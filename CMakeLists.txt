@@ -1,0 +1,21 @@
+
+cmake_minimum_required(VERSION 2.6)
+project(romi_rover)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_BUILD_TYPE DEBUG)
+
+add_subdirectory(libromi)
+add_subdirectory(brush_motors)
+add_subdirectory(camera_recorder)
+add_subdirectory(configuration)
+add_subdirectory(fake_camera)
+add_subdirectory(fake_cnc)
+add_subdirectory(fake_motors)
+add_subdirectory(grbl)
+add_subdirectory(interface)
+add_subdirectory(navigation)
+add_subdirectory(realsense)
+add_subdirectory(video4linux)
+add_subdirectory(weeder)
+add_subdirectory(wheel_odometry)
