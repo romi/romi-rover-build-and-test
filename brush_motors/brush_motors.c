@@ -1,0 +1,446 @@
+#include <string.h>
+#include "romi/mem.h"
+#include "brush_motors.h"
+
+static char *device = NULL;
+static mutex_t *mutex = NULL;
+static serial_t *serial = NULL;
+static membuf_t *encoders = NULL;
+static membuf_t *status = NULL;
+
+static int initialized = 0;
+static double wheel_diameter = 0.0;
+static double encoder_steps = 0.0;
+static double max_speed = 0.0;
+static double max_signal = 0.0;
+static char with_pid = 0;
+static char with_rc = 0;
+static char with_homing = 0;
+static double k[] = { 0.0, 0.0, 0.0 };
+
+datahub_t *get_datahub_encoders();
+messagehub_t *get_messagehub_motorstatus();
+
+static int open_serial(const char *dev)
+{
+        log_info("Trying to open the serial connection on %s.", dev);
+	
+        mutex_lock(mutex);        
+        serial = new_serial(dev, 115200);
+        mutex_unlock(mutex);        
+	
+        if (serial == NULL)
+                log_info("Open failed.");
+        else 
+                log_info("Serial connection opened.");
+        
+        return (serial == NULL);
+}
+
+static void close_serial()
+{
+        mutex_lock(mutex);        
+        if (serial) delete_serial(serial);
+        serial = NULL;
+        mutex_unlock(mutex);        
+}
+
+static int set_device(const char *dev)
+{
+        close_serial();
+        if (device != NULL) {
+                mem_free(device);
+                device = NULL;
+        }
+        device = mem_strdup(dev);
+        if (device == NULL) {
+                log_err("Out of memory");
+                return -1;
+        }
+        return 0;
+}
+
+static int send_command(const char *cmd, membuf_t *message)
+{
+        int err = 0;
+        const char *r;
+
+        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @1: cmd=%s", cmd);
+        
+        mutex_lock(mutex);        
+
+        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @2");
+        
+        if (serial == NULL) {
+                membuf_printf(message, "No serial");
+                err = -1;
+                goto unlock;
+        }        
+
+        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @3");
+        
+        r = serial_command_send(serial, message, cmd);
+        if (r == NULL) {
+                err = -1;
+                membuf_printf(message, "Unknown error");
+        } else if (strncmp(r, "ERR", 3) == 0) {
+                err = -1;
+        } 
+
+        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @4: r=%s", r);
+        
+unlock:
+        mutex_unlock(mutex);
+
+        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @5");
+        
+        return err;
+}
+
+static int reset_controller(serial_t *serial)
+{
+        char cmd[256];
+        
+        log_info("Resetting the motor controller.");
+
+        membuf_t *reply = new_membuf();
+        if (reply == NULL)
+                return -1;
+        
+        if (send_command("X", reply) != 0) {
+                log_err("Reset failed: %s", membuf_data(reply));
+                return -1;
+        }
+
+        double steps_per_meter = encoder_steps / (M_PI * wheel_diameter);
+        rprintf(cmd, sizeof(cmd), "I[%d,%d,%d,%d,%d,%d]",
+                (int) steps_per_meter,
+                (int) (max_speed * 100.0),
+                (int) max_signal,
+                with_pid? 1 : 0,
+                with_rc? 1 : 0,
+                with_homing? 1 : 0);
+        if (send_command(cmd, reply) != 0) {
+                log_err("Initialization failed: %s", membuf_data(reply));
+                return -1;
+        }
+        
+        rprintf(cmd, sizeof(cmd), "K[%d,%d,%d]",
+                (int) (k[0] * 1000.0),
+                (int) (k[1] * 1000.0),
+                (int) (k[2] * 1000.0));
+        if (send_command(cmd, reply) != 0) {
+                log_err("Initialization of PID failed: %s", membuf_data(reply));
+                return -1;
+        }
+        
+        if (send_command("E1", reply) != 0) {
+                log_err("Enable failed: %s", membuf_data(reply));
+                return -1;
+        }
+
+        delete_membuf(reply);
+        return 0;
+}
+
+int get_rover_configuration()
+{
+        json_object_t rover = client_get("configuration", "rover");
+        if (!json_isobject(rover)) {
+                log_err("unexpected value for 'rover'");
+                json_unref(rover);
+                return -1;
+        }
+
+        double diam = json_object_getnum(rover, "wheel_diameter");
+        double steps = json_object_getnum(rover, "encoder_steps");
+        if (isnan(diam) || isnan(steps)) {
+                log_err("invalid wheel diameter or encoder steps");
+                json_unref(rover);
+                return -1;
+        }
+        if (diam < 0.02 || diam > 2.0) {
+                log_err("invalid wheel diameter: %f !in [0.02,2.00]", diam);
+                json_unref(rover);
+                return -1;
+        }
+        if (steps < 100 || steps > 10000) {
+                log_err("invalid encoder steps: %f !in [100,10000]", steps);
+                json_unref(rover);
+                return -1;
+        }
+        wheel_diameter = diam;
+        encoder_steps = steps;
+
+        log_info("wheel_diameter %f", wheel_diameter);
+        log_info("encoder_steps  %f", encoder_steps);
+        json_unref(rover);
+        return 0;
+}
+
+int get_controller_configuration()
+{
+        json_object_t controller = client_get("configuration", "brush_motors");
+        if (!json_isobject(controller)) {
+                log_err("unexpected value for 'brush_motors'");
+                json_unref(controller);
+                return -1;
+        }
+
+        const char *dev = json_object_getstr(controller, "device");
+        double v = json_object_getnum(controller, "max_speed");
+        double sig = json_object_getnum(controller, "max_signal");
+        int pid = json_object_getbool(controller, "pid");
+        int rc = json_object_getbool(controller, "rc");
+        int h = json_object_getbool(controller, "homing");
+        json_object_t ka = json_object_get(controller, "k");
+
+        if (dev == NULL || isnan(v) || isnan(sig) || pid == -1
+            || rc == -1 || h == -1 || !json_isarray(ka)) {
+                log_err("invalid controller settings");
+                json_unref(controller);
+                return -1;
+        }
+
+        double kp = json_array_getnum(ka, 0);
+        double ki = json_array_getnum(ka, 1);
+        double kd = json_array_getnum(ka, 2);
+        if (isnan(kp) || isnan(ki) || isnan(kd)
+            || kp < 0.0 || kp > 100.0
+            || ki < 0.0 || ki > 100.0
+            || kd < 0.0 || kd > 100.0) {
+                log_err("invalid PID settings");
+                json_unref(controller);
+                return -1;
+        }
+        
+        if (device == NULL) {
+                if (set_device(dev) != 0)
+                        return -1;
+        }
+        
+        max_speed = v;
+        max_signal = sig;
+        with_pid = pid;
+        with_rc = rc;
+        with_homing = h;
+        k[0] = kp;
+        k[1] = ki;
+        k[2] = kd;
+
+        log_info("max_speed      %.1f", max_speed);
+        log_info("max_signal     %.0f", max_signal);
+        log_info("with_pid       %s", with_pid? "yes" : "no");
+        log_info("with_rc        %s", with_rc? "yes" : "no");
+        log_info("with_homing    %s", with_homing? "yes" : "no");
+        log_info("PID            [%.4f,%.4f,%.4f]", k[0], k[1], k[2]);
+
+        return 0;
+}
+
+int get_configuration()
+{
+        if (get_rover_configuration() != 0)
+                return -1;
+        if (get_controller_configuration() != 0)
+                return -1;
+        return 0;
+}
+
+int motorcontroller_init()
+{
+        if (initialized)
+                return 0;
+        
+        if (get_configuration() != 0)
+                return -1;
+
+        if (open_serial(device) != 0)
+                return -1;
+        
+        if (reset_controller(serial) != 0) {
+                close_serial();
+                return -1;
+        }
+        
+        initialized = 1;
+        return 0;
+}
+
+int brush_motors_init(int argc, char **argv)
+{
+        mutex = new_mutex();
+        if (mutex == NULL)
+                return -1;
+
+        encoders = new_membuf();
+        if (encoders == NULL)
+                return -1;
+        
+        status = new_membuf();
+        if (status == NULL)
+                return -1;
+
+        if (argc > 2) {
+                log_debug("using serial device '%s'", device);
+                if (set_device(argv[1]) != 0)
+                        return -1;
+        }
+
+        for (int i = 0; i < 10; i++) {
+                if (motorcontroller_init() == 0)
+                        return 0;
+                log_err("motorcontroller_init failed: attempt %d/10", i);
+                clock_sleep(0.2);
+        }
+
+        log_err("failed to initialize the motorcontroller");
+        return -1;
+}
+
+void brush_motors_cleanup()
+{
+        close_serial();
+        if (mutex)
+                delete_mutex(mutex);
+        if (status)
+                delete_membuf(status);
+        if (encoders)
+                delete_membuf(encoders);
+        if (device)
+                mem_free(device);
+}
+
+int motorcontroller_onmoveat(void *userdata,
+                             messagelink_t *link,
+                             json_object_t command,
+                             membuf_t *message)
+{
+        log_debug("motorcontroller_onmoveat");
+
+        if (motorcontroller_init() != 0) {
+                membuf_printf(message, "Motor controller not initialized");
+                return -1;
+        }
+        
+        json_object_t speed = json_object_get(command, "speed");
+        double left, right;
+        if (json_isarray(speed)) {
+                left = json_array_getnum(speed, 0);
+                right = json_array_getnum(speed, 1);
+        } else if (json_isnumber(speed)) {
+                left = json_number_value(speed);
+                right = left;
+        }
+        
+        if (isnan(left) || isnan(right)) {
+                log_warn("invalid left|right values: %f, %f", left, right);
+                membuf_printf(message, "Invalid left|right values");
+                return -1;
+        }
+
+        if (left < -1000.0 || left > 1000.0
+            || right < -1000.0 || right > 1000.0) {
+                log_warn("Speed is out of bounds [-1000, 1000].");
+                membuf_printf(message, "Speed is out of bounds [-1000, 1000].");
+                return -1;
+        }
+
+        char cmd[64];
+        rprintf(cmd, sizeof(cmd), "M[%d,%d]", (int) left, (int) right);
+
+        return send_command(cmd, message);
+}
+
+int motorcontroller_onenable(void *userdata,
+                             messagelink_t *link,
+                             json_object_t command,
+                             membuf_t *message)
+{
+        log_debug("motorcontroller_onenable.");
+
+        if (motorcontroller_init() != 0) {
+                membuf_printf(message, "Motor controller not initialized");
+                return -1;
+        }
+        
+        double value = json_object_getnum(command, "value");
+        if (isnan(value)) {
+                log_warn("missing value for enable");
+                membuf_printf(message, "missing value for enable");
+                return -1;
+        }
+        return send_command((value == 0)? "E0" : "E1", message);
+}
+
+int motorcontroller_onreset(void *userdata,
+                            messagelink_t *link,
+                            json_object_t command,
+                            membuf_t *message)
+{
+        log_info("Resetting the motor controller.");
+        if (motorcontroller_init() != 0) {
+                membuf_printf(message, "Motor controller not initialized");
+                return -1;
+        }        
+        return send_command("X", message);
+}
+
+int motorcontroller_onhoming(void *userdata,
+                             messagelink_t *link,
+                             json_object_t command,
+                             membuf_t *message)
+{
+	log_debug("Homing");
+        return send_command("H", message);
+}
+
+void broadcast_encoders()
+{
+        static double offset = 0.0;
+        
+        if (motorcontroller_init() != 0) {
+                clock_sleep(0.2);
+                return;
+        }
+        
+        if (send_command("e", encoders) != 0) {
+                log_err("brush_motors: 'e' command returned: %s",
+                        membuf_data(encoders));
+                return;
+        }
+                
+        int encL, encR;
+        unsigned int millis;
+        const char *r = membuf_data(encoders);
+        sscanf(r, "e[%d,%d,%u]", &encL, &encR, &millis);
+
+        double boottime = millis / 1000.0;
+        if (offset == 0.0) {
+                double now = clock_time();
+                offset = now - boottime;
+        }
+        
+        datahub_broadcast_f(get_datahub_encoders(), NULL, 
+                            "{\"encoders\":[%d,%d], \"timestamp\": %f}",
+                            encL, encR, offset + boottime);
+        clock_sleep(0.100);
+}
+
+void broadcast_status()
+{
+        if (motorcontroller_init() != 0) {
+                clock_sleep(1);
+                return;
+        }
+
+        if (send_command("S", encoders) != 0) {
+                log_err("brush_motors: 'S' command returned: %s",
+                        membuf_data(encoders));
+                return;
+        }
+
+        const char *r = membuf_data(encoders);
+        messagehub_broadcast_f(get_messagehub_motorstatus(), NULL, r + 1);
+        clock_sleep(1);
+}

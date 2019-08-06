@@ -1,0 +1,74 @@
+{
+    "rover": {
+        "wheel_diameter": 0.12,
+        "wheel_base": 1.00,
+        "width": 1.0,
+        "length": 1.0,
+        "encoder_steps": 3000
+    },
+    
+    "brush_motors": {
+        "device": "/dev/ttyACM1",
+        "max_speed": 0.5,
+        "max_signal": 60,
+        "pid": true,
+        "rc": false,
+        "homing": false,
+        "k": [0.3, 0.8, 0]
+    },
+    
+    "grbl": {
+        "device": "/dev/ttyACM0"
+    },
+    
+    "fake_camera": {
+        "image": "/home/hanappe/projects/LettuceThink/github/romi-rover/camera.jpg"
+    },
+    
+    "camera-recorder": {
+        "directory": "/tmp/data"
+    },
+    
+    "weeder": {
+        "workspace": [0.5, 480, 24, 1060, 1043, 710, 680],
+        "z0": -10,
+        "invert_axes": false,
+        "datadir": "/tmp/weeder",
+        "quincunx_threshold": 0.5
+    },
+    
+    "interface": {
+        "html": "/home/hanappe/projects/LettuceThink/github/romi-rover/interface/html",
+        "scripts": "/home/hanappe/projects/LettuceThink/github/romi-rover/scripts/chatelain-lite.json"
+    },
+    
+    "launch": {
+        "general": {
+            "xxlog-dir": "/tmp/log"
+        },
+        "registry": {
+            "path": "/usr/local/bin/rcregistry"
+        },
+        "nodes": [{
+            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/configuration/build/configuration"
+        }, {
+            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/brush_motors/build/brush_motors"
+        }, {
+            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/fake_camera/build/fake_camera"
+        }, {
+            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/grbl/build/grbl"
+        }, {
+            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/wheel_odometry/build/wheel_odometry"
+        }, {
+            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/camera_recorder/build/camera_recorder"
+        }, {
+            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/weeder/build/weeder"
+        }, {
+            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/navigation/build/navigation"
+        }],
+        "extra" : [{
+            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/interface/build/interface"
+        }]
+    }
+}
+

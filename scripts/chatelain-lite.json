@@ -1,0 +1,52 @@
+[
+    {
+        "name": "scan",
+        "display_name": "Scan",
+        "script": [
+            {"action": "homing"},
+            {"action": "start_recording"},
+            {"action": "move", "distance": 3.6, "speed": 200},
+            {"action": "stop_recording"},
+            {"action": "move", "distance": -3.1, "speed": -200},
+            {"action": "homing"}
+        ]
+    },
+    {
+        "name": "weeding",
+        "display_name": "Weeding",
+        "script": [
+            {"action": "homing"},
+            {"action": "move", "distance": 1.2},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": -2.5},
+            {"action": "homing"}
+        ]
+    },
+    {
+        "name": "move-forward",
+        "display_name": "Forward",
+        "script": [
+            {"action": "move", "distance": 0.60}
+        ]
+    },
+    {
+        "name": "move-backward",
+        "display_name": "Backward",
+        "script": [
+            {"action": "move", "distance": -0.60}
+        ]
+    },
+    {
+        "name": "shutdown",
+        "display_name": "Shutdown",
+        "script": [
+            {"action": "shutdown"}
+        ]
+    }
+]
