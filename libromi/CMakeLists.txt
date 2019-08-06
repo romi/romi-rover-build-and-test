@@ -21,6 +21,6 @@ target_link_libraries(romi jpeg m)
 
 INSTALL(TARGETS romi DESTINATION "lib")
 INSTALL (
-    DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/
     DESTINATION include
     FILES_MATCHING PATTERN "*.h")

@@ -5,9 +5,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE DEBUG)
 
 ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_SOURCE_DIR}/wheel_odometry_main.c
-  COMMAND rcgen code ${CMAKE_SOURCE_DIR}/wheel_odometry_main.c ${CMAKE_SOURCE_DIR}/rcgen.json
-  DEPENDS ${CMAKE_SOURCE_DIR}/rcgen.json
+  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/wheel_odometry_main.c
+  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/wheel_odometry_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
+  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
   )
 
 add_executable(wheel_odometry wheel_odometry.c wheel_odometry_main.c)

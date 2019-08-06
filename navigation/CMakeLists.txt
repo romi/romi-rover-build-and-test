@@ -8,7 +8,7 @@ add_executable(navigation navigation.c navigation_main.c)
 target_link_libraries(navigation romi rcom)
 
 ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_SOURCE_DIR}/navigation_main.c
-  COMMAND rcgen code ${CMAKE_SOURCE_DIR}/navigation_main.c ${CMAKE_SOURCE_DIR}/rcgen.json
-  DEPENDS ${CMAKE_SOURCE_DIR}/rcgen.json
+  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/navigation_main.c
+  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/navigation_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
+  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
   )

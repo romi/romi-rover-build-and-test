@@ -8,7 +8,7 @@ add_executable(fake_cnc fake_cnc.c fake_cnc_main.c)
 target_link_libraries(fake_cnc rcom)
 
 ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_SOURCE_DIR}/fake_cnc_main.c
-  COMMAND rcgen code ${CMAKE_SOURCE_DIR}/fake_cnc_main.c ${CMAKE_SOURCE_DIR}/rcgen.json
-  DEPENDS ${CMAKE_SOURCE_DIR}/rcgen.json
+  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/fake_cnc_main.c
+  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/fake_cnc_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
+  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
   )

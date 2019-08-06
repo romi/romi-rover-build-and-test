@@ -22,52 +22,51 @@
     },
     
     "fake_camera": {
-        "image": "/home/hanappe/projects/LettuceThink/github/romi-rover/camera.jpg"
+        "image": "data/camera.jpg"
     },
     
     "camera-recorder": {
-        "directory": "/tmp/data"
+        "directory": "data/camera"
     },
     
     "weeder": {
         "workspace": [0.5, 480, 24, 1060, 1043, 710, 680],
         "z0": -10,
         "invert_axes": false,
-        "datadir": "/tmp/weeder",
+        "datadir": "data/weeder",
         "quincunx_threshold": 0.5
     },
     
     "interface": {
-        "html": "/home/hanappe/projects/LettuceThink/github/romi-rover/interface/html",
-        "scripts": "/home/hanappe/projects/LettuceThink/github/romi-rover/scripts/chatelain-lite.json"
+        "html": "interface/html",
+        "scripts": "scripts/chatelain-lite.json"
     },
     
     "launch": {
         "general": {
-            "xxlog-dir": "/tmp/log"
+            "log-dir-HIDE": "log"
         },
         "registry": {
             "path": "/usr/local/bin/rcregistry"
         },
         "nodes": [{
-            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/configuration/build/configuration"
+            "path": "build/configuration/configuration"
         }, {
-            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/brush_motors/build/brush_motors"
+            "path": "build/brush_motors/brush_motors"
         }, {
-            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/fake_camera/build/fake_camera"
+            "path": "build/fake_camera/fake_camera"
         }, {
-            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/grbl/build/grbl"
+            "path": "build/grbl/grbl"
         }, {
-            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/wheel_odometry/build/wheel_odometry"
+            "path": "build/wheel_odometry/wheel_odometry"
         }, {
-            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/camera_recorder/build/camera_recorder"
+            "path": "build/camera_recorder/camera_recorder"
         }, {
-            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/weeder/build/weeder"
+            "path": "build/weeder/weeder"
         }, {
-            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/navigation/build/navigation"
-        }],
-        "extra" : [{
-            "path": "/home/hanappe/projects/LettuceThink/github/romi-rover/interface/build/interface"
+            "path": "build/navigation/navigation"
+        }, {
+            "path": "build/interface/interface"
         }]
     }
 }

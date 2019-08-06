@@ -8,7 +8,7 @@ add_executable(realsense realsense.cc realsense_main.c convert.c)
 target_link_libraries(realsense rcom jpeg png realsense2)
 
 ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_SOURCE_DIR}/realsense_main.c
-  COMMAND rcgen code ${CMAKE_SOURCE_DIR}/realsense_main.c ${CMAKE_SOURCE_DIR}/rcgen.json
-  DEPENDS ${CMAKE_SOURCE_DIR}/rcgen.json
+  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/realsense_main.c
+  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/realsense_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
+  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
   )

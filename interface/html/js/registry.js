@@ -25,7 +25,6 @@ function Graph(nodes)
     
     this.setColumn = function(node) {
         if (node.inputs.length == 0) {
-            console.log("node " + node.name + " has zero inputs");
             node.column = 0;
         } else {
             var column = 0;
@@ -42,18 +41,18 @@ function Graph(nodes)
     
     this.nextUnmarked = function() {
         for (let i = 0; i < this.mark.length; i++) {
-            if (this.mark[i] == "no")
+            if (this.mark[i] == 'no')
                 return i;
         }
         return -1;
     }
     
     this.visit = function(n) {
-        if (this.mark[n] == "yes")
+        if (this.mark[n] == 'yes')
             return 0;
-        if (this.mark[n] == "temp")
+        if (this.mark[n] == 'temp')
             return -1; // FAIL
-        this.mark[n] = "temp";
+        this.mark[n] = 'temp';
         var node = this.nodes[n];
         for (let i = 0; i < node.inputs.length; i++) {
             var nextNode = node.inputs[i].fromNode;
@@ -61,13 +60,13 @@ function Graph(nodes)
             if (nextN == -1) return -1; // FAIL
             this.visit(nextN);
         }
-        this.mark[n] == "yes";
+        this.mark[n] == 'yes';
         this.list.push(node);
     }
     
     this.sort = function() {
         for (let i = 0; i < this.nodes.length; i++)
-            this.mark[i] = "no";
+            this.mark[i] = 'no';
         while (true) {
             let n = this.nextUnmarked();
             if (n == -1) break;
@@ -94,11 +93,11 @@ function Entry(name, type, topic, addr)
     this.resources = [];
     
     this.appendTopicView = function(div) {
-        var d = document.createElement("div");
-        d.className = "entry " + this.type;
+        var d = document.createElement('div');
+        d.className = 'entry ' + this.type;
         
-        var name = document.createElement("span");
-        name.className = "entry-name";
+        var name = document.createElement('span');
+        name.className = 'entry-name';
         name.innerHTML = this.name;
         d.appendChild(name);
         
@@ -106,50 +105,24 @@ function Entry(name, type, topic, addr)
     }
 
     this.appendNodeView = function(div) {
-        var d = document.createElement("div");
-        d.className = "entry " + this.type;
+        var d = document.createElement('div');
+        d.className = 'entry ' + this.type;
         
-        var name = document.createElement("span");
-        name.className = "entry-topic";
+        var name = document.createElement('span');
+        name.className = 'entry-topic';
         name.innerHTML = this.topic;
         d.appendChild(name);
         
-        d.appendChild(document.createElement("br"));
+        d.appendChild(document.createElement('br'));
         
-        var type = document.createElement("span");
-        type.className = "entry-type";
+        var type = document.createElement('span');
+        type.className = 'entry-type';
         type.innerHTML = this.type;
         d.appendChild(type);
         
         div.appendChild(d);
     }
 
-}
-
-function Topic(name, type)
-{
-    this.convertType = function(type) {
-        switch (type) {
-        case "messagehub": return "messagehub"; break;
-        case "messagelink": return "messagehub"; break;
-        case "datahub": return "datahub"; break;
-        case "datalink": return "datahub"; break;
-        case "streamer": return "streamer"; break;
-        case "streamerlink": return "streamer"; break;
-        case "service": return "service"; break;
-        default: return type; break;
-        }        
-    }
-    
-    this.matches = function(name, type) {
-        type = this.convertType(type);
-        return (this.name == name
-                && this.type == type);
-    }
-
-    this.entries = [];
-    this.name = name;
-    this.type = this.convertType(type);
 }
 
 function Node(name)
@@ -194,43 +167,16 @@ function Registry(uri)
     }
 
     this.requestList = function() {
-        this.sendRequest({"request": "list"});
-    }
-
-    this.updateTopicsView = function() {
-        var root = document.getElementById("topics-tab");
-        while (root.firstChild) {
-            root.removeChild(root.firstChild);
-        }
-        for (var i = 0; i < this.topics.length; i++) {
-            var topic = this.topics[i];
-            var div = document.createElement("div");
-            div.className = "topic";
-            var name = document.createElement("span");
-            name.className = "topic-name";
-            name.innerHTML = topic.name;
-            div.appendChild(name);
-            div.appendChild(document.createElement("br"));
-            var t = document.createElement("span");
-            t.className = "topic-type";
-            t.innerHTML = topic.type;
-            div.appendChild(t);
-            
-            for (var j = 0; j < topic.entries.length; j++)
-                topic.entries[j].appendTopicView(div);
-            
-            root.appendChild(div);
-        }
+        this.sendRequest({'request': 'list'});
     }
 
     this.updateNodesView = function() {
-        console.log("self.registry.updateNodesView");
-        var root = document.getElementById("nodes-tab");
+        var root = document.getElementById('nodes');
         while (root.firstChild) {
             root.removeChild(root.firstChild);
         }
 
-        var draw = SVG('nodes-tab').size(1000, 1000);
+        var draw = SVG('nodes').size(1000, 1000);
         var y = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]; // FIXME!
         
         for (let i = 0; i < this.nodes.length; i++) {
@@ -253,14 +199,14 @@ function Registry(uri)
                     family: 'Nunito',
                     size: 14, weight: '400' }).move(19, h);
 
-                if (e.type == "messagehub"
-                    || e.type == "datahub"
-                    || e.type == "streamer") {
+                if (e.type == 'messagehub'
+                    || e.type == 'datahub'
+                    || e.type == 'streamer') {
                     group.circle(6).fill('#00aa5b').move(187, h + 6);
                     e.connector = [187 + 3, h + 9];
-                } else if (e.type == "messagelink"
-                           || e.type == "datalink"
-                           || e.type == "streamerlink") {
+                } else if (e.type == 'messagelink'
+                           || e.type == 'datalink'
+                           || e.type == 'streamerlink') {
                     group.circle(6).fill('#00aa5b').move(7.5, h + 6);
                     e.connector = [7.5 + 3, h + 9];
                 }
@@ -272,12 +218,13 @@ function Registry(uri)
                         var a = group.link(r.uri);
                         a.plain(r.name).font({family: 'Nunito',size: 14, weight: '400' }).move(30, h);
                     }
+                    subframe.size(190, 18 + e.resources.length * 16);
                 }
                 
-                if (e.type == "streamer") {
+                if (e.type == 'streamer') {
                     subframe.size(190, 18 + 100);
-                    group.image("http://" + e.addr + "/stream.html", 190, 100).move(5, h + 16);
-                    h += 116;
+                    group.image('http://' + e.addr + '/stream.html', 190, 100).move(5, h + 16);
+                    h += 100;
                 }
                 
                 h += 21;                
@@ -290,10 +237,8 @@ function Registry(uri)
             y[column] += h + 10;
         }
         for (let i = 0; i < this.nodes.length; i++) {
-            console.log("lines node " + i + ": inputs " + this.nodes[i].inputs);
             var n0 = this.nodes[i];
             for (let j = 0; j < n0.inputs.length; j++) {
-                console.log("lines node " + i + " entry " + j);
                 var input = n0.inputs[j];
                 var i0 = input.toEntryIndex;
                 var e0 = n0.entries[i0];
@@ -311,33 +256,9 @@ function Registry(uri)
     }
 
     this.updateView = function() {
-        console.log("self.registry.updateView");
-        this.updateTopicsView();
         this.updateNodesView();
     }
     
-    this.getTopic = function(name, type) {
-        for (var i = 0; i < this.topics.length; i++) {
-            if (this.topics[i].matches(name, type))
-                return this.topics[i];
-        }
-        var topic = new Topic(name, type);
-        this.topics.push(topic);
-        return topic;
-    }
-
-    this.updateTopics = function() {
-        this.topics = [];
-        for (var i = 0; i < this.entries.length; i++) {
-            var e = this.entries[i];
-            e = new Entry(e.name, e.type, e.topic, e.addr);
-            var topic = this.getTopic(e.topic, e.type);
-            if (e.type == "datahub" || e.type == "messagehub" || e.type == "streamer") 
-                topic.entries.splice(0, 0, e);
-            else topic.entries.push(e);
-        }
-    }
-
     this.getNode = function(name) {
         for (var i = 0; i < this.nodes.length; i++) {
             if (this.nodes[i].name == name)
@@ -363,32 +284,31 @@ function Registry(uri)
             var e = this.entries[i];
             e = new Entry(e.name, e.type, e.topic, e.addr);
             var node = this.getNode(e.name);
-            if (e.type == "datahub" || e.type == "messagehub"
-                || e.type == "streamer" || e.type == "service") 
+            if (e.type == 'datahub' || e.type == 'messagehub'
+                || e.type == 'streamer' || e.type == 'service') 
                 node.entries.splice(0, 0, e);
             else node.entries.push(e);
         }
         // FIXME
-        console.log("checking inputs");
         for (var i = 0; i < this.nodes.length; i++) {
             var node = this.nodes[i];
             node.inputs = [];
             for (var j = 0; j < node.entries.length; j++) {
                 var e = node.entries[j];
-                if (e.type == "messagehub" || e.type == "datahub"
-                    || e.type == "streamer" || e.type == "service")
+                if (e.type == 'messagehub' || e.type == 'datahub'
+                    || e.type == 'streamer' || e.type == 'service')
                     continue;
                 var type = null;
                 switch (e.type) {
-                case "messagelink": type = "messagehub"; break;
-                case "datalink": type = "datahub"; break;
-                case "streamerlink": type = "streamer"; break;
+                case 'messagelink': type = 'messagehub'; break;
+                case 'datalink': type = 'datahub'; break;
+                case 'streamerlink': type = 'streamer'; break;
                 }
                 var nodeEntry = this.findNodeEntry(e.topic, type);
                 if (nodeEntry)
                     node.inputs.push(new Link(nodeEntry.node, nodeEntry.index, j));
                 else
-                    console.log("no link for " + e.topic + ":" + type);
+                    console.log('no link for ' + e.topic + ':' + type);
             }
         }
         this.graph = new Graph(this.nodes);
@@ -397,11 +317,10 @@ function Registry(uri)
         // Get the exported resources of the service nodes
         for (let i = 0; i < this.nodes.length; i++) {
             var node = this.nodes[i];
-            node.inputs = [];
             for (var j = 0; j < node.entries.length; j++) {
                 var e = node.entries[j];
-                if (e.type == "service") {
-                    $.getJSON("http://" + e.addr + "/index.json", new IndexQuery(this, e).handleResponse);
+                if (e.type == 'service') {
+                    $.getJSON('http://' + e.addr + '/index.json', new IndexQuery(this, e).handleResponse);
                 }
             }
         }
@@ -409,25 +328,23 @@ function Registry(uri)
 
     this.updateList = function(list) {
         this.entries = list;
-        this.updateTopics();
         this.updateNodes();
         this.updateView();
     }
 
     this.handleMessage = function(e) {
         if (!e.request) {
-            console.log("Registry: message has no request string");
+            console.log('Registry: message has no request string');
 
-        } else if (e.request == "proxy-update-list") {
+        } else if (e.request == 'proxy-update-list') {
             this.updateList(e.list);
 
-        } else if (e.request == "proxy-add") {
+        } else if (e.request == 'proxy-add') {
             this.entries.push(e.entry);
-            this.updateTopics();
             this.updateNodes();
             this.updateView();
 
-        } else if (e.request == "proxy-remove") {
+        } else if (e.request == 'proxy-remove') {
             var found = false;
             for (var i = 0; i < this.entries.length; i++) {
                 var entry = this.entries[i];
@@ -437,13 +354,12 @@ function Registry(uri)
                     break;
                 }
             }
-            if (!found) console.log("could not find entry with id " + e.id);
-            this.updateTopics();
+            if (!found) console.log('could not find entry with id ' + e.id);
             this.updateNodes();
             this.updateView();
 
         } else {
-            console.log("Registry: unknown request: " + e.request);
+            console.log('Registry: unknown request: ' + e.request);
         }
     }
 
@@ -451,21 +367,20 @@ function Registry(uri)
         this.ws = new WebSocket(uri);
 
         this.ws.onopen = function(e) {
-            console.log("Registry: websocket open");
+            console.log('Registry: websocket open');
             self.requestList();
         }
 
         this.ws.onmessage = function(e) {
-            console.log(e.data);
             self.handleMessage(JSON.parse(e.data));
         }
 
         this.ws.onclose = function(e) {
-            console.log("Registry: websocket closed");
+            console.log('Registry: websocket closed');
         }
 
         this.ws.onerror = function(e) {
-            console.log("Registry: websocket error: " + e.toString());
+            console.log('Registry: websocket error: ' + e.toString());
         }
     }
 }
