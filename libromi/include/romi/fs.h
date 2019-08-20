@@ -9,6 +9,8 @@ extern "C" {
 int is_absolute(const char *path);
 int make_absolute_path(const char *path, char *buffer, int len);
 
+list_t *dir_list(const char *path);
+
 #ifdef __cplusplus
 }
 #endif

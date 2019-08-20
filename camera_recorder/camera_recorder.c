@@ -1,3 +1,8 @@
+
+// TMP
+#include <unistd.h>
+
+
 #include <romi.h>
 #include "camera_recorder.h"
 
@@ -5,14 +10,47 @@ static int initialized = 0;
 static mutex_t *recording_mutex;
 static mutex_t *position_mutex;
 static char *directory = NULL;
+
 static database_t *db = NULL;
 static scan_t *scan = NULL;
 static fileset_t *fileset = NULL;
+
 static int recording = 0;
 static multipart_parser_t *parser = NULL;
 static vector_t position = {0};
 
 streamerlink_t *get_streamerlink_camera();
+messagelink_t *get_messagelink_db();
+
+void broadcast_db_message(const char *event,
+                          const char *scan_id,
+                          const char *fileset_id,
+                          const char *file_id)
+{
+        log_debug("broadcast_db_message: %s, %s, %s, %s",
+                  event, scan_id, fileset_id, file_id);
+        messagelink_t *bus = get_messagelink_db();
+        if (file_id)
+                messagelink_send_f(bus,
+                                   "{\"event\": \"%s\", "
+                                   "\"source\": \"camera_recorder\", "
+                                   "\"scan\": \"%s\", "
+                                   "\"fileset\": \"%s\", "
+                                   "\"file\": \"%s\"}",
+                                   event, scan_id, fileset_id, file_id);
+        else if (fileset_id)
+                messagelink_send_f(bus,
+                                   "{\"event\": \"%s\", "
+                                   "\"source\": \"camera_recorder\", "
+                                   "\"scan\": \"%s\", "
+                                   "\"fileset\": \"%s\"}",
+                                   event, scan_id, fileset_id);
+        else messagelink_send_f(bus,
+                                "{\"event\": \"%s\", "
+                                "\"source\": \"camera_recorder\", "
+                                "\"scan\": \"%s\"}",
+                                event, scan_id);
+}
 
 void camera_recorder_onpose(void *userdata,
                             datalink_t *link,
@@ -22,12 +60,14 @@ void camera_recorder_onpose(void *userdata,
         json_object_t data = datalink_parse(link, input);
         if (json_isnull(data)) {
                 log_warn("camera_recorder_onpose: failed to parse data");
+                json_unref(data);
                 return;
         }
 
         json_object_t a = json_object_get(data, "position");
         if (!json_isarray(a)) {
                 log_warn("camera_recorder_onpose: 'position' is not an array");
+                json_unref(data);
                 return;
         }
         
@@ -37,6 +77,7 @@ void camera_recorder_onpose(void *userdata,
         pz = json_array_getnum(a, 2);
         if (isnan(px) || isnan(py) || isnan(pz)) {
                 log_warn("camera_recorder_onpose: invalid position values"); 
+                json_unref(data);
                 return;
         }
         
@@ -45,6 +86,8 @@ void camera_recorder_onpose(void *userdata,
         position.y = py;
         position.z = pz;
         mutex_unlock(position_mutex);
+
+        json_unref(data);
 }
 
 static int *camera_recorder_onimage(void *userdata,
@@ -52,14 +95,9 @@ static int *camera_recorder_onimage(void *userdata,
                                     const char *mimetype,
                                     double timestamp)
 {
-        log_debug("camera_recorder_onimage.");
-        log_debug("camera_recorder_onimage @1");
-        
         mutex_lock(recording_mutex);
-        log_debug("camera_recorder_onimage @2");
         
         if (recording) {
-                
                 // Check for valid JPEG signature
                 if ((image[0] != 0xff) || (image[1] != 0xd8)  || (image[2] != 0xff)) {
                         log_warn("Image has a bad signature.");
@@ -72,37 +110,28 @@ static int *camera_recorder_onimage(void *userdata,
 
                 double lag = clock_time() - timestamp;
         
-        log_debug("camera_recorder_onimage @3");
-        
                 if (lag < 1.0f) {
                         vector_t p;
-                        
-        log_debug("camera_recorder_onimage @4");
-        
                         mutex_lock(position_mutex);
                         p = position;
                         mutex_unlock(position_mutex);
-
-         log_debug("camera_recorder_onimage @5");
-        
                        
-                        file_t *file = fileset_new_file(fileset, timestamp, p);
+                        file_t *file = fileset_new_file(fileset);
                         if (file) {
+                                file_set_timestamp(file, timestamp);
+                                file_set_position(file, p);
                                 file_import_jpeg(file, image, len);
+                                broadcast_db_message("new", scan_id(scan),
+                                                     fileset_id(fileset), file_id(file));
                         }
-
-        log_debug("camera_recorder_onimage @6");
         
                 } else {
                         log_info("Too much lag. Skipping image.");
                 }
         }
-        log_debug("camera_recorder_onimage @7");
         
 unlock:
         mutex_unlock(recording_mutex);
-        log_debug("camera_recorder_onimage @8");
-        
 }
 
 int camera_recorder_ondata(void *userdata, const char *buf, int len)
@@ -132,16 +161,19 @@ static int get_configuration()
         if (directory != NULL)
                 return 0;
 
+        char buffer[1024];
+        log_err("Current working directory: %s", getcwd(buffer, 1024));
+        
         int err = -1;
         json_object_t path = json_null();
-        path = client_get("configuration", "camera-recorder.directory");
+        path = client_get("configuration", "fsdb.directory");
         if (json_isstring(path)) {
                 set_directory(json_string_value(path));
                 log_info("using configuration file for directory: '%s'",
                          json_string_value(path));
                 err = 0;
         } else {
-                log_err("Failed to obtain a valid camera-recorder.directory setting");
+                log_err("Failed to obtain a valid fsdb.directory setting");
         }
         json_unref(path);
         return err;
@@ -200,6 +232,8 @@ void camera_recorder_cleanup()
                 delete_mutex(position_mutex);
         if (parser)
                 delete_multipart_parser(parser);
+        if (directory)
+                mem_free(directory);
 }
 
 int camera_recorder_onstart(void *userdata,
@@ -215,9 +249,6 @@ int camera_recorder_onstart(void *userdata,
         mutex_lock(recording_mutex);
 
         if (recording == 0) {
-
-                log_debug("camera_recorder_onstart @1: link=%p", link);
-
                 if (parser != NULL) {
                         delete_multipart_parser(parser);
                         parser = NULL;
@@ -232,28 +263,25 @@ int camera_recorder_onstart(void *userdata,
                         mutex_unlock(recording_mutex);
                         return -1;
                 }
-
-                log_debug("camera_recorder_onstart @2");
                 
                 scan = database_new_scan(db);
                 if (scan == NULL) {
+                        database_unload(db);
                         membuf_printf(message, "Failed to create a new scan");
                         mutex_unlock(recording_mutex);
                         return -1;
                 }
-        
-                log_debug("camera_recorder_onstart @3");
+                broadcast_db_message("new", scan_id(scan), NULL, NULL);
                 
-                fileset = database_new_fileset(db, scan, "images");
+                fileset = scan_new_fileset(scan, "images");
                 if (fileset == NULL) {
-                        membuf_printf(message, "Failed to create a new fileset");
-                        delete_scan(scan);
+                        database_unload(db);
                         scan = NULL;
+                        membuf_printf(message, "Failed to create a new fileset");
                         mutex_unlock(recording_mutex);
                         return -1;
                 }
-
-                log_debug("camera_recorder_onstart @4");
+                broadcast_db_message("new", scan_id(scan), fileset_id(fileset), NULL);
                 
                 recording = 1;
         }
@@ -267,8 +295,6 @@ int camera_recorder_onstop(void *userdata,
                            json_object_t command,
                            membuf_t *message)
 {
-        log_debug("camera_recorder_onstop @1");
-
         if (recorder_init() != 0) {
                 membuf_printf(message, "Recorder not initialized");
                 return 0;
@@ -277,28 +303,20 @@ int camera_recorder_onstop(void *userdata,
         mutex_lock(recording_mutex);
         recording = 0;
         
-        log_debug("camera_recorder_onstop @2");
-        
         if (scan) {
-                database_store_scan(db, scan);
-                delete_scan(scan);
+                scan_store(scan);
+                broadcast_db_message("store", scan_id(scan), NULL, NULL);
+                database_unload(db);
                 scan = NULL;
                 fileset = NULL;
         }
-        
-        log_debug("camera_recorder_onstop @3");
         
         if (parser != NULL) {
                 delete_multipart_parser(parser);
                 parser = NULL;
         }
         
-        log_debug("camera_recorder_onstop @4");
-        
         mutex_unlock(recording_mutex);
-
-        
-        log_debug("camera_recorder_onstop @5");
 
         // Don't call streamerlink_disconnect() inside the
         // mutex-locked section. The handler may be calling ondata
@@ -308,8 +326,6 @@ int camera_recorder_onstop(void *userdata,
                 membuf_printf(message, "Failed to disconnect");
                 return -1;
         }
-
-        log_debug("camera_recorder_onstop @6");
         
         return 0;
 }

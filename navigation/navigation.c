@@ -107,9 +107,16 @@ static int move(double distance, double speed, membuf_t *message)
                 mutex_lock(position_mutex);
                 pos = position.x;
                 mutex_unlock(position_mutex);
-
-                log_debug("Distance to go: %f", target - pos);
-
+                
+                {
+                        static double last_d = 0.0;
+                        double d = target - pos;
+                        if ((d - last_d) * (d - last_d) > 0.0004) {
+                                log_debug("Distance to go: %f", target - pos);
+                                last_d = d;
+                        }
+                }
+                
                 if ((speed < 0 && pos <= target)
                     || (speed > 0 && pos >= target)) {
                         break;

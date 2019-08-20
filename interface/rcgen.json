@@ -26,6 +26,10 @@
                   "mimetype_out": "text/html",
                   "onrequest": "interface_registry" },
                 
+                { "name": "db.html",
+                  "mimetype_out": "text/html",
+                  "onrequest": "interface_db" },
+                
                 { "name": "listen.html",
                   "mimetype_out": "text/html",
                   "onrequest": "interface_listen" },

@@ -34,6 +34,8 @@ messagelink_t *get_messagelink_camera_recorder();
 messagelink_t *get_messagelink_navigation();
 messagehub_t *get_messagehub_log_interface();
 
+json_object_t global_env;
+
 ////////////////////////////////////////////////////////
 
 static int status_error(json_object_t reply, membuf_t *message)
@@ -243,48 +245,163 @@ static script_t *find_script(list_t *list, const char *name)
         return NULL;
 }
 
-static int do_action(const char *name, json_object_t obj, membuf_t *message)
+//////////////////////////////////////////////////////
+
+static json_object_t eval(json_object_t obj, list_t *environments);
+static json_object_t eval_expr(const char *expr, list_t* environments);
+static json_object_t eval_string(json_object_t str, list_t* environments);
+static json_object_t eval_object(json_object_t obj, list_t *environments);
+static json_object_t eval_array(json_object_t obj, list_t *environments);
+
+static json_object_t eval_expr(const char *expr, list_t* environments)
 {
-        if (rstreq(name, "homing")) 
-                return homing(message);
+        for (list_t *l = environments; l != NULL; l = list_next(l)) {
+                json_object_t env = list_get(l, base_t);
+                json_object_t value = json_object_get(env, expr);
+                if (!json_falsy(value))
+                        return value;
+        }
+        log_err("Failed to evaluate the expression '%s'", expr);
+        return json_null();
+}
 
-        if (rstreq(name, "start_recording"))
-                return start_recording(message);
+// Check out https://github.com/codeplea/tinyexpr
+static json_object_t eval_string(json_object_t str, list_t* environments)
+{
+        const char *s = json_string_value(str);
+        
+        if (strchr(s, '$') == NULL)
+                return json_string_create(s);
 
-        if (rstreq(name, "stop_recording"))
-                return stop_recording(message);
+        int len = strlen(s);
+        if (s[0] == '$' && s[1] == '(' && s[len-1] == ')') {
+                char *expr = mem_alloc(len-2);
+                if (expr == NULL) return json_null();
+                memcpy(expr, s+2, len-3);
+                expr[len-3] = '\0';
+                json_object_t value = eval_expr(expr, environments);
+                json_ref(value);
+                mem_free(expr);
+                return value;
+                
+        } else {
+                return json_string_create(s);
+        }
+}
 
-        /* if (rstreq(name, "shutdown")) */
+static int32 eval_object_field(const char* key, json_object_t value, void* data)
+{
+        list_t* stuff = (list_t*) data;
+        json_object_t obj = list_get(stuff, base_t);
+        list_t* environments = list_next(stuff);
+        json_object_t new_value = eval(value, environments);
+        if (json_isundefined(new_value))
+                return -1;
+        json_object_set(obj, key, new_value);
+        json_unref(new_value);
+        return 0;
+}
+
+static json_object_t eval_object(json_object_t obj, list_t *environments)
+{
+        json_object_t o = json_object_create();
+        list_t *stuff = list_prepend(environments, o);
+        int err = json_object_foreach(obj, eval_object_field, stuff);
+        if (err != 0) {
+                json_unref(o);
+                delete1_list(stuff);
+                return json_null();
+        }
+        delete1_list(stuff);
+        return o;
+}
+
+static json_object_t eval_array(json_object_t obj, list_t *environments)
+{
+        json_object_t a = json_array_create();
+        for (int i = 0; i < json_array_length(obj); i++) {
+                json_object_t e = json_array_get(obj, i);
+                e = eval(e, environments);
+                if (json_isnull(e)) {
+                        json_unref(a);
+                        return json_null();
+                }
+                json_array_push(a, e);
+                json_unref(e);
+        }
+        return a;
+}
+
+static json_object_t eval(json_object_t obj, list_t *environments)
+{
+        if (json_isnumber(obj)) {
+                return json_number_create(json_number_value(obj));
+
+        } else if (json_isstring(obj)) {
+                return eval_string(obj, environments);
+                
+        } else if (json_isarray(obj)) {
+                return eval_array(obj, environments);
+                
+        } else if (json_isobject(obj)) {
+                return eval_object(obj, environments);
+                
+        } else {
+                return obj;
+        }
+}
+
+//////////////////////////////////////////////////////
+
+static int do_action(const char *name, json_object_t action,
+                     list_t *environments, membuf_t *message)
+{
+        int err;
+        /* json_object_t args; */
+        
+        /* args = eval(action, environments); */
+        /* if (json_isnull(args)) { */
+        /*         return -1; */
+        /* } */
+        
+        if (rstreq(name, "homing")) {
+                err = homing(message);
+
+        } else if (rstreq(name, "start_recording")) {
+                err = start_recording(message);
+
+        } else if (rstreq(name, "stop_recording")) {
+                err = stop_recording(message);
+
+        /* } else if (rstreq(name, "shutdown")) */
         /*         return shutdown_rover(message); */
 
-        if (rstreq(name, "move")) {
-                double distance = json_object_getnum(obj, "distance");
+        } else if (rstreq(name, "move")) {
+                double distance = json_object_getnum(action, "distance");
                 if (isnan(distance)) {
                         log_err("Action 'move': invalid distance");
                         return -1;
                 }
                 double speed = 100.0;
-                if (json_object_has(obj, "speed")) {
-                        speed = json_object_getnum(obj, "speed");
+                if (json_object_has(action, "speed")) {
+                        speed = json_object_getnum(action, "speed");
                         if (isnan(speed) || speed < -1000 || speed > 1000) {
                                 log_err("Action 'move': invalid distance");
                                 return -1;
                         }
                 }
-                return move(message, distance, speed);
-        }
-
-        if (rstreq(name, "moveat")) {
-                double speed = json_object_getnum(obj, "speed");
+                err = move(message, distance, speed);
+                
+        } else if (rstreq(name, "moveat")) {
+                double speed = json_object_getnum(action, "speed");
                 if (isnan(speed) || speed < -1000 || speed > 1000) {
                         log_err("Action 'moveat': invalid speed");
                         return -1;
                 }
-                return moveat(message, (int) speed);
-        }
-
-        if (rstreq(name, "hoe")) {
-                const char *method = json_object_getstr(obj, "method");
+                err = moveat(message, (int) speed);
+                
+        } else if (rstreq(name, "hoe")) {
+                const char *method = json_object_getstr(action, "method");
                 if (method == NULL) {
                         log_err("Action 'hoe': invalid method");
                         return -1;
@@ -293,12 +410,39 @@ static int do_action(const char *name, json_object_t obj, membuf_t *message)
                         log_err("Action 'hoe': invalid method");
                         return -1;
                 }
-                return hoe(message, method);
+                err = hoe(message, method);
+        } else {
+                log_err("Unknown action: '%s'", name);
+                membuf_printf(message, "Unknown action: '%s'", name);
+                err = -1;
         }
 
-        log_err("Unknown action: '%s'", name);
-        membuf_printf(message, "Unknown action: '%s'", name);
-        return -1;
+        /* json_unref(action); */
+        return err;
+}
+
+static int execute(json_object_t actions, list_t *environments, membuf_t *message)
+{
+        int err = 0;
+
+        for (int i = 0; i < json_array_length(actions); i++) {
+                
+                json_object_t action = json_array_get(actions, i);
+                
+                const char *action_name = json_object_getstr(action, "action");
+                if (action_name == NULL) {
+                        membuf_printf(message, "script step has no action field");
+                        err = -1;
+                        break;
+                }
+                
+                status = action_name; 
+                log_debug("action: %s", action_name);
+                
+                do_action(action_name, action, environments, message);
+        }
+
+        return err;
 }
 
 void _run_script(script_t *script)
@@ -312,21 +456,17 @@ void _run_script(script_t *script)
         status = "idle";
         current_script = script;
         mutex_unlock(mutex);
-        
-        for (int i = 0; i < json_array_length(script->actions); i++) {
-                json_object_t obj = json_array_get(script->actions, i);
-                const char *name = json_object_getstr(obj, "action");
-                if (name == NULL) {
-                        log_err("Invalid action! Script '%s', action %d", name, i);
-                        moveat(message, 0); // FIXME: raise alert to robot!
-                        break;
-                }
-                status = name; 
-                log_debug("_run_script: %s", name);
-                do_action(name, obj, message);
-                progress = 100 * (i+1) / json_array_length(script->actions);
+
+        list_t *environments = list_prepend(NULL, global_env);
+
+        if (execute(script->actions, environments, message) != 0) {
+                membuf_append_zero(message);
+                log_err("Script '%s' returned an error: %s",
+                        script->name, membuf_data(message));
+                moveat(message, 0); // FIXME: raise alert to robot!
         }
 
+        delete_list(environments);
         delete_membuf(message);
                 
         mutex_lock(mutex);
@@ -487,11 +627,17 @@ static int get_configuration()
                 return 0;
         
         log_debug("trying to configure the interface");
+
+        global_env = client_get("configuration", "");
+        if (json_falsy(global_env)) {
+                log_err("failed to load the configuration");
+                return -1;
+        }
         
-        json_object_t config = client_get("configuration", "interface");
+        json_object_t config = json_object_get(global_env, "interface");
 
         if (!json_isobject(config)) {
-                log_err("failed to load the configuration");
+                log_err("failed to load the interface configuration");
                 json_unref(config);
                 return -1;
         }
@@ -596,6 +742,7 @@ void interface_cleanup()
         }
         if (mutex != NULL)
                 delete_mutex(mutex);
+        json_unref(global_env);
 }
 
 /////////////////////////////////////////////////////
@@ -815,6 +962,73 @@ int interface_registry(void *data, request_t *request)
                              "  </body>\n"
                              "</html>\n",
                              get_registry_ip(), get_registry_port());
+        return 0;
+}
+
+int interface_db(void *data, request_t *request)
+{
+        addr_t *addr;
+        char b[52];
+        char c[52];
+
+        addr = registry_get_service("db");
+        addr_string(addr, b, 52);
+        delete_addr(addr);
+        
+        addr = registry_get_messagehub("db");
+        addr_string(addr, c, 52);
+        delete_addr(addr);
+
+        request_reply_printf(request,
+"<!DOCTYPE html>\n"
+"<html lang=\"en\">\n"
+"  <head>\n"
+"    <meta charset=\"utf-8\">\n"
+"    <title>Database</title>\n"
+"    <link rel=\"stylesheet\" href=\"css/bootstrap.min.css\">\n"
+"    <link rel=\"stylesheet\" href=\"css/db.css\">\n"
+"  </head>\n"
+"  <body>\n"
+"    <div id=\"main\" class=\"container\">\n"
+"      <ul class=\"nav nav-pills\" id=\"browser\" role=\"tablist\">\n"
+"        <li class=\"nav-item\">\n"
+"          <a class=\"nav-link active\" id=\"db-tab\" data-toggle=\"tab\" href=\"#db\"\n"
+"             role=\"tab\" aria-controls=\"db\" aria-selected=\"true\">DB</a>\n"
+"        </li>\n"
+"        <li class=\"nav-item\">\n"
+"          <a class=\"nav-link\" id=\"scan-tab\" data-toggle=\"tab\" href=\"#scan\"\n"
+"             role=\"tab\" aria-controls=\"scan\" aria-selected=\"false\">-</a>\n"
+"        </li>\n"
+"        <li class=\"nav-item\">\n"
+"          <a class=\"nav-link\" id=\"fileset-tab\" data-toggle=\"tab\" href=\"#fileset\"\n"
+"             role=\"tab\" aria-controls=\"fileset\" aria-selected=\"false\">-</a>\n"
+"        </li>\n"
+"        <li class=\"nav-item\">\n"
+"          <a class=\"nav-link\" id=\"file-tab\" data-toggle=\"tab\" href=\"#file\"\n"
+"             role=\"tab\" aria-controls=\"file\" aria-selected=\"false\">-</a>\n"
+"        </li>\n"
+"      </ul>\n"
+"      <div class=\"tab-content\" id=\"myTabContent\">\n"
+"        <div class=\"tab-pane show active\" id=\"db\" role=\"tabpanel\" aria-labelledby=\"db-tab\">\n"
+"          Database has not been loaded, yet.</div>\n"
+"        <div class=\"tab-pane\" id=\"scan\" role=\"tabpanel\" aria-labelledby=\"scan-tab\">\n"
+"          Select a scan in the DB tab.</div>\n"
+"        <div class=\"tab-pane\" id=\"fileset\" role=\"tabpanel\" aria-labelledby=\"fileset-tab\">\n"
+"          Select a fileset in the scan tab.</div>\n"
+"        <div class=\"tab-pane\" id=\"file\" role=\"tabpanel\" aria-labelledby=\"file-tab\">\n"
+"          Select a file in the fileset tab.</div>\n"
+"      </div>\n"
+"    </div>\n"
+"    <script src=\"js/jquery.min.js\"></script>\n"
+"    <script src=\"js/bootstrap.min.js\"></script>\n"
+"    <script src=\"js/db.js\"></script>\n"
+"    <script src=\"js/svg.min.js\"></script>\n"
+"    <script>\n"
+"      $(document).ready(function() { showDB(\"http://%s\", \"ws://%s\"); });\n"
+"    </script>\n"
+"  </body>\n"
+"</html>\n",
+                             b, c);
         return 0;
 }
 

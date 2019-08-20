@@ -12,8 +12,14 @@ static workspace_t workspace;
 static int initialized = 0;
 static int z0;
 static double quincunx_threshold = 1.0;
+static database_t *db = NULL;
 
 messagelink_t *get_messagelink_cnc();
+
+database_t *get_database()
+{
+        return db;
+}
 
 static int status_error(json_object_t reply, membuf_t *message)
 {
@@ -91,17 +97,17 @@ static int init_workspace()
         }
         z0 = (int) z;
 
-        const char *d = json_object_getstr(config, "datadir");
-        if (d == NULL) {
-                log_err("Invalid value for 'datadir'");
-                json_unref(config);
-                return -1;
-        }
+        /* const char *d = json_object_getstr(config, "datadir"); */
+        /* if (d == NULL) { */
+        /*         log_err("Invalid value for 'datadir'"); */
+        /*         json_unref(config); */
+        /*         return -1; */
+        /* } */
         
-        if (set_weeding_data_directory(d) != 0) {
-                json_unref(config);
-                return -1;
-        }
+        /* if (set_weeding_data_directory(d) != 0) { */
+        /*         json_unref(config); */
+        /*         return -1; */
+        /* } */
 
         double threshold = json_object_getnum(config, "quincunx_threshold");
         if (isnan(threshold) || threshold < 0 || threshold > 1000.0) {
@@ -115,12 +121,35 @@ static int init_workspace()
         return 0;
 }
 
+static int init_database()
+{
+        if (db != NULL)
+                return 0;
+
+        int err = -1;
+        json_object_t path = json_null();
+        path = client_get("configuration", "fsdb.directory");
+        if (json_isstring(path)) {
+                log_info("using configuration file for directory: '%s'",
+                         json_string_value(path));
+                db = new_database(json_string_value(path));
+                err = (db == NULL);
+        } else {
+                log_err("Failed to obtain a valid camera-recorder.directory setting");
+        }
+        json_unref(path);
+        return err;
+}
+
 static int init()
 {
         if (initialized)
                 return 0;
         
         if (init_workspace() != 0)
+                return -1;
+        
+        if (init_database() != 0)
                 return -1;
         
         initialized = 1;
@@ -142,7 +171,9 @@ int weeder_init(int argc, char **argv)
 
 void weeder_cleanup()
 {
-        free_weeding_data_directory();
+        /* free_weeding_data_directory(); */
+        if (db)
+                delete_database(db);
 }
 
 void weeder_onmessage_cnc(void *userdata,

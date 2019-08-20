@@ -470,7 +470,7 @@ int image_store(image_t* image, const char *filename)
         }
         
         jpeg_set_defaults(&cinfo);
-        jpeg_set_quality(&cinfo, 85, TRUE);
+        jpeg_set_quality(&cinfo, 90, TRUE);
 
         jpeg_start_compress(&cinfo, TRUE);
 
@@ -501,6 +501,112 @@ int image_store(image_t* image, const char *filename)
 
         return 0;
 }
+
+#define BLOCKSIZE 4096
+
+typedef struct _jpeg_dest_t {
+        struct jpeg_destination_mgr mgr;
+        membuf_t* membuf;
+} jpeg_dest_t;
+
+
+static void jpeg_bufferinit(j_compress_ptr cinfo)
+{
+        jpeg_dest_t* my_mgr = (jpeg_dest_t*) cinfo->dest;
+        membuf_t* membuf = my_mgr->membuf;
+
+        cinfo->dest->next_output_byte = (unsigned char*) membuf_data(membuf);
+        cinfo->dest->free_in_buffer = membuf_available(membuf);
+}
+
+static boolean jpeg_bufferemptyoutput(j_compress_ptr cinfo)
+{
+        jpeg_dest_t* my_mgr = (jpeg_dest_t*) cinfo->dest;
+        membuf_t* membuf = my_mgr->membuf;
+        
+        if (membuf_assure(membuf, BLOCKSIZE) != 0)
+                return 0;
+        
+        cinfo->dest->next_output_byte = (unsigned char*) (membuf_data(membuf)
+                                                          + membuf_len(membuf));
+        cinfo->dest->free_in_buffer = membuf_available(membuf);
+
+        return 1;
+}
+
+static void jpeg_bufferterminate(j_compress_ptr cinfo)
+{
+        jpeg_dest_t* my_mgr = (jpeg_dest_t*) cinfo->dest;
+        membuf_t* membuf = my_mgr->membuf;
+        int len = membuf_size(membuf) - cinfo->dest->free_in_buffer;
+        membuf_set_len(membuf, len);
+}
+
+int image_store_to_mem(image_t* image, membuf_t *out)
+{
+        struct jpeg_compress_struct cinfo;
+        struct jpeg_error_mgr jerr;
+	jpeg_dest_t* my_mgr;
+        JSAMPLE* buffer;
+        int index = 0;
+
+        cinfo.err = jpeg_std_error(&jerr);
+        jpeg_create_compress(&cinfo);
+
+        cinfo.dest = (struct jpeg_destination_mgr *) 
+                (*cinfo.mem->alloc_small) ((j_common_ptr) &cinfo, JPOOL_PERMANENT,
+                                           sizeof(jpeg_dest_t));       
+        cinfo.dest->init_destination = &jpeg_bufferinit;
+        cinfo.dest->empty_output_buffer = &jpeg_bufferemptyoutput;
+        cinfo.dest->term_destination = &jpeg_bufferterminate;
+
+        my_mgr = (jpeg_dest_t*) cinfo.dest;
+        my_mgr->membuf = out;
+        membuf_assure(out, BLOCKSIZE);
+
+        cinfo.image_width = image->width;	
+        cinfo.image_height = image->height;
+        if (image->type == IMAGE_BW) {
+                cinfo.input_components = 1;	
+                cinfo.in_color_space = JCS_GRAYSCALE;
+        } else {
+                cinfo.input_components = 3;	
+                cinfo.in_color_space = JCS_RGB;
+        }
+
+        jpeg_set_defaults(&cinfo);
+        jpeg_set_quality(&cinfo, 90, TRUE);
+
+        jpeg_start_compress(&cinfo, TRUE);
+
+        buffer = (JSAMPLE*) malloc(image->channels * image->width); 
+        if (buffer == NULL) {
+                fprintf(stderr, "Out of memory\n");
+                return -1;
+        }
+
+        while (cinfo.next_scanline < cinfo.image_height) {
+                if (image->type == IMAGE_BW) {
+                        for (int i = 0; i < image->width; i++)
+                                buffer[i] = (unsigned char) (image->data[index++] * 255.0f);
+                } else {
+                        for (int i = 0, j = 0; i < image->width; i++) {
+                                buffer[j++] = (unsigned char) (image->data[index++] * 255.0f);
+                                buffer[j++] = (unsigned char) (image->data[index++] * 255.0f);
+                                buffer[j++] = (unsigned char) (image->data[index++] * 255.0f);
+                        }
+                }
+                jpeg_write_scanlines(&cinfo, &buffer, 1);
+        }
+
+        jpeg_finish_compress(&cinfo);
+
+        jpeg_destroy_compress(&cinfo);
+        free(buffer);
+
+        return 0;
+}
+
 
 image_t *image_binary(image_t* image, float threshold)
 {

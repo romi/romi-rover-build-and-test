@@ -25,8 +25,8 @@
         "image": "data/camera.jpg"
     },
     
-    "camera-recorder": {
-        "directory": "data/camera"
+    "fsdb": {
+        "directory": "data/db"
     },
     
     "weeder": {
@@ -52,21 +52,33 @@
         "nodes": [{
             "path": "build/configuration/configuration"
         }, {
-            "path": "build/brush_motors/brush_motors"
+            "path": "build/fsdb/fsdb"
         }, {
-            "path": "build/fake_camera/fake_camera"
+            "path": "build/brush_motors/brush_motors",
+            "disabled": false
         }, {
-            "path": "build/grbl/grbl"
+            "path": "build/fake_camera/fake_camera",
+            "disabled": false
         }, {
-            "path": "build/wheel_odometry/wheel_odometry"
+            "path": "build/video4linux/video4linux",
+            "disabled": true
+        }, {
+            "path": "build/grbl/grbl",
+            "disabled": false
+        }, {
+            "path": "build/wheel_odometry/wheel_odometry",
+            "disabled": false
         }, {
             "path": "build/camera_recorder/camera_recorder"
         }, {
-            "path": "build/weeder/weeder"
+            "path": "build/weeder/weeder",
+            "disabled": false
         }, {
-            "path": "build/navigation/navigation"
+            "path": "build/navigation/navigation",
+            "disabled": false
         }, {
-            "path": "build/interface/interface"
+            "path": "build/interface/interface",
+            "disabled": false
         }]
     }
 }

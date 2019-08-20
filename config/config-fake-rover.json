@@ -1,6 +1,6 @@
 {
     "rover": {
-        "wheel_diameter": 0.12,
+        "wheel_diameter": 0.506,
         "wheel_base": 1.00,
         "width": 1.10,
         "length": 1.40,
@@ -11,15 +11,14 @@
         "image": "data/camera.jpg"
     },
     
-    "camera-recorder": {
-        "directory": "data/camera"
+    "fsdb": {
+        "directory": "data/db"
     },
     
     "weeder": {
         "workspace": [0.5, 480, 24, 1060, 1043, 710, 680],
         "z0": -10,
         "invert_axes": false,
-        "datadir": "data/weeder",
         "quincunx_threshold": 0.5
     },
     
@@ -38,9 +37,15 @@
         "nodes": [{
             "path": "build/configuration/configuration"
         }, {
+            "path": "build/fsdb/fsdb"
+        }, {
             "path": "build/fake_motors/fake_motors"
         }, {
-            "path": "build/fake_camera/fake_camera"
+            "path": "build/fake_camera/fake_camera",
+            "disabled": false
+        }, {
+            "path": "build/video4linux/video4linux",
+            "disabled": true
         }, {
             "path": "build/fake_cnc/fake_cnc"
         }, {

@@ -15,7 +15,7 @@ int fake_camera_init(int argc, char **argv)
         } else {
                 path = client_get("configuration", "fake_camera.image");
                 if (!json_isstring(path)) {
-                        log_err("Setting fake_camera.image is not a string");
+                        log_err("The value of fake_camera.image is not a string");
                         json_unref(path);
                         return -1;
                 }

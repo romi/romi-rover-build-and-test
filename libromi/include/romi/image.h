@@ -1,6 +1,8 @@
 #ifndef _ROMI_IMAGE_H_
 #define _ROMI_IMAGE_H_
 
+#include <rcom.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,6 +30,7 @@ image_t *image_clone(image_t *im);
 image_t *image_load(const char *filename);
 image_t *image_load_from_mem(const unsigned char *data, int len);
 int image_store(image_t* image, const char *filename);
+int image_store_to_mem(image_t* image, membuf_t *out);
 
 int image_contains(image_t *image, int x, int y);
 

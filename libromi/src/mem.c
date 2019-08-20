@@ -5,7 +5,6 @@
 
 #include "romi/mem.h"
 
-#define MEM_ALWAYS_ZERO
 
 void *safe_malloc(size_t size)
 {
@@ -19,9 +18,7 @@ void *safe_malloc(size_t size)
                 log_err("safe_malloc: out of memory");
                 return NULL;
         }
-#ifdef MEM_ALWAYS_ZERO
         memset(ptr, 0, size); // zero it anyway.
-#endif
         return ptr;
 }
 
@@ -36,9 +33,7 @@ void safe_free(void *ptr)
 void *safe_calloc(size_t nmemb, size_t size)
 {
         void *ptr = safe_malloc(nmemb * size);
-#ifndef MEM_ALWAYS_ZERO
         if (ptr != NULL) memset(ptr, 0, nmemb * size);
-#endif
         return ptr;
 }
 

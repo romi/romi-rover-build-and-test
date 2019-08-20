@@ -62,14 +62,16 @@ void wheel_odometry_ondata(void *userdata,
                            data_t *output)
 {
         json_object_t data = datalink_parse(link, input);
-        if (json_isnull(data)) {
+        if (json_falsy(data)) {
                 log_warn("wheel_odometry_ondata: failed to parse data");
+                json_unref(data);
                 return;
         }
         
         json_object_t encoders = json_object_get(data, "encoders");
         if (json_isnull(encoders) || !json_isarray(encoders)) {
                 log_warn("wheel_odometry_ondata: expected an array for the encoder values");
+                json_unref(data);
                 return;
         }
 
@@ -79,6 +81,7 @@ void wheel_odometry_ondata(void *userdata,
         
         if (isnan(left) || isnan(right) || isnan(timestamp)) {
                 log_warn("wheel_odometry_ondata: invalid values");
+                json_unref(data);
                 return;
         }
 
@@ -89,13 +92,15 @@ void wheel_odometry_ondata(void *userdata,
         } else {
                 rover_set_encoders(rover, left, right, timestamp);
         }
+
+        log_debug("encoders: %f, %f", left, right);
         
         vector_t position;
         vector_t speed;
         quaternion_t orientation;
         rover_get_pose(rover, &position, &speed, &orientation);
 
-        {
+        if (0) {
                 static double last_print = 0.0;
                 double now = clock_time();
                 if (now - last_print > 3) {
@@ -115,6 +120,7 @@ void wheel_odometry_ondata(void *userdata,
                             orientation.s, orientation.v.x,
                             orientation.v.y, orientation.v.z,
                             timestamp);
+        json_unref(data);
 }
 
 

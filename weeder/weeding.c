@@ -13,119 +13,181 @@
 
 #include "weeding.h"
 
-static char *_data_directory = NULL;
-static char _dir[1024];
-static char _date[100];
-static int _dir_initialized = 0;
+/* static char *_data_directory = NULL; */
+/* static char _dir[1024]; */
+/* static char _date[100]; */
+/* static int _dir_initialized = 0; */
 
 ////////////////////////////////////////////////////////////////////
 
-int set_weeding_data_directory(const char *directory)
+// FIXME: in weeder.c
+database_t *get_database();
+scan_t* scan = NULL;
+messagelink_t *get_messagelink_db();
+
+void broadcast_db_message(const char *event,
+                          const char *scan_id,
+                          const char *fileset_id,
+                          const char *file_id)
 {
-        if (_data_directory != NULL) {
-                mem_free(_data_directory);
-                _data_directory = NULL;
-        }
-        _data_directory = mem_strdup(directory);
-        if (_data_directory == NULL)
-                return -1;
-        log_info("Storing datasets in '%s'", _data_directory);
-        return 0;
+        log_debug("broadcast_db_message: %s, %s, %s, %s",
+                  event, scan_id, fileset_id, file_id);
+        messagelink_t *bus = get_messagelink_db();
+        if (file_id)
+                messagelink_send_f(bus,
+                                   "{\"event\": \"%s\", "
+                                   "\"source\": \"weeder\", "
+                                   "\"scan\": \"%s\", "
+                                   "\"fileset\": \"%s\", "
+                                   "\"file\": \"%s\"}",
+                                   event, scan_id, fileset_id, file_id);
+        else if (fileset_id)
+                messagelink_send_f(bus,
+                                   "{\"event\": \"%s\", "
+                                   "\"source\": \"weeder\", "
+                                   "\"scan\": \"%s\", "
+                                   "\"fileset\": \"%s\"}",
+                                   event, scan_id, fileset_id);
+        else messagelink_send_f(bus,
+                                "{\"event\": \"%s\", "
+                                "\"source\": \"weeder\", "
+                                "\"scan\": \"%s\"}",
+                                event, scan_id);
 }
 
-void free_weeding_data_directory()
-{
-        if (_data_directory != NULL) {
-                mem_free(_data_directory);
-                _data_directory = NULL;
-        }
-}
+/* int set_weeding_data_directory(const char *directory) */
+/* { */
+/*         if (_data_directory != NULL) { */
+/*                 mem_free(_data_directory); */
+/*                 _data_directory = NULL; */
+/*         } */
+/*         _data_directory = mem_strdup(directory); */
+/*         if (_data_directory == NULL) */
+/*                 return -1; */
+/*         log_info("Storing datasets in '%s'", _data_directory); */
+/*         return 0; */
+/* } */
+
+/* void free_weeding_data_directory() */
+/* { */
+/*         if (_data_directory != NULL) { */
+/*                 mem_free(_data_directory); */
+/*                 _data_directory = NULL; */
+/*         } */
+/* } */
 
 static void init_store()
 {
-        clock_datetime(_date, sizeof(_date), '-', '_', '-');
-        rprintf(_dir, sizeof(_dir), "%s/%s", _data_directory, _date);
-        log_debug("_dir: '%s'\n_data_directory: %s", _dir, _data_directory);
-	if (mkdir(_dir, 0777) != 0) {
-                log_err("Failed to create the directory '%s': %s", _dir, strerror(errno));
-                return;
-        }
-        log_info("Storing new analysis in '%s'", _dir);
-        _dir_initialized = 1;
+        database_t *db = get_database();
+        scan = database_new_scan(db);
+        broadcast_db_message("new", scan_id(scan), NULL, NULL);
 }
 
-static void store_jpg(image_t *image, const char *name)
+static void close_store()
 {
-        if (!_dir_initialized)
+        if (scan) scan_store(scan);
+        database_t *db = get_database();
+        database_unload(db);
+}
+
+static file_t *create_file(const char *fsid)
+{
+        if (scan == NULL)
+                return NULL;
+        fileset_t *fileset = scan_get_fileset(scan, fsid);
+        if (fileset == NULL) {
+                fileset = scan_new_fileset(scan, fsid);
+                broadcast_db_message("new", scan_id(scan), fileset_id(fileset), NULL);
+        }
+        if (fileset == NULL) 
+                return NULL;
+        file_t *file = fileset_new_file(fileset);
+        if (file == NULL)
+                return NULL;
+        file_set_timestamp(file, clock_time());
+        broadcast_db_message("new", scan_id(scan), fileset_id(fileset), file_id(file));
+        return file;
+}
+
+static void store_jpg(image_t *image, const char *fsid)
+{
+        file_t *file = create_file(fsid);
+        if (file == NULL)
+                return;
+
+        membuf_t *buffer = new_membuf();
+        if (image_store_to_mem(image, buffer) != 0)
                 return;
         
-        static char buffer[1024];
-        rprintf(buffer, sizeof(buffer), "%s/%s", _dir, name);
-        image_store(image, buffer);
-        log_debug("Storing image to %s", buffer);
-}
-
-static void store_txt(membuf_t *data, const char *name)
-{
-        if (!_dir_initialized)
-                return;
+        file_import_jpeg(file, membuf_data(buffer), membuf_len(buffer));
         
-        static char buffer[1024];
-        rprintf(buffer, sizeof(buffer), "%s/%s", _dir, name);
-        membuf_append_zero(data);
-        FILE *fp = fopen(buffer, "w");
-        if (fp) {
-                log_debug("Storing data to %s", buffer);
-                fprintf(fp, "%s", membuf_data(data));
-                fclose(fp);
-        }
+        /* static char buffer[1024]; */
+        /* rprintf(buffer, sizeof(buffer), "%s/%s", _dir, name); */
+        /* image_store(image, buffer); */
+        /* log_debug("Storing image to %s", buffer); */
 }
 
-static void store_path(FILE *fp, list_t *points, int h, float scale)
+static void store_txt(membuf_t *data, const char *fileset)
 {
-        fprintf(fp, "    <path d=\"");
-        float x, y;
+        /* if (!_dir_initialized) */
+        /*         return; */
         
-        point_t *p = list_get(points, point_t);
-        x = p->x * scale;
-        y = h - p->y * scale;
-        fprintf(fp, "M %f,%f L", x, y);
-        points = list_next(points);
-
-        while (points) {
-                p = list_get(points, point_t);
-                x = p->x * scale;
-                y = h - p->y * scale;
-                fprintf(fp, " %f,%f", x, y);
-                points = list_next(points);
-        }
-        fprintf(fp, "\" id=\"path\" style=\"fill:none;stroke:#0000ce;"
-                "stroke-width:2;stroke-linecap:butt;"
-                "stroke-linejoin:miter;stroke-miterlimit:4;"
-                "stroke-opacity:1;stroke-dasharray:none\" />");
+        /* static char buffer[1024]; */
+        /* rprintf(buffer, sizeof(buffer), "%s/%s", _dir, name); */
+        /* membuf_append_zero(data); */
+        /* FILE *fp = fopen(buffer, "w"); */
+        /* if (fp) { */
+        /*         log_debug("Storing data to %s", buffer); */
+        /*         fprintf(fp, "%s", membuf_data(data)); */
+        /*         fclose(fp); */
+        /* } */
 }
+
+/* static void store_path(FILE *fp, list_t *points, int h, float scale) */
+/* { */
+/*         fprintf(fp, "    <path d=\""); */
+/*         float x, y; */
+        
+/*         point_t *p = list_get(points, point_t); */
+/*         x = p->x * scale; */
+/*         y = h - p->y * scale; */
+/*         fprintf(fp, "M %f,%f L", x, y); */
+/*         points = list_next(points); */
+
+/*         while (points) { */
+/*                 p = list_get(points, point_t); */
+/*                 x = p->x * scale; */
+/*                 y = h - p->y * scale; */
+/*                 fprintf(fp, " %f,%f", x, y); */
+/*                 points = list_next(points); */
+/*         } */
+/*         fprintf(fp, "\" id=\"path\" style=\"fill:none;stroke:#0000ce;" */
+/*                 "stroke-width:2;stroke-linecap:butt;" */
+/*                 "stroke-linejoin:miter;stroke-miterlimit:4;" */
+/*                 "stroke-opacity:1;stroke-dasharray:none\" />"); */
+/* } */
 
 static void store_svg(int w, int h, const char *image, list_t *path, float scale)
 {
-        if (!_dir_initialized)
-                return;
+        /* if (!_dir_initialized) */
+        /*         return; */
         
-        static char buffer[1024];
-        rprintf(buffer, sizeof(buffer), "%s/%s", _dir, "path.svg");
+        /* static char buffer[1024]; */
+        /* rprintf(buffer, sizeof(buffer), "%s/%s", _dir, "path.svg"); */
         
-        FILE *fp = fopen(buffer, "w");
-        fprintf(fp, ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
-                     "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" "
-                     "xmlns=\"http://www.w3.org/2000/svg\" "
-                     "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
-                     "version=\"1.0\" width=\"%dpx\" height=\"%dpx\">\n"),
-                w, h);
-        fprintf(fp, "    <image xlink:href=\"%s\" "
-                "x=\"0px\" y=\"0px\" width=\"%dpx\" height=\"%dpx\" />\n",
-                image, w, h);
-        store_path(fp, path, h, scale);
-        fprintf(fp, "\n</svg>\n");
-        fclose(fp);
+        /* FILE *fp = fopen(buffer, "w"); */
+        /* fprintf(fp, ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" */
+        /*              "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" " */
+        /*              "xmlns=\"http://www.w3.org/2000/svg\" " */
+        /*              "xmlns:xlink=\"http://www.w3.org/1999/xlink\" " */
+        /*              "version=\"1.0\" width=\"%dpx\" height=\"%dpx\">\n"), */
+        /*         w, h); */
+        /* fprintf(fp, "    <image xlink:href=\"%s\" " */
+        /*         "x=\"0px\" y=\"0px\" width=\"%dpx\" height=\"%dpx\" />\n", */
+        /*         image, w, h); */
+        /* store_path(fp, path, h, scale); */
+        /* fprintf(fp, "\n</svg>\n"); */
+        /* fclose(fp); */
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -745,17 +807,15 @@ image_t *get_workspace_view(image_t *camera, workspace_t *workspace)
                                     workspace->width,
                                     camera->height - workspace->y0,
                                     workspace->theta);
-        store_jpg(rot, "rot.jpg");
-        
         image_t *cropped = FIXME_image_crop(rot,
                                             workspace->x0,
                                             camera->height - workspace->y0 - workspace->height,
                                             workspace->width,
                                             workspace->height);
-        store_jpg(cropped, "cropped.jpg");
+        store_jpg(cropped, "extra");
 
         image_t *scaled = FIXME_image_scale(cropped, 4);
-        store_jpg(scaled, "workspace.jpg");
+        store_jpg(scaled, "scaled");
 
         delete_image(rot);
         delete_image(cropped);
@@ -766,12 +826,12 @@ image_t *get_workspace_view(image_t *camera, workspace_t *workspace)
 image_t *compute_mask(image_t *image)
 {
         image_t* exg = image_excess_green(image);
-        store_jpg(exg, "exg.jpg");
+        store_jpg(exg, "extra");
 
         float threshold = image_otsu_threshold(exg);
         
         image_t *mask = image_binary(exg, threshold);
-        store_jpg(mask, "mask.jpg");
+        store_jpg(mask, "masked");
 
         delete_image(exg);
         return mask;
@@ -782,7 +842,6 @@ image_t *compute_probability_map(image_t *image, int w, float *avg)
         image_t *bell = new_image_bw(w, w);
         image_fill(bell, 0, 0.0f);
         image_bell(bell, w/2, w/2, w/6);
-        store_jpg(bell, "bell.jpg");
 
         //
         image_t *corr = new_image_bw(image->width, image->height);
@@ -796,7 +855,7 @@ image_t *compute_probability_map(image_t *image, int w, float *avg)
                         image_set(corr, x, y, 0, v);
                 }
         }
-        store_jpg(corr, "pmap.jpg");
+        store_jpg(corr, "extra");
         corr_sum /= (corr->width * corr->height);
         
         delete_image(bell);
@@ -837,7 +896,7 @@ image_t *estimate_pattern_position(image_t *p_map, float d0, point_t *pos, float
                         }
                 }
         }
-        store_jpg(pattern, "pattern-probabilities.jpg");
+        store_jpg(pattern, "extra");
 
         pos->x = x_max;
         pos->y = y_max;
@@ -915,9 +974,10 @@ list_t *compute_path(image_t *camera, workspace_t *workspace,
         list_t *positions = NULL;
         membuf_t *data = new_membuf();
 
-        init_store();        
-        membuf_printf(data, "{\n    \"date\": \"%s\",\n", _date);        
-        store_jpg(camera, "camera.jpg");
+        init_store();
+        
+        membuf_printf(data, "{\n    \"timestamp\": %f,\n", clock_time());        
+        store_jpg(camera, "images");
         
         // rotate and crop the camera image
         image_t *image = get_workspace_view(camera, workspace);
@@ -973,16 +1033,16 @@ list_t *compute_path(image_t *camera, workspace_t *workspace,
                 membuf_printf(data, "[%f,%f], ", ptn_pos.x + 2 * cos_d0, ptn_pos.y + d0);
                 image_circle(pattern, ptn_pos.x + 2 * cos_d0, ptn_pos.y + 2.0f * d0, 5.0f, black);
                 membuf_printf(data, "[%f,%f]]", ptn_pos.x + 2 * cos_d0, ptn_pos.y + 2.0f * d0);
-                store_jpg(pattern, "pattern.jpg");
+                store_jpg(pattern, "extra");
                 delete_image(pattern);
         }
 
         if (confidence < threshold) {
-                image_t *adjusted = new_image_bw(image->width, image->height);
-                store_jpg(adjusted, "positions.jpg");
-                delete_image(adjusted);
+                /* image_t *adjusted = new_image_bw(image->width, image->height); */
+                /* store_jpg(adjusted, "extra"); */
+                /* delete_image(adjusted); */
                 membuf_printf(data, "\n}\n");
-                store_txt(data, "out.json");
+                store_txt(data, "weeding");
                 goto cleanup_and_exit;
         }
 
@@ -999,7 +1059,7 @@ list_t *compute_path(image_t *camera, workspace_t *workspace,
                         point_t *p = list_get(l, point_t);
                         image_circle(adjusted, p->x, p->y, 5.0f, black);
                 }
-                store_jpg(adjusted, "pattern-adjusted-small.jpg");
+                store_jpg(adjusted, "extra");
                 delete_image(adjusted);
 
                 membuf_printf(data, ",\n    \"adjusted\": [");
@@ -1011,8 +1071,8 @@ list_t *compute_path(image_t *camera, workspace_t *workspace,
                         if (list_next(l) != NULL) membuf_printf(data, ",");
                 }
                 membuf_printf(data, "]\n}");
-                store_txt(data, "out.json");
-                store_jpg(adjusted, "positions.jpg");
+                store_txt(data, "weeding");
+                store_jpg(adjusted, "positions");
                 delete_image(adjusted);
         }
 
@@ -1056,6 +1116,7 @@ cleanup_and_exit:
         delete_image(mask);
         delete_image(p_map);
         delete_image(pattern);
+        close_store();        
 
         // done
         return path;

@@ -9,6 +9,10 @@
         {
             "type": "messagelink",
             "topic": "cnc"
+        },
+        {
+            "type": "messagelink",
+            "topic": "db"
         }
     ]
 }
