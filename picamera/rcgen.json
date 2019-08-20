@@ -1,0 +1,18 @@
+{
+    "name": "picamera",
+    "idle": "picamera_broadcast",
+    "com": [
+        {
+            "type": "streamer",
+            "topic": "camera",
+            "mimetype": "multipart/x-mixed-replace; boundary=nextimage"
+        },
+        {
+            "type": "service",
+            "topic": "camera",
+            "resources": [{"name": "camera.jpg",
+                           "mimetype_out": "image/jpeg",
+                           "onrequest": "picamera_still"}]
+        }
+    ]
+}
