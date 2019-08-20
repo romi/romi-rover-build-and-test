@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <jpeglib.h>
 #include <png.h>
-#include <ltcom.h>
+#include <rcom.h>
 #include "convert.h"
 
 #define BLOCKSIZE 4096
