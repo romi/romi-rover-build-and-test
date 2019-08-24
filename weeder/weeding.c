@@ -13,11 +13,6 @@
 
 #include "weeding.h"
 
-/* static char *_data_directory = NULL; */
-/* static char _dir[1024]; */
-/* static char _date[100]; */
-/* static int _dir_initialized = 0; */
-
 ////////////////////////////////////////////////////////////////////
 
 // FIXME: in weeder.c
@@ -55,30 +50,9 @@ void broadcast_db_message(const char *event,
                                 event, scan_id);
 }
 
-/* int set_weeding_data_directory(const char *directory) */
-/* { */
-/*         if (_data_directory != NULL) { */
-/*                 mem_free(_data_directory); */
-/*                 _data_directory = NULL; */
-/*         } */
-/*         _data_directory = mem_strdup(directory); */
-/*         if (_data_directory == NULL) */
-/*                 return -1; */
-/*         log_info("Storing datasets in '%s'", _data_directory); */
-/*         return 0; */
-/* } */
-
-/* void free_weeding_data_directory() */
-/* { */
-/*         if (_data_directory != NULL) { */
-/*                 mem_free(_data_directory); */
-/*                 _data_directory = NULL; */
-/*         } */
-/* } */
-
 static void init_store()
 {
-  //log_debug("init_store");
+        //log_debug("init_store");
         database_t *db = get_database();
         scan = database_new_scan(db);
         broadcast_db_message("new", scan_id(scan), NULL, NULL);
@@ -86,72 +60,67 @@ static void init_store()
 
 static void close_store()
 {
-  //log_debug("close_store @1");
+        //log_debug("close_store @1");
         if (scan) scan_store(scan);
-  //log_debug("close_store @2");
+        //log_debug("close_store @2");
         database_t *db = get_database();
-  //log_debug("close_store @3");
+        //log_debug("close_store @3");
         database_unload(db);
-  //log_debug("close_store @4");
+        //log_debug("close_store @4");
 }
 
 static file_t *create_file(const char *fsid)
 {
-  //log_debug("create_file @1: fsid=%s", fsid);
+        //log_debug("create_file @1: fsid=%s", fsid);
         if (scan == NULL)
                 return NULL;
-  //log_debug("create_file @2");
+        //log_debug("create_file @2");
         fileset_t *fileset = scan_get_fileset(scan, fsid);
         if (fileset == NULL) {
-  //log_debug("create_file @3");
+                //log_debug("create_file @3");
                 fileset = scan_new_fileset(scan, fsid);
-  //log_debug("create_file @4");
+                //log_debug("create_file @4");
                 broadcast_db_message("new", scan_id(scan), fileset_id(fileset), NULL);
         }
-  //log_debug("create_file @5");
+        //log_debug("create_file @5");
         if (fileset == NULL) 
                 return NULL;
-  //log_debug("create_file @6");
+        //log_debug("create_file @6");
         file_t *file = fileset_new_file(fileset);
         if (file == NULL)
                 return NULL;
-  //log_debug("create_file @7");
+        //log_debug("create_file @7");
         file_set_timestamp(file, clock_time());
-  //log_debug("create_file @8");
+        //log_debug("create_file @8");
         broadcast_db_message("new", scan_id(scan), fileset_id(fileset), file_id(file));
         return file;
 }
 
 static void store_jpg(image_t *image, const char *fsid)
 {
-  //log_debug("store_jpg @1: fsid=%s", fsid);
+        //log_debug("store_jpg @1: fsid=%s", fsid);
         file_t *file = create_file(fsid);
         if (file == NULL)
                 return;
 
-  //log_debug("store_jpg @2");
+        //log_debug("store_jpg @2");
         membuf_t *buffer = new_membuf();
         if (buffer == NULL)
                 return;
         if (membuf_assure(buffer, 1024 * 1024) != 0) {
-	  delete_membuf(buffer);
+                delete_membuf(buffer);
                 return;
 	}
         if (image_store_to_mem(image, buffer) != 0) {
-	  delete_membuf(buffer);
+                delete_membuf(buffer);
                 return;
 	}
         
         //log_debug("store_jpg @3");
         file_import_jpeg(file, membuf_data(buffer), membuf_len(buffer));
-        
-        /* static char buffer[1024]; */
-        /* rprintf(buffer, sizeof(buffer), "%s/%s", _dir, name); */
-        /* image_store(image, buffer); */
-        /* log_debug("Storing image to %s", buffer); */
 
 	delete_membuf(buffer);
-  //log_debug("store_jpg @4");
+        //log_debug("store_jpg @4");
 }
 
 static void store_txt(membuf_t *data, const char *fileset)
@@ -480,14 +449,14 @@ list_t *compute_boustrophedon(workspace_t *workspace, float z0)
 /*
   Returns:
 
--1: error (shouldn't happen :)
-0: no intersection, the segment lies outside the circle
-1: segment touches the circle on the border
-2: segment intersects the circle at two positions, ys0 and ys1, with ys0 < ys1
-3: y0 is inside the circle. the segment exits the circle at ys1
-4: y1 is inside the circle. the segment exits the circle at ys0
-FIXME/TODO: 5: no intersection, the segment is contained inside the circle
- */
+  -1: error (shouldn't happen :)
+  0: no intersection, the segment lies outside the circle
+  1: segment touches the circle on the border
+  2: segment intersects the circle at two positions, ys0 and ys1, with ys0 < ys1
+  3: y0 is inside the circle. the segment exits the circle at ys1
+  4: y1 is inside the circle. the segment exits the circle at ys0
+  FIXME/TODO: 5: no intersection, the segment is contained inside the circle
+*/
 static int intersects(float x, float y0, float y1,
                       point_t *p, float r,
                       float *ys0p, float *ys1p)

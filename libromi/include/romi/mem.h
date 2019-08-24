@@ -19,7 +19,7 @@ void *safe_realloc(void *ptr, size_t size);
 #define mem_calloc(_n,_size)   safe_calloc(_n,_size)
 #define mem_realloc(_p,_size)  safe_realloc(_p,_size)
 #define mem_free(_p)           safe_free(_p)
-#define new_array(_type,_len)    ((_type*)safe_malloc(_len * sizeof(_type)))
+#define new_array(_type,_len)  ((_type*)safe_malloc((_len) * sizeof(_type)))
 #define delete_array(_p)       safe_free(_p)
 
 char *safe_strdup(const char *s);

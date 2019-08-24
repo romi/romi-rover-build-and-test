@@ -58,10 +58,10 @@
             "disabled": false
         }, {
             "path": "build/fake_camera/fake_camera",
-            "disabled": false
+            "disabled": true
         }, {
             "path": "build/video4linux/video4linux",
-            "disabled": true
+            "disabled": false
         }, {
             "path": "build/grbl/grbl",
             "disabled": false
