@@ -164,8 +164,8 @@ int get_rover_configuration()
                 json_unref(rover);
                 return -1;
         }
-        if (steps < 100 || steps > 10000) {
-                log_err("invalid encoder steps: %f !in [100,10000]", steps);
+        if (steps < 100 || steps > 1000000) {
+                log_err("invalid encoder steps: %f !in [100,1000000]", steps);
                 json_unref(rover);
                 return -1;
         }
