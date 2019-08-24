@@ -93,7 +93,7 @@ void wheel_odometry_ondata(void *userdata,
                 rover_set_encoders(rover, left, right, timestamp);
         }
 
-        log_debug("encoders: %f, %f", left, right);
+        //log_debug("encoders: %f, %f", left, right);
         
         vector_t position;
         vector_t speed;
