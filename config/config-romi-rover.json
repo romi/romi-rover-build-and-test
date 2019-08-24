@@ -1,0 +1,88 @@
+{
+    "rover": {
+        "wheel_diameter": 0.322,
+        "wheel_base": 1.00,
+        "width": 1.0,
+        "length": 1.0,
+        "encoder_steps": 13250
+    },
+    
+    "brush_motors": {
+        "device": "/dev/ttyACM1",
+        "max_speed": 0.5,
+        "max_signal": 30,
+        "pid": true,
+        "rc": false,
+        "homing": false,
+        "k": [0.08, 1.20, 0.0 ]
+    },
+    
+    "grbl": {
+        "device": "/dev/ttyACM0"
+    },
+    
+    "fake_camera": {
+        "image": "data/camera.jpg"
+    },
+    
+    "fsdb": {
+        "directory": "data/db"
+    },
+    
+    "weeder": {
+        "workspace": [0.5, 316, 96, 617, 617, 620, 620],
+        "z0": -10,
+        "invert_axes": false,
+        "datadir": "data/weeder",
+        "quincunx_threshold": 0.5
+    },
+    
+    "interface": {
+        "html": "interface/html",
+        "scripts": "scripts/rover-chatelain.json"
+    },
+    
+    "launch": {
+        "general": {
+            "log-dir-HIDE": "log"
+        },
+        "registry": {
+            "path": "/usr/local/bin/rcregistry"
+        },
+        "nodes": [{
+            "path": "build/configuration/configuration"
+        }, {
+            "path": "build/fsdb/fsdb"
+        }, {
+            "path": "build/brush_motors/brush_motors",
+            "disabled": false
+        }, {
+            "path": "build/fake_camera/fake_camera",
+            "disabled": true
+        }, {
+            "path": "build/video4linux/video4linux",
+            "disabled": false
+        }, {
+            "path": "build/grbl/grbl",
+            "disabled": false
+        }, {
+            "path": "build/fake_cnc/fake_cnc",
+            "disabled": true
+        }, {
+            "path": "build/wheel_odometry/wheel_odometry",
+            "disabled": false
+        }, {
+            "path": "build/camera_recorder/camera_recorder"
+        }, {
+            "path": "build/weeder/weeder",
+            "disabled": false
+        }, {
+            "path": "build/navigation/navigation",
+            "disabled": false
+        }, {
+            "path": "build/interface/interface",
+            "disabled": false
+        }]
+    }
+}
+
