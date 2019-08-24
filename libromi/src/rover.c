@@ -174,11 +174,11 @@ static void rover_update_pose(rover_t *r,
         // wheel.
         dL = left - r->encoder[0];
         dR = right - r->encoder[1];
-        log_debug("dL %f, dR %f steps", dL, dR);
+        //log_debug("dL %f, dR %f steps", dL, dR);
         
         dL = r->wheel_circumference * dL / r->encoder_steps;
         dR = r->wheel_circumference * dR / r->encoder_steps;
-        log_debug("dL %f, dR %f m", dL, dR);
+        //log_debug("dL %f, dR %f m", dL, dR);
 
         // dx and dy are the changes in the location of the rover, in
         // the frame of reference of the rover.
