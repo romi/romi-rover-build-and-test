@@ -523,7 +523,9 @@ static boolean jpeg_bufferemptyoutput(j_compress_ptr cinfo)
 {
         jpeg_dest_t* my_mgr = (jpeg_dest_t*) cinfo->dest;
         membuf_t* membuf = my_mgr->membuf;
-        
+
+        membuf_set_len(membuf, membuf_size(membuf));
+
         if (membuf_assure(membuf, BLOCKSIZE) != 0)
                 return 0;
         

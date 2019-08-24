@@ -107,10 +107,10 @@ static void store_jpg(image_t *image, const char *fsid)
         membuf_t *buffer = new_membuf();
         if (buffer == NULL)
                 return;
-        if (membuf_assure(buffer, 1024 * 1024) != 0) {
-                delete_membuf(buffer);
-                return;
-	}
+        /* if (membuf_assure(buffer, 1024 * 1024) != 0) { */
+        /*         delete_membuf(buffer); */
+        /*         return; */
+	/* } */
         if (image_store_to_mem(image, buffer) != 0) {
                 delete_membuf(buffer);
                 return;
