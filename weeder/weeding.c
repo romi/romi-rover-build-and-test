@@ -78,6 +78,7 @@ void broadcast_db_message(const char *event,
 
 static void init_store()
 {
+  //log_debug("init_store");
         database_t *db = get_database();
         scan = database_new_scan(db);
         broadcast_db_message("new", scan_id(scan), NULL, NULL);
@@ -85,46 +86,72 @@ static void init_store()
 
 static void close_store()
 {
+  //log_debug("close_store @1");
         if (scan) scan_store(scan);
+  //log_debug("close_store @2");
         database_t *db = get_database();
+  //log_debug("close_store @3");
         database_unload(db);
+  //log_debug("close_store @4");
 }
 
 static file_t *create_file(const char *fsid)
 {
+  //log_debug("create_file @1: fsid=%s", fsid);
         if (scan == NULL)
                 return NULL;
+  //log_debug("create_file @2");
         fileset_t *fileset = scan_get_fileset(scan, fsid);
         if (fileset == NULL) {
+  //log_debug("create_file @3");
                 fileset = scan_new_fileset(scan, fsid);
+  //log_debug("create_file @4");
                 broadcast_db_message("new", scan_id(scan), fileset_id(fileset), NULL);
         }
+  //log_debug("create_file @5");
         if (fileset == NULL) 
                 return NULL;
+  //log_debug("create_file @6");
         file_t *file = fileset_new_file(fileset);
         if (file == NULL)
                 return NULL;
+  //log_debug("create_file @7");
         file_set_timestamp(file, clock_time());
+  //log_debug("create_file @8");
         broadcast_db_message("new", scan_id(scan), fileset_id(fileset), file_id(file));
         return file;
 }
 
 static void store_jpg(image_t *image, const char *fsid)
 {
+  //log_debug("store_jpg @1: fsid=%s", fsid);
         file_t *file = create_file(fsid);
         if (file == NULL)
                 return;
 
+  //log_debug("store_jpg @2");
         membuf_t *buffer = new_membuf();
-        if (image_store_to_mem(image, buffer) != 0)
+        if (buffer == NULL)
                 return;
+        if (membuf_assure(buffer, 1024 * 1024) != 0) {
+	  delete_membuf(buffer);
+                return;
+	}
+        if (image_store_to_mem(image, buffer) != 0) {
+	  delete_membuf(buffer);
+                return;
+	}
         
+        //log_debug("store_jpg @3");
         file_import_jpeg(file, membuf_data(buffer), membuf_len(buffer));
         
         /* static char buffer[1024]; */
         /* rprintf(buffer, sizeof(buffer), "%s/%s", _dir, name); */
         /* image_store(image, buffer); */
         /* log_debug("Storing image to %s", buffer); */
+
+	delete_membuf(buffer);
+  //log_debug("store_jpg @4");
 }
 
 static void store_txt(membuf_t *data, const char *fileset)
