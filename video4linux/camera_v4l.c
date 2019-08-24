@@ -298,10 +298,16 @@ void convert_yuv422_to_rgb888(int width, int height, unsigned char *src, unsigne
 
         for (line = 0; line < height; ++line) {
                 for (column = 0; column < width; ++column) {
+#if 0
                         *tmp++ = CLIP((double)*py + 1.402*((double)*pv-128.0));
                         *tmp++ = CLIP((double)*py - 0.344*((double)*pu-128.0) - 0.714*((double)*pv-128.0));      
                         *tmp++ = CLIP((double)*py + 1.772*((double)*pu-128.0));
+#else			
 
+                        *tmp++ = CLIP((double)*py - 0.344*((double)*pu-128.0) - 0.714*((double)*pv-128.0));
+                        *tmp++ = CLIP((double)*py + 1.772*((double)*pu-128.0));
+                        *tmp++ = CLIP((double)*py + 1.402*((double)*pv-128.0));
+#endif
                         // increase py every time
                         py += 2;
                         // increase pu,pv every second time
@@ -398,6 +404,7 @@ static int camera_converttojpeg(camera_t* camera)
         cinfo.image_height = camera->height;
         cinfo.input_components = 3;
         cinfo.in_color_space = JCS_RGB;
+        //cinfo.in_color_space = JCS_BGR;
 
         jpeg_set_defaults(&cinfo);
         jpeg_set_quality(&cinfo, camera->jpeg_quality, TRUE);
@@ -1058,7 +1065,6 @@ static int camera_init(camera_t* camera)
         /* camera_setctrl(camera, V4L2_CID_BLUE_BALANCE, 127); */
         /* camera_setctrl(camera, V4L2_CID_EXPOSURE, 127); */
 
-        /*
         struct v4l2_queryctrl queryctrl;
         struct v4l2_control control;
 
@@ -1132,7 +1138,6 @@ static int camera_init(camera_t* camera)
                         return -1;
                 }
         }
-        */
  
        camera->state = CAMERA_INIT;
 
