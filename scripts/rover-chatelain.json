@@ -20,6 +20,32 @@
         ]
     },
     {
+        "name": "weed_salads",
+        "display_name": "Weed salads ",
+        "script": [
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60, "speed": 400},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60, "speed": 400},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60, "speed": 400},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60, "speed": 400},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60, "speed": 400},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60, "speed": 400},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60, "speed": 400},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": 0.60, "speed": 400},
+            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "move", "distance": -4.8},
+            {"action": "homing"}
+        ]
+    },
+    {
         "name": "move-forward",
         "display_name": "Forward 60cm",
         "script": [
