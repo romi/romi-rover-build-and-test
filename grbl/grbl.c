@@ -64,12 +64,21 @@ static int send_command(const char *cmd, membuf_t *message)
 static int reset_cnc()
 {
         log_debug("Resetting CNC");
-
+	
+	serial_println(serial, "");
+	serial_println(serial, "");
+	clock_sleep(2);
         serial_flush(serial);
 
         log_debug("Homing");
         if (send_command("$H", reply) != 0) {
                 log_err("Homing failed");
+                return -1;
+        }
+
+        log_debug("Making sure spindle is off");
+        if (send_command("M5", reply) != 0) {
+                log_err("Spindle off failed");
                 return -1;
         }
 
