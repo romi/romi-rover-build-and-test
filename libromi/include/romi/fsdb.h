@@ -40,6 +40,12 @@ fileset_t *scan_get_fileset_at(scan_t *scan, int i);
 fileset_t *scan_get_fileset(scan_t *scan, const char *id);
 database_t *scan_get_database(scan_t *scan);
 
+int scan_set_metadata_str(scan_t *scan, const char *key, const char *value);
+int scan_set_metadata_num(scan_t *scan, const char *key, double value);
+int scan_set_metadata(scan_t *scan, const char *key, json_object_t value);
+
+
+
 /*
   Fileset
  */

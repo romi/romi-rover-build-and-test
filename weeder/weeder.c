@@ -209,7 +209,7 @@ static int move_away_arm()
         return 0;
 }
 
-static list_t *compute_quincunx(membuf_t *message)
+static list_t *compute_quincunx(membuf_t *message, double start_time)
 {
         // Move away the arm before taking a picture of the workspace.
         if (move_away_arm() != 0) {
@@ -226,7 +226,9 @@ static list_t *compute_quincunx(membuf_t *message)
                 delete_membuf(buf);
                 return NULL;
         }
-                
+
+        log_info("Done grabbing image: %f s", clock_time() - start_time);
+
         image_t *image = image_load_from_mem(membuf_data(buf), membuf_len(buf));
         if (image == NULL) {
                 log_err("Failed to decompress the image");
@@ -234,8 +236,12 @@ static list_t *compute_quincunx(membuf_t *message)
                 delete_membuf(buf);
                 return NULL;
         }
+        log_info("Done decompressing image: %f s", clock_time() - start_time);
 
-        list_t *path = compute_path(image, &workspace, 0.3f, z0, quincunx_threshold);
+        list_t *path = compute_path(image, &workspace, 0.3f, z0, quincunx_threshold,
+                                    start_time);
+        
+        log_info("Done computing path: %f s", clock_time() - start_time);
         
         delete_membuf(buf);
         delete_image(image);
@@ -299,13 +305,14 @@ static int hoe(int method, membuf_t *message)
 {
         list_t *path = NULL;
         int err;
-        
+        double start_time = clock_time();
+
         if (method == WEEDING_METHOD_QUINCUNX) {
-                path = compute_quincunx(message);
+                path = compute_quincunx(message, start_time);
         } else {
                 path = compute_boustrophedon(&workspace, z0);
         }
-		
+                
         if (path == NULL) {
                 log_err("Failed to compute the path");
                 membuf_printf(message, "Failed to compute the path");
@@ -314,6 +321,8 @@ static int hoe(int method, membuf_t *message)
         
         err = send_path(path, message);
 
+        log_info("Finished executing path: %f s", clock_time() - start_time);
+        
         for (list_t *l = path; l != NULL; l = list_next(l)) {
                 point_t *p = list_get(l, point_t);
                 delete_point(p);

@@ -53,8 +53,14 @@ void broadcast_db_message(const char *event,
 static void init_store()
 {
         //log_debug("init_store");
+        char timestamp[128];
+        clock_datetime(timestamp, sizeof(timestamp), '-', ' ', ':');
+
         database_t *db = get_database();
         scan = database_new_scan(db);
+        scan_set_metadata_str(scan, "type", "weeding");
+        scan_set_metadata_str(scan, "date", timestamp);
+        
         broadcast_db_message("new", scan_id(scan), NULL, NULL);
 }
 
@@ -964,7 +970,8 @@ list_t *adjust_positions(image_t *p_map, float d0, point_t *ptn_pos, float delta
 }
 
 list_t *compute_path(image_t *camera, workspace_t *workspace,
-                     float distance, float z0, float threshold)
+                     float distance, float z0, float threshold,
+                     double start_time)
 {
         list_t *path = NULL;
         list_t *positions = NULL;
@@ -978,8 +985,12 @@ list_t *compute_path(image_t *camera, workspace_t *workspace,
         // rotate and crop the camera image
         image_t *image = get_workspace_view(camera, workspace);
 
+        log_info("Done rotating and cropping image: %f s", clock_time() - start_time);
+
         // compute the binary mask (plants=white, soil=black...)
         image_t *mask = compute_mask(image);
+        
+        log_info("Done computing mask: %f s", clock_time() - start_time);
         
         float meters_to_pixels = 1000.0f * image->width / (float) workspace->width_mm;
 
@@ -994,6 +1005,8 @@ list_t *compute_path(image_t *camera, workspace_t *workspace,
         float p_max = -1.0f;
         image_t *pattern = estimate_pattern_position(p_map, d0, &ptn_pos, &p_max);
 
+        log_info("Done estimating positions: %f s", clock_time() - start_time);
+        
         // 
         float confidence = (p_max / 10.0f) / average_prob;
         log_info("*** quincunx: confidence: %f\n", confidence);
@@ -1045,6 +1058,8 @@ list_t *compute_path(image_t *camera, workspace_t *workspace,
         // adjust the positions of the points.
         float delta = 0.04f * meters_to_pixels;
         positions = adjust_positions(p_map, d0, &ptn_pos, delta);
+
+        log_info("Done adjusting positions: %f s", clock_time() - start_time);
 
         // FIXME: ugly!
         // Store image of adjusted positions + add to data output
@@ -1099,6 +1114,8 @@ list_t *compute_path(image_t *camera, workspace_t *workspace,
                 store_svg(image->width, image->height, "positions.jpg",
                           path, scale);
         }
+
+        log_info("Done compting modified boustrophedon: %f s", clock_time() - start_time);
 
         // clean up
 cleanup_and_exit:

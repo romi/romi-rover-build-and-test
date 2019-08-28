@@ -15,6 +15,7 @@
 
 int database_get_scan_directory(database_t *db, scan_t *scan, char *buffer, int len);
 int database_get_scan_json_file(database_t *db, scan_t *scan, char *buffer, int len);
+int database_get_scan_metadata_path(database_t *db, scan_t *scan, char *buffer, int len);
 
 int database_get_file_path(database_t *db, scan_t *scan,
                            fileset_t *fileset, file_t *file,
@@ -464,6 +465,7 @@ struct _scan_t {
         database_t *db;
         char *id;
         list_t *filesets;
+        json_object_t metadata;
 };
 
 static int scan_unload(scan_t *scan);
@@ -476,6 +478,7 @@ scan_t *new_scan(database_t *db, const char *id)
         scan->db = db;
         scan->id = mem_strdup(id);
         scan->filesets = NULL;
+        scan->metadata = json_object_create();
         
         if (scan->id == NULL) {
                 delete_obj(scan);
@@ -492,6 +495,7 @@ void delete_scan(scan_t *scan)
                 if (scan->id)
                         mem_free(scan->id);
                 delete_obj(scan);
+                json_unref(scan->metadata);
         }
 }
 
@@ -572,9 +576,22 @@ database_t *scan_get_database(scan_t *scan)
         return scan->db;
 }
 
+static int scan_get_metadata_path(scan_t *scan, char *buffer, int len)
+{
+        return database_get_scan_metadata_path(scan->db, scan, buffer, len);
+}
+
 static int scan_store_metadata(scan_t *scan)
 {
         int err = 0;
+        char path[1024];
+        
+        err = scan_get_metadata_path(scan, path, sizeof(path));
+        if (err != 0) return err;
+        
+        err = json_tofile(scan->metadata, 0, path);
+        if (err != 0) return err;
+
         for (list_t *l = scan->filesets; l != NULL; l = list_next(l)) {
                 fileset_t *fileset = list_get(l, fileset_t);
                 if (fileset_store_metadata(fileset) != 0)
@@ -628,13 +645,27 @@ int scan_store(scan_t *scan)
         return 0;
 }
 
-static int scan_load(scan_t *scan)
+static int scan_load_metadata(scan_t *scan)
 {
-        if (scan_unload(scan) != 0) {
-                log_warn("scan_load: Unload failed");
+        char path[1024];
+        scan_get_metadata_path(scan, path, sizeof(path));
+
+        int err;
+        char errmsg[128];
+        json_object_t obj = json_load(path, &err, errmsg, sizeof(errmsg));
+        if (err != 0) {
+                log_warn("Failed to load the metadata for scan '%s': %s",
+                         scan->id, errmsg);
                 return -1;
         }
 
+        json_unref(scan->metadata);
+        scan->metadata = obj;
+        return 0;
+}
+
+static int scan_load_files(scan_t *scan)
+{
         log_info("Loading scan '%s'", scan->id);
 
         char buffer[1024];
@@ -680,7 +711,20 @@ static int scan_load(scan_t *scan)
         }
         
         json_unref(obj);
+
         return 0;
+}
+
+static int scan_load(scan_t *scan)
+{
+        if (scan_unload(scan) != 0) {
+                log_warn("scan_load: Unload failed");
+                return -1;
+        }
+
+        if (scan_load_files(scan) != 0)
+                return -1;
+        return scan_load_metadata(scan);
 }
 
 void scan_print(scan_t *scan)
@@ -690,6 +734,24 @@ void scan_print(scan_t *scan)
                 fileset_t *fileset = list_get(l, fileset_t);
                 fileset_print(fileset);
         }
+}
+
+int scan_set_metadata_str(scan_t *scan, const char *key, const char *value)
+{
+        json_object_setstr(scan->metadata, key, value);
+        return scan_store_metadata(scan);
+}
+
+int scan_set_metadata_num(scan_t *scan, const char *key, double value)
+{
+        json_object_setnum(scan->metadata, key, value);
+        return scan_store_metadata(scan);
+}
+
+int scan_set_metadata(scan_t *scan, const char *key, json_object_t value)
+{
+        json_object_set(scan->metadata, key, value);
+        return scan_store_metadata(scan);
 }
 
 /**************************************************************/
@@ -891,6 +953,16 @@ int database_get_scan_directory(database_t *db,
                                 char *buffer, int len)
 {
         snprintf(buffer, len, "%s/%s", db->path, scan->id);
+        buffer[len-1] = 0;
+        return 0;
+}
+
+int database_get_scan_metadata_path(database_t *db,
+                                    scan_t *scan,
+                                    char *buffer, int len)
+{
+        snprintf(buffer, len, "%s/%s/metadata/metadata.json",
+                 db->path, scan->id);
         buffer[len-1] = 0;
         return 0;
 }

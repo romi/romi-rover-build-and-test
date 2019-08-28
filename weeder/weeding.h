@@ -47,7 +47,8 @@ void point_set(point_t *p, float x, float y, float z);
 ////
 
 list_t *compute_path(image_t *camera, workspace_t *workspace,
-                     float distance, float z0, float threshold);
+                     float distance, float z0, float threshold,
+                     double start_time);
 list_t *compute_boustrophedon(workspace_t *workspace, float z0);
 
 ////
