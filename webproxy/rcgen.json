@@ -1,0 +1,15 @@
+{
+    "name": "webproxy",
+    "com": [
+        {
+            "type": "service",
+            "topic": "webproxy",
+            "port": 80,
+            "resources": [
+                { "name": "*",
+                  "mimetype_out": "text/html",
+                  "onrequest": "webproxy_get" }
+            ]
+        }
+    ]
+}

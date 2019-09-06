@@ -1,0 +1,10 @@
+{
+    "name": "watchdog",
+    "com": [
+        {
+            "type": "controller",
+            "topic": "watchdog",
+            "commands": [{"name": "shutdown", "oncommand": "watchdog_shutdown"}]
+        }
+    ]
+}
