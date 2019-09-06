@@ -21,7 +21,7 @@ int cnc_onmoveto(void *userdata,
                  json_object_t command,
                  membuf_t *message)
 {
-	log_debug("cnc_onmoveto");
+	r_debug("cnc_onmoveto");
 
         const char *r;
         int hasx = json_object_has(command, "x");
@@ -45,7 +45,7 @@ int cnc_onmoveto(void *userdata,
         if (hasx) _x = x;
         if (hasy) _y = y;
         if (hasz) _z = z;
-	log_debug("position[%.1f,%.1f,%.1f]", _x, _y, _z);
+	r_debug("position[%.1f,%.1f,%.1f]", _x, _y, _z);
         mutex_unlock(mutex);
         
         return 0;
@@ -56,7 +56,7 @@ int cnc_ontravel(void *userdata,
                  json_object_t command,
                  membuf_t *message)
 {
-	log_debug("cnc_ontravel");
+	r_debug("cnc_ontravel");
         
         json_object_t path = json_object_get(command, "path");
         if (!json_isarray(path)) {
@@ -90,7 +90,7 @@ int cnc_ontravel(void *userdata,
                 _x = json_array_getnum(p, 0);
                 _y = json_array_getnum(p, 1);
                 _z = json_array_getnum(p, 2);
-                log_debug("position[%.1f,%.1f,%.1f]", _x, _y, _z);
+                r_debug("position[%.1f,%.1f,%.1f]", _x, _y, _z);
                 clock_sleep(1.0);
         }
         
@@ -104,7 +104,7 @@ int cnc_onspindle(void *userdata,
                   json_object_t command,
                   membuf_t *message)
 {
-	log_debug("cnc_onspindle");
+	r_debug("cnc_onspindle");
         return 0;
 }
 
@@ -113,6 +113,6 @@ int cnc_onhoming(void *userdata,
                  json_object_t command,
                  membuf_t *message)
 {
-	log_debug("cnc_onhoming");
+	r_debug("cnc_onhoming");
         return 0;
 }

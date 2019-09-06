@@ -27,7 +27,7 @@ void broadcast_db_message(const char *event,
                           const char *fileset_id,
                           const char *file_id)
 {
-        log_debug("broadcast_db_message: %s, %s, %s, %s",
+        r_debug("broadcast_db_message: %s, %s, %s, %s",
                   event, scan_id, fileset_id, file_id);
         messagelink_t *bus = get_messagelink_db();
         if (file_id)
@@ -59,14 +59,14 @@ void camera_recorder_onpose(void *userdata,
 {
         json_object_t data = datalink_parse(link, input);
         if (json_isnull(data)) {
-                log_warn("camera_recorder_onpose: failed to parse data");
+                r_warn("camera_recorder_onpose: failed to parse data");
                 json_unref(data);
                 return;
         }
 
         json_object_t a = json_object_get(data, "position");
         if (!json_isarray(a)) {
-                log_warn("camera_recorder_onpose: 'position' is not an array");
+                r_warn("camera_recorder_onpose: 'position' is not an array");
                 json_unref(data);
                 return;
         }
@@ -76,7 +76,7 @@ void camera_recorder_onpose(void *userdata,
         py = json_array_getnum(a, 1);
         pz = json_array_getnum(a, 2);
         if (isnan(px) || isnan(py) || isnan(pz)) {
-                log_warn("camera_recorder_onpose: invalid position values"); 
+                r_warn("camera_recorder_onpose: invalid position values"); 
                 json_unref(data);
                 return;
         }
@@ -100,11 +100,11 @@ static int *camera_recorder_onimage(void *userdata,
         if (recording) {
                 // Check for valid JPEG signature
                 if ((image[0] != 0xff) || (image[1] != 0xd8)  || (image[2] != 0xff)) {
-                        log_warn("Image has a bad signature.");
+                        r_warn("Image has a bad signature.");
                         goto unlock;
                 }
                 if ((image[len-2] != 0xff) || (image[len-1] != 0xd9)) {
-                        log_warn("Image has a bad signature (2).");
+                        r_warn("Image has a bad signature (2).");
                         goto unlock;
                 }
 
@@ -126,7 +126,7 @@ static int *camera_recorder_onimage(void *userdata,
                         }
         
                 } else {
-                        log_info("Too much lag. Skipping image.");
+                        r_info("Too much lag. Skipping image.");
                 }
         }
         
@@ -145,12 +145,12 @@ int camera_recorder_ondata(void *userdata, const char *buf, int len)
 static int set_directory(const char *path)
 {
         if (directory != NULL) {
-                mem_free(directory);
+                r_free(directory);
                 directory = NULL;
         }
-        directory = mem_strdup(path);
+        directory = r_strdup(path);
         if (directory == NULL) {
-                log_err("Out of memory");
+                r_err("Out of memory");
                 return -1;
         }
         return 0;
@@ -162,18 +162,18 @@ static int get_configuration()
                 return 0;
 
         char buffer[1024];
-        log_err("Current working directory: %s", getcwd(buffer, 1024));
+        r_err("Current working directory: %s", getcwd(buffer, 1024));
         
         int err = -1;
         json_object_t path = json_null();
         path = client_get("configuration", "fsdb.directory");
         if (json_isstring(path)) {
                 set_directory(json_string_value(path));
-                log_info("using configuration file for directory: '%s'",
+                r_info("using configuration file for directory: '%s'",
                          json_string_value(path));
                 err = 0;
         } else {
-                log_err("Failed to obtain a valid fsdb.directory setting");
+                r_err("Failed to obtain a valid fsdb.directory setting");
         }
         json_unref(path);
         return err;
@@ -207,18 +207,18 @@ int camera_recorder_init(int argc, char **argv)
         if (argc == 2) {
                 // FIXME: needs more checking
                 set_directory(argv[1]);
-                log_info("using command line argument for directory: '%s'", argv[1]);
+                r_info("using command line argument for directory: '%s'", argv[1]);
                 
         }
         
         for (int i = 0; i < 10; i++) {
                 if (recorder_init() == 0)
                         return 0;
-                log_err("recorder_init failed: attempt %d/10", i);
+                r_err("recorder_init failed: attempt %d/10", i);
                 clock_sleep(0.2);
         }
 
-        log_err("failed to initialize the camera recorder");        
+        r_err("failed to initialize the camera recorder");        
         return -1;
 }
 
@@ -233,7 +233,7 @@ void camera_recorder_cleanup()
         if (parser)
                 delete_multipart_parser(parser);
         if (directory)
-                mem_free(directory);
+                r_free(directory);
 }
 
 int camera_recorder_onstart(void *userdata,
@@ -264,7 +264,7 @@ int camera_recorder_onstart(void *userdata,
                         return -1;
                 }
                 
-                scan = database_new_scan(db);
+                scan = database_new_scan(db, NULL);
                 if (scan == NULL) {
                         database_unload(db);
                         membuf_printf(message, "Failed to create a new scan");
@@ -304,7 +304,7 @@ int camera_recorder_onstop(void *userdata,
         recording = 0;
         
         if (scan) {
-                scan_store(scan);
+                //scan_store(scan);
                 broadcast_db_message("store", scan_id(scan), NULL, NULL);
                 database_unload(db);
                 scan = NULL;

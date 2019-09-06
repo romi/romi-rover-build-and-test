@@ -30,8 +30,8 @@
     },
     
     "weeder": {
-        "workspace": [0.5, 316, 96, 617, 617, 620, 620],
-        "z0": -10,
+        "workspace": [0.00873, 316, 96, 617, 617, 620, 620],
+        "z0": -0.010,
         "invert_axes": false,
         "datadir": "data/weeder",
         "quincunx_threshold": 0.5

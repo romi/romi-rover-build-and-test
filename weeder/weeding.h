@@ -1,6 +1,7 @@
 #ifndef _ROMI_WEEDING_H_
 #define _ROMI_WEEDING_H_
 
+#include <r.h>
 #include <romi.h>
 
 #ifdef __cplusplus
@@ -25,14 +26,17 @@ extern "C" {
 // workspace, measured in millimeters.
 
 typedef struct _workspace_t {
-        float theta;
+        double theta;
         int x0;
         int y0;
         int width;
         int height;
-        int width_mm;
-        int height_mm;
+        double width_meter;
+        double height_meter;
 } workspace_t;
+
+int workspace_parse(workspace_t *workspace, json_object_t obj);
+json_object_t workspace_to_json(workspace_t *workspace);
 
 ////
 
@@ -46,10 +50,16 @@ void point_set(point_t *p, float x, float y, float z);
 
 ////
 
-list_t *compute_path(image_t *camera, workspace_t *workspace,
-                     float distance, float z0, float threshold,
-                     double start_time);
-list_t *compute_boustrophedon(workspace_t *workspace, float z0);
+list_t *compute_path(scan_t *session,
+                     const char *fileset_id,
+                     image_t *camera,
+                     workspace_t *workspace,
+                     double distance_plants,
+                     double distance_rows,
+                     double radius_zone,
+                     double diameter_tool,
+                     float *confidence);
+list_t *compute_boustrophedon(workspace_t *workspace, double diameter_tool);
 
 ////
 

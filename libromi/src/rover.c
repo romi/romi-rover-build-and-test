@@ -1,11 +1,8 @@
 
-// for log_xxx()
-#include <rcom.h>
-
 #include <string.h>
 #include <math.h>
 
-#include "romi/mem.h"
+#include <r.h>
 #include "romi/rover.h"
 
 
@@ -40,7 +37,7 @@ rover_t *new_rover(double wheel_diameter,
                    //double rover_length,
                    double encoder_steps)
 {
-        rover_t *r = new_obj(rover_t);
+        rover_t *r = r_new(rover_t);
         if (r == NULL) return NULL;
         memset(r, 0, sizeof(rover_t));
 
@@ -60,7 +57,7 @@ rover_t *new_rover(double wheel_diameter,
 void delete_rover(rover_t *r)
 {
         if (r) {
-                delete_obj(r);
+                r_delete(r);
         }
 }
 
@@ -168,17 +165,17 @@ static void rover_update_pose(rover_t *r,
                 return;
         }
 
-        /* log_debug("encL %f, encR %f steps", left, right); */
+        /* r_debug("encL %f, encR %f steps", left, right); */
         
         // dL and dR are the distances travelled by the left and right
         // wheel.
         dL = left - r->encoder[0];
         dR = right - r->encoder[1];
-        //log_debug("dL %f, dR %f steps", dL, dR);
+        //r_debug("dL %f, dR %f steps", dL, dR);
         
         dL = r->wheel_circumference * dL / r->encoder_steps;
         dR = r->wheel_circumference * dR / r->encoder_steps;
-        //log_debug("dL %f, dR %f m", dL, dR);
+        //r_debug("dL %f, dR %f m", dL, dR);
 
         // dx and dy are the changes in the location of the rover, in
         // the frame of reference of the rover.
@@ -188,7 +185,7 @@ static void rover_update_pose(rover_t *r,
                 alpha = 0.0;
         } else {
                 double radius = 0.5 * r->wheel_base * (dL + dR) / (dR - dL);
-                /* log_debug("radius %f", radius); */
+                /* r_debug("radius %f", radius); */
                 if (radius >= 0) {
                         alpha = dR / (radius + half_wheel_base);
                 } else {
@@ -198,7 +195,7 @@ static void rover_update_pose(rover_t *r,
                 dy = radius - radius * cos(alpha);
         }
 
-        /* log_debug("dx %f, dy %f, alpha %f", dx, dy, alpha); */
+        /* r_debug("dx %f, dy %f, alpha %f", dx, dy, alpha); */
 
         // Convert dx and dy to the changes in the last frame of
         // reference (i.e. relative to the current orientation).
@@ -207,7 +204,7 @@ static void rover_update_pose(rover_t *r,
         double dx_ = c * dx - s * dy;
         double dy_ = s * dx + c * dy;
 
-        /* log_debug("dx_ %f, dy_ %f", dx_, dy_); */
+        /* r_debug("dx_ %f, dy_ %f", dx_, dy_); */
 
         r->displacement.x += dx_;
         r->displacement.y += dy_;
@@ -228,13 +225,13 @@ static void rover_update_pose(rover_t *r,
                 }
         }
         
-        //log_debug("displacement:  %f %f - angle %f",
+        //r_debug("displacement:  %f %f - angle %f",
         // r->displacement.x, r->displacement.y, r->theta * 180.0 / M_PI);
-        //log_debug("speed:  %f %f", r->speed.x, r->speed.y);
+        //r_debug("speed:  %f %f", r->speed.x, r->speed.y);
 
         //quaternion_t dtheta = convert_euler_to_quaternion(0, 0, r->theta);
         //*orientation = MultQuaternionQuaternion(&dtheta, &r->orientation);
-        //log_debug("quaternion: %f %f %f %f", dtheta.s, dtheta.v.x, dtheta.v.y, dtheta.v.z);
+        //r_debug("quaternion: %f %f %f %f", dtheta.s, dtheta.v.x, dtheta.v.y, dtheta.v.z);
 }
 
 void rover_get_wheel_speeds(rover_t *r, double speed, double radius, double *left, double *right)

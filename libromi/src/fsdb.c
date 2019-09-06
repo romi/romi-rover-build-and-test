@@ -7,54 +7,144 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <rcom.h>
-
+#include <r.h>
 #include "romi.h"
+
+/*
+
+--------------------------------------------
+
+DB
+  - scan
+    - fileset
+      - file
+  - scan
+    - fileset
+      - file
+  ...
+
+--------------------------------------------
+
+Session: regroups all data related to a session that starts when the device (scanner or robot) is turned on until turned off.
+Fileset: file sets are not always part of a scan. For example, log files.
+
+
+DB
+  - session
+    - scan  (ex. camera_recorder)
+      - fileset (ex. "images")
+        - file
+    - fileset (ex. logs, dump, weeding images)
+      - file
+  - session
+    - scan
+      - fileset
+        - file
+    - fileset (ex. logs, dump, weeding images)
+      - file
+  ...
+
+--------------------------------------------
+
+DB
+  - scan == session
+    - fileset (ex. "log", "dump", "weeding-000")
+      - file
+
+--------------------------------------------
+
+DB == session
+  - scan (ex. camera_recorder)
+    - fileset
+      - file
+  - scan (ex. "log", "weeding-000")
+    - "files"
+      - file
+
+--------------------------------------------
+
+DB
+  - session
+    - scan  (ex. scan by camera_recorder)
+      - fileset (ex. "images")
+        - file
+    - scan  (ex. "device"???)
+      - fileset (ex. logs, dump, weeding images)
+        - file
+  ...
+
+--------------------------------------------
+
+ */
 
 /**************************************************************/
 
-int database_get_scan_directory(database_t *db, scan_t *scan, char *buffer, int len);
-int database_get_scan_json_file(database_t *db, scan_t *scan, char *buffer, int len);
-int database_get_scan_metadata_path(database_t *db, scan_t *scan, char *buffer, int len);
+static int database_create_scan_dir(database_t *db, scan_t *scan);
+static int database_get_scan_directory(database_t *db, scan_t *scan,
+                                       char *buffer, int len);
+static int database_get_scan_json_file(database_t *db, scan_t *scan,
+                                       char *buffer, int len);
+static int database_get_scan_metadata_path(database_t *db, scan_t *scan,
+                                           char *buffer, int len);
 
-int database_get_file_path(database_t *db, scan_t *scan,
-                           fileset_t *fileset, file_t *file,
-                           char *buffer, int len);
-int database_get_file_metadata_path(database_t *db,
-                                    scan_t *scan,
-                                    fileset_t *fileset,
-                                    file_t *file,
-                                    char *buffer, int len);
-int database_create_fileset_dir(database_t *db, scan_t *scan, const char *id);
+static int database_create_fileset_dir(database_t *db, scan_t *scan, const char *id);
+static int database_get_fileset_metadata_path(database_t *db, scan_t *scan,
+                                              fileset_t *fileset, char *buffer, int len);
+
+static int database_get_file_path(database_t *db, scan_t *scan, fileset_t *fileset,
+                                  file_t *file, char *buffer, int len);
+static int database_get_file_metadata_path(database_t *db, scan_t *scan, fileset_t *fileset,
+                                           file_t *file, char *buffer, int len);
+
+
+static void database_broadcast(database_t *db,
+                               const char *event,
+                               scan_t *scan,
+                               fileset_t *fileset,
+                               file_t *file);
+
+static void scan_broadcast(scan_t *scan,
+                           const char *event,
+                           fileset_t *fileset,
+                           file_t *file);
+
+static void fileset_broadcast(fileset_t *fileset,
+                              const char *event,
+                              file_t *file);
+
+// FIXME
+static int file_update_files(file_t *file);
+static int fileset_update_files(fileset_t *fileset);
+static int scan_store_filesets(scan_t *scan);
 
 /**************************************************************/
 
 struct _file_t {
         fileset_t *fileset;
         char *id;
-        char *name;
+        char *localfile;
         char *mimetype;
         json_object_t metadata;
 };
 
 file_t *new_file(fileset_t *fileset,
                  const char *id,
-                 const char *name,
+                 const char *localfile,
                  const char *mimetype)
 {
-        file_t *file = new_obj(file_t);
+        file_t *file = r_new(file_t);
         if (file == NULL) return NULL;
 
         file->fileset = fileset;
-        file->id = mem_strdup(id);
-        file->name = name? mem_strdup(name) : NULL;
-        file->mimetype = mimetype? mem_strdup(mimetype) : NULL;
+        file->id = r_strdup(id);
+        file->localfile = localfile? r_strdup(localfile) : NULL;
+        file->mimetype = mimetype? r_strdup(mimetype) : NULL;
         file->metadata = json_object_create();
         
         if (file->id == NULL
-            || (name != NULL && file->name == NULL)
+            || (localfile != NULL && file->localfile == NULL)
             || (mimetype != NULL && file->mimetype == NULL)) {
-                delete_obj(file);
+                r_delete(file);
                 return NULL;
         }
         return file;
@@ -64,11 +154,11 @@ void delete_file( file_t *file)
 {
         if (file) {
                 if (file->id)
-                        mem_free(file->id);
-                if (file->name)
-                        mem_free(file->name);
+                        r_free(file->id);
+                if (file->localfile)
+                        r_free(file->localfile);
                 json_unref(file->metadata);
-                delete_obj(file);
+                r_delete(file);
         }
 }
 
@@ -77,9 +167,9 @@ const char *file_id(file_t *file)
         return file->id;
 }
 
-const char *file_name(file_t *file)
+const char *file_localfile(file_t *file)
 {
-        return file->name;
+        return file->localfile;
 }
 
 const char *file_mimetype(file_t *file)
@@ -108,6 +198,12 @@ int file_get_metadata_path(file_t *file, char *buffer, int len)
         return database_get_file_metadata_path(db, scan, fileset, file, buffer, len);
 }
 
+static int file_update_files(file_t *file)
+{
+        fileset_t *fileset = file_get_fileset(file);
+        return fileset_update_files(fileset);
+}
+
 static int file_store_metadata(file_t *file)
 {
         char path[1024];
@@ -115,33 +211,44 @@ static int file_store_metadata(file_t *file)
         return json_tofile(file->metadata, 0, path);
 }
 
-int file_import_jpeg(file_t *file, const unsigned char *image, int len)
+int file_import_data(file_t *file,
+                     const char *data, int len,
+                     const char *mimetype,
+                     const char *file_extension)
 {
-        char name[256];
-        snprintf(name, 256, "%s.jpg", file->id);
-        name[255] = 0;
+        char localfile[256];
+        char path[1024];
+        
+        rprintf(localfile, sizeof(localfile), "%s.%s", file->id, file_extension);
 
-        file->name = mem_strdup(name);
-        if (file->name == NULL)
+        if (file->localfile != NULL)
+                r_free(file->localfile);        
+        file->localfile = r_strdup(localfile);
+        if (file->localfile == NULL)
                 return -1;
 
-        char path[1024];
-        file_path(file, path, 1024);
+        if (file->mimetype != NULL)
+                r_free(file->mimetype);        
+        file->mimetype = r_strdup(mimetype);
+        if (file->mimetype == NULL)
+                return -1;
+
+        file_path(file, path, sizeof(path));
         
         int fd = open(path,
                       O_WRONLY | O_CREAT,
                       S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
         if (fd == -1) {
-                log_warn("Failed to open '%s': %s.", path, strerror(errno));
+                r_warn("Failed to open '%s': %s.", path, strerror(errno));
                 return -1;
         }
         
         ssize_t n, wrote = 0;
         while (wrote < len) {
-                n = write(fd, image + wrote, len - wrote);
-		//log_debug("file_import_jpeg: %s: len=%d, wrote=%d, n=%d", path, len, wrote, n);
+                n = write(fd, data + wrote, len - wrote);
+		//r_debug("file_import_jpeg: %s: len=%d, wrote=%d, n=%d", path, len, wrote, n);
                 if (n == -1) {
-                        log_warn("Failed to write '%s': %s.", path, strerror(errno));
+                        r_warn("Failed to write '%s': %s.", path, strerror(errno));
                         close(fd);
                         return -1;
                 }
@@ -149,13 +256,51 @@ int file_import_jpeg(file_t *file, const unsigned char *image, int len)
         }
         close(fd);
 
-        json_object_setstr(file->metadata, "mimetype", "image/jpeg");
-        return file_store_metadata(file);
+        if (file_update_files(file) != 0) {
+                // FIXME: then what?
+        }
+
+        return file_set_metadata_str(file, "mimetype", mimetype);
+}
+
+int file_import_jpeg(file_t *file, const char *image, int len)
+{
+        return file_import_data(file, image, len, "image/jpeg", "jpg");
+}
+
+int file_import_png(file_t *file, const char *image, int len)
+{
+        return file_import_data(file, image, len, "image/png", "png");
+}
+
+int file_import_svg(file_t *file, const char *svg, int len)
+{
+        return file_import_data(file, svg, len, "image/svg+xml", "svg");
+}
+
+int file_import_image(file_t *file, image_t*image, const char *format)
+{
+        file_set_timestamp(file, clock_time());
+        
+        membuf_t *buffer = new_membuf();
+        if (buffer == NULL)
+                return -1;
+
+        if (image_store_to_mem(image, buffer, format) != 0) {
+                delete_membuf(buffer);
+                return -1;
+	}
+        
+        file_import_data(file, membuf_data(buffer), membuf_len(buffer),
+                         image_mimetype(format), format);
+
+	delete_membuf(buffer);
+        return 0;
 }
 
 void file_set_timestamp(file_t *file, double timestamp)
 {
-        json_object_setnum(file->metadata, "timestamp", timestamp);
+        file_set_metadata_num(file, "timestamp", timestamp);
 }
 
 double file_get_timestamp(file_t *file)
@@ -165,15 +310,12 @@ double file_get_timestamp(file_t *file)
 
 void file_set_position(file_t *file, vector_t position)
 {
-        json_object_t a = json_object_get(file->metadata, "position");
-        if (json_falsy(a)) {
-                a = json_array_create();
-                json_object_set(file->metadata, "position", a);
-                json_unref(a);
-        }
+        json_object_t a = json_array_create();
         json_array_setnum(a, 0, position.x);
         json_array_setnum(a, 1, position.y);
         json_array_setnum(a, 2, position.z);
+        file_set_metadata(file, "position", a);
+        json_unref(a);
 }
 
 vector_t file_get_position(file_t *file)
@@ -193,11 +335,14 @@ static int file_load_metadata(file_t *file)
         char path[1024];
         file_get_metadata_path(file, path, sizeof(path));
 
+        if (!is_file(path))
+                return 0;
+
         int err;
         char errmsg[128];
         json_object_t obj = json_load(path, &err, errmsg, sizeof(errmsg));
         if (err != 0) {
-                log_warn("Failed to load the metadata for file '%s': %s",
+                r_warn("Failed to load the metadata for file '%s': %s",
                          file->id, errmsg);
                 return -1;
         }
@@ -209,17 +354,15 @@ static int file_load_metadata(file_t *file)
 
 static int file_load(file_t *file, json_object_t obj)
 {
-        json_print(obj, 0);
-        
-        const char *name = json_object_getstr(obj, "file");
-        if (name == NULL) {
-                log_warn("File has no name! (id %s)", file->id);
+        const char *localfile = json_object_getstr(obj, "file");
+        if (localfile == NULL) {
+                r_warn("File has no localfile! (id %s)", file->id);
                 return -1;
         }
-        if (file->name)
-                mem_free(file->name);
-        file->name = mem_strdup(name);
-        if (file->name == NULL)
+        if (file->localfile)
+                r_free(file->localfile);
+        file->localfile = r_strdup(localfile);
+        if (file->localfile == NULL)
                 return -1;
 
         return file_load_metadata(file);
@@ -227,13 +370,36 @@ static int file_load(file_t *file, json_object_t obj)
 
 void file_print(file_t *file)
 {
-        printf("        File '%s', '%s'\n", file->id, file->name);
+        printf("        File '%s', '%s'\n", file->id, file->localfile);
 }
 
 json_object_t file_get_metadata(file_t *file)
 {
         // TODO: return a clone?
         return file->metadata;
+}
+
+int file_set_metadata_str(file_t *file, const char *key, const char *value)
+{
+        json_object_setstr(file->metadata, key, value);
+        return file_store_metadata(file);
+}
+
+int file_set_metadata_num(file_t *file, const char *key, double value)
+{
+        json_object_setnum(file->metadata, key, value);
+        return file_store_metadata(file);
+}
+
+int file_set_metadata(file_t *file, const char *key, json_object_t value)
+{
+        json_object_set(file->metadata, key, value);
+        return file_store_metadata(file);
+}
+
+const char *file_get_metadata_str(file_t *file, const char *key)
+{
+        return json_object_getstr(file->metadata, key);
 }
 
 /**************************************************************/
@@ -243,6 +409,7 @@ struct _fileset_t {
         char *id;
         list_t *files;
         int num_files;
+        json_object_t metadata;
 };
 
 static int fileset_unload(fileset_t *fileset);
@@ -250,16 +417,17 @@ static int fileset_load(fileset_t *fileset, json_object_t obj);
 
 fileset_t *new_fileset(scan_t *scan, const char *id)
 {
-        fileset_t *fileset = new_obj(fileset_t);
+        fileset_t *fileset = r_new(fileset_t);
         if (fileset == NULL) return NULL;
         
         fileset->scan = scan;
-        fileset->id = mem_strdup(id);
+        fileset->id = r_strdup(id);
         fileset->files = NULL;
         fileset->num_files = 0;
+        fileset->metadata = json_object_create();
         
         if (fileset->id == NULL) {
-                delete_obj(fileset);
+                r_delete(fileset);
                 return NULL;
         }
         
@@ -269,16 +437,36 @@ fileset_t *new_fileset(scan_t *scan, const char *id)
 void delete_fileset(fileset_t *fileset)
 {
         if (fileset) {
-                if (fileset->id) mem_free(fileset->id);
-                delete_obj(fileset);
+                if (fileset->id) r_free(fileset->id);
+                json_unref(fileset->metadata);
+                r_delete(fileset);
         }
+}
+
+static void fileset_broadcast(fileset_t *fileset,
+                              const char *event,
+                              file_t *file)
+{
+        scan_broadcast(fileset->scan, event, fileset, file);
+}
+
+static int fileset_update_files(fileset_t *fileset)
+{
+        scan_t *scan = fileset_get_scan(fileset);
+        return scan_store_filesets(scan);
 }
 
 static int fileset_add_file(fileset_t *fileset, file_t *file)
 {
         fileset->num_files++;
         fileset->files = list_prepend(fileset->files, file);
-        return fileset->files == NULL;
+        return (fileset->files == NULL)? -1 : 0;
+}
+
+static int fileset_remove_file(fileset_t *fileset, file_t *file)
+{
+        fileset->files = list_remove(fileset->files, file);
+        return 0;
 }
 
 static int fileset_unload(fileset_t *fileset)
@@ -293,59 +481,85 @@ static int fileset_unload(fileset_t *fileset)
         }
 }
 
+static int fileset_get_metadata_path(fileset_t *fileset, char *buffer, int len)
+{
+        scan_t *scan = fileset_get_scan(fileset);
+        database_t *db = scan_get_database(scan);
+        return database_get_fileset_metadata_path(db, scan, fileset, buffer, len);
+}
+
+static int fileset_store_metadata(fileset_t *fileset)
+{
+        char path[1024];
+        fileset_get_metadata_path(fileset, path, sizeof(path));
+        return json_tofile(fileset->metadata, 0, path);
+}
+
 static int fileset_store_file(fileset_t *fileset, file_t *file, FILE* fp)
 {
-        //log_debug("fileset_store_file @1");
-        if (file->name == NULL) {
-                //log_debug("fileset_store_file @1.1");
-                log_warn("File '%s' has no file name. Skipping.", file->id);
+        //r_debug("fileset_store_file @1");
+        if (file->localfile == NULL || file->mimetype == NULL) {
+                //r_debug("fileset_store_file @1.1");
+                //r_warn("File '%s' has no file localfile. Skipping.", file->id);
         } else {
-                //log_debug("fileset_store_file @1.2");
-                fprintf(fp, "{\"file\": \"%s\", \"id\": \"%s\"}", file->name, file->id);
+                //r_debug("fileset_store_file @1.2");
+                fprintf(fp, "{\"id\": \"%s\", \"file\": \"%s\", \"mimetype\": \"%s\"}",
+                        file->id, file->localfile, file->mimetype);
         }
-        //log_debug("fileset_store_file @2");
+        //r_debug("fileset_store_file @2");
         return 0;
 }
 
 static int fileset_store_files(fileset_t *fileset, FILE* fp)
 {
-        //log_debug("fileset_store_files @1");
+        //r_debug("fileset_store_files @1");
         fprintf(fp, "{\"id\": \"%s\", \"files\": [", fileset->id);
 
         list_t *files = fileset->files;
         while (files) {
-                //log_debug("fileset_store_files @2");
+                //r_debug("fileset_store_files @2");
                 file_t *file = list_get(files, file_t);;
                 fileset_store_file(fileset, file, fp);
                 files = list_next(files);
                 if (files) fprintf(fp, ", ");
         } 
         fprintf(fp, "]}");
-        //log_debug("fileset_store_files @3");
+        //r_debug("fileset_store_files @3");
         return 0;
 }
 
-static int fileset_store_metadata(fileset_t *fileset)
+static int fileset_load_metadata(fileset_t *fileset)
 {
-        int err = 0;
-        for (list_t *l = fileset->files; l != NULL; l = list_next(l)) {
-                file_t *file = list_get(l, file_t);
-                if (file_store_metadata(file) != 0)
-                        err--;
-        } 
-        return err;
+        char path[1024];
+        fileset_get_metadata_path(fileset, path, sizeof(path));
+
+        if (!is_file(path))
+                return 0;
+
+        int err;
+        char errmsg[128];
+        json_object_t obj = json_load(path, &err, errmsg, sizeof(errmsg));
+        if (err != 0) {
+                r_warn("Failed to load the metadata for file '%s': %s",
+                       fileset->id, errmsg);
+                return -1;
+        }
+
+        json_unref(fileset->metadata);
+        fileset->metadata = obj;
+        return 0;
 }
 
 static int fileset_load(fileset_t *fileset, json_object_t obj)
 {
         if (fileset_unload(fileset) != 0) {
-                log_warn("fileset_load: Unload failed");
+                r_warn("fileset_load: Unload failed");
                 return -1;
         }
         
         json_object_t files = json_object_get(obj, "files");
         if (!json_isarray(files)) {
-                log_warn("Failed to load fileset '%s': "
+                r_warn("Failed to load fileset '%s': "
                          "the files field is supposed to be a JSON array",
                          fileset->id);
                 return -1;
@@ -354,22 +568,22 @@ static int fileset_load(fileset_t *fileset, json_object_t obj)
                 json_object_t f = json_array_get(files, i);
                 const char *id = json_object_getstr(f, "id");
                 if (id == NULL) {
-                        log_warn("While loading fileset '%s/%s': "
+                        r_warn("While loading fileset '%s/%s': "
                                  "file %d has no id!",
                                  scan_id(fileset->scan), fileset->id, i);
                         continue;
                 }
-                const char *name = json_object_getstr(f, "file");
-                if (name == NULL) {
-                        log_warn("While loading fileset '%s/%s': file %d has no name.",
+                const char *localfile = json_object_getstr(f, "file");
+                if (localfile == NULL) {
+                        r_warn("While loading fileset '%s/%s': file %d has no localfile.",
                                  scan_id(fileset->scan), fileset->id, i);
                 }
                 const char *mimetype = json_object_getstr(f, "mimetype");
-                if (name == NULL) {
-                        log_warn("While loading fileset '%s/%s': file %d has no mimetype.",
+                if (mimetype == NULL) {
+                        r_warn("While loading fileset '%s/%s': file %d has no mimetype.",
                                  scan_id(fileset->scan), fileset->id, i);
                 }
-                file_t *file = new_file(fileset, id, name, mimetype);
+                file_t *file = new_file(fileset, id, localfile, mimetype);
                 if (file == NULL)
                         return -1;
                 if (file_load(file, f) != 0) {
@@ -379,7 +593,7 @@ static int fileset_load(fileset_t *fileset, json_object_t obj)
                         return -1;
                 }
         }
-        return 0;
+        return fileset_load_metadata(fileset);
 }
 
 scan_t *fileset_get_scan(fileset_t *fileset)
@@ -390,25 +604,33 @@ scan_t *fileset_get_scan(fileset_t *fileset)
 file_t *fileset_new_file(fileset_t *fileset)
 {
         char id[32];
+        int num = fileset->num_files;
         
-        //log_debug("fileset_new_file @1");
-        while (1) {
-                //log_debug("fileset_new_file @2");
-                snprintf(id, 32, "%05d", fileset->num_files);
+        //r_debug("fileset_new_file @1");
+        while (num < 1000000) {
+                //r_debug("fileset_new_file @2");
+                snprintf(id, 32, "%05d", num);
                 id[31] = 0;
                 if (fileset_get_file(fileset, id) == NULL)
                         break;
-                fileset->num_files++;
+                num++;
         }
         
-        //log_debug("fileset_new_file @3");
+        //r_debug("fileset_new_file @3");
         file_t *file = new_file(fileset, id, NULL, NULL);
         if (file == NULL) return NULL;
-        //log_debug("fileset_new_file @4");
+        //r_debug("fileset_new_file @4");
         fileset_add_file(fileset, file);
-        //log_debug("fileset_new_file @5");
-        fileset->num_files++;
-        //log_debug("fileset_new_file @6");
+        //r_debug("fileset_new_file @5");
+
+        if (fileset_update_files(fileset) != 0) {
+                fileset_remove_file(fileset, file);
+                delete_file(file);
+                return NULL;
+        }
+        
+        fileset_broadcast(fileset, "new", file);
+
         return file;
 }
 
@@ -419,7 +641,7 @@ const char *fileset_id(fileset_t *fileset)
 
 int fileset_count_files(fileset_t *fileset)
 {
-        //log_debug("fileset_count_files: list_size=%d", list_size(fileset->files));
+        //r_debug("fileset_count_files: list_size=%d", list_size(fileset->files));
         return list_size(fileset->files);
 }
 
@@ -439,16 +661,16 @@ file_t *fileset_get_file(fileset_t *fileset, const char *id)
         return NULL;
 }
 
-file_t *fileset_get_file_by_name(fileset_t *fileset, const char *name)
-{
-        for (list_t *l = fileset->files; l != NULL; l = list_next(l)) {
-                file_t *file = list_get(l, file_t);
-                if (file->name != NULL
-                    && rstreq(file->name, name))
-                        return file;
-        }
-        return NULL;
-}
+/* file_t *fileset_get_file_by_name(fileset_t *fileset, const char *name) */
+/* { */
+/*         for (list_t *l = fileset->files; l != NULL; l = list_next(l)) { */
+/*                 file_t *file = list_get(l, file_t); */
+/*                 if (file->name != NULL */
+/*                     && rstreq(file->name, name)) */
+/*                         return file; */
+/*         } */
+/*         return NULL; */
+/* } */
 
 void fileset_print(fileset_t *fileset)
 {
@@ -457,6 +679,41 @@ void fileset_print(fileset_t *fileset)
                 file_t *file = list_get(l, file_t);
                 file_print(file);
         }
+}
+
+int fileset_set_metadata_str(fileset_t *fileset, const char *key, const char *value)
+{
+        json_object_setstr(fileset->metadata, key, value);
+        return fileset_store_metadata(fileset);
+}
+
+int fileset_set_metadata_num(fileset_t *fileset, const char *key, double value)
+{
+        json_object_setnum(fileset->metadata, key, value);
+        return fileset_store_metadata(fileset);
+}
+
+int fileset_set_metadata(fileset_t *fileset, const char *key, json_object_t value)
+{
+        json_object_set(fileset->metadata, key, value);
+        return fileset_store_metadata(fileset);
+}
+
+file_t* fileset_store_image(fileset_t *fileset, const char *name,
+                            image_t *image, const char *format)
+{
+        if (fileset == NULL)
+                return NULL;
+        
+        file_t *file = fileset_new_file(fileset);
+        if (file == NULL)
+                return NULL;
+        
+        file_set_metadata_str(file, "name", name);
+        if (file_import_image(file, image, format) != 0)
+                return NULL;
+        
+        return file;
 }
 
 /**************************************************************/
@@ -472,16 +729,16 @@ static int scan_unload(scan_t *scan);
 
 scan_t *new_scan(database_t *db, const char *id)
 {
-        scan_t *scan = new_obj(scan_t);
+        scan_t *scan = r_new(scan_t);
         if (scan == NULL) return NULL;
 
         scan->db = db;
-        scan->id = mem_strdup(id);
+        scan->id = r_strdup(id);
         scan->filesets = NULL;
         scan->metadata = json_object_create();
         
         if (scan->id == NULL) {
-                delete_obj(scan);
+                r_delete(scan);
                 return NULL;
         }
         
@@ -493,10 +750,18 @@ void delete_scan(scan_t *scan)
         if (scan) {
                 scan_unload(scan);
                 if (scan->id)
-                        mem_free(scan->id);
-                delete_obj(scan);
+                        r_free(scan->id);
+                r_delete(scan);
                 json_unref(scan->metadata);
         }
+}
+
+static void scan_broadcast(scan_t *scan,
+                           const char *event,
+                           fileset_t *fileset,
+                           file_t *file)
+{
+        database_broadcast(scan->db, event, scan, fileset, file);
 }
 
 const char *scan_id(scan_t *scan)
@@ -549,6 +814,11 @@ fileset_t *scan_new_fileset(scan_t *scan, const char *id)
                 delete_fileset(fileset);
                 return NULL;
 	}
+        if (scan_store_filesets(scan) != 0) {
+                delete_fileset(fileset);
+                return NULL;
+        }
+        scan_broadcast(scan, "new", fileset, NULL);
 	return fileset;
 }
 
@@ -589,72 +859,76 @@ static int scan_store_metadata(scan_t *scan)
         err = scan_get_metadata_path(scan, path, sizeof(path));
         if (err != 0) return err;
         
-        err = json_tofile(scan->metadata, 0, path);
-        if (err != 0) return err;
-
-        for (list_t *l = scan->filesets; l != NULL; l = list_next(l)) {
-                fileset_t *fileset = list_get(l, fileset_t);
-                if (fileset_store_metadata(fileset) != 0)
-                        err--;
-        }
-        return err;
+        return json_tofile(scan->metadata, 0, path);
 }
 
 static int scan_store_filesets(scan_t *scan)
 {
         char path[1024];
-	
-        //log_debug("scan_store_filesets @1");
+        char backup[1024];
+
+        //r_debug("scan_store_filesets @1");
 	if (scan_get_fileset_listing(scan, path, sizeof(path)) != 0)
                 return -1;
 
-        log_info("scan_store: Storing filesets to '%s'", path);
+        rprintf(backup, sizeof(backup), "%s.backup", path);
+        if (rename(path, backup) != 0) {
+                if (errno != ENOENT)
+                        r_warn("Failed to create a backup file");
+        }
         
-        //log_debug("scan_store_filesets @2");
+        //r_info("scan_store: Storing filesets to '%s'", path);
+        
+        //r_debug("scan_store_filesets @2");
         FILE* fp = fopen(path, "w");
         if (fp == NULL) {
-                log_warn("Failed to open file '%s'", path);
+                r_warn("Failed to open file '%s'", path);
                 return -1;
         }
         
-        //log_debug("scan_store_filesets @3");
+        //r_debug("scan_store_filesets @3");
         fprintf(fp, "{\"filesets\": [");
         for (list_t *l = scan->filesets; l != NULL; l = list_next(l)) {
-                //log_debug("scan_store_filesets @3.1");
+                //r_debug("scan_store_filesets @3.1");
                 fileset_t *fileset = list_get(l, fileset_t);
                 fileset_store_files(fileset, fp);
-                if (l) fprintf(fp, ", ");
+                if (list_next(l)) fprintf(fp, ", ");
         }
         
         fprintf(fp, "]}");
         fclose(fp);
-        //log_debug("scan_store_filesets @4");
+        //r_debug("scan_store_filesets @4");
+
+        unlink(backup);
         return 0;
 }
 
-int scan_store(scan_t *scan)
-{
-        int err = 0;
-        //log_debug("scan_store @1");
-        if (scan_store_filesets(scan) != 0)
-                err--;
-        //log_debug("scan_store @2");
-        if (scan_store_metadata(scan) != 0)
-                err--;
-        //log_debug("scan_store @3");
-        return 0;
-}
+/* int scan_store(scan_t *scan) */
+/* { */
+/*         int err = 0; */
+/*         //r_debug("scan_store @1"); */
+/*         if (scan_store_filesets(scan) != 0) */
+/*                 err--; */
+/*         //r_debug("scan_store @2"); */
+/*         if (scan_store_metadata(scan) != 0) */
+/*                 err--; */
+/*         //r_debug("scan_store @3"); */
+/*         return 0; */
+/* } */
 
 static int scan_load_metadata(scan_t *scan)
 {
         char path[1024];
         scan_get_metadata_path(scan, path, sizeof(path));
 
+        if (!is_file(path))
+                return 0;
+        
         int err;
         char errmsg[128];
         json_object_t obj = json_load(path, &err, errmsg, sizeof(errmsg));
         if (err != 0) {
-                log_warn("Failed to load the metadata for scan '%s': %s",
+                r_warn("Failed to load the metadata for scan '%s': %s",
                          scan->id, errmsg);
                 return -1;
         }
@@ -666,7 +940,7 @@ static int scan_load_metadata(scan_t *scan)
 
 static int scan_load_files(scan_t *scan)
 {
-        log_info("Loading scan '%s'", scan->id);
+        //r_info("Loading scan '%s'", scan->id);
 
         char buffer[1024];
         scan_get_fileset_listing(scan, buffer, sizeof(buffer));
@@ -675,13 +949,13 @@ static int scan_load_files(scan_t *scan)
         char errmsg[128];
         json_object_t obj = json_load(buffer, &err, errmsg, sizeof(errmsg));
         if (json_falsy(obj)) {
-                log_warn("Failed to load scan '%s'", scan->id);
+                r_warn("Failed to load scan '%s'", scan->id);
                 return -1;
         }
 
         json_object_t filesets = json_object_get(obj, "filesets");
         if (!json_isarray(filesets)) {
-                log_warn("Failed to load scan '%s': "
+                r_warn("Failed to load scan '%s': "
                          "the filesets field is supposed to be a JSON array",
                          scan->id);
                 return -1;
@@ -691,7 +965,7 @@ static int scan_load_files(scan_t *scan)
                 json_object_t fs = json_array_get(filesets, i);
                 const char *id = json_object_getstr(fs, "id");
                 if (id == NULL) {
-                        log_warn("While loading scan '%s': "
+                        r_warn("While loading scan '%s': "
                                  "fileset %d has no id!",
                                  scan->id, i);
                         continue;
@@ -706,7 +980,7 @@ static int scan_load_files(scan_t *scan)
                 }
                 /* for (int i = 0; i < fileset_count_files(fileset); i++) { */
                 /*         file_t *file = fileset_get_file_at(fileset, i); */
-                /*         log_debug("%s", file_id(file));; */
+                /*         r_debug("%s", file_id(file));; */
                 /* } */
         }
         
@@ -718,7 +992,7 @@ static int scan_load_files(scan_t *scan)
 static int scan_load(scan_t *scan)
 {
         if (scan_unload(scan) != 0) {
-                log_warn("scan_load: Unload failed");
+                r_warn("scan_load: Unload failed");
                 return -1;
         }
 
@@ -759,17 +1033,21 @@ int scan_set_metadata(scan_t *scan, const char *key, json_object_t value)
 struct _database_t {
         char *path;
         list_t *scans;
+        database_listener_t listener;
+        void *userdata;
 };
 
 database_t *new_database(const char *path)
 {
-        database_t *db = new_obj(database_t);
+        database_t *db = r_new(database_t);
         if (db == NULL) return NULL;
 
+        db->userdata = NULL;
+        db->listener = NULL;
         db->scans = NULL;
-        db->path = mem_strdup(path);
+        db->path = r_strdup(path);
         if (db->path == NULL) {
-                delete_obj(db);
+                r_delete(db);
                 return NULL;
         }
         
@@ -781,8 +1059,8 @@ void delete_database(database_t *db)
         if (db) {
                 database_unload(db);
                 if (db->path)
-                        mem_free(db->path);
-                delete_obj(db);
+                        r_free(db->path);
+                r_delete(db);
         }
 }
 
@@ -815,20 +1093,20 @@ scan_t *database_get_scan(database_t *db, const char *id)
 
 int database_unload(database_t *db)
 {
-        //log_debug("database_unload @1");
+        //r_debug("database_unload @1");
         if (db->scans) {
-                //log_debug("database_unload @2");
+                //r_debug("database_unload @2");
                 for (list_t *l = db->scans; l != NULL; l = list_next(l)) {
-                        //log_debug("database_unload @2.0");
+                        //r_debug("database_unload @2.0");
                         scan_t *scan = list_get(l, scan_t);
-                        //log_debug("database_unload @2.1");
+                        //r_debug("database_unload @2.1");
                         delete_scan(scan);
                 }
-                //log_debug("database_unload @2.2");
+                //r_debug("database_unload @2.2");
                 delete_list(db->scans);
                 db->scans = NULL;
         }
-        //log_debug("database_unload @3");
+        //r_debug("database_unload @3");
         return 0;
 }
         
@@ -836,13 +1114,19 @@ int database_load(database_t *db)
 {
         int err = 0;
         if (database_unload(db) != 0) {
-                log_warn("database_unload: Unload failed");
+                r_warn("database_unload: Unload failed");
                 return -1;
         }
 
         list_t *ids = dir_list(db->path);
         for (list_t *l = ids; l != NULL; l = list_next(l)) {
                 char *id = list_get(l, char);
+
+                char files[1024];
+                rprintf(files, sizeof(files), "%s/%s/files.json", db->path, id);
+                if (!is_file(files))
+                        continue;
+                
                 scan_t *scan = new_scan(db, id);
                 if (scan == NULL) {
                         err = -1;
@@ -857,59 +1141,73 @@ int database_load(database_t *db)
                 }
         }
         for (list_t *l = ids; l != NULL; l = list_next(l))
-                mem_free(list_get(l, char));
+                r_free(list_get(l, char));
 
         return err;
 }
 
-int database_create_scan_dir(database_t *db, const char *id)
+scan_t *database_new_scan(database_t *db, const char *id)
 {
-        char path[1024];
-        
-        snprintf(path, 1024, "%s/%s", db->path, id);
-        path[1023] = 0;
-	if (mkdir(path, 0777) == -1) {
-                log_err("Failed to create directory '%s': %s.",
-                        path, strerror(errno));
-                return -1;
-	}
+        char datetime[256];
+        const char *s = id;
 
-        log_info("new scan '%s' in directory '%s'", id, path);
-
-        snprintf(path, 1024, "%s/%s/metadata", db->path, id);
-        path[1023] = 0;
-	if (mkdir(path, 0777) == -1) {
-                log_err("Failed to create directory '%s': %s.",
-                        path, strerror(errno));
-                return -1;
-	}
-        return 0;
-}
-
-scan_t *database_new_scan(database_t *db)
-{
-        char id[256];
-        clock_datetime(id, sizeof(id), '-', '_', '-');
-        if (database_create_scan_dir(db, id) != 0)
-                return NULL;
-        scan_t *scan = new_scan(db, id);
+        if (s == NULL) {
+                clock_datetime(datetime, sizeof(datetime), '-', '_', '-');
+                s = datetime;
+        }
+        scan_t *scan = new_scan(db, s);
 	if (scan == NULL) return NULL;
 	
+        if (database_create_scan_dir(db, scan) != 0) {
+                delete_scan(scan);
+                return NULL;
+        }
+        
 	if (database_add_scan(db, scan) != 0) {
                 delete_scan(scan);
                 return NULL;
 	}
+        database_broadcast(db, "new", scan, NULL, NULL);
         return scan;
 }
 
-int database_create_fileset_dir(database_t *db, scan_t *scan, const char *id)
+// --
+
+static int database_get_file_path(database_t *db,
+                                  scan_t *scan,
+                                  fileset_t *fileset,
+                                  file_t *file,
+                                  char *buffer, int len)
+{
+        if (rprintf(buffer, len, "%s/%s/%s/%s",
+                    db->path, scan->id,
+                    fileset->id, file->localfile) == NULL)
+                return -1;
+        return 0;
+}
+
+static int database_get_file_metadata_path(database_t *db,
+                                           scan_t *scan,
+                                           fileset_t *fileset,
+                                           file_t *file,
+                                           char *buffer, int len)
+{
+        if (rprintf(buffer, len, "%s/%s/metadata/%s/%s.json",
+                    db->path, scan->id, fileset->id, file->id) == NULL)
+                return -1;
+        return 0;
+}
+
+// --
+
+static int database_create_fileset_dir(database_t *db, scan_t *scan, const char *id)
 {
         char path[1024];
         
         snprintf(path, 1024, "%s/%s/%s", db->path, scan->id, id);
         path[1023] = 0;
 	if (mkdir(path, 0777) == -1) {
-                log_err("Failed to create directory '%s': %s.",
+                r_err("Failed to create directory '%s': %s.",
                         path, strerror(errno));
                 return -1;
 	}
@@ -917,7 +1215,7 @@ int database_create_fileset_dir(database_t *db, scan_t *scan, const char *id)
         snprintf(path, 1024, "%s/%s/metadata/%s", db->path, scan->id, id);
         path[1023] = 0;
 	if (mkdir(path, 0777) == -1) {
-                log_err("Failed to create directory '%s': %s.",
+                r_err("Failed to create directory '%s': %s.",
                         path, strerror(errno));
                 return -1;
 	}
@@ -925,56 +1223,83 @@ int database_create_fileset_dir(database_t *db, scan_t *scan, const char *id)
         return 0;
 }
 
-int database_get_file_path(database_t *db,
-                           scan_t *scan,
-                           fileset_t *fileset,
-                           file_t *file,
-                           char *buffer, int len)
+static int database_get_fileset_metadata_path(database_t *db,
+                                              scan_t *scan,
+                                              fileset_t *fileset,
+                                              char *buffer, int len)
 {
-        snprintf(buffer, len, "%s/%s/%s/%s", db->path, scan->id, fileset->id, file->name);
-        buffer[len-1] = 0;
+        if (rprintf(buffer, len, "%s/%s/metadata/%s.json",
+                     db->path, scan->id, fileset->id) == NULL)
+                return -1;
         return 0;
 }
 
-int database_get_file_metadata_path(database_t *db,
+//
+
+static int database_get_scan_directory(database_t *db,
+                                       scan_t *scan,
+                                       char *buffer, int len)
+{
+        if (rprintf(buffer, len, "%s/%s", db->path, scan->id) == NULL)
+                return -1;
+        return 0;
+}
+
+static int database_create_scan_dir(database_t *db, scan_t *scan)
+{
+        char path[1024];
+
+        if (database_get_scan_directory(db, scan, path, sizeof(path)) != 0)
+                return -1;
+
+        if (path_exists(path)) {
+                if (is_directory(path))
+                        return 0;
+                else {
+                        r_err("Scan path exists but is not a directory: '%s'", path);
+                        return -1;
+                }
+        }
+        
+	if (mkdir(path, 0777) == -1) {
+                r_err("Failed to create directory '%s': %s.",
+                        path, strerror(errno));
+                return -1;
+	}
+
+        r_info("new scan '%s' in directory '%s'", scan->id, path);
+
+        if (rprintf(path, sizeof(path), "%s/%s/metadata", db->path, scan->id) == NULL)
+                return -1;
+
+	if (mkdir(path, 0777) == -1) {
+                r_err("Failed to create directory '%s': %s.",
+                        path, strerror(errno));
+                return -1;
+	}
+        return 0;
+}
+
+static int database_get_scan_metadata_path(database_t *db,
                                     scan_t *scan,
-                                    fileset_t *fileset,
-                                    file_t *file,
                                     char *buffer, int len)
 {
-        snprintf(buffer, len, "%s/%s/metadata/%s/%s.json",
-                 db->path, scan->id, fileset->id, file->id);
-        buffer[len-1] = 0;
+        if (rprintf(buffer, len, "%s/%s/metadata/metadata.json",
+                    db->path, scan->id) == NULL)
+                return -1;
         return 0;
 }
 
-int database_get_scan_directory(database_t *db,
-                                scan_t *scan,
-                                char *buffer, int len)
+static int database_get_scan_json_file(database_t *db,
+                                       scan_t *scan,
+                                       char *buffer, int len)
 {
-        snprintf(buffer, len, "%s/%s", db->path, scan->id);
-        buffer[len-1] = 0;
+        if (rprintf(buffer, len, "%s/%s/files.json", db->path, scan->id) == NULL)
+                return -1;
         return 0;
 }
 
-int database_get_scan_metadata_path(database_t *db,
-                                    scan_t *scan,
-                                    char *buffer, int len)
-{
-        snprintf(buffer, len, "%s/%s/metadata/metadata.json",
-                 db->path, scan->id);
-        buffer[len-1] = 0;
-        return 0;
-}
-
-int database_get_scan_json_file(database_t *db,
-                                scan_t *scan,
-                                char *buffer, int len)
-{
-        snprintf(buffer, len, "%s/%s/files.json", db->path, scan->id);
-        buffer[len-1] = 0;
-        return 0;
-}
+//
 
 void database_print(database_t *db)
 {
@@ -982,4 +1307,28 @@ void database_print(database_t *db)
                 scan_t *scan = list_get(l, scan_t);
                 scan_print(scan);
         }
+}
+
+void database_set_listener(database_t *db, database_listener_t listener, void *userdata)
+{
+        db->userdata = userdata;
+        db->listener = listener;
+}
+
+void database_broadcast(database_t *db,
+                        const char *event,
+                        scan_t *scan,
+                        fileset_t *fileset,
+                        file_t *file)
+{
+        const char *scan_id = scan? scan->id : NULL;
+        const char *fileset_id = fileset? fileset->id : NULL;
+        const char *file_id = file? file->id : NULL;
+        if (db->listener)
+                db->listener(db->userdata, db, event, scan_id, fileset_id, file_id);
+}
+
+const char *database_path(database_t *db)
+{
+        return db->path;
 }

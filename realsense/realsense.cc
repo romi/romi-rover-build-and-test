@@ -30,7 +30,7 @@ int realsense_init(int argc, char **argv)
                 pipe.start(cfg);
                 
         } catch (const rs2::error& e) {
-                log_err("realsense_init: an error occurred: %s", e.what());
+                r_err("realsense_init: an error occurred: %s", e.what());
                 return -1;
         }
 
@@ -89,18 +89,18 @@ void realsense_broadcast()
                 frames = pipe.wait_for_frames();
                         
         } catch (const camera_disconnected_error& e) {
-                log_err("Camera was disconnected! Quitting."); // TODO: use health monitor
+                r_err("Camera was disconnected! Quitting."); // TODO: use health monitor
                 app_set_quit();
                 
         } catch (const recoverable_error& e) {
-                log_warn("Operation failed. Trying again. (error: %s)", e.what());
+                r_warn("Operation failed. Trying again. (error: %s)", e.what());
                 return;
                 
         } catch (const error& e) {
-                log_err("An error occurred: %s", e.what());
+                r_err("An error occurred: %s", e.what());
                 error_count++;
                 if (error_count > 20) {
-                        log_err("Too many errors. Quitting");
+                        r_err("Too many errors. Quitting");
                         app_set_quit();
                 }
                 return;
@@ -113,7 +113,7 @@ void realsense_broadcast()
         if (convert_rgb) {
                 frame color_frame = frames.get_color_frame();
 
-                log_debug("convert_rgb");
+                r_debug("convert_rgb");
 
                 membuf_lock(rgbbuf);
                 convert_to_jpeg(color_frame.get_data(), rgb_width, rgb_height, 85, rgbbuf);
@@ -128,7 +128,7 @@ void realsense_broadcast()
         if (convert_depth) {
                 frame depth_frame = frames.get_depth_frame();
                         
-                log_debug("convert_depth");
+                r_debug("convert_depth");
                 
                 membuf_lock(pngbuf);
                 membuf_clear(pngbuf);
@@ -150,16 +150,16 @@ int realsense_still(void *data, request_t *request)
         bool done = false;
         while (!done) {
                 
-                log_debug("send_still_image: want_image=true");
+                r_debug("send_still_image: want_image=true");
                 
                 mutex_lock(mutex);
                 want_image = true;
                 mutex_unlock(mutex);
 
                 membuf_lock(rgbbuf);
-                log_debug("realsense_still: image len=%d", membuf_len(rgbbuf));
+                r_debug("realsense_still: image len=%d", membuf_len(rgbbuf));
                 if (membuf_len(rgbbuf) > 0) {
-                        log_debug("send_still_image: have_image=true");
+                        r_debug("send_still_image: have_image=true");
                         request_reply_append(request, membuf_data(rgbbuf), membuf_len(rgbbuf));
                         done = true;
                 }
@@ -169,7 +169,7 @@ int realsense_still(void *data, request_t *request)
         }
 
         mutex_lock(mutex);
-        log_debug("send_still_image: want_image=false");
+        r_debug("send_still_image: want_image=false");
         want_image = false;
         mutex_unlock(mutex);
         

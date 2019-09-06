@@ -134,7 +134,7 @@ int convert_to_png_16bit_grayscale(const uint16_t* image, int width, int height,
                      PNG_COLOR_TYPE_GRAY, 
                      PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
-        row_pointers = (png_bytepp) png_malloc(png_ptr, width * sizeof(png_bytep));
+        row_pointers = (png_bytepp) png_malloc(png_ptr, height * sizeof(png_bytep));
         for (y = 0; y < (size_t) height; y++)
                 row_pointers[y] = png_malloc(png_ptr, width * 2);
 

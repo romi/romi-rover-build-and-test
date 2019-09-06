@@ -43,7 +43,7 @@ static int status_error(json_object_t reply, membuf_t *message)
         int ret = -1;
         const char *status = json_object_getstr(reply, "status");
         if (status == NULL) {
-                log_err("invalid status");
+                r_err("invalid status");
                 membuf_printf(message, "invalid status");
                 
         } else if (rstreq(status, "ok")) {
@@ -51,7 +51,7 @@ static int status_error(json_object_t reply, membuf_t *message)
                 
         } else if (rstreq(status, "error")) {
                 const char *s = json_object_getstr(reply, "message");
-                log_err("message error: %s", s);
+                r_err("message error: %s", s);
                 membuf_printf(message, "%s", s);
         }
         json_unref(reply);
@@ -64,7 +64,7 @@ static int homing(membuf_t *message)
         json_object_t reply;
         int err;
         
-        log_debug("Sending homing");
+        r_debug("Sending homing");
 
         if (app_standalone()) {
                 clock_sleep(1);
@@ -80,7 +80,7 @@ static int moveat(membuf_t *message, int speed)
         messagelink_t *motors = get_messagelink_motorcontroller();
         json_object_t reply;
 
-        log_debug("Sending moveat %d", speed);
+        r_debug("Sending moveat %d", speed);
 
         if (app_standalone()) {
                 clock_sleep(1);
@@ -97,7 +97,7 @@ static int move(membuf_t *message, double distance, double speed)
         messagelink_t *navigation = get_messagelink_navigation();
         json_object_t reply;
 
-        log_debug("Sending move %f", distance);
+        r_debug("Sending move %f", distance);
 
         if (app_standalone()) {
                 clock_sleep(1);
@@ -117,7 +117,7 @@ static int hoe(membuf_t *message, const char *method)
         messagelink_t *weeder = get_messagelink_weeder();
         json_object_t reply;
 
-        log_debug("Sending hoe %s", method);
+        r_debug("Sending hoe %s", method);
 
         if (app_standalone()) {
                 clock_sleep(1);
@@ -134,7 +134,7 @@ static int start_recording(membuf_t *message)
         messagelink_t *recorder = get_messagelink_camera_recorder();
         json_object_t reply;
         
-        log_debug("Sending start_recording");
+        r_debug("Sending start_recording");
 
         if (app_standalone()) {
                 clock_sleep(1);
@@ -154,7 +154,7 @@ static int stop_recording(membuf_t *message)
         messagelink_t *recorder = get_messagelink_camera_recorder();
         json_object_t reply;
         
-        log_debug("Sending stop_recording");
+        r_debug("Sending stop_recording");
 
         if (app_standalone()) {
                 clock_sleep(1);
@@ -173,7 +173,7 @@ static int stop_recording(membuf_t *message)
 /*         messagelink_t *link = get_messagelink_shutdown(); */
 /*         json_object_t reply; */
 
-/*         log_debug("Sending shutdown"); */
+/*         r_debug("Sending shutdown"); */
 
 /*         if (app_standalone()) { */
 /*                 clock_sleep(1); */
@@ -181,7 +181,7 @@ static int stop_recording(membuf_t *message)
 /*         } */
         
 /*         reply = messagelink_send_command_f(_shutdown, "{'command':'shutdown'}"); */
-/*         log_debug("shutdown replied: %.*s", message_len(reply), message_data(reply)); */
+/*         r_debug("shutdown replied: %.*s", message_len(reply), message_data(reply)); */
 /*         return 0; */
 /* } */
 
@@ -199,10 +199,10 @@ static script_t *new_script(const char *name,
                             const char *display_name,
                             json_object_t actions)
 {
-        script_t *script = new_obj(script_t);
+        script_t *script = r_new(script_t);
         script->actions = json_null();
-        script->name = mem_strdup(name);
-        script->display_name = mem_strdup(display_name);
+        script->name = r_strdup(name);
+        script->display_name = r_strdup(display_name);
         if (script->name == NULL || script->display_name == NULL) {
                 delete_script(script);
                 return NULL;
@@ -215,10 +215,10 @@ static script_t *new_script(const char *name,
 static void delete_script(script_t *script)
 {
         if (script) {
-                if (script->name) mem_free(script->name);
-                if (script->display_name) mem_free(script->display_name);
+                if (script->name) r_free(script->name);
+                if (script->display_name) r_free(script->display_name);
                 json_unref(script->actions);
-                delete_obj(script);
+                r_delete(script);
         }
 }
 
@@ -261,7 +261,7 @@ static json_object_t eval_expr(const char *expr, list_t* environments)
                 if (!json_falsy(value))
                         return value;
         }
-        log_err("Failed to evaluate the expression '%s'", expr);
+        r_err("Failed to evaluate the expression '%s'", expr);
         return json_null();
 }
 
@@ -275,13 +275,13 @@ static json_object_t eval_string(json_object_t str, list_t* environments)
 
         int len = strlen(s);
         if (s[0] == '$' && s[1] == '(' && s[len-1] == ')') {
-                char *expr = mem_alloc(len-2);
+                char *expr = r_alloc(len-2);
                 if (expr == NULL) return json_null();
                 memcpy(expr, s+2, len-3);
                 expr[len-3] = '\0';
                 json_object_t value = eval_expr(expr, environments);
                 json_ref(value);
-                mem_free(expr);
+                r_free(expr);
                 return value;
                 
         } else {
@@ -379,14 +379,14 @@ static int do_action(const char *name, json_object_t action,
         } else if (rstreq(name, "move")) {
                 double distance = json_object_getnum(action, "distance");
                 if (isnan(distance)) {
-                        log_err("Action 'move': invalid distance");
+                        r_err("Action 'move': invalid distance");
                         return -1;
                 }
                 double speed = 100.0;
                 if (json_object_has(action, "speed")) {
                         speed = json_object_getnum(action, "speed");
                         if (isnan(speed) || speed < -1000 || speed > 1000) {
-                                log_err("Action 'move': invalid distance");
+                                r_err("Action 'move': invalid distance");
                                 return -1;
                         }
                 }
@@ -395,7 +395,7 @@ static int do_action(const char *name, json_object_t action,
         } else if (rstreq(name, "moveat")) {
                 double speed = json_object_getnum(action, "speed");
                 if (isnan(speed) || speed < -1000 || speed > 1000) {
-                        log_err("Action 'moveat': invalid speed");
+                        r_err("Action 'moveat': invalid speed");
                         return -1;
                 }
                 err = moveat(message, (int) speed);
@@ -403,16 +403,16 @@ static int do_action(const char *name, json_object_t action,
         } else if (rstreq(name, "hoe")) {
                 const char *method = json_object_getstr(action, "method");
                 if (method == NULL) {
-                        log_err("Action 'hoe': invalid method");
+                        r_err("Action 'hoe': invalid method");
                         return -1;
                 }
                 if (!rstreq(method, "quincunx") && !rstreq(method, "boustrophedon")) {
-                        log_err("Action 'hoe': invalid method");
+                        r_err("Action 'hoe': invalid method");
                         return -1;
                 }
                 err = hoe(message, method);
         } else {
-                log_err("Unknown action: '%s'", name);
+                r_err("Unknown action: '%s'", name);
                 membuf_printf(message, "Unknown action: '%s'", name);
                 err = -1;
         }
@@ -437,7 +437,7 @@ static int execute(json_object_t actions, list_t *environments, membuf_t *messag
                 }
                 
                 status = action_name; 
-                log_debug("action: %s", action_name);
+                r_debug("action: %s", action_name);
                 
                 do_action(action_name, action, environments, message);
         }
@@ -447,7 +447,7 @@ static int execute(json_object_t actions, list_t *environments, membuf_t *messag
 
 void _run_script(script_t *script)
 {
-        log_debug("_run_script");
+        r_debug("_run_script");
 
         membuf_t *message = new_membuf();
         
@@ -461,7 +461,7 @@ void _run_script(script_t *script)
 
         if (execute(script->actions, environments, message) != 0) {
                 membuf_append_zero(message);
-                log_err("Script '%s' returned an error: %s",
+                r_err("Script '%s' returned an error: %s",
                         script->name, membuf_data(message));
                 moveat(message, 0); // FIXME: raise alert to robot!
         }
@@ -482,10 +482,10 @@ void _run_script(script_t *script)
 int run_script(script_t *script)
 {
         int err = 0;
-        log_debug("run_script");
+        r_debug("run_script");
         mutex_lock(mutex);
         if (thread == NULL) {
-                log_debug("run_script: creating new thread");
+                r_debug("run_script: creating new thread");
                 thread = new_thread((thread_run_t) _run_script, script, 0, 0);
                 if (thread == NULL) 
                         err = -1;
@@ -503,17 +503,17 @@ static list_t *load_script_file(const char *filename)
         json_object_t scripts;
         list_t *list = NULL;
 
-        log_debug("load_script_file %s", filename);
+        r_debug("load_script_file %s", filename);
         
         scripts = json_load(filename, &err, errmsg, sizeof(errmsg));
         if (err != 0) {
-                log_err("Failed to load scripts file: %s", errmsg);
-                log_err("File: '%s'", filename);
+                r_err("Failed to load scripts file: %s", errmsg);
+                r_err("File: '%s'", filename);
                 json_unref(scripts);
                 return NULL;
         }
         if (!json_isarray(scripts)) {
-                log_err("Scripts file doesn't contain an array. File: '%s'", filename);
+                r_err("Scripts file doesn't contain an array. File: '%s'", filename);
                 json_unref(scripts);
                 return NULL;
         }
@@ -526,7 +526,7 @@ static list_t *load_script_file(const char *filename)
 
                 script = json_array_get(scripts, i);
                 if (!json_isobject(script)) {
-                        log_err("Script is not an object. File: '%s'", filename);
+                        r_err("Script is not an object. File: '%s'", filename);
                         json_unref(scripts);
                         delete_script_list(list);
                         return NULL;
@@ -539,17 +539,17 @@ static list_t *load_script_file(const char *filename)
                     || display_name == NULL
                     || !json_isarray(actions)) {
                         if (name == NULL) 
-                                log_err("Script %i has no name. File: '%s'", i, filename);
+                                r_err("Script %i has no name. File: '%s'", i, filename);
                         else if (display_name == NULL) 
-                                log_err("Script %i has no disply name. File: '%s'",
+                                r_err("Script %i has no disply name. File: '%s'",
                                         i, filename);
-                        else log_err("Script %i: script filed is not an array. File: '%s'",
+                        else r_err("Script %i: script filed is not an array. File: '%s'",
                                      i, filename);
                         json_unref(scripts);
                         delete_script_list(list);
                         return NULL;
                 }
-                log_debug("Adding script '%s'", name);
+                r_debug("Adding script '%s'", name);
                 script_t *s = new_script(name, display_name, actions);
                 list = list_append(list, s);
         }
@@ -566,7 +566,7 @@ static int set_server_dir(const char *path)
         char resolved_path[PATH_MAX];
         struct stat statbuf;
 
-        log_debug("set_server_dir: %s", path);
+        r_debug("set_server_dir: %s", path);
 
         // FIXME!
         if (path[0] != '/') {
@@ -574,7 +574,7 @@ static int set_server_dir(const char *path)
                 if (getcwd(cwd, PATH_MAX) == NULL) {
                         char reason[200];
                         strerror_r(errno, reason, 200);
-                        log_err("getcwd failed: %s", reason);
+                        r_err("getcwd failed: %s", reason);
                         return -1;
                 }
                 snprintf(initial_path, PATH_MAX, "%s/%s", cwd, path);
@@ -587,37 +587,37 @@ static int set_server_dir(const char *path)
         if (realpath(initial_path, resolved_path) == NULL) {
                 char reason[200];
                 strerror_r(errno, reason, 200);
-                log_err("realpath failed: %s", reason);
-                log_err("path: %s", initial_path);
+                r_err("realpath failed: %s", reason);
+                r_err("path: %s", initial_path);
                 return -1;
         }
         if (stat(resolved_path, &statbuf) != 0) {
                 char reason[200];
                 strerror_r(errno, reason, 200);
-                log_err("stat failed: %s", reason);
+                r_err("stat failed: %s", reason);
                 return -1;
         }
         if ((statbuf.st_mode & S_IFMT) != S_IFDIR) {
-                log_err("Not a directory: %s", resolved_path);
+                r_err("Not a directory: %s", resolved_path);
                 return -1;
         }
         
-        server_dir = mem_strdup(resolved_path);
-        log_info("Serving files from directory %s", server_dir);
+        server_dir = r_strdup(resolved_path);
+        r_info("Serving files from directory %s", server_dir);
         return 0;
 }
 
 static int set_script_path(const char *path)
 {
         if (script_path != NULL) {
-                mem_free(script_path);
+                r_free(script_path);
                 script_path = NULL;
         }
-        script_path = mem_strdup(path);
+        script_path = r_strdup(path);
         if (script_path == NULL)
                 return -1;
 
-        log_info("Script file: %s", path);
+        r_info("Script file: %s", path);
         return 0;
 }
 
@@ -626,18 +626,18 @@ static int get_configuration()
         if (server_dir != NULL && script_path != NULL)
                 return 0;
         
-        log_debug("trying to configure the interface");
+        r_debug("trying to configure the interface");
 
         global_env = client_get("configuration", "");
         if (json_falsy(global_env)) {
-                log_err("failed to load the configuration");
+                r_err("failed to load the configuration");
                 return -1;
         }
         
         json_object_t config = json_object_get(global_env, "interface");
 
         if (!json_isobject(config)) {
-                log_err("failed to load the interface configuration");
+                r_err("failed to load the interface configuration");
                 json_unref(config);
                 return -1;
         }
@@ -645,7 +645,7 @@ static int get_configuration()
         const char *html = json_object_getstr(config, "html");
         const char *script_file = json_object_getstr(config, "scripts");
         if (html == NULL || script_file == NULL) {
-                log_err("invalid configuration");
+                r_err("invalid configuration");
                 json_unref(config);
                 return -1;
         }
@@ -687,8 +687,8 @@ static void log_writer(messagehub_t *hub, const char* line)
         // FIXME
         if (hub == NULL) {
                 if (get_messagehub_log_interface() != NULL)
-                        set_log_writer((log_writer_t) log_writer,
-                                       get_messagehub_log_interface());
+                        r_log_set_writer((log_writer_t) log_writer,
+                                         get_messagehub_log_interface());
                 return;
         }
         if (_inside_log_writer)
@@ -707,7 +707,7 @@ int interface_init(int argc, char **argv)
 
         // FIXME: the messagehub has not been created yet when
         // interface_init is called.
-        set_log_writer((log_writer_t) log_writer, NULL);
+        r_log_set_writer((log_writer_t) log_writer, NULL);
         
         if (argc == 3) {
                 if (set_server_dir(argv[1]) != 0)
@@ -719,20 +719,20 @@ int interface_init(int argc, char **argv)
         for (int i = 0; i < 10; i++) {
                 if (init() == 0)
                         return 0;
-                log_err("init failed: attempt %d/10", i);
+                r_err("init failed: attempt %d/10", i);
                 clock_sleep(0.2);
         }
 
-        log_err("failed to initialize the interface");        
+        r_err("failed to initialize the interface");        
         return -1;
 }
 
 void interface_cleanup()
 {
         if (server_dir)
-                mem_free(server_dir);
+                r_free(server_dir);
         if (script_path)
-                mem_free(script_path);
+                r_free(script_path);
         if (scripts) {
                 for (list_t *l = scripts; l != NULL; l = list_next(l)) {
                         script_t *script = list_get(l, script_t);
@@ -751,7 +751,7 @@ static int send_file(const char *path, const char *mimetype, request_t *request)
 {
         FILE *fp = fopen(path, "r");
         if (fp == NULL) {
-                log_err("Failed to open %s", path);
+                r_err("Failed to open %s", path);
                 return -1;
         }
 
@@ -764,7 +764,7 @@ static int send_file(const char *path, const char *mimetype, request_t *request)
                 request_reply_append(request, buffer, num);
                 if (feof(fp)) break;
                 if (ferror(fp)) {
-                        log_err("Failed to read %s", path);
+                        r_err("Failed to read %s", path);
                         fclose(fp);
                         return -1;
                 }
@@ -785,28 +785,27 @@ static int check_path(const char *filename, char *path, int len)
         if (realpath(requested_path, resolved_path) == NULL) {
                 char reason[200];
                 strerror_r(errno, reason, 200);
-                log_err("realpath failed: %s", reason);
-                log_err("path: %s", requested_path);
+                r_err("realpath failed: %s", reason);
+                r_err("path: %s", requested_path);
                 return -1;
         }
         if (strncmp(server_dir, resolved_path, strlen(server_dir)) != 0) {
-                log_err("File not in server path: %s", resolved_path);
+                r_err("File not in server path: %s", resolved_path);
                 return -1;
         }
         if (stat(resolved_path, &statbuf) != 0) {
                 char reason[200];
                 strerror_r(errno, reason, 200);
-                log_err("stat failed: %s", reason);
+                r_err("stat failed: %s", reason);
                 return -1;
         }
         if ((statbuf.st_mode & S_IFMT) != S_IFREG) {
-                log_err("Not a regular file: %s", resolved_path);
+                r_err("Not a regular file: %s", resolved_path);
                 return -1;
         }
         snprintf(path, len, "%s", resolved_path);
         return 0;
 }
-
 
 int send_local_file(const char *filename, request_t *request)
 {
@@ -830,7 +829,7 @@ int send_local_file(const char *filename, request_t *request)
 int interface_local_file(void *data, request_t *request)
 {
         if (init() != 0) {
-                request_set_status(request, 500);
+                request_set_status(request, HTTP_Status_Internal_Server_Error);
                 return -1;
         }
 
@@ -847,7 +846,7 @@ int interface_local_file(void *data, request_t *request)
 int interface_index(void *data, request_t *request)
 {
         if (init() != 0) {
-                request_set_status(request, 500);
+                request_set_status(request, HTTP_Status_Internal_Server_Error);
                 return -1;
         }
         return send_local_file("index.html", request);
@@ -856,7 +855,7 @@ int interface_index(void *data, request_t *request)
 int interface_scripts(void *data, request_t *request)
 {
         if (init() != 0) {
-                request_set_status(request, 500);
+                request_set_status(request, HTTP_Status_Internal_Server_Error);
                 return -1;
         }
 
@@ -902,27 +901,27 @@ int interface_status(void *data, request_t *request)
 int interface_execute(void *data, request_t *request)
 {
         if (init() != 0) {
-                request_set_status(request, 500);
+                request_set_status(request, HTTP_Status_Internal_Server_Error);
                 return -1;
         }
 
         const char *arg = request_args(request);
         if (arg == NULL) {
-                request_set_status(request, 400);
+                request_set_status(request, HTTP_Status_Bad_Request);
                 return -1;
         }
 
-        log_debug("checking for script '%s'", arg);
+        r_debug("checking for script '%s'", arg);
 
         script_t *script = find_script(scripts, arg);
         if (script == NULL) {
-                request_set_status(request, 404);
+                request_set_status(request, HTTP_Status_Not_Found);
                 return -1;
         }
 
         int r = run_script(script);
         if (r == -1) {
-                request_set_status(request, 500);
+                request_set_status(request, HTTP_Status_Internal_Server_Error);
                 return -1;
         }
 
@@ -1032,30 +1031,30 @@ int interface_db(void *data, request_t *request)
         return 0;
 }
 
-int interface_listen(void *data, request_t *request)
-{
-        if (request_args(request) == NULL) {
-                return -1;
-        }
+/* int interface_listen(void *data, request_t *request) */
+/* { */
+/*         if (request_args(request) == NULL) { */
+/*                 return -1; */
+/*         } */
 
-        request_reply_printf(request,
-                             "<!DOCTYPE html>\n"
-                             "<html lang=\"en\">\n"
-                             "  <head>\n"
-                             "    <meta charset=\"utf-8\">\n"
-                             "    <title>Registry</title>\n"
-                             "    <link rel=\"stylesheet\" href=\"index.css\">\n"
-                             "    <script src=\"js/jquery.min.js\"></script>\n"
-                             "    <script src=\"js/bootstrap.min.js\"></script>\n"
-                             "    <script src=\"js/listen.js\"></script>\n"
-                             "  </head>\n"
-                             "  <body>\n"
-                             "    <div id=\"registry\"></div>\n"
-                             "    <script>\n"
-                             "      $(document).ready(function() { listenTo(\"ws://%s\"); });\n"
-                             "    </script>\n"
-                             "  </body>\n"
-                             "</html>\n",
-                             request_args(request));        
-        return 0;
-}
+/*         request_reply_printf(request, */
+/*                              "<!DOCTYPE html>\n" */
+/*                              "<html lang=\"en\">\n" */
+/*                              "  <head>\n" */
+/*                              "    <meta charset=\"utf-8\">\n" */
+/*                              "    <title>Registry</title>\n" */
+/*                              "    <link rel=\"stylesheet\" href=\"index.css\">\n" */
+/*                              "    <script src=\"js/jquery.min.js\"></script>\n" */
+/*                              "    <script src=\"js/bootstrap.min.js\"></script>\n" */
+/*                              "    <script src=\"js/listen.js\"></script>\n" */
+/*                              "  </head>\n" */
+/*                              "  <body>\n" */
+/*                              "    <div id=\"registry\"></div>\n" */
+/*                              "    <script>\n" */
+/*                              "      $(document).ready(function() { listenTo(\"ws://%s\"); });\n" */
+/*                              "    </script>\n" */
+/*                              "  </body>\n" */
+/*                              "</html>\n", */
+/*                              request_args(request));         */
+/*         return 0; */
+/* } */

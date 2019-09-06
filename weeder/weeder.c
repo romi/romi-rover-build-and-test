@@ -10,11 +10,13 @@ enum {
 
 static workspace_t workspace;
 static int initialized = 0;
-static int z0;
+static double z0;
 static double quincunx_threshold = 1.0;
 static database_t *db = NULL;
+static scan_t *session = NULL;
 
 messagelink_t *get_messagelink_cnc();
+messagelink_t *get_messagelink_db();
 
 database_t *get_database()
 {
@@ -41,77 +43,38 @@ static int status_error(json_object_t reply, membuf_t *message)
 
 static int init_workspace()
 {
-        log_debug("trying to configure the workspace dimensions");
+        r_debug("trying to configure the workspace dimensions");
         
         json_object_t config = client_get("configuration", "weeder");
         if (json_falsy(config) || !json_isobject(config)) {
-                log_err("failed to load the configuration");
+                r_err("failed to load the configuration");
                 json_unref(config);
                 return -1;
         }
 
         json_object_t w = json_object_get(config, "workspace");
-        if (json_falsy(w) || !json_isarray(w)) {
-                log_err("failed to load the workspace configuration");
-                json_unref(config);
-                return -1;
-        }
         
-        double theta = json_array_getnum(w, 0);
-        double x0 = json_array_getnum(w, 1);
-        double y0 = json_array_getnum(w, 2);
-        double width = json_array_getnum(w, 3);
-        double height = json_array_getnum(w, 4);
-        double width_mm = json_array_getnum(w, 5);
-        double height_mm = json_array_getnum(w, 6);
-        if (isnan(theta) || isnan(x0) || isnan(y0)
-            || isnan(width) || isnan(height)
-            || isnan(width_mm) || isnan(height_mm)) {
-                log_err("invalid workspace values");
+        if (workspace_parse(&workspace, w) != 0) {
                 json_unref(config);
                 return -1;
         }
-
-        workspace.theta = theta;
-        workspace.x0 = x0;
-        workspace.y0 = y0;
-        workspace.width = width;
-        workspace.height = height;
-        workspace.width_mm = width_mm;
-        workspace.height_mm = height_mm;
-
-        log_debug("workspace: theta %.2f, x0 %.2f, y0 %.2f, "
-                  "width %.2f px / %.2f mm, height %.2f px / %.2f mm", 
-                  theta, x0, y0, width, width_mm, height, height_mm);
 
         double z = json_object_getnum(config, "z0");
         if (isnan(z)) {
-                log_err("failed to load the z0 setting");
+                r_err("failed to load the z0 setting");
                 json_unref(config);
                 return -1;
         }
-        if (z > 0 || z < -1000) {
-                log_err("Invalid z0 setting: z0 !in [-1000,0]");
+        if (z > 0 || z < -1) {
+                r_err("Invalid z0 setting: z0 !in [-1,0]");
                 json_unref(config);
                 return -1;
         }
-        z0 = (int) z;
-
-        /* const char *d = json_object_getstr(config, "datadir"); */
-        /* if (d == NULL) { */
-        /*         log_err("Invalid value for 'datadir'"); */
-        /*         json_unref(config); */
-        /*         return -1; */
-        /* } */
-        
-        /* if (set_weeding_data_directory(d) != 0) { */
-        /*         json_unref(config); */
-        /*         return -1; */
-        /* } */
+        z0 = z;
 
         double threshold = json_object_getnum(config, "quincunx_threshold");
         if (isnan(threshold) || threshold < 0 || threshold > 1000.0) {
-                log_err("Invalid value for 'quincunx_threshold'");
+                r_err("Invalid value for 'quincunx_threshold'");
                 json_unref(config);
                 return -1;
         }
@@ -121,24 +84,92 @@ static int init_workspace()
         return 0;
 }
 
+static void broadcast_db_message(void *userdata,
+                                 database_t *db,
+                                 const char *event,
+                                 const char *scan_id,
+                                 const char *fileset_id,
+                                 const char *file_id)
+{
+        r_debug("broadcast_db_message: %s, %s, %s, %s",
+                  event, scan_id, fileset_id, file_id);
+        messagelink_t *bus = get_messagelink_db();
+        if (file_id)
+                messagelink_send_f(bus,
+                                   "{\"event\": \"%s\", "
+                                   "\"source\": \"weeder\", "
+                                   "\"scan\": \"%s\", "
+                                   "\"fileset\": \"%s\", "
+                                   "\"file\": \"%s\"}",
+                                   event, scan_id, fileset_id, file_id);
+        else if (fileset_id)
+                messagelink_send_f(bus,
+                                   "{\"event\": \"%s\", "
+                                   "\"source\": \"weeder\", "
+                                   "\"scan\": \"%s\", "
+                                   "\"fileset\": \"%s\"}",
+                                   event, scan_id, fileset_id);
+        else messagelink_send_f(bus,
+                                "{\"event\": \"%s\", "
+                                "\"source\": \"weeder\", "
+                                "\"scan\": \"%s\"}",
+                                event, scan_id);
+}
+
 static int init_database()
 {
         if (db != NULL)
                 return 0;
 
         int err = -1;
-        json_object_t path = json_null();
-        path = client_get("configuration", "fsdb.directory");
-        if (json_isstring(path)) {
-                log_info("using configuration file for directory: '%s'",
-                         json_string_value(path));
-                db = new_database(json_string_value(path));
-                err = (db == NULL);
-        } else {
-                log_err("Failed to obtain a valid camera-recorder.directory setting");
+        
+        /* json_object_t path = json_null(); */
+        /* path = client_get("configuration", "fsdb.directory"); */
+        /* if (json_isstring(path)) { */
+        /*         r_info("using configuration file for directory: '%s'", */
+        /*                  json_string_value(path)); */
+        /*         db = new_database(json_string_value(path)); */
+        /*         err = (db == NULL); */
+
+        /*         database_set_listener(db, broadcast_db_message, NULL); */
+                
+        /* } else { */
+        /*         r_err("Failed to obtain a valid camera-recorder.directory setting"); */
+        /* } */
+        /* json_unref(path); */
+
+        json_object_t fsdb = client_get("db", "session");
+        if (!json_isobject(fsdb)) {
+                r_err("Failed to obtain the session information from fsdb");
+                return -1;
         }
-        json_unref(path);
-        return err;
+        
+        const char *dir = json_object_getstr(fsdb, "db"); 
+        const char *session_id = json_object_getstr(fsdb, "session");
+        if (dir == NULL || session_id == NULL) {
+                r_err("Failed to load the session info from fsdb");
+                json_unref(fsdb);
+                return -1;
+        }
+        
+        r_info("Session: db='%s', session='%s'", dir, session_id);
+        
+        db = new_database(dir);
+        if (dir == NULL) {
+                json_unref(fsdb);
+                return -1;
+        }
+
+        session = database_new_scan(db, session_id);
+        if (session == NULL) {
+                json_unref(fsdb);
+                return -1;
+        }
+                
+        database_set_listener(db, broadcast_db_message, NULL);
+        json_unref(fsdb);
+        
+        return 0;
 }
 
 static int init()
@@ -161,11 +192,11 @@ int weeder_init(int argc, char **argv)
         for (int i = 0; i < 10; i++) {
                 if (init() == 0)
                         return 0;
-                log_err("workspace initialization failed: attempt %d/10", i);
+                r_err("workspace initialization failed: attempt %d/10", i);
                 clock_sleep(0.2);
         }
         
-        log_err("failed to initialize the workspace");
+        r_err("failed to initialize the workspace");
         return -1;
 }
 
@@ -192,16 +223,16 @@ static int move_away_arm()
         // move weeding tool up
         reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", \"z\": 0}");
         if (status_error(reply, message)) {
-                log_err("moveto returned error: %s", membuf_data(message));
+                r_err("moveto returned error: %s", membuf_data(message));
                 delete_membuf(message);
                 return -1;
         }
         // move weeding tool to the end of the workspace
         reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", "
                                            "\"x\": 0, \"y\": %d}",
-                                           workspace.height_mm);
+                                           workspace.height_meter);
         if (status_error(reply, message)) {
-                log_err("moveto returned error: %s", membuf_data(message));
+                r_err("moveto returned error: %s", membuf_data(message));
                 delete_membuf(message);
                 return -1;
         }
@@ -209,11 +240,16 @@ static int move_away_arm()
         return 0;
 }
 
-static list_t *compute_quincunx(membuf_t *message, double start_time)
+static list_t *compute_quincunx(membuf_t *message,
+                                double distance_plants,
+                                double distance_rows,
+                                double radius_zone,
+                                double diameter_tool,
+                                double start_time)
 {
         // Move away the arm before taking a picture of the workspace.
         if (move_away_arm() != 0) {
-                log_err("Failed to move the arm");
+                r_err("Failed to move the arm");
                 membuf_printf(message, "Failed to move the arm");
                 return NULL;
         }
@@ -221,34 +257,40 @@ static list_t *compute_quincunx(membuf_t *message, double start_time)
         membuf_t *buf = new_membuf();
         int err = client_get_data("camera", "camera.jpg", buf);
         if (err != 0) {
-                log_err("Failed to obtain the camera image");
+                r_err("Failed to obtain the camera image");
                 membuf_printf(message, "Failed to obatin the camera image");
                 delete_membuf(buf);
                 return NULL;
         }
 
-        log_info("Done grabbing image: %f s", clock_time() - start_time);
+        r_info("Done grabbing image: %f s", clock_time() - start_time);
 
         image_t *image = image_load_from_mem(membuf_data(buf), membuf_len(buf));
         if (image == NULL) {
-                log_err("Failed to decompress the image");
+                r_err("Failed to decompress the image");
                 membuf_printf(message, "Failed to decompress the image");
                 delete_membuf(buf);
                 return NULL;
         }
-        log_info("Done decompressing image: %f s", clock_time() - start_time);
+        r_info("Done decompressing image: %f s", clock_time() - start_time);
 
-        list_t *path = compute_path(image, &workspace, 0.3f, z0, quincunx_threshold,
-                                    start_time);
+        r_debug("Session: ", session? scan_id(session) : "NULL!");
         
-        log_info("Done computing path: %f s", clock_time() - start_time);
+        float confidence;
+        list_t *path = compute_path(session, NULL, image, &workspace,
+                                    distance_plants, distance_rows,
+                                    radius_zone, diameter_tool,
+                                    &confidence);
+
+        // Don't keep the fileset data loaded in memory.
+        database_unload(db);
         
         delete_membuf(buf);
         delete_image(image);
         return path;
 }
 
-static int send_path(list_t *path, membuf_t *message)
+static int send_path(list_t *path, double z0, membuf_t *message)
 {
         messagelink_t *cnc = get_messagelink_cnc();
         json_object_t reply;
@@ -256,14 +298,33 @@ static int send_path(list_t *path, membuf_t *message)
         // move weeding tool up
         reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", \"z\": 0}");
         if (status_error(reply, message)) {
-                log_err("moveto returned error: %s", membuf_data(message));
+                r_err("moveto returned error: %s", membuf_data(message));
+                return -1;
+        }
+
+        // move to the first point on the path
+        point_t *p = list_get(path, point_t);
+        reply = messagelink_send_command_f(cnc,
+                                           "{\"command\": \"moveto\", "
+                                           "\"x\": %.4f, \"y\": %.4f}",
+                                           p->x, p->y);
+        if (status_error(reply, message)) {
+                r_err("moveto returned error: %s", membuf_data(message));
                 return -1;
         }
 
         // start the spindle
         reply = messagelink_send_command_f(cnc, "{\"command\": \"spindle\", \"speed\": 1}");
         if (status_error(reply, message)) {
-                log_err("spindle returned error: %s", membuf_data(message));
+                r_err("spindle returned error: %s", membuf_data(message));
+                return -1;
+        }
+
+        // move weeding tool down
+        reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", \"z\": %.4f}",
+                                           z0);
+        if (status_error(reply, message)) {
+                r_err("moveto returned error: %s", membuf_data(message));
                 return -1;
         }
 
@@ -278,50 +339,112 @@ static int send_path(list_t *path, membuf_t *message)
         membuf_printf(buf, "]}");
         membuf_append_zero(buf);
 
-        log_debug("path: %s", membuf_data(buf));
+        r_debug("path: %s", membuf_data(buf));
         
         // send path to cnc
         messagelink_send_text(cnc, membuf_data(buf), membuf_len(buf));
         reply = messagelink_read(cnc);
         
         if (status_error(reply, message)) {
-                log_err("travel returned error: %s", membuf_data(message));
+                r_err("travel returned error: %s", membuf_data(message));
                 delete_membuf(buf);
                 return -1;
         }
         delete_membuf(buf);
 
+        // move weeding tool up
+        reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", \"z\": 0}");
+        if (status_error(reply, message)) {
+                r_err("moveto returned error: %s", membuf_data(message));
+                return -1;
+        }
+
         // stop spindle
         reply = messagelink_send_command_f(cnc, "{\"command\": \"spindle\", \"speed\": 0}");
         if (status_error(reply, message)) {
-                log_err("spindle returned error: %s", membuf_data(message));
+                r_err("spindle returned error: %s", membuf_data(message));
+                return -1;
+        }
+
+        // move to the top-left corner
+        reply = messagelink_send_command_f(cnc,
+                                           "{\"command\": \"moveto\", "
+                                           "\"x\": 0, \"y\": %.4f}",
+                                           workspace.height_meter);
+        if (status_error(reply, message)) {
+                r_err("moveto returned error: %s", membuf_data(message));
                 return -1;
         }
 
         return 0;
 }
 
-static int hoe(int method, membuf_t *message)
+static int hoe(int method, json_object_t command, membuf_t *message)
 {
         list_t *path = NULL;
         int err;
         double start_time = clock_time();
 
+        double diameter_tool = 0.05f;
+        if (json_object_has(command, "diameter-tool")) {
+                        diameter_tool = json_object_getnum(command, "diameter-tool");
+                        if (isnan(diameter_tool)
+                            || diameter_tool < 0.01
+                            || diameter_tool > 1.0) {
+                                r_err("Invalid tool diameter (0.1<d<1)");
+                                membuf_printf(message, "Invalid tool diameter (0.1<d<1)");
+                                return -1;
+                        }
+                }
+
         if (method == WEEDING_METHOD_QUINCUNX) {
-                path = compute_quincunx(message, start_time);
+                double distance_plants = json_object_getnum(command, "distance-plants");
+                if (isnan(distance_plants)
+                    || distance_plants < 0.01
+                    || distance_plants > 2.0) {
+                        r_err("No distance between plant given");
+                        membuf_printf(message, "No distance between plant given");
+                        return -1;
+                }
+                double distance_rows = distance_plants;
+                if (json_object_has(command, "distance-rows")) {
+                        distance_rows = json_object_getnum(command, "distance-rows");
+                        if (isnan(distance_rows)
+                            || distance_rows < 0.01
+                            || distance_rows > 2.0) {
+                                r_err("Invalid distance between rows");
+                                membuf_printf(message, "Invalid distance between rows");
+                                return -1;
+                        }
+                }
+                double radius_zones = 0.10;
+                if (json_object_has(command, "radius-zones")) {
+                        json_object_getnum(command, "radius-zones");
+                        if (isnan(radius_zones)
+                            || radius_zones < 0.01
+                            || radius_zones > 2.0) {
+                                r_err("Invalid zone radius");
+                                membuf_printf(message, "Invalid zone radius");
+                                return -1;
+                        }
+                }
+                path = compute_quincunx(message,
+                                        distance_plants, distance_rows,
+                                        radius_zones, diameter_tool,
+                                        start_time);
         } else {
-                path = compute_boustrophedon(&workspace, z0);
+                path = compute_boustrophedon(&workspace, diameter_tool);
         }
                 
         if (path == NULL) {
-                log_err("Failed to compute the path");
+                r_err("Failed to compute the path");
                 membuf_printf(message, "Failed to compute the path");
                 return -1;
         }
         
-        err = send_path(path, message);
+        err = send_path(path, z0, message);
 
-        log_info("Finished executing path: %f s", clock_time() - start_time);
+        r_info("Finished executing path: %f s", clock_time() - start_time);
         
         for (list_t *l = path; l != NULL; l = list_next(l)) {
                 point_t *p = list_get(l, point_t);
@@ -337,7 +460,7 @@ int weeder_onhoe(void *userdata,
                  json_object_t command,
                  membuf_t *message)
 {
-	log_debug("weeder_onhoe");
+	r_debug("weeder_onhoe");
 
         if (init_workspace() != 0) {
                 membuf_printf(message, "workspace not intialized");
@@ -348,16 +471,16 @@ int weeder_onhoe(void *userdata,
 
 	const char *method = json_object_getstr(command, "method");
 	if (method == NULL || rstreq(method, "boustrophedon")) {
-                log_debug("Doing boustrophedon.");
+                r_debug("Doing boustrophedon.");
                 weeding_method = WEEDING_METHOD_BOUSTROPHEDON;
 	} else if (rstreq(method, "quincunx")) {
-                log_debug("Doing quincunx weeding method.");
+                r_debug("Doing quincunx weeding method.");
                 weeding_method = WEEDING_METHOD_QUINCUNX;
 	} else {
-                log_err("Bad weeding method: %s", method);
+                r_err("Bad weeding method: %s", method);
                 membuf_printf(message, "Bad weeding method: %s", method);
                 return -1;
 	}
 
-        return hoe(weeding_method, message); 
+        return hoe(weeding_method, command, message); 
 }

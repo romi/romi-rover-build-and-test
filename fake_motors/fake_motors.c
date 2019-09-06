@@ -28,11 +28,11 @@ int init_rover()
                 return -1;
         last_attempt = now;
         
-        log_debug("trying to configure the rover's dimensions");
+        r_debug("trying to configure the rover's dimensions");
         
         json_object_t config = client_get("configuration", "rover");
         if (json_falsy(config)) {
-                log_err("failed to load the configuration");
+                r_err("failed to load the configuration");
                 json_unref(config);
                 return -1;
         }
@@ -40,12 +40,12 @@ int init_rover()
         double base = json_object_getnum(config, "wheel_base");
         double steps = json_object_getnum(config, "encoder_steps");
         if (isnan(diam) || isnan(base) || isnan(steps)) {
-                log_err("invalid configuration values");
+                r_err("invalid configuration values");
                 json_unref(config);
                 return -1;
         }
 
-        log_debug("initializing rover: diam %.2f, base %.2f, steps %d",
+        r_debug("initializing rover: diam %.2f, base %.2f, steps %d",
                   diam, base, (int) steps);
         
         wheel_circumference = M_PI * diam;
@@ -75,11 +75,11 @@ int motorcontroller_onmoveat(void *userdata,
                              json_object_t command,
                              membuf_t *message)
 {
-        log_debug("motorcontroller_onmoveat");
+        r_debug("motorcontroller_onmoveat");
 
         json_object_t s = json_object_get(command, "speed");
         if (!json_isarray(s)) {
-                log_warn("Speed value is not an array");
+                r_warn("Speed value is not an array");
                 membuf_printf(message, "Speed value is not an array");
                 return -1;
         }
@@ -87,14 +87,14 @@ int motorcontroller_onmoveat(void *userdata,
         double left = json_array_getnum(s, 0);
         double right = json_array_getnum(s, 1);
         if (isnan(left) || isnan(right)) {
-                log_warn("invalid left|right values: %f, %f", left, right);
+                r_warn("invalid left|right values: %f, %f", left, right);
                 membuf_printf(message, "Invalid left|right values");
                 return -1;
         }
 
         if (left < -1000.0 || left > 1000.0
             || right < -1000.0 || right > 1000.0) {
-                log_warn("Speed is out of bounds [-1000, 1000].");
+                r_warn("Speed is out of bounds [-1000, 1000].");
                 membuf_printf(message, "Speed is out of bounds [-1000, 1000]");
                 return -1;
         }
@@ -112,11 +112,11 @@ int motorcontroller_onenable(void *userdata,
                              json_object_t command,
                              membuf_t *message)
 {
-        log_debug("motorcontroller_onenable");
+        r_debug("motorcontroller_onenable");
 
         double value = json_object_getnum(command, "value");
         if (isnan(value)) {
-                log_warn("missing value for enable");
+                r_warn("missing value for enable");
                 membuf_printf(message, "missing value for enable");
                 return -1;
         }
@@ -133,7 +133,7 @@ int motorcontroller_onreset(void *userdata,
                             json_object_t command,
                             membuf_t *message)
 {
-        log_debug("motorcontroller_onreset");
+        r_debug("motorcontroller_onreset");
 
         mutex_lock(mutex);
         enabled = 0;
@@ -151,7 +151,7 @@ int motorcontroller_onhoming(void *userdata,
                              json_object_t command,
                              membuf_t *message)
 {
-        log_debug("motorcontroller_onhoming");
+        r_debug("motorcontroller_onhoming");
         return 0;
 }
 

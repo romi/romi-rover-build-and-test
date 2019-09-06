@@ -26,14 +26,14 @@ void navigation_onpose(void *userdata,
 {
         json_object_t data = datalink_parse(link, input);
         if (json_falsy(data)) {
-                log_warn("camera_recorder_onpose: failed to parse data");
+                r_warn("camera_recorder_onpose: failed to parse data");
                 json_unref(data);
                 return;
         }
 
         json_object_t a = json_object_get(data, "position");
         if (!json_isarray(a)) {
-                log_warn("camera_recorder_onpose: 'position' is not an array");
+                r_warn("camera_recorder_onpose: 'position' is not an array");
                 json_unref(data);
                 return;
         }
@@ -43,7 +43,7 @@ void navigation_onpose(void *userdata,
         py = json_array_getnum(a, 1);
         pz = json_array_getnum(a, 2);
         if (isnan(px) || isnan(py) || isnan(pz)) {
-                log_warn("camera_recorder_onpose: invalid position values"); 
+                r_warn("camera_recorder_onpose: invalid position values"); 
                 json_unref(data);
                 return;
         }
@@ -61,7 +61,7 @@ int status_error(json_object_t reply, membuf_t *message)
 {
         const char *status = json_object_getstr(reply, "status");
         if (status == NULL) {
-                log_err("invalid status");
+                r_err("invalid status");
                 membuf_printf(message, "invalid status");
                 return -1;
                 
@@ -70,7 +70,7 @@ int status_error(json_object_t reply, membuf_t *message)
                 
         } else if (rstreq(status, "error")) {
                 const char *s = json_object_getstr(reply, "message");
-                log_err("message error: %s", s);
+                r_err("message error: %s", s);
                 membuf_printf(message, "%s", s);
                 return -1;
         }
@@ -83,19 +83,19 @@ static int move(double distance, double speed, membuf_t *message)
         double pos;
         messagelink_t *motors = get_messagelink_motorcontroller();
 
-        log_info("getting current position");
+        r_info("getting current position");
 
         mutex_lock(position_mutex);
         pos = position.x;
         mutex_unlock(position_mutex);
 
-        log_info("current position: %f", pos);
+        r_info("current position: %f", pos);
                 
         double target = pos + distance;
         if (distance * speed < 0)
                 speed = -speed;
         
-        log_info("starting to move");
+        r_info("starting to move");
         
         reply = messagelink_send_command_f(motors, "{'command':'moveat','speed':[%d,%d]}",
                                            (int) speed, (int) speed);
@@ -112,7 +112,7 @@ static int move(double distance, double speed, membuf_t *message)
                         static double last_d = 0.0;
                         double d = target - pos;
                         if ((d - last_d) * (d - last_d) > 0.0004) {
-                                log_debug("Distance to go: %f", target - pos);
+                                r_debug("Distance to go: %f", target - pos);
                                 last_d = d;
                         }
                 }
@@ -141,11 +141,11 @@ int navigation_onmove(void *userdata,
                       json_object_t command,
                       membuf_t *message)
 {
-	log_debug("navigation_onmove");
+	r_debug("navigation_onmove");
 
         double distance = json_object_getnum(command, "distance");
         if (isnan(distance)) {
-                log_warn("Invalid distance");
+                r_warn("Invalid distance");
                 membuf_printf(message, "Invalid distance");
                 return -1;
         }
@@ -154,7 +154,7 @@ int navigation_onmove(void *userdata,
         if (json_object_has(command, "speed")) {
                 speed = json_object_getnum(command, "speed");
                 if (isnan(speed)) {
-                        log_warn("Invalid speed");
+                        r_warn("Invalid speed");
                         membuf_printf(message, "Invalid speed");
                         return -1;
                 }

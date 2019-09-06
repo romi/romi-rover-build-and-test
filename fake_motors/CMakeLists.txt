@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(fake_motors fake_motors.c fake_motors_main.c)
-target_link_libraries(fake_motors rcom m)
+target_link_libraries(fake_motors rcom r m)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/fake_motors_main.c

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(fake_cnc fake_cnc.c fake_cnc_main.c)
-target_link_libraries(fake_cnc rcom)
+target_link_libraries(fake_cnc rcom r)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/fake_cnc_main.c

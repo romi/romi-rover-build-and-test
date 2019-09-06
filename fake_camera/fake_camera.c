@@ -15,7 +15,7 @@ int fake_camera_init(int argc, char **argv)
         } else {
                 path = client_get("configuration", "fake_camera.image");
                 if (!json_isstring(path)) {
-                        log_err("The value of fake_camera.image is not a string");
+                        r_err("The value of fake_camera.image is not a string");
                         json_unref(path);
                         return -1;
                 }
@@ -28,7 +28,7 @@ int fake_camera_init(int argc, char **argv)
                 return -1;
         }
 
-        log_err("Loading file: '%s'", filename);
+        r_err("Loading file: '%s'", filename);
 
         char buffer[1024];
         FILE *fp = fopen(filename, "rb");
@@ -42,7 +42,7 @@ int fake_camera_init(int argc, char **argv)
         if (ferror(fp)) {
                 err = -1;
                 json_unref(path);
-                log_err("An error occured while loading '%s'", argv[1]);
+                r_err("An error occured while loading '%s'", argv[1]);
         }
         
         fclose(fp);

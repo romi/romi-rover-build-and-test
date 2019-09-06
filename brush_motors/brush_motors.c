@@ -1,5 +1,5 @@
 #include <string.h>
-#include "romi/mem.h"
+#include <r.h>
 #include "brush_motors.h"
 
 static char *device = NULL;
@@ -23,16 +23,16 @@ messagehub_t *get_messagehub_motorstatus();
 
 static int open_serial(const char *dev)
 {
-        log_info("Trying to open the serial connection on %s.", dev);
+        r_info("Trying to open the serial connection on %s.", dev);
 	
         mutex_lock(mutex);        
         serial = new_serial(dev, 115200);
         mutex_unlock(mutex);        
 	
         if (serial == NULL)
-                log_info("Open failed.");
+                r_info("Open failed.");
         else 
-                log_info("Serial connection opened.");
+                r_info("Serial connection opened.");
         
         return (serial == NULL);
 }
@@ -49,12 +49,12 @@ static int set_device(const char *dev)
 {
         close_serial();
         if (device != NULL) {
-                mem_free(device);
+                r_free(device);
                 device = NULL;
         }
-        device = mem_strdup(dev);
+        device = r_strdup(dev);
         if (device == NULL) {
-                log_err("Out of memory");
+                r_err("Out of memory");
                 return -1;
         }
         return 0;
@@ -65,11 +65,11 @@ static int send_command(const char *cmd, membuf_t *message)
         int err = 0;
         const char *r;
 
-        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @1: cmd=%s", cmd);
+        if (cmd[0] != 'e' && cmd[0] != 'S') r_debug("send_command @1: cmd=%s", cmd);
         
         mutex_lock(mutex);        
 
-        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @2");
+        if (cmd[0] != 'e' && cmd[0] != 'S') r_debug("send_command @2");
         
         if (serial == NULL) {
                 membuf_printf(message, "No serial");
@@ -77,7 +77,7 @@ static int send_command(const char *cmd, membuf_t *message)
                 goto unlock;
         }        
 
-        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @3");
+        if (cmd[0] != 'e' && cmd[0] != 'S') r_debug("send_command @3");
         
         r = serial_command_send(serial, message, cmd);
         if (r == NULL) {
@@ -87,12 +87,12 @@ static int send_command(const char *cmd, membuf_t *message)
                 err = -1;
         } 
 
-        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @4: r=%s", r);
+        if (cmd[0] != 'e' && cmd[0] != 'S') r_debug("send_command @4: r=%s", r);
         
 unlock:
         mutex_unlock(mutex);
 
-        if (cmd[0] != 'e' && cmd[0] != 'S') log_debug("send_command @5");
+        if (cmd[0] != 'e' && cmd[0] != 'S') r_debug("send_command @5");
         
         return err;
 }
@@ -101,14 +101,14 @@ static int reset_controller(serial_t *serial)
 {
         char cmd[256];
         
-        log_info("Resetting the motor controller.");
+        r_info("Resetting the motor controller.");
 
         membuf_t *reply = new_membuf();
         if (reply == NULL)
                 return -1;
         
         if (send_command("X", reply) != 0) {
-                log_err("Reset failed: %s", membuf_data(reply));
+                r_err("Reset failed: %s", membuf_data(reply));
                 return -1;
         }
 
@@ -121,7 +121,7 @@ static int reset_controller(serial_t *serial)
                 with_rc? 1 : 0,
                 with_homing? 1 : 0);
         if (send_command(cmd, reply) != 0) {
-                log_err("Initialization failed: %s", membuf_data(reply));
+                r_err("Initialization failed: %s", membuf_data(reply));
                 return -1;
         }
         
@@ -130,12 +130,12 @@ static int reset_controller(serial_t *serial)
                 (int) (k[1] * 1000.0),
                 (int) (k[2] * 1000.0));
         if (send_command(cmd, reply) != 0) {
-                log_err("Initialization of PID failed: %s", membuf_data(reply));
+                r_err("Initialization of PID failed: %s", membuf_data(reply));
                 return -1;
         }
         
         if (send_command("E1", reply) != 0) {
-                log_err("Enable failed: %s", membuf_data(reply));
+                r_err("Enable failed: %s", membuf_data(reply));
                 return -1;
         }
 
@@ -147,7 +147,7 @@ int get_rover_configuration()
 {
         json_object_t rover = client_get("configuration", "rover");
         if (!json_isobject(rover)) {
-                log_err("unexpected value for 'rover'");
+                r_err("unexpected value for 'rover'");
                 json_unref(rover);
                 return -1;
         }
@@ -155,25 +155,25 @@ int get_rover_configuration()
         double diam = json_object_getnum(rover, "wheel_diameter");
         double steps = json_object_getnum(rover, "encoder_steps");
         if (isnan(diam) || isnan(steps)) {
-                log_err("invalid wheel diameter or encoder steps");
+                r_err("invalid wheel diameter or encoder steps");
                 json_unref(rover);
                 return -1;
         }
         if (diam < 0.02 || diam > 2.0) {
-                log_err("invalid wheel diameter: %f !in [0.02,2.00]", diam);
+                r_err("invalid wheel diameter: %f !in [0.02,2.00]", diam);
                 json_unref(rover);
                 return -1;
         }
         if (steps < 100 || steps > 1000000) {
-                log_err("invalid encoder steps: %f !in [100,1000000]", steps);
+                r_err("invalid encoder steps: %f !in [100,1000000]", steps);
                 json_unref(rover);
                 return -1;
         }
         wheel_diameter = diam;
         encoder_steps = steps;
 
-        log_info("wheel_diameter %f", wheel_diameter);
-        log_info("encoder_steps  %f", encoder_steps);
+        r_info("wheel_diameter %f", wheel_diameter);
+        r_info("encoder_steps  %f", encoder_steps);
         json_unref(rover);
         return 0;
 }
@@ -182,7 +182,7 @@ int get_controller_configuration()
 {
         json_object_t controller = client_get("configuration", "brush_motors");
         if (!json_isobject(controller)) {
-                log_err("unexpected value for 'brush_motors'");
+                r_err("unexpected value for 'brush_motors'");
                 json_unref(controller);
                 return -1;
         }
@@ -197,7 +197,7 @@ int get_controller_configuration()
 
         if (dev == NULL || isnan(v) || isnan(sig) || pid == -1
             || rc == -1 || h == -1 || !json_isarray(ka)) {
-                log_err("invalid controller settings");
+                r_err("invalid controller settings");
                 json_unref(controller);
                 return -1;
         }
@@ -209,7 +209,7 @@ int get_controller_configuration()
             || kp < 0.0 || kp > 100.0
             || ki < 0.0 || ki > 100.0
             || kd < 0.0 || kd > 100.0) {
-                log_err("invalid PID settings");
+                r_err("invalid PID settings");
                 json_unref(controller);
                 return -1;
         }
@@ -228,12 +228,12 @@ int get_controller_configuration()
         k[1] = ki;
         k[2] = kd;
 
-        log_info("max_speed      %.1f", max_speed);
-        log_info("max_signal     %.0f", max_signal);
-        log_info("with_pid       %s", with_pid? "yes" : "no");
-        log_info("with_rc        %s", with_rc? "yes" : "no");
-        log_info("with_homing    %s", with_homing? "yes" : "no");
-        log_info("PID            [%.4f,%.4f,%.4f]", k[0], k[1], k[2]);
+        r_info("max_speed      %.1f", max_speed);
+        r_info("max_signal     %.0f", max_signal);
+        r_info("with_pid       %s", with_pid? "yes" : "no");
+        r_info("with_rc        %s", with_rc? "yes" : "no");
+        r_info("with_homing    %s", with_homing? "yes" : "no");
+        r_info("PID            [%.4f,%.4f,%.4f]", k[0], k[1], k[2]);
 
         return 0;
 }
@@ -282,7 +282,7 @@ int brush_motors_init(int argc, char **argv)
                 return -1;
 
         if (argc > 2) {
-                log_debug("using serial device '%s'", device);
+                r_debug("using serial device '%s'", device);
                 if (set_device(argv[1]) != 0)
                         return -1;
         }
@@ -290,11 +290,11 @@ int brush_motors_init(int argc, char **argv)
         for (int i = 0; i < 10; i++) {
                 if (motorcontroller_init() == 0)
                         return 0;
-                log_err("motorcontroller_init failed: attempt %d/10", i);
+                r_err("motorcontroller_init failed: attempt %d/10", i);
                 clock_sleep(0.2);
         }
 
-        log_err("failed to initialize the motorcontroller");
+        r_err("failed to initialize the motorcontroller");
         return -1;
 }
 
@@ -308,7 +308,7 @@ void brush_motors_cleanup()
         if (encoders)
                 delete_membuf(encoders);
         if (device)
-                mem_free(device);
+                r_free(device);
 }
 
 int motorcontroller_onmoveat(void *userdata,
@@ -316,7 +316,7 @@ int motorcontroller_onmoveat(void *userdata,
                              json_object_t command,
                              membuf_t *message)
 {
-        log_debug("motorcontroller_onmoveat");
+        r_debug("motorcontroller_onmoveat");
 
         if (motorcontroller_init() != 0) {
                 membuf_printf(message, "Motor controller not initialized");
@@ -334,14 +334,14 @@ int motorcontroller_onmoveat(void *userdata,
         }
         
         if (isnan(left) || isnan(right)) {
-                log_warn("invalid left|right values: %f, %f", left, right);
+                r_warn("invalid left|right values: %f, %f", left, right);
                 membuf_printf(message, "Invalid left|right values");
                 return -1;
         }
 
         if (left < -1000.0 || left > 1000.0
             || right < -1000.0 || right > 1000.0) {
-                log_warn("Speed is out of bounds [-1000, 1000].");
+                r_warn("Speed is out of bounds [-1000, 1000].");
                 membuf_printf(message, "Speed is out of bounds [-1000, 1000].");
                 return -1;
         }
@@ -357,7 +357,7 @@ int motorcontroller_onenable(void *userdata,
                              json_object_t command,
                              membuf_t *message)
 {
-        log_debug("motorcontroller_onenable.");
+        r_debug("motorcontroller_onenable.");
 
         if (motorcontroller_init() != 0) {
                 membuf_printf(message, "Motor controller not initialized");
@@ -366,7 +366,7 @@ int motorcontroller_onenable(void *userdata,
         
         double value = json_object_getnum(command, "value");
         if (isnan(value)) {
-                log_warn("missing value for enable");
+                r_warn("missing value for enable");
                 membuf_printf(message, "missing value for enable");
                 return -1;
         }
@@ -378,7 +378,7 @@ int motorcontroller_onreset(void *userdata,
                             json_object_t command,
                             membuf_t *message)
 {
-        log_info("Resetting the motor controller.");
+        r_info("Resetting the motor controller.");
         if (motorcontroller_init() != 0) {
                 membuf_printf(message, "Motor controller not initialized");
                 return -1;
@@ -391,7 +391,7 @@ int motorcontroller_onhoming(void *userdata,
                              json_object_t command,
                              membuf_t *message)
 {
-	log_debug("Homing");
+	r_debug("Homing");
         return send_command("H", message);
 }
 
@@ -405,7 +405,7 @@ void broadcast_encoders()
         }
         
         if (send_command("e", encoders) != 0) {
-                log_err("brush_motors: 'e' command returned: %s",
+                r_err("brush_motors: 'e' command returned: %s",
                         membuf_data(encoders));
                 return;
         }
@@ -435,7 +435,7 @@ void broadcast_status()
         }
 
         if (send_command("S", encoders) != 0) {
-                log_err("brush_motors: 'S' command returned: %s",
+                r_err("brush_motors: 'S' command returned: %s",
                         membuf_data(encoders));
                 return;
         }

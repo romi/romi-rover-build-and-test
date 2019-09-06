@@ -149,7 +149,7 @@ camera_t* new_camera(const char* dev,
 {
         camera_t* camera = (camera_t*) malloc(sizeof(camera_t));
         if (camera == NULL) {
-                log_err("Camera: Out of memory");
+                r_err("Camera: Out of memory");
                 return NULL;
         }
         memset(camera, 0, sizeof(camera_t));
@@ -240,12 +240,12 @@ int camera_capture(camera_t* camera)
                         if (EINTR == errno)
                                 continue;
 
-                        log_err("Camera: select error %d, %s", errno, strerror(errno));
+                        r_err("Camera: select error %d, %s", errno, strerror(errno));
                         return -1;
                 }
 
                 if (0 == r) {
-                        log_err("Camera: select timeout");
+                        r_err("Camera: select timeout");
                         continue;
                 }
                         
@@ -257,7 +257,7 @@ int camera_capture(camera_t* camera)
         }
 
         if (error) {
-                log_err("Camera: Failed to grab frame");
+                r_err("Camera: Failed to grab frame");
                 return -1;
         }
 
@@ -362,7 +362,7 @@ static boolean jpeg_bufferemptyoutput(j_compress_ptr cinfo)
         camera->jpeg_buffer = (unsigned char*) realloc(camera->jpeg_buffer, 
                                                        camera->jpeg_buffer_size + BLOCKSIZE);
         if (camera->jpeg_buffer == NULL) {
-                log_err("Camera: Out of memory");
+                r_err("Camera: Out of memory");
                 return 0;
         }
         camera->jpeg_buffer_size += BLOCKSIZE;
@@ -438,7 +438,7 @@ static int camera_convert(camera_t* camera, void* src)
         if (camera->rgb_buffer == NULL) {
                 camera->rgb_buffer = malloc(size);
                 if (camera->rgb_buffer == NULL) {
-                        log_err("Camera: Out of memory");
+                        r_err("Camera: Out of memory");
                         return -1;
                 }
                 camera->rgb_buffer_size = size;
@@ -449,7 +449,7 @@ static int camera_convert(camera_t* camera, void* src)
         if (camera->jpeg_buffer == NULL) {
                 camera->jpeg_buffer = (unsigned char*) realloc(camera->jpeg_buffer, BLOCKSIZE);
                 if (camera->jpeg_buffer == NULL) {
-                        log_err("Camera: Out of memory");
+                        r_err("Camera: Out of memory");
                         return -1;
                 }
                 camera->jpeg_buffer_size = BLOCKSIZE;
@@ -481,7 +481,7 @@ static int camera_read(camera_t* camera)
 
                                 // fall through
                         default:
-                                log_err("Camera: read error %d, %s", errno, strerror(errno));
+                                r_err("Camera: read error %d, %s", errno, strerror(errno));
                                 return -1;
                         }
                 }
@@ -507,7 +507,7 @@ static int camera_read(camera_t* camera)
 
                                 // fall through
                         default:
-                                log_err("Camera: VIDIOC_DQBUF error %d, %s", errno, strerror(errno));
+                                r_err("Camera: VIDIOC_DQBUF error %d, %s", errno, strerror(errno));
                                 return -1;
                         }
                 }
@@ -517,7 +517,7 @@ static int camera_read(camera_t* camera)
                 camera_convert(camera, camera->buffers[buf.index].start);
 
                 if (-1 == xioctl(camera->fd, VIDIOC_QBUF, &buf)) {
-                        log_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
                         return -1;
                 }
 
@@ -541,7 +541,7 @@ static int camera_read(camera_t* camera)
 
                                 // fall through
                         default:
-                                log_err("Camera: VIDIOC_DQBUF error %d, %s", errno, strerror(errno));
+                                r_err("Camera: VIDIOC_DQBUF error %d, %s", errno, strerror(errno));
                                 return -1;
                         }
                 }
@@ -556,7 +556,7 @@ static int camera_read(camera_t* camera)
                 camera_convert(camera, (void *) buf.m.userptr);
 
                 if (-1 == xioctl(camera->fd, VIDIOC_QBUF, &buf)) {
-                        log_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
                         return -1;
                 }
                 break;
@@ -590,7 +590,7 @@ static int camera_capturestop(camera_t* camera)
                         return 0;
 
                 if (-1 == xioctl(camera->fd, VIDIOC_STREAMOFF, &type)) {
-                        log_err("Camera: VIDIOC_STREAMOFF error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_STREAMOFF error %d, %s", errno, strerror(errno));
                         return -1;
                 }
 
@@ -607,7 +607,7 @@ static int camera_capturestart(camera_t* camera)
         enum v4l2_buf_type type;
 
         if (camera->state != CAMERA_INIT) {
-                log_err("Camera: Not in the init state");
+                r_err("Camera: Not in the init state");
                 return -1;
         }
 
@@ -630,7 +630,7 @@ static int camera_capturestart(camera_t* camera)
                         buf.index = i;
 
                         if (-1 == xioctl(camera->fd, VIDIOC_QBUF, &buf)) {
-                                log_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
+                                r_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
                                 return -1;
                         }
                 }
@@ -638,7 +638,7 @@ static int camera_capturestart(camera_t* camera)
                 type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
                 if (-1 == xioctl(camera->fd, VIDIOC_STREAMON, &type)) {
-                        log_err("Camera: VIDIOC_STREAMON error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_STREAMON error %d, %s", errno, strerror(errno));
                         return -1;
                 }
 
@@ -659,7 +659,7 @@ static int camera_capturestart(camera_t* camera)
                         buf.length = camera->buffers[i].length;
 
                         if (-1 == xioctl(camera->fd, VIDIOC_QBUF, &buf)) {
-                                log_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
+                                r_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
                                 return -1;
                         }
                 }
@@ -667,7 +667,7 @@ static int camera_capturestart(camera_t* camera)
                 type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
                 if (-1 == xioctl(camera->fd, VIDIOC_STREAMON, &type)) {
-                        log_err("Camera: VIDIOC_STREAMON error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_STREAMON error %d, %s", errno, strerror(errno));
                         return -1;
                 }
 
@@ -699,7 +699,7 @@ static int camera_cleanup(camera_t* camera)
         case IO_METHOD_MMAP:
                 for (i = 0; i < camera->n_buffers; ++i)
                         if (-1 == munmap(camera->buffers[i].start, camera->buffers[i].length)) {
-                                log_err("Camera: munmap error %d, %s", errno, strerror(errno));
+                                r_err("Camera: munmap error %d, %s", errno, strerror(errno));
                                 return -1;
                         }
                 break;
@@ -735,14 +735,14 @@ static int camera_readinit(camera_t* camera, unsigned int buffer_size)
         camera->buffers = (buffer_t*) malloc(sizeof(buffer_t));
         memset(camera->buffers, 0, sizeof(buffer_t));
         if (!camera->buffers) {
-                log_err("Camera: Out of memory");
+                r_err("Camera: Out of memory");
                 return -1;
         }
 
         camera->buffers[0].length = buffer_size;
         camera->buffers[0].start = malloc(buffer_size);
         if (!camera->buffers[0].start) {
-                log_err("Camera: Out of memory");
+                r_err("Camera: Out of memory");
                 return -1;
         }
 
@@ -763,22 +763,22 @@ static int camera_mmapinit(camera_t* camera)
 
         if (-1 == xioctl(camera->fd, VIDIOC_REQBUFS, &req)) {
                 if (EINVAL == errno) {
-                        log_err("Camera: %s does not support memory mapping", camera->device_name);
+                        r_err("Camera: %s does not support memory mapping", camera->device_name);
                         return -1;
                 } else {
-                        log_err("Camera: VIDIOC_REQBUFS error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_REQBUFS error %d, %s", errno, strerror(errno));
                         return -1;
                 }
         }
 
         if (req.count < 2) {
-                log_err("Camera: Insufficient buffer memory on %s", camera->device_name);
+                r_err("Camera: Insufficient buffer memory on %s", camera->device_name);
                 return -1;
         }
 
         camera->buffers = calloc(req.count, sizeof(buffer_t));
         if (!camera->buffers) {
-                log_err("Camera: Out of memory");
+                r_err("Camera: Out of memory");
                 return -1;
         }
 
@@ -792,7 +792,7 @@ static int camera_mmapinit(camera_t* camera)
                 buf.index = camera->n_buffers;
 
                 if (-1 == xioctl(camera->fd, VIDIOC_QUERYBUF, &buf)) {
-                        log_err("Camera: VIDIOC_QUERYBUF error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_QUERYBUF error %d, %s", errno, strerror(errno));
                         return -1;
                 }
                 camera->buffers[camera->n_buffers].length = buf.length;
@@ -803,7 +803,7 @@ static int camera_mmapinit(camera_t* camera)
                                                                 camera->fd, buf.m.offset);
 
                 if (MAP_FAILED == camera->buffers[camera->n_buffers].start) {
-                        log_err("Camera: mmap error %d, %s", errno, strerror(errno));
+                        r_err("Camera: mmap error %d, %s", errno, strerror(errno));
                         return -1;
                 }
         }
@@ -829,10 +829,10 @@ static int camera_userptrinit(camera_t* camera, unsigned int buffer_size)
 
         if (-1 == xioctl(camera->fd, VIDIOC_REQBUFS, &req)) {
                 if (EINVAL == errno) {
-                        log_err("Camera: %s does not support user pointer i/o", camera->device_name);
+                        r_err("Camera: %s does not support user pointer i/o", camera->device_name);
                         return -1;
                 } else {
-                        log_err("Camera: VIDIOC_REQBUFS error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_REQBUFS error %d, %s", errno, strerror(errno));
                         return -1;
                 }
         }
@@ -840,7 +840,7 @@ static int camera_userptrinit(camera_t* camera, unsigned int buffer_size)
         camera->buffers = calloc(4, sizeof(buffer_t));
 
         if (!camera->buffers) {
-                log_err("Camera: Out of memory");
+                r_err("Camera: Out of memory");
                 return -1;
         }
 
@@ -849,7 +849,7 @@ static int camera_userptrinit(camera_t* camera, unsigned int buffer_size)
                 camera->buffers[camera->n_buffers].start = memalign (/* boundary */ page_size, buffer_size);
 
                 if (!camera->buffers[camera->n_buffers].start) {
-                        log_err("Camera: Out of memory");
+                        r_err("Camera: Out of memory");
                         return -1;
                 }
         }
@@ -863,20 +863,20 @@ static int camera_open(camera_t* camera)
         struct stat st;
 
         if (camera->state != CAMERA_CLEAN) {
-                log_err("Camera: Not in the clean state");
+                r_err("Camera: Not in the clean state");
                 return -1;
         }
 
         // stat file
 
         if (-1 == stat(camera->device_name, &st)) {
-                log_err("Camera: Cannot identify '%s': %d, %s", camera->device_name, errno, strerror(errno));
+                r_err("Camera: Cannot identify '%s': %d, %s", camera->device_name, errno, strerror(errno));
                 return -1;
         }
 
         // check if its device
         if (!S_ISCHR (st.st_mode)) {
-                log_err("Camera: %s is no device", camera->device_name);
+                r_err("Camera: %s is no device", camera->device_name);
                 return -1;
         }
 
@@ -885,7 +885,7 @@ static int camera_open(camera_t* camera)
 
         // check if opening was successfull
         if (-1 == camera->fd) {
-                log_err("Camera: Cannot open '%s': %d, %s", camera->device_name, errno, strerror(errno));
+                r_err("Camera: Cannot open '%s': %d, %s", camera->device_name, errno, strerror(errno));
                 return -1;
         }
 
@@ -904,19 +904,19 @@ static int camera_setctrl(camera_t* camera, int id, int value)
 
         if (-1 == ioctl(camera->fd, VIDIOC_QUERYCTRL, &queryctrl)) {
                 if (errno != EINVAL) {
-                        log_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
                         return -1;
                 } else {
-                        log_warn("Camera: control %d is not supported", id);
+                        r_warn("Camera: control %d is not supported", id);
                 }
         } else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-                log_warn("Camera: Control %d is not supported", id);
+                r_warn("Camera: Control %d is not supported", id);
         } else {
                 memset(&control, 0, sizeof (control));
                 control.id = id;
                 control.value = value;
                 if (-1 == ioctl(camera->fd, VIDIOC_S_CTRL, &control)) {
-                        log_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
                         return -1;
                 }
         }
@@ -932,22 +932,22 @@ static int camera_init(camera_t* camera)
         unsigned int min;
 
         if (camera->state != CAMERA_OPEN) {
-                log_err("Camera: Not in the open state");
+                r_err("Camera: Not in the open state");
                 return -1;
         }
 
         if (-1 == xioctl(camera->fd, VIDIOC_QUERYCAP, &cap)) {
                 if (EINVAL == errno) {
-                        log_err("Camera: %s is no V4L2 device", camera->device_name);
+                        r_err("Camera: %s is no V4L2 device", camera->device_name);
                         return -1;
                 } else {
-                        log_err("Camera: VIDIOC_QUERYCAP error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_QUERYCAP error %d, %s", errno, strerror(errno));
                         return -1;
                 }
         }
 
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-                log_err("Camera: %s is no video capture device", camera->device_name);
+                r_err("Camera: %s is no video capture device", camera->device_name);
                 return -1;
         }
 
@@ -955,7 +955,7 @@ static int camera_init(camera_t* camera)
 #ifdef IO_READ
         case IO_METHOD_READ:
                 if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
-                        log_err("Camera: %s does not support read i/o", camera->device_name);
+                        r_err("Camera: %s does not support read i/o", camera->device_name);
                         return -1;
                 }
                 break;
@@ -969,7 +969,7 @@ static int camera_init(camera_t* camera)
 #endif
 #if defined(IO_MMAP) || defined(IO_USERPTR)
                 if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-                        log_err("Camera: %s does not support streaming i/o", camera->device_name);
+                        r_err("Camera: %s does not support streaming i/o", camera->device_name);
                         return -1;
                 }
                 break;
@@ -1002,7 +1002,7 @@ static int camera_init(camera_t* camera)
 
         CLEAR(fmt);
 
-        log_info("Camera: Opening video device %dx%d.", camera->width, camera->height);
+        r_info("Camera: Opening video device %dx%d.", camera->width, camera->height);
 
         // v4l2_format
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -1012,18 +1012,18 @@ static int camera_init(camera_t* camera)
         fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
 
         if (-1 == xioctl(camera->fd, VIDIOC_S_FMT, &fmt)) {
-                log_err("Camera: VIDIOC_S_FMT error %d, %s", errno, strerror(errno));
+                r_err("Camera: VIDIOC_S_FMT error %d, %s", errno, strerror(errno));
                 return -1;
         }
 
         /* Note VIDIOC_S_FMT may change width and height. */
         if (camera->width != fmt.fmt.pix.width) {
                 camera->width = fmt.fmt.pix.width;
-                log_err("Camera: Image width set to %i by device %s.", camera->width, camera->device_name);
+                r_err("Camera: Image width set to %i by device %s.", camera->width, camera->device_name);
         }
         if (camera->height != fmt.fmt.pix.height) {
                 camera->height = fmt.fmt.pix.height;
-                log_err("Camera: Image height set to %i by device %s.", camera->height, camera->device_name);
+                r_err("Camera: Image height set to %i by device %s.", camera->height, camera->device_name);
         }
 
         /* Buggy driver paranoia. */
@@ -1073,20 +1073,20 @@ static int camera_init(camera_t* camera)
 
         if (-1 == ioctl(camera->fd, VIDIOC_QUERYCTRL, &queryctrl)) {
                 if (errno != EINVAL) {
-                        log_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
                         return -1;
                 } else {
-                        log_warn("Camera: V4L2_CID_BRIGHTNESS is not supported\n");
+                        r_warn("Camera: V4L2_CID_BRIGHTNESS is not supported\n");
                 }
         } else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-                log_warn("Camera: V4L2_CID_BRIGHTNESS is not supported\n");
+                r_warn("Camera: V4L2_CID_BRIGHTNESS is not supported\n");
         } else {
                 memset(&control, 0, sizeof (control));
                 control.id = V4L2_CID_BRIGHTNESS;
                 control.value = queryctrl.default_value;
 
                 if (-1 == ioctl(camera->fd, VIDIOC_S_CTRL, &control)) {
-                        log_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
                         return -1;
                 }
         }
@@ -1097,20 +1097,20 @@ static int camera_init(camera_t* camera)
 
         if (-1 == ioctl(camera->fd, VIDIOC_QUERYCTRL, &queryctrl)) {
                 if (errno != EINVAL) {
-                        log_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
                         return -1;
                 } else {
-                        log_warn("Camera: V4L2_CID_AUTO_WHITE_BALANCE is not supported\n");
+                        r_warn("Camera: V4L2_CID_AUTO_WHITE_BALANCE is not supported\n");
                 }
         } else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-                log_warn("Camera: V4L2_CID_AUTO_WHITE_BALANCE is not supported\n");
+                r_warn("Camera: V4L2_CID_AUTO_WHITE_BALANCE is not supported\n");
         } else {
                 memset(&control, 0, sizeof (control));
                 control.id = V4L2_CID_AUTO_WHITE_BALANCE;
                 control.value = 1;
 
                 if (-1 == ioctl(camera->fd, VIDIOC_S_CTRL, &control)) {
-                        log_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
                         return -1;
                 }
         }
@@ -1121,20 +1121,20 @@ static int camera_init(camera_t* camera)
 
         if (-1 == ioctl(camera->fd, VIDIOC_QUERYCTRL, &queryctrl)) {
                 if (errno != EINVAL) {
-                        log_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
                         return -1;
                 } else {
-                        log_warn("Camera: V4L2_CID_AUTOGAIN is not supported\n");
+                        r_warn("Camera: V4L2_CID_AUTOGAIN is not supported\n");
                 }
         } else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-                log_warn("Camera: V4L2_CID_AUTOGAIN is not supported\n");
+                r_warn("Camera: V4L2_CID_AUTOGAIN is not supported\n");
         } else {
                 memset(&control, 0, sizeof (control));
                 control.id = V4L2_CID_AUTOGAIN;
                 control.value = 1;
 
                 if (-1 == ioctl(camera->fd, VIDIOC_S_CTRL, &control)) {
-                        log_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
+                        r_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
                         return -1;
                 }
         }

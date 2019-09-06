@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(grbl grbl.c grbl_main.c)
-target_link_libraries(grbl rcom)
+target_link_libraries(grbl rcom romi r)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/grbl_main.c

@@ -2,15 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <jpeglib.h>
+#include <png.h>
 #include <setjmp.h>
 #include <math.h>
 
-#include "romi/mem.h"
+#include <r.h>
 #include "romi/image.h"
 
 image_t *new_image(int type, int width, int height)
 {
-        image_t *image = new_obj(image_t);
+        image_t *image = r_new(image_t);
         if (image == NULL) return NULL;
 
         image->type = type;
@@ -41,7 +42,7 @@ void delete_image(image_t *image)
         if (image) {
                 if (image->data)
                         free(image->data);
-                delete_obj(image);
+                r_delete(image);
         }
 }
 
@@ -164,6 +165,10 @@ void image_bell(image_t *image, float xc, float yc, float stddev)
         }
 }
 
+
+/*****************************************************/
+/* JPEG                                              */
+
 static jmp_buf setjmp_buffer;
 
 static void exit_error(j_common_ptr cinfo)
@@ -171,7 +176,7 @@ static void exit_error(j_common_ptr cinfo)
         longjmp(setjmp_buffer, 1);
 }
 
-image_t *image_load(const char *filename)
+image_t *image_load_jpeg(const char *filename)
 {
         struct jpeg_error_mgr pub;
         struct jpeg_decompress_struct cinfo;
@@ -230,11 +235,11 @@ image_t *image_load(const char *filename)
          */
         if (cinfo.output_components == 1
             && cinfo.jpeg_color_space == JCS_GRAYSCALE) {
-                fprintf(stderr, "8-bit grayscale JPEG\n");
+                //fprintf(stderr, "8-bit grayscale JPEG\n");
                 image = new_image_bw(cinfo.output_width, cinfo.output_height);
         } else if (cinfo.output_components == 3
             && cinfo.out_color_space == JCS_RGB) {
-                fprintf(stderr, "24-bit RGB JPEG\n");
+                //fprintf(stderr, "24-bit RGB JPEG\n");
                 image = new_image_rgb(cinfo.output_width, cinfo.output_height);
         } else {
                 fprintf(stderr, "Unhandled JPEG format\n");
@@ -442,7 +447,7 @@ image_t *image_load_from_mem(const unsigned char *data, int len)
         return image;
 }
 
-int image_store(image_t* image, const char *filename)
+int image_store_jpeg(image_t* image, const char *filename)
 {
         struct jpeg_compress_struct cinfo;
         struct jpeg_error_mgr jerr;
@@ -544,7 +549,7 @@ static void jpeg_bufferterminate(j_compress_ptr cinfo)
         membuf_set_len(membuf, len);
 }
 
-int image_store_to_mem(image_t* image, membuf_t *out)
+int image_store_to_mem_jpeg(image_t* image, membuf_t *out)
 {
         struct jpeg_compress_struct cinfo;
         struct jpeg_error_mgr jerr;
@@ -609,6 +614,375 @@ int image_store_to_mem(image_t* image, membuf_t *out)
         return 0;
 }
 
+/*****************************************************/
+/* PNG                                               */
+
+image_t *image_load_png(const char *filename)
+{
+        int x, y, i, k;
+        FILE *fp = NULL;
+        png_structp png = NULL;
+        png_infop info = NULL;
+        png_bytep *row_pointers = NULL;
+        
+        png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        if (png == NULL) {
+                r_err("Memory allocation failed");
+                goto cleanup_and_exit;
+        }
+
+        if (setjmp(png_jmpbuf(png))) {
+                r_err("setjmp failed");
+                return NULL;
+        }
+
+        info = png_create_info_struct(png);
+        if (info == NULL) {
+                r_err("Memory allocation failed");
+                goto cleanup_and_exit;
+        }
+        
+        fp = fopen(filename, "rb");
+        if (fp == NULL) {
+                r_err("Failed to open the file '%s'", filename);
+                goto cleanup_and_exit;
+        }
+        
+        png_init_io(png, fp);
+        png_read_info(png, info);
+
+        png_byte color_type = png_get_color_type(png, info);
+        png_byte bit_depth = png_get_bit_depth(png, info);
+        int width = png_get_image_width(png, info);
+        int height = png_get_image_height(png, info);
+        image_t *image = NULL;
+
+        // Convert 16-bits to 8-bits 
+        if (bit_depth == 16)
+                png_set_strip_16(png);
+
+        // Convert < 8-bit gray scale to 8-bit 
+        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+                png_set_expand_gray_1_2_4_to_8(png);
+
+        if (color_type == PNG_COLOR_TYPE_GRAY) {
+                image = new_image_bw(width, height);
+        } else if (color_type == PNG_COLOR_TYPE_RGB
+                   || color_type == PNG_COLOR_TYPE_RGBA) {
+                image = new_image_rgb(width, height);
+        } else {
+                r_err("Unsupported PNG image format");
+                return NULL;
+        }
+                
+        png_read_update_info(png, info);
+
+        row_pointers = (png_bytep*) r_alloc(sizeof(png_bytep) * height);
+        if (row_pointers == NULL) 
+                goto cleanup_and_exit;
+        
+        for (y = 0; y < height; y++) {
+                row_pointers[y] = (png_byte*) r_alloc(png_get_rowbytes(png, info));
+                if (row_pointers[y] == NULL) 
+                        goto cleanup_and_exit;
+        }
+        
+        png_read_image(png, row_pointers);
+
+        if (color_type == PNG_COLOR_TYPE_GRAY) {
+                for (y = 0, k = 0; y < height; y++) {
+                        png_bytep row = row_pointers[y];
+                        for (x = 0; x < width; x++)
+                                image->data[k++] = (float) *row++ / 255.0f;
+                }
+        } else if (color_type == PNG_COLOR_TYPE_RGB) {
+                for (y = 0, k = 0; y < height; y++) {
+                        png_bytep row = row_pointers[y];
+                        for (x = 0; x < width; x++) {
+                                image->data[k++] = (float) *row++ / 255.0f;
+                                image->data[k++] = (float) *row++ / 255.0f;
+                                image->data[k++] = (float) *row++ / 255.0f;
+                        }
+                }
+        } else if (color_type == PNG_COLOR_TYPE_RGBA) {
+                for (y = 0, k = 0; y < height; y++) {
+                        png_bytep row = row_pointers[y];
+                        for (x = 0, i = 0; x < width; x++, i += 4) {
+                                float alpha = (float) row[i+3] / 255.0f;
+                                image->data[k++] = alpha * (float) row[i] / 255.0f;
+                                image->data[k++] = alpha * (float) row[i+1] / 255.0f;
+                                image->data[k++] = alpha * (float) row[i+2] / 255.0f;
+                        }
+                }
+        }
+
+cleanup_and_exit:
+        if (fp) fclose(fp);
+        if (row_pointers) {
+                for (y = 0; y < height; y++) 
+                        if (row_pointers[y])
+                                r_free(row_pointers[y]);
+                r_free(row_pointers);
+        }
+        png_destroy_read_struct(&png, &info, NULL);
+        
+        return image;
+}
+
+int image_store_png(image_t* image, const char *filename)
+{
+        png_structp png_ptr = NULL;
+        png_infop info_ptr = NULL;
+        size_t x, y, k;
+        png_bytepp row_pointers;
+
+        FILE *fp = fopen(filename, "wb");
+        if (fp == NULL) {
+                r_err("Failed to open the file '%s'", filename);
+                return -1;
+        }
+
+        png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        if (png_ptr == NULL) {
+                return -1;
+        }
+
+        info_ptr = png_create_info_struct(png_ptr);
+        if (info_ptr == NULL) {
+                png_destroy_write_struct(&png_ptr, NULL);
+                return -1;
+        }
+
+        if (setjmp(png_jmpbuf(png_ptr))) {
+                png_destroy_write_struct(&png_ptr, &info_ptr);
+                return -1;
+        }
+        
+        png_set_IHDR(png_ptr, info_ptr,
+                     image->width, image->height, 
+                     8, 
+                     (image->type == IMAGE_BW)? PNG_COLOR_TYPE_GRAY : PNG_COLOR_TYPE_RGB, 
+                     PNG_INTERLACE_NONE,
+                     PNG_COMPRESSION_TYPE_DEFAULT,
+                     PNG_FILTER_TYPE_DEFAULT);
+
+        row_pointers = (png_bytepp) png_malloc(png_ptr, image->height * sizeof(png_bytep));
+        for (y = 0; y < (size_t) image->height; y++)
+                row_pointers[y] = png_malloc(png_ptr, image->width * image->channels);
+
+        if (image->type == IMAGE_BW) {
+                for (y = 0, k = 0; y < (size_t) image->height; y++) {
+                        png_bytep row = row_pointers[y];
+                        for (x = 0; x < (size_t) image->width; x++) {
+                                *row++ = (png_byte)(image->data[k++] * 255.0f);
+                        }
+                }
+        } else {
+                for (y = 0, k = 0; y < (size_t) image->height; y++) {
+                        png_bytep row = row_pointers[y];
+                        for (x = 0; x < (size_t) image->width; x++) {
+                                *row++ = (png_byte)(image->data[k++] * 255.0f);
+                                *row++ = (png_byte)(image->data[k++] * 255.0f);
+                                *row++ = (png_byte)(image->data[k++] * 255.0f);
+                        }
+                }
+        }
+        
+        png_init_io(png_ptr, fp);
+        png_set_rows(png_ptr, info_ptr, row_pointers);
+        png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+
+        for (y = 0; y < (size_t) image->height; y++)
+                png_free(png_ptr, row_pointers[y]);
+
+        png_free(png_ptr, row_pointers);
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+
+        fclose(fp);
+        
+        return 0;
+}
+
+void append_png_data(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+        membuf_t *out = (membuf_t*) png_get_io_ptr(png_ptr);
+        membuf_append(out, (const char*) data, length);
+}
+
+void flush_png_data(png_structp png_ptr)
+{
+}
+
+int image_store_to_mem_png(image_t* image, membuf_t *out)
+{
+        png_structp png_ptr = NULL;
+        png_infop info_ptr = NULL;
+        size_t x, y, k;
+        png_bytepp row_pointers;
+
+        png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        if (png_ptr == NULL) {
+                return -1;
+        }
+
+        info_ptr = png_create_info_struct(png_ptr);
+        if (info_ptr == NULL) {
+                png_destroy_write_struct(&png_ptr, NULL);
+                return -1;
+        }
+
+        if (setjmp(png_jmpbuf(png_ptr))) {
+                png_destroy_write_struct(&png_ptr, &info_ptr);
+                return -1;
+        }
+
+        png_set_IHDR(png_ptr, info_ptr,
+                     image->width, image->height, 
+                     8, 
+                     (image->type == IMAGE_BW)? PNG_COLOR_TYPE_GRAY : PNG_COLOR_TYPE_RGB, 
+                     PNG_INTERLACE_NONE,
+                     PNG_COMPRESSION_TYPE_DEFAULT,
+                     PNG_FILTER_TYPE_DEFAULT);
+
+        row_pointers = (png_bytepp) png_malloc(png_ptr, image->height * sizeof(png_bytep));
+        for (y = 0; y < (size_t) image->height; y++)
+                row_pointers[y] = png_malloc(png_ptr, image->width * image->channels);
+
+        if (image->type == IMAGE_BW) {
+                for (y = 0, k = 0; y < (size_t) image->height; y++) {
+                        png_bytep row = row_pointers[y];
+                        for (x = 0; x < (size_t) image->width; x++) {
+                                *row++ = (png_byte)(image->data[k++] * 255.0f);
+                        }
+                }
+        } else {
+                for (y = 0, k = 0; y < (size_t) image->height; y++) {
+                        png_bytep row = row_pointers[y];
+                        for (x = 0; x < (size_t) image->width; x++) {
+                                *row++ = (png_byte)(image->data[k++] * 255.0f);
+                                *row++ = (png_byte)(image->data[k++] * 255.0f);
+                                *row++ = (png_byte)(image->data[k++] * 255.0f);
+                        }
+                }
+        }
+        
+        png_set_write_fn(png_ptr, out, append_png_data, flush_png_data);
+        
+        png_set_rows(png_ptr, info_ptr, row_pointers);
+        png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+
+        for (y = 0; y < (size_t) image->height; y++) {
+                png_free(png_ptr, row_pointers[y]);
+        }
+        png_free(png_ptr, row_pointers);
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+
+        return 0;
+}
+
+
+/*****************************************************/
+
+int image_store(image_t* image, const char *filename, const char *type)
+{
+        if (rstreq(type, "jpg"))
+                return image_store_jpeg(image, filename);
+        else if (rstreq(type, "png"))
+                return image_store_png(image, filename);
+        else {
+                r_warn("Unsupported image type: '%s'", type);
+                return -1;
+        }
+}
+
+int image_store_to_mem(image_t* image, membuf_t *out, const char *format)
+{
+        if (rstreq(format, "jpg"))
+                return image_store_to_mem_jpeg(image, out);
+        else if (rstreq(format, "png"))
+                return image_store_to_mem_png(image, out);
+        else {
+                r_warn("Unsupported image format: '%s'", format);
+                return -1;
+        }
+}
+
+int image_type_png(const char *filename)
+{
+        FILE *fp;
+        char buf[4];
+
+        if ((fp = fopen(filename, "rb")) == NULL)
+                return 0;
+
+        if (fread(buf, 1, 4, fp) != 4) {
+                fclose(fp);
+                return 0;
+        }
+        
+        fclose(fp);
+        return (png_sig_cmp(buf, 0, 4) == 0)? 1 : 0;
+}
+
+int image_type_jpeg(const char *filename)
+{
+        FILE *fp;
+        unsigned char buf[3];
+
+        if ((fp = fopen(filename, "rb")) == NULL)
+                return 0;
+
+        if (fread(buf, 1, 3, fp) != 3) {
+                fclose(fp);
+                return 0;
+        }
+        
+        fclose(fp);
+
+        return buf[0] == 0xff && buf[1] == 0xd8 && buf[2] == 0xff;
+}
+
+// FIXME: This function shouldn't rely on the filename but check the
+// file signature.
+const char *image_type(const char *filename)
+{
+        if (image_type_jpeg(filename)) {
+                return "jpg";
+        } else if (image_type_png(filename)) {
+                return "png";
+        }
+        return NULL;
+}
+
+const char *image_mimetype(const char *format)
+{
+        if (rstreq(format, "jpg")) {
+                return "image/jpeg";
+        } else if (rstreq(format, "png")) {
+                return "image/png";
+        } else {
+                r_warn("Unsupported image format: '%s'", format);
+                return NULL;
+        }
+}
+
+image_t *image_load(const char *filename)
+{
+        const char *type = image_type(filename);
+        if (type == NULL) {
+                r_warn("Unsupported image type");
+                return NULL;
+        } else if (rstreq(type, "jpg")) {
+                return image_load_jpeg(filename);
+        } else if (rstreq(type, "png")) {
+                return image_load_png(filename);
+        } else {
+                r_warn("Unsupported image type: '%s'", type);
+                return NULL;
+        }
+}
+
+/*****************************************************/
 
 image_t *image_binary(image_t* image, float threshold)
 {
@@ -630,6 +1004,7 @@ image_t *image_binary(image_t* image, float threshold)
         return binary;
 }
 
+
 // FIXME
 image_t *FIXME_image_crop(image_t *image, int x, int y, int width, int height)
 {
@@ -645,12 +1020,12 @@ image_t *FIXME_image_crop(image_t *image, int x, int y, int width, int height)
         return cropped;
 }
 
-image_t *image_rotate(image_t *image, float xc, float yc, float degrees)
+image_t *image_rotate(image_t *image, float xc, float yc, double radians)
 {
         image_t *rot = new_image(image->type, image->width, image->height);
 
-        float c = cosf(M_PI * degrees / 180.0f);
-        float s = sinf(M_PI * degrees / 180.0f);
+        float c = cosf(radians);
+        float s = sinf(radians);
         
         for (int y = 0; y < image->height; y++) {
                 for (int x = 0; x < image->width; x++) {
@@ -760,4 +1135,84 @@ int image_split_rgb(image_t *rgb_in, image_t **rgb_out)
                 return 0;
         }
         return -1;
+}
+
+image_t *image_convert_bw(image_t *image)
+{
+        if (image->type == IMAGE_BW) {
+                return image_clone(image);
+        }
+        image_t *bw = new_image_bw(image->width, image->height);
+        if (bw == NULL) {
+                // FIXME
+                return NULL;
+        }
+        int len = image->width * image->height;
+        for (int i = 0, j = 0; i < len; i++) {
+                float r = image->data[j++];
+                float g = image->data[j++];
+                float b = image->data[j++];
+                float v = 0.2989f * r + 0.5870f * g + 0.1140f * b;
+                bw->data[i] = v;
+        }
+        return bw;
+}
+
+image_t* image_excess_green(image_t* image)
+{
+        if (image->type != IMAGE_RGB) {
+                fprintf(stderr, "image_excess_green: not a RGB image\n");
+                return NULL;
+        }
+
+        image_t* exg = new_image_bw(image->width, image->height);
+        int len = image->width * image->height;
+
+        float r_max = 0.0f, g_max = 0.0f, b_max = 0.0f;
+        for (int i = 0, j = 0; i < len; i++) {
+                float r = image->data[j++];
+                float g = image->data[j++];
+                float b = image->data[j++];
+                if (r > r_max) r_max = r;
+                if (g > g_max) g_max = g;
+                if (b > b_max) b_max = b;
+        }
+
+        if (r_max == 0.0f)
+                r_max = 1.0f;
+        if (g_max == 0.0f)
+                g_max = 1.0f;
+        if (b_max == 0.0f)
+                b_max = 1.0f;
+
+        float exg_min = 2.0f;
+        float exg_max = -2.0f;
+        
+        for (int i = 0, j = 0; i < len; i++) {
+                float rn = image->data[j++] / r_max;
+                float gn = image->data[j++] / g_max;
+                float bn = image->data[j++] / b_max;
+
+                if (0) {
+                        exg->data[i] = 3.0f * gn / (rn + gn + bn) - 1.0f;
+                } else {
+                        float n = rn + gn + bn;
+                        float r = rn / n;
+                        float g = gn / n;
+                        float b = bn / n;
+                        float v = 2.0f * g - r - b;
+
+                        if (v < exg_min) exg_min = v;
+                        if (v > exg_max) exg_max = v;
+
+                        exg->data[i] = v;
+                }
+        }
+        
+        float norm = exg_max - exg_min;
+        for (int i = 0; i < len; i++) {
+                exg->data[i] = (exg->data[i] - exg_min) / norm;
+        }
+        
+        return exg;
 }

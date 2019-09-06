@@ -30,10 +30,6 @@
                   "mimetype_out": "text/html",
                   "onrequest": "interface_db" },
                 
-                { "name": "listen.html",
-                  "mimetype_out": "text/html",
-                  "onrequest": "interface_listen" },
-                
                 { "name": "*",
                   "mimetype_out": "text/html",
                   "onrequest": "interface_local_file" }

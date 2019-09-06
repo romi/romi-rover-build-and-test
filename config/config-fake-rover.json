@@ -1,4 +1,4 @@
-{
+{    
     "rover": {
         "wheel_diameter": 0.506,
         "wheel_base": 1.00,
@@ -8,7 +8,8 @@
     },
     
     "fake_camera": {
-        "image": "data/camera.jpg"
+        "imagexx": "data/camera.jpg",
+        "image": "/home/hanappe/projects/LettuceThink/DATA/2019/Chatelain/db/2019-08-26_15-10-48/images/00000.jpg"
     },
     
     "fsdb": {
@@ -16,10 +17,10 @@
     },
     
     "weeder": {
-        "workspace": [0.5, 480, 24, 1060, 1043, 710, 680],
-        "z0": -10,
+        "workspace": [0, 410, 103, 474, 474, 0.600, 0.600],
+        "z0": -0.010,
         "invert_axes": false,
-        "quincunx_threshold": 0.5
+        "quincunx_threshold": 0.0
     },
     
     "interface": {
@@ -29,7 +30,8 @@
     
     "launch": {
         "general": {
-            "log-dir-HIDE": "log"
+            "log-dir-HIDE": "log",
+            "user": "hanappe"
         },
         "registry": {
             "path": "/usr/local/bin/rcregistry"
@@ -58,6 +60,12 @@
             "path": "build/navigation/navigation"
         }, {
             "path": "build/interface/interface"
+        }, {
+            "path": "build/watchdog/watchdog",
+            "user": "root"
+        }, {
+            "path": "build/webproxy/webproxy",
+            "user": "root"
         }]
     }
 }

@@ -3,6 +3,7 @@
 
 static membuf_t *buffer = NULL;
 static database_t *db = NULL;
+static scan_t *session = NULL;
 
 streamer_t *get_streamer_camera();
 messagehub_t *get_messagehub_db();
@@ -18,7 +19,7 @@ int fsdb_node_init(int argc, char **argv)
         } else {
                 path = client_get("configuration", "fsdb.directory");
                 if (!json_isstring(path)) {
-                        log_err("The value of fsdb.directory is not a string");
+                        r_err("The value of fsdb.directory is not a string");
                         json_unref(path);
                         return -1;
                 }
@@ -26,24 +27,27 @@ int fsdb_node_init(int argc, char **argv)
         }
 
         if (dir == NULL) {
-                log_err("No directory specified");
+                r_err("No directory specified");
                 json_unref(path);
                 return -1;
         }
 
         db = new_database(dir);
         if (db == NULL) {
-                log_err("Failed to create the database");
+                r_err("Failed to create the database");
                 json_unref(path);
                 return -1;
         }
         if (database_load(db) != 0) {
-                log_err("Failed to load the database");
+                r_err("Failed to load the database");
                 delete_database(db);
                 json_unref(path);
                 return -1;
         }
-        database_print(db);
+        //database_print(db);
+
+        session = database_new_scan(db, NULL);
+        r_info("Created new session directory '%s'", scan_id(session));
         
         json_unref(path);
         
@@ -77,7 +81,7 @@ list_t *parse_uri(const char *uri)
                 if (end == NULL) {
                         if (start < uri + size - 1) {
                                 int len = uri + size - start;
-                                char *s = mem_alloc(len+1);
+                                char *s = r_alloc(len+1);
                                 memcpy(s, start, len);
                                 s[len] = 0;
                                 list = list_append(list, s);
@@ -89,7 +93,7 @@ list_t *parse_uri(const char *uri)
                                 start = end + 1;
                         } else {
                                 int len = end - start;
-                                char *s = mem_alloc(len+1);
+                                char *s = r_alloc(len+1);
                                 memcpy(s, start, len);
                                 s[len] = 0;
                                 list = list_append(list, s);
@@ -122,7 +126,7 @@ int fsdb_get_scan_metadata(request_t *request, const char *scan_id)
 {
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
-                log_warn("Could not find scan '%s'", scan_id);
+                r_warn("Could not find scan '%s'", scan_id);
                 request_set_status(request, 404);
                 return -1;
         }
@@ -151,14 +155,14 @@ int fsdb_get_fileset_metadata(request_t *request,
 {
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
-                log_warn("Could not find scan '%s'", scan_id);
+                r_warn("Could not find scan '%s'", scan_id);
                 request_set_status(request, 404);
                 return -1;
         }
         
          fileset_t *fileset = scan_get_fileset(scan, fileset_id);
         if (fileset == NULL) {
-                log_warn("Could not find fileset '%s'", fileset_id);
+                r_warn("Could not find fileset '%s'", fileset_id);
                 request_set_status(request, 404);
                 return -1;
         }
@@ -182,7 +186,7 @@ int fsdb_get_fileset_metadata(request_t *request,
         request_set_mimetype(request, "application/json");
         return 0;
 }
-
+        
 int fsdb_get_file_metadata(request_t *request,
                            const char *scan_id,
                            const char *fileset_id,
@@ -190,21 +194,21 @@ int fsdb_get_file_metadata(request_t *request,
 {
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
-                log_warn("Could not find scan '%s'", scan_id);
+                r_warn("Could not find scan '%s'", scan_id);
                 request_set_status(request, 404);
                 return -1;
         }
         
         fileset_t *fileset = scan_get_fileset(scan, fileset_id);
         if (fileset == NULL) {
-                log_warn("Could not find fileset '%s'", fileset_id);
+                r_warn("Could not find fileset '%s'", fileset_id);
                 request_set_status(request, 404);
                 return -1;
         }
         
         file_t *file = fileset_get_file(fileset, file_id);
         if (file == NULL) {
-                log_warn("Could not find file '%s'", file_id);
+                r_warn("Could not find file '%s'", file_id);
                 request_set_status(request, 404);
                 return -1;
         }
@@ -227,12 +231,12 @@ int fsdb_get_metadata(request_t *request, list_t *query)
         const char *file_id = list_get(query, char);
         
         if (list_next(query) != NULL) {
-                log_warn("URI too long");
+                r_warn("URI too long");
                 request_set_status(request, 400);
                 return -1;
         }
         if (!rstreq(db_id, "db")) {
-                log_warn("Invalid metadata id: '%s'", db_id);
+                r_warn("Invalid metadata id: '%s'", db_id);
                 request_set_status(request, 404);
                 return -1;
         }
@@ -261,57 +265,57 @@ int fsdb_get_data(request_t *request, list_t *query)
         const char *file_id = list_get(query, char);
 
         if (db_id == NULL || !rstreq(db_id, "db")) {
-                log_warn("Missing DB prefix");
+                r_warn("Missing DB prefix");
                 request_set_status(request, 400);
                 return -1;
         }
         if (scan_id == NULL) {
-                log_warn("Missing scan ID");
+                r_warn("Missing scan ID");
                 request_set_status(request, 400);
                 return -1;
         }
         if (fileset_id == NULL) {
-                log_warn("Missing fileset ID");
+                r_warn("Missing fileset ID");
                 request_set_status(request, 400);
                 return -1;
         }
         if (file_id == NULL) {
-                log_warn("Missing file ID");
+                r_warn("Missing file ID");
                 request_set_status(request, 400);
                 return -1;
         }
         
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
-                log_warn("Could not find scan '%s'", scan_id);
+                r_warn("Could not find scan '%s'", scan_id);
                 request_set_status(request, 404);
                 return -1;
         }
 
         fileset_t *fileset = scan_get_fileset(scan, fileset_id);
         if (fileset == NULL) {
-                log_warn("Could not find fileset '%s'", fileset_id);
+                r_warn("Could not find fileset '%s'", fileset_id);
                 request_set_status(request, 404);
                 return -1;
         }
 
         file_t *file = fileset_get_file(fileset, file_id);
         if (file == NULL) {
-                log_warn("Could not find file '%s'", file_id);
+                r_warn("Could not find file '%s'", file_id);
                 request_set_status(request, 404);
                 return -1;
         }
 
         char path[1024];
         if (file_path(file, path, sizeof(path)) != 0) {
-                log_warn("Failed to get the path of file '%s'", file_id);
+                r_warn("Failed to get the path of file '%s'", file_id);
                 request_set_status(request, 500);
                 return -1;
         }
 
         const char *mimetype = filename_to_mimetype(path);
         if (mimetype == NULL) {
-                log_warn("Failed to determine mimetype file '%s'", path);
+                r_warn("Failed to determine mimetype file '%s'", path);
                 request_set_status(request, 500);
                 return -1;
         }
@@ -326,7 +330,7 @@ int fsdb_get_data(request_t *request, list_t *query)
         }
 
         if (ferror(fp)) {
-                log_err("An error occured reading file '%s'", path);
+                r_err("An error occured reading file '%s'", path);
                 request_set_status(request, 500);
                 return -1;
         }
@@ -334,7 +338,6 @@ int fsdb_get_data(request_t *request, list_t *query)
         fclose(fp);
         return 0;
 }
-
 
 // scans:   /metadata/db
 // scan:    /metadata/db/<scan-id>
@@ -361,15 +364,21 @@ int fsdb_get(void *data, request_t *request)
         else err = -1;
         
         for (list_t *l = query; l != NULL; l = list_next(l))
-                mem_free(list_get(l, char));
+                r_free(list_get(l, char));
         delete_list(query);
         
         return err;
 }
 
+int fsdb_get_session(void *data, request_t *request)
+{
+        request_reply_printf(request, "{\"db\": \"%s\", \"session\": \"%s\"}",
+                             database_path(db), scan_id(session));
+}
+
 int fsdb_onmessage(void *userdata, messagelink_t *link, json_object_t message)
 {
-        log_debug("fsdb_onmessage");
+        r_debug("fsdb_onmessage");
         const char *event = json_object_getstr(message, "event");
 
         messagehub_t *hub = get_messagehub_db();

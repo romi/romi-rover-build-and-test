@@ -26,7 +26,7 @@ int video4linux_init(int argc, char **argv)
         
         camera = new_camera(device, IO_METHOD_MMAP, 1280, 960, 90);
         if (camera == NULL) {
-                log_err("Failed to open the camera");
+                r_err("Failed to open the camera");
                 return -1;
         }
         return 0;
@@ -48,7 +48,7 @@ void video4linux_broadcast()
         if (want_image || streamer_has_clients(streamer)) {
                 int error = camera_capture(camera);
                 if (error) {
-                        log_err("Failed to grab the image");
+                        r_err("Failed to grab the image");
                         clock_sleep(0.04);
                         return;
                 }
@@ -77,16 +77,16 @@ int video4linux_still(void *data, request_t *request)
         int done = 0;
         while (!done) {
                 
-                log_debug("send_still_image: want_image=true");
+                r_debug("send_still_image: want_image=true");
                 
                 mutex_lock(mutex);
                 want_image = 1;
                 mutex_unlock(mutex);
 
                 membuf_lock(rgbbuf);
-                log_debug("realsense_still: image len=%d", membuf_len(rgbbuf));
+                r_debug("realsense_still: image len=%d", membuf_len(rgbbuf));
                 if (membuf_len(rgbbuf) > 0) {
-                        log_debug("send_still_image: have_image=true");
+                        r_debug("send_still_image: have_image=true");
                         request_reply_append(request, membuf_data(rgbbuf), membuf_len(rgbbuf));
                         membuf_clear(rgbbuf); // consume the image
                         done = 1;
@@ -97,7 +97,7 @@ int video4linux_still(void *data, request_t *request)
         }
 
         mutex_lock(mutex);
-        log_debug("send_still_image: want_image=false");
+        r_debug("send_still_image: want_image=false");
         want_image = 0;
         mutex_unlock(mutex);
         

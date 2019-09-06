@@ -14,11 +14,11 @@ int init_rover(double left, double right, double timestamp)
                 return -1;
         last_attempt = now;
         
-        log_debug("trying to configure the rover's dimensions");
+        r_debug("trying to configure the rover's dimensions");
         
         json_object_t config = client_get("configuration", "rover");
         if (json_isnull(config)) {
-                log_err("failed to load the configuration");
+                r_err("failed to load the configuration");
                 json_unref(config);
                 return -1;
         }
@@ -26,14 +26,14 @@ int init_rover(double left, double right, double timestamp)
         double base = json_object_getnum(config, "wheel_base");
         double steps = json_object_getnum(config, "encoder_steps");
         if (isnan(diam) || isnan(base) || isnan(steps)) {
-                log_err("invalid configuration values");
+                r_err("invalid configuration values");
                 json_unref(config);
                 return -1;
         }
 
         json_unref(config);
         
-        log_debug("initializing rover: diam %.3f, base %.3f, steps %d",
+        r_debug("initializing rover: diam %.3f, base %.3f, steps %d",
                   diam, base, (int) steps);
         
         rover = new_rover(diam, base, steps);
@@ -63,14 +63,14 @@ void wheel_odometry_ondata(void *userdata,
 {
         json_object_t data = datalink_parse(link, input);
         if (json_falsy(data)) {
-                log_warn("wheel_odometry_ondata: failed to parse data");
+                r_warn("wheel_odometry_ondata: failed to parse data");
                 json_unref(data);
                 return;
         }
         
         json_object_t encoders = json_object_get(data, "encoders");
         if (json_isnull(encoders) || !json_isarray(encoders)) {
-                log_warn("wheel_odometry_ondata: expected an array for the encoder values");
+                r_warn("wheel_odometry_ondata: expected an array for the encoder values");
                 json_unref(data);
                 return;
         }
@@ -80,7 +80,7 @@ void wheel_odometry_ondata(void *userdata,
         double timestamp = json_object_getnum(data, "timestamp");
         
         if (isnan(left) || isnan(right) || isnan(timestamp)) {
-                log_warn("wheel_odometry_ondata: invalid values");
+                r_warn("wheel_odometry_ondata: invalid values");
                 json_unref(data);
                 return;
         }
@@ -93,7 +93,7 @@ void wheel_odometry_ondata(void *userdata,
                 rover_set_encoders(rover, left, right, timestamp);
         }
 
-        //log_debug("encoders: %f, %f", left, right);
+        //r_debug("encoders: %f, %f", left, right);
         
         vector_t position;
         vector_t speed;
@@ -104,7 +104,7 @@ void wheel_odometry_ondata(void *userdata,
                 static double last_print = 0.0;
                 double now = clock_time();
                 if (now - last_print > 3) {
-                        //log_info("position: x %f, y %f", position.x, position.y);
+                        //r_info("position: x %f, y %f", position.x, position.y);
                         last_print = now;
                 }
         }
