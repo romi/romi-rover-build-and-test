@@ -12,8 +12,9 @@ static workspace_t workspace;
 static int initialized = 0;
 static double z0;
 static double quincunx_threshold = 1.0;
+static char *directory = NULL;
 static database_t *db = NULL;
-static scan_t *session = NULL;
+static scan_t *scan = NULL;
 
 messagelink_t *get_messagelink_cnc();
 messagelink_t *get_messagelink_db();
@@ -116,58 +117,49 @@ static void broadcast_db_message(void *userdata,
                                 event, scan_id);
 }
 
-static int init_database()
+static char *get_fsdb_directory()
 {
-        if (db != NULL)
-                return 0;
-
-        int err = -1;
-        
-        /* json_object_t path = json_null(); */
-        /* path = client_get("configuration", "fsdb.directory"); */
-        /* if (json_isstring(path)) { */
-        /*         r_info("using configuration file for directory: '%s'", */
-        /*                  json_string_value(path)); */
-        /*         db = new_database(json_string_value(path)); */
-        /*         err = (db == NULL); */
-
-        /*         database_set_listener(db, broadcast_db_message, NULL); */
-                
-        /* } else { */
-        /*         r_err("Failed to obtain a valid camera-recorder.directory setting"); */
-        /* } */
-        /* json_unref(path); */
-
-        json_object_t fsdb = client_get("db", "session");
+        json_object_t fsdb = client_get("db", "directory");
         if (!json_isobject(fsdb)) {
                 r_err("Failed to obtain the session information from fsdb");
-                return -1;
+                return NULL;
         }
-        
-        const char *dir = json_object_getstr(fsdb, "db"); 
-        const char *session_id = json_object_getstr(fsdb, "session");
-        if (dir == NULL || session_id == NULL) {
-                r_err("Failed to load the session info from fsdb");
-                json_unref(fsdb);
-                return -1;
-        }
-        
-        r_info("Session: db='%s', session='%s'", dir, session_id);
-        
-        db = new_database(dir);
+        const char *dir = json_object_getstr(fsdb, "db");
         if (dir == NULL) {
-                json_unref(fsdb);
-                return -1;
+                r_err("The fsdb's session information does not contain the 'db' field");
+                return NULL;
         }
-
-        session = database_new_scan(db, session_id);
-        if (session == NULL) {
-                json_unref(fsdb);
-                return -1;
-        }
-                
-        database_set_listener(db, broadcast_db_message, NULL);
+        char *copy = r_strdup(dir);
         json_unref(fsdb);
+        return copy;
+}
+
+static char *get_directory()
+{
+        if (directory != NULL)
+                return r_strdup(directory);
+        else
+                return get_fsdb_directory();
+}
+
+static int init_database()
+{
+        if (db != NULL) 
+                return 0;
+        
+        char *dir = get_directory();
+        if (dir == NULL)
+                return -1;
+        db = new_database(dir);
+        r_free(dir);
+
+        database_load(db);
+
+        database_set_listener(db, broadcast_db_message, NULL);
+        
+        scan = database_new_scan(db, "weeding");
+        if (scan == NULL)
+                return -1;
         
         return 0;
 }
@@ -176,19 +168,20 @@ static int init()
 {
         if (initialized)
                 return 0;
-        
         if (init_workspace() != 0)
-                return -1;
-        
-        if (init_database() != 0)
-                return -1;
-        
+                return -1;        
         initialized = 1;
         return 0;
 }
 
 int weeder_init(int argc, char **argv)
 {
+        if (argc == 2) {
+                // FIXME: needs more checking
+                directory = r_strdup(argv[1]);
+                r_info("using command line argument for directory: '%s'", directory);
+        }
+        
         for (int i = 0; i < 10; i++) {
                 if (init() == 0)
                         return 0;
@@ -202,7 +195,6 @@ int weeder_init(int argc, char **argv)
 
 void weeder_cleanup()
 {
-        /* free_weeding_data_directory(); */
         if (db)
                 delete_database(db);
 }
@@ -229,7 +221,7 @@ static int move_away_arm()
         }
         // move weeding tool to the end of the workspace
         reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", "
-                                           "\"x\": 0, \"y\": %d}",
+                                           "\"x\": 0, \"y\": %.4f}",
                                            workspace.height_meter);
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
@@ -254,38 +246,33 @@ static list_t *compute_quincunx(membuf_t *message,
                 return NULL;
         }
 
-        membuf_t *buf = new_membuf();
-        int err = client_get_data("camera", "camera.jpg", buf);
+        response_t *response = NULL;
+        int err = client_get_data("camera", "camera.jpg", &response);
         if (err != 0) {
                 r_err("Failed to obtain the camera image");
                 membuf_printf(message, "Failed to obatin the camera image");
-                delete_membuf(buf);
                 return NULL;
         }
 
         r_info("Done grabbing image: %f s", clock_time() - start_time);
 
-        image_t *image = image_load_from_mem(membuf_data(buf), membuf_len(buf));
+        membuf_t *body = response_body(response);
+        image_t *image = image_load_from_mem(membuf_data(body), membuf_len(body));
         if (image == NULL) {
                 r_err("Failed to decompress the image");
                 membuf_printf(message, "Failed to decompress the image");
-                delete_membuf(buf);
+                delete_response(response);
                 return NULL;
         }
         r_info("Done decompressing image: %f s", clock_time() - start_time);
-
-        r_debug("Session: ", session? scan_id(session) : "NULL!");
         
         float confidence;
-        list_t *path = compute_path(session, NULL, image, &workspace,
+        list_t *path = compute_path(scan, NULL, image, &workspace,
                                     distance_plants, distance_rows,
                                     radius_zone, diameter_tool,
                                     &confidence);
-
-        // Don't keep the fileset data loaded in memory.
-        database_unload(db);
         
-        delete_membuf(buf);
+        delete_response(response);
         delete_image(image);
         return path;
 }
@@ -333,7 +320,7 @@ static int send_path(list_t *path, double z0, membuf_t *message)
         membuf_printf(buf, "{\"command\": \"travel\", \"path\": [");
         for (list_t *l = path; l != NULL; l = list_next(l)) {
                 point_t *p = list_get(l, point_t);
-                membuf_printf(buf, "[%d,%d,%d]", (int) p->x, (int) p->y, (int) p->z);
+                membuf_printf(buf, "[%.4f,%.4f,%.4f]", p->x, p->y, p->z);
                 if (list_next(l)) membuf_printf(buf, ",");
         }
         membuf_printf(buf, "]}");
@@ -385,6 +372,8 @@ static int hoe(int method, json_object_t command, membuf_t *message)
         int err;
         double start_time = clock_time();
 
+        json_print(command, 0);
+        
         double diameter_tool = 0.05f;
         if (json_object_has(command, "diameter-tool")) {
                         diameter_tool = json_object_getnum(command, "diameter-tool");
@@ -463,7 +452,11 @@ int weeder_onhoe(void *userdata,
 	r_debug("weeder_onhoe");
 
         if (init_workspace() != 0) {
-                membuf_printf(message, "workspace not intialized");
+                membuf_printf(message, "Workspace not intialized");
+                return -1;
+        }
+        if (init_database() != 0) {
+                membuf_printf(message, "Database not intialized");
                 return -1;
         }
 

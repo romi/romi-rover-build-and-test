@@ -9,6 +9,8 @@
 
 static int store_workspace(fileset_t *fileset, workspace_t *workspace)
 {
+        if (fileset == NULL)
+                return 0;
         json_object_t w = workspace_to_json(workspace);
         int err = fileset_set_metadata(fileset, "workspace", w);
         json_unref(w);
@@ -60,16 +62,22 @@ static fileset_t *create_fileset(scan_t *session, const char *fileset_id,
 
 static void store_jpg(fileset_t *fileset, const char *name, image_t *image)
 {
+        if (fileset == NULL)
+                return;
         fileset_store_image(fileset, name, image, "jpg");
 }
 
 static void store_png(fileset_t *fileset, const char *name, image_t *image)
 {
+        if (fileset == NULL)
+                return;
         fileset_store_image(fileset, name, image, "png");
 }
 
 static file_t *create_file(fileset_t *fileset, const char *name)
 {
+        if (fileset == NULL)
+                return NULL;
         file_t *file = fileset_new_file(fileset);
         if (file == NULL)
                 return NULL;
@@ -954,29 +962,37 @@ image_t *estimate_pattern_position(fileset_t *fileset,
                                    float d_rows,                                   
                                    point_t *pos, float *p)
 {
-        float x_max = 0.0f;
-        float y_max = 0.0f;
+        int x_max = 0;
+        int y_max = 0;
         float p_max = -1.0f;
 
-        image_t *pattern = new_image_bw((int) d_rows, (int) d_plants);
+        int dr = (int) d_rows;
+        int dp = (int) d_plants;
+        int w = dr + 1;
+        int h = dp + 1;
         
-        for (float y = 0.0f; y < d_plants; y += 1.0f) {
-                for (float x = 0.0f; x < d_rows; x += 1.0f) {
+        image_t *pattern = new_image_bw(w, h);
+
+        r_debug("d_rows %d, d_plants %d", dr, dp);
+
+        for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
                         float v = (image_get(p_map, x, y, 0)
-                                   + image_get(p_map, x, y + d_plants, 0)
-                                   + image_get(p_map, x, y + 2.0f * d_plants, 0)
+                                   + image_get(p_map, x, y + dp, 0)
+                                   + image_get(p_map, x, y + 2 * dp, 0)
                                    
-                                   + image_get(p_map, x + d_rows, y - d_plants/2, 0)
-                                   + image_get(p_map, x + d_rows, y - d_plants/2 + d_plants, 0)
-                                   + image_get(p_map, x + d_rows, y - d_plants/2 + 2.0f * d_plants, 0)
-                                   + image_get(p_map, x + d_rows, y - d_plants/2 + 3.0f * d_plants, 0)
+                                   + image_get(p_map, x + dr, y - dp / 2, 0)
+                                   + image_get(p_map, x + dr, y - dp / 2 + dp, 0)
+                                   + image_get(p_map, x + dr, y - dp / 2 + 2 * dp, 0)
+                                   + image_get(p_map, x + dr, y - dp / 2 + 3 * dp, 0)
                                    
-                                   + image_get(p_map, x + 2 * d_rows, y, 0)
-                                   + image_get(p_map, x + 2 * d_rows, y + d_plants, 0)
-                                   + image_get(p_map, x + 2 * d_rows, y + 2.0f * d_plants, 0));
+                                   + image_get(p_map, x + 2 * dr, y, 0)
+                                   + image_get(p_map, x + 2 * dr, y + dp, 0)
+                                   + image_get(p_map, x + 2 * dr, y + 2 * dp, 0));
                         
                         image_set(pattern, (int) x, (int) y, 0, v);
                         if (v > p_max) {
+                                r_debug("x=%d, y=%d, p=%f", x, y, v);
                                 p_max = v;
                                 x_max = x;
                                 y_max = y;
@@ -985,8 +1001,8 @@ image_t *estimate_pattern_position(fileset_t *fileset,
         }
         store_png(fileset, "probability-positions", pattern);
 
-        pos->x = x_max;
-        pos->y = y_max;
+        pos->x = (float) x_max;
+        pos->y = (float) y_max;
         *p = p_max;
         
         return pattern;
@@ -1067,10 +1083,14 @@ void store_pattern_position(fileset_t *fileset, image_t *image, float dpx_plants
         delete_image(pattern);
 }
 
-void store_positions_metadata(fileset_t *fileset, list_t *positions, double meters_to_pixels)
+void store_positions_metadata(fileset_t *fileset, list_t *positions,
+                              double meters_to_pixels)
 {
         int i;
         json_object_t a;
+
+        if (fileset == NULL)
+                return;
 
         i = 0;
         a = json_array_create();
@@ -1150,7 +1170,10 @@ list_t *compute_quincunx_positions(fileset_t *fileset,
         
         // 
         *confidence = (p_max / 10.0f) / average_prob;
-        r_info("quincunx: confidence: %f", *confidence);
+        
+        r_info("quincunx: p_max %f", (double) p_max);
+        r_info("quincunx: average_prob %f", (double) average_prob);
+        r_info("quincunx: confidence: %f", (double) *confidence);
 
         // adjust the positions of the points.
         float delta = 0.04f * meters_to_pixels;
@@ -1224,7 +1247,8 @@ list_t *compute_path(scan_t *session, const char *fileset_id, image_t *camera,
                   path, positions, radius_zones, scale);
 
         json_object_setnum(performance, "path", clock_time() - start_time);
-        fileset_set_metadata(fileset, "performance", performance);
+        if (fileset)
+                fileset_set_metadata(fileset, "performance", performance);
         
         // Cleaning up
 cleanup_and_exit:
