@@ -59,8 +59,6 @@ void webproxy_get_stream(request_t *request,
         /*         response_set_status(response, HTTP_Status_Internal_Server_Error); */
         /*         return; */
         /* } */
-
-        return 0;
 }
 
 void webproxy_onrequest(void *data,
