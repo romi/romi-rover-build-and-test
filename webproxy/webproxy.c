@@ -11,113 +11,190 @@ void webproxy_cleanup()
 {
 }
 
-list_t* chop_path(const char *path)
+void webproxy_get_service(request_t *request,
+                          const char *topic,
+                          const char *resource,
+                          response_t *response)
 {
-        list_t* elements = NULL;
-        membuf_t *buf = new_membuf();
-        if (buf == NULL)
-                return NULL;
-
-        for (int i = 0; path[i] != 0; i++) {
-                char c = path[i];
-                if (c == '/') {
-                        if (membuf_len(buf) > 0) {
-                                membuf_append_zero(buf);
-                                char *s = r_strdup(membuf_data(buf));
-                                r_debug("chop_path: s=%s", s);
-                                elements = list_append(elements, s);
-                                membuf_clear(buf);
-                        } 
-                } else {
-                        membuf_append(buf, &c, 1);
-                }
-        }
-        if (membuf_len(buf) > 0) {
-                membuf_append_zero(buf);
-                char *s = r_strdup(membuf_data(buf));
-                elements = list_append(elements, s);
-        } 
-        return elements;
-}
-
-char *glue_path(list_t* elements)
-{
-        membuf_t *buf = new_membuf();
-        for (list_t* l = elements; l != NULL; l = list_next(l)) {
-                const char *s = list_get(l, char);
-                membuf_append(buf, "/", 1);
-                membuf_append_str(buf, s);
-        }
-        membuf_append_zero(buf);
-        return r_strdup(membuf_data(buf));
-}
-
-void delete_path(list_t* list)
-{
-        for (list_t* l = list; l != NULL; l = list_next(l)) {
-                char *s = list_get(l, char);
-                if (s) r_free(s);
-        }
-        delete_list(list);
-}
-
-int webproxy_get_service(request_t *request, const char *topic, const char *resource)
-{
+        int err;
         r_debug("webproxy_get_service: topic %s, resource %s", topic, resource);
-        return client_get_data(topic, resource, request_reply_buffer(request));
+        if (request_args(request) != NULL) {
+                char buffer[1024]; 
+                rprintf(buffer, sizeof(buffer), "%s?%s", resource, request_args(request));
+                r_debug("   resource %s", buffer);
+                err = client_get_data(topic, buffer, &response);
+                
+        } else
+                err = client_get_data(topic, resource, &response);
+        
+        if (err != 0)
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
 }
 
-int webproxy_get(void *data, request_t *request)
+int webproxy_stream_onresponse(void *userdata, response_t *response)
+{
+        return 0;
+}
+
+int webproxy_stream_ondata(void *userdata, const char *buf, int len)
+{
+        return 0;
+}
+
+void webproxy_get_stream(request_t *request,
+                         const char *topic,
+                         const char *resource,
+                         response_t *response)
+{
+        r_debug("webproxy_get_stream: topic %s, resource %s", topic, resource);
+        
+        /* streamerlink_t *link = NULL; */
+        /* link = registry_open_streamerlink("webproxy", */
+        /*                                   topic, */
+        /*                                   webproxy_stream_ondata,  */
+        /*                                   webproxy_stream_onresponse, */
+        /*                                   void* userdata, */
+        /*                                   1); */
+        /* if (link == NULL) { */
+        /*         response_set_status(response, HTTP_Status_Internal_Server_Error); */
+        /*         return; */
+        /* } */
+
+        return 0;
+}
+
+void webproxy_onrequest(void *data,
+                        request_t *request,
+                        response_t *response)
 {
 	const char *path = request_uri(request);
-        r_debug("webproxy_get: uri=%s", path);
+        r_debug("webproxy_onrequest: uri=%s", path);
         
-        list_t* elements = chop_path(path);
+        list_t* elements = path_break(path);
+        list_t* start = elements;
 
-        for (list_t* l = elements; l != NULL; l = list_next(l)) {
-                const char *s = list_get(l, char);
-                r_debug("%s", s);
-        }
+        char *s = list_get(start, char);
+        if (rstreq(s, "/"))
+            start = list_next(start);
 
-        list_t* l_type = elements;
+        list_t* l_type = start;
         if (l_type == NULL) {
-                request_set_status(request, HTTP_Status_Bad_Request);
-                return -1;
+                response_set_status(response, HTTP_Status_Bad_Request);
+                return;
         }
+        
         char *type = list_get(l_type, char);
-        r_debug("webproxy_get: type %s", type);
+        r_debug("webproxy_onrequest: type %s", type);
+        
+        if (rstreq(type, "coffee")) {
+                response_set_status(response, HTTP_Status_Im_A_Teapot);
+                return;
+        }
         
         list_t* l_topic = list_next(l_type);
         if (l_topic == NULL) {
-                request_set_status(request, HTTP_Status_Bad_Request);
-                return -1;
+                response_set_status(response, HTTP_Status_Bad_Request);
+                return;
         }
+        
         char *topic = list_get(l_topic, char);
-        r_debug("webproxy_get: topic %s", topic);
+        r_debug("webproxy_onrequest: topic %s", topic);
         
         list_t* l_resource = list_next(l_topic);
         if (l_resource == NULL) {
-                request_set_status(request, HTTP_Status_Bad_Request);
-                return -1;
+                response_set_status(response, HTTP_Status_Bad_Request);
+                return;
         }
-        char *resource = glue_path(l_resource);
-        r_debug("webproxy_get: resource %s", resource);
+
+        char resource[1024];
+        int err = path_glue(l_resource, 1, resource, sizeof(resource));
+        r_debug("webproxy_onrequest: resource %s", resource);
 
         int r = 0;
         if (rstreq(type, "service")) {
-                r = webproxy_get_service(request, topic, resource);
-
-        } else if (rstreq(type, "kettle")) {
-                request_set_status(request, HTTP_Status_Im_A_Teapot);
+                webproxy_get_service(request, topic, resource, response);
 
         } else {
-                request_set_status(request, HTTP_Status_Bad_Request);
-                r = -1;
+                r_debug("webproxy_onrequest: Bad resquest: Unknown type '%s'", type);
+                response_set_status(response, HTTP_Status_Bad_Request);
         }
         
-        delete_path(elements);
-        r_free(resource);
+        path_delete(elements);
+}
+
+static void copy_message_to_client(messagelink_t *link_from_client,
+                                   messagelink_t *link_to_hub,
+                                   json_object_t message)
+{
+        r_debug("copy_message_to_client");
+        if (link_from_client)
+                messagelink_send_obj(link_from_client, message);
+}
+
+static void copy_message_to_hub(messagelink_t *link_to_hub,
+                                messagelink_t *link_from_client,
+                                json_object_t message)
+{
+        r_debug("copy_message_to_hub");
+        if (link_to_hub)
+                messagelink_send_obj(link_to_hub, message);
+}
+
+static void link_from_client_closed(messagelink_t *link_to_hub,
+                                    messagelink_t *link_from_client)
+{
+        r_debug("link_from_client_closed");
+        registry_close_messagelink(link_to_hub);
+        messagelink_set_userdata(link_from_client, NULL);
+}
+
+int webproxy_onconnect(void *userdata, messagehub_t *hub,
+                       request_t* request, messagelink_t *link_from_client)
+{
+        const char *path = request_uri(request);
+        r_debug("webproxy_onconnect: uri '%s'", path);
         
-        return r;
+        list_t* elements = path_break(path);
+        list_t* start = elements;
+
+        char *s = list_get(start, char);
+        if (rstreq(s, "/"))
+            start = list_next(start);
+
+        list_t* l_type = start;
+        if (l_type == NULL)
+                return -1;
+        
+        char *type = list_get(l_type, char);
+        r_debug("webproxy_onconnect: type %s", type);
+
+        if (!rstreq(type, "messagehub"))
+                return -1;
+        
+        list_t* l_topic = list_next(l_type);
+        if (l_topic == NULL)
+                return -1;
+        
+        char *topic = list_get(l_topic, char);
+        r_debug("webproxy_onconnect: topic %s", topic);
+        
+        messagelink_t *link_to_hub = NULL;
+        link_to_hub = registry_open_messagelink("webproxy",
+                                                topic,
+                                                (messagelink_onmessage_t) copy_message_to_client,
+                                                link_from_client);
+        if (link_to_hub == NULL) {
+                path_delete(elements);
+                return -1;
+        }
+        
+        messagelink_set_userdata(link_from_client, link_to_hub);
+        messagelink_set_onmessage(link_from_client,
+                                  (messagelink_onmessage_t) copy_message_to_hub);
+        messagelink_set_onclose(link_from_client,
+                                (messagelink_onclose_t) link_from_client_closed);
+
+        path_delete(elements);
+        return 0;
 }
 

@@ -2,14 +2,11 @@
     "name": "webproxy",
     "com": [
         {
-            "type": "service",
+            "type": "messagehub",
             "topic": "webproxy",
             "port": 80,
-            "resources": [
-                { "name": "*",
-                  "mimetype_out": "text/html",
-                  "onrequest": "webproxy_get" }
-            ]
+            "onconnect": "webproxy_onconnect",
+            "onrequest": "webproxy_onrequest"
         }
     ]
 }
