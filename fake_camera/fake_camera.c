@@ -71,9 +71,7 @@ void fake_camera_broadcast()
         clock_sleep(0.5);
 }
 
-int fake_camera_still(void *data, request_t *request)
+void fake_camera_still(void *data, request_t *request, response_t *response)
 {
-        request_reply_append(request, membuf_data(rgbbuf), membuf_len(rgbbuf));        
-        request_set_status(request, 200);
-        return 0;
+        response_append(response, membuf_data(rgbbuf), membuf_len(rgbbuf));        
 }

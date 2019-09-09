@@ -53,7 +53,7 @@ DB
 
 --------------------------------------------
 
-DB == session
+db == session
   - scan (ex. camera_recorder)
     - fileset
       - file
@@ -63,7 +63,7 @@ DB == session
 
 --------------------------------------------
 
-DB
+db
   - session
     - scan  (ex. scan by camera_recorder)
       - fileset (ex. "images")
@@ -71,6 +71,37 @@ DB
     - scan  (ex. "device"???)
       - fileset (ex. logs, dump, weeding images)
         - file
+  ...
+
+--------------------------------------------
+
+
+session
+  - log
+  - dump
+  - db
+    - scan  (ex. scan by camera_recorder)
+      - fileset (ex. "images")
+        - file
+    - weeding  (ex. scan by camera_recorder)
+      - fileset (ex. "images")
+        - file
+  ...
+
+
+
+session
+  - log
+  - dump
+  - db
+    - scan-00001
+      - images
+        - 00000.jpg
+    - weeding
+      - 2019-09-05_14-13-45
+        - 00000.jpg
+      - 2019-09-05_14-16-12
+        - 00000.jpg
   ...
 
 --------------------------------------------
@@ -1118,7 +1149,7 @@ int database_load(database_t *db)
                 return -1;
         }
 
-        list_t *ids = dir_list(db->path);
+        list_t *ids = directory_list(db->path);
         for (list_t *l = ids; l != NULL; l = list_next(l)) {
                 char *id = list_get(l, char);
 
@@ -1206,17 +1237,16 @@ static int database_create_fileset_dir(database_t *db, scan_t *scan, const char 
         
         snprintf(path, 1024, "%s/%s/%s", db->path, scan->id, id);
         path[1023] = 0;
-	if (mkdir(path, 0777) == -1) {
-                r_err("Failed to create directory '%s': %s.",
-                        path, strerror(errno));
+        
+	if (directory_create(path) == -1) {
+                r_err("Failed to create directory '%s'", path);
                 return -1;
 	}
 
         snprintf(path, 1024, "%s/%s/metadata/%s", db->path, scan->id, id);
         path[1023] = 0;
-	if (mkdir(path, 0777) == -1) {
-                r_err("Failed to create directory '%s': %s.",
-                        path, strerror(errno));
+	if (directory_create(path) == -1) {
+                r_err("Failed to create directory '%s'", path);
                 return -1;
 	}
         
@@ -1261,9 +1291,8 @@ static int database_create_scan_dir(database_t *db, scan_t *scan)
                 }
         }
         
-	if (mkdir(path, 0777) == -1) {
-                r_err("Failed to create directory '%s': %s.",
-                        path, strerror(errno));
+	if (directory_create(path) == -1) {
+                r_err("Failed to create directory '%s'", path);
                 return -1;
 	}
 
@@ -1272,9 +1301,8 @@ static int database_create_scan_dir(database_t *db, scan_t *scan)
         if (rprintf(path, sizeof(path), "%s/%s/metadata", db->path, scan->id) == NULL)
                 return -1;
 
-	if (mkdir(path, 0777) == -1) {
-                r_err("Failed to create directory '%s': %s.",
-                        path, strerror(errno));
+	if (directory_create(path) == -1) {
+                r_err("Failed to create directory '%s'", path);
                 return -1;
 	}
         return 0;

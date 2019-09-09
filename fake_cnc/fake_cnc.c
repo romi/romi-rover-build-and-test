@@ -45,7 +45,7 @@ int cnc_onmoveto(void *userdata,
         if (hasx) _x = x;
         if (hasy) _y = y;
         if (hasz) _z = z;
-	r_debug("position[%.1f,%.1f,%.1f]", _x, _y, _z);
+	r_debug("position[%.4f,%.4f,%.4f]", _x, _y, _z);
         mutex_unlock(mutex);
         
         return 0;
@@ -90,8 +90,8 @@ int cnc_ontravel(void *userdata,
                 _x = json_array_getnum(p, 0);
                 _y = json_array_getnum(p, 1);
                 _z = json_array_getnum(p, 2);
-                r_debug("position[%.1f,%.1f,%.1f]", _x, _y, _z);
-                clock_sleep(1.0);
+                r_debug("position[%.4f,%.4f,%.4f]", _x, _y, _z);
+                clock_sleep(0.2);
         }
         
         mutex_unlock(mutex);        

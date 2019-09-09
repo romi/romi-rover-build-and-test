@@ -17,13 +17,17 @@
         "script": [
             {"action": "homing"},
             {"action": "move", "distance": 1.2},
-            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "hoe", "method": "quincunx",
+             "distance-plants": 0.30, "distance-rows": 0.2},
             {"action": "move", "distance": 0.60},
-            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "hoe", "method": "quincunx",
+             "distance-plants": 0.30, "distance-rows": 0.2},
             {"action": "move", "distance": 0.60},
-            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "hoe", "method": "quincunx",
+             "distance-plants": 0.30, "distance-rows": 0.2},
             {"action": "move", "distance": 0.60},
-            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30},
+            {"action": "hoe", "method": "quincunx",
+             "distance-plants": 0.30, "distance-rows": 0.2},
             {"action": "move", "distance": -2.5},
             {"action": "homing"}
         ]

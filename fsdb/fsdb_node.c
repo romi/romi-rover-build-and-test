@@ -1,9 +1,7 @@
 #include <romi.h>
 #include "fsdb_node.h"
 
-static membuf_t *buffer = NULL;
 static database_t *db = NULL;
-static scan_t *session = NULL;
 
 streamer_t *get_streamer_camera();
 messagehub_t *get_messagehub_db();
@@ -13,9 +11,13 @@ int fsdb_node_init(int argc, char **argv)
 {
         json_object_t path = json_null();
         const char *dir = NULL;
+        char buffer[1024];
         
         if (argc >= 2) {
                 dir = argv[1];
+        } else if (app_get_session() != NULL) {
+                rprintf(buffer, sizeof(buffer), "%s/db", app_get_session());
+                dir = buffer;
         } else {
                 path = client_get("configuration", "fsdb.directory");
                 if (!json_isstring(path)) {
@@ -45,25 +47,14 @@ int fsdb_node_init(int argc, char **argv)
                 return -1;
         }
         //database_print(db);
-
-        session = database_new_scan(db, NULL);
-        r_info("Created new session directory '%s'", scan_id(session));
         
         json_unref(path);
-        
-        buffer = new_membuf();
-        if (buffer == NULL) {
-                json_unref(path);
-                return -1;
-        }
         
         return 0;
 }
 
 void fsdb_node_cleanup()
 {
-        if (buffer)
-                delete_membuf(buffer);
         if (db)
                 delete_database(db);
 }
@@ -104,90 +95,90 @@ list_t *parse_uri(const char *uri)
         return list;
 }
 
-int fsdb_get_db_metadata(request_t *request)
+int fsdb_get_db_metadata(response_t *response)
 {
         int add_comma = 0;
-        request_reply_printf(request, "{ \"scans\": [");
+        response_printf(response, "{ \"scans\": [");
         for (int i = 0; i < database_count_scans(db); i++) {
                 scan_t *scan = database_get_scan_at(db, i);
                 if (add_comma)
-                        request_reply_printf(request, ",");
+                        response_printf(response, ",");
                 if (scan) {
-                        request_reply_printf(request, "{\"id\": \"%s\"}", scan_id(scan));
+                        response_printf(response, "{\"id\": \"%s\"}", scan_id(scan));
                         add_comma = 1;
                 }
         }
-        request_reply_printf(request, "]}");
-        request_set_mimetype(request, "application/json");
+        response_printf(response, "]}");
+        response_set_mimetype(response, "application/json");
         return 0;
 }
 
-int fsdb_get_scan_metadata(request_t *request, const char *scan_id)
+int fsdb_get_scan_metadata(response_t *response, const char *scan_id)
 {
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
                 r_warn("Could not find scan '%s'", scan_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
         
         int add_comma = 0;
-        request_reply_printf(request, "{ \"id\": \"%s\", ", scan_id);
-        request_reply_printf(request, "\"filesets\": [");
+        response_printf(response, "{ \"id\": \"%s\", ", scan_id);
+        response_printf(response, "\"filesets\": [");
         for (int i = 0; i < scan_count_filesets(scan); i++) {
                 fileset_t *fileset = scan_get_fileset_at(scan, i);
                 if (add_comma)
-                        request_reply_printf(request, ",");
+                        response_printf(response, ",");
                 if (fileset) {
-                        request_reply_printf(request, "{\"id\": \"%s\"}",
+                        response_printf(response, "{\"id\": \"%s\"}",
                                              fileset_id(fileset));
                         add_comma = 1;
                 }
         }
-        request_reply_printf(request, "]}");
-        request_set_mimetype(request, "application/json");
+        response_printf(response, "]}");
+        response_set_mimetype(response, "application/json");
         return 0;
 }
 
-int fsdb_get_fileset_metadata(request_t *request,
+int fsdb_get_fileset_metadata(response_t *response,
                               const char *scan_id,
                               const char *fileset_id)
 {
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
                 r_warn("Could not find scan '%s'", scan_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
         
          fileset_t *fileset = scan_get_fileset(scan, fileset_id);
         if (fileset == NULL) {
                 r_warn("Could not find fileset '%s'", fileset_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
         
         int add_comma = 0;
-        request_reply_printf(request, "{ \"id\": \"%s\", ", fileset_id);
-        request_reply_printf(request, "\"scan_id\": \"%s\", ", scan_id);
-        request_reply_printf(request, "\"files\": [");
+        response_printf(response, "{ \"id\": \"%s\", ", fileset_id);
+        response_printf(response, "\"scan_id\": \"%s\", ", scan_id);
+        response_printf(response, "\"files\": [");
         for (int i = 0; i < fileset_count_files(fileset); i++) {
                 file_t *file = fileset_get_file_at(fileset, i);
                 if (add_comma)
-                        request_reply_printf(request, ",");
+                        response_printf(response, ",");
                 if (file && file_mimetype(file) != NULL) {
-                        request_reply_printf(request,
+                        response_printf(response,
                                              "{\"id\": \"%s\", \"mimetype\": \"%s\"}",
                                              file_id(file), file_mimetype(file));
                         add_comma = 1;
                 }
         }
-        request_reply_printf(request, "]}");
-        request_set_mimetype(request, "application/json");
+        response_printf(response, "]}");
+        response_set_mimetype(response, "application/json");
         return 0;
 }
         
-int fsdb_get_file_metadata(request_t *request,
+int fsdb_get_file_metadata(response_t *response,
                            const char *scan_id,
                            const char *fileset_id,
                            const char *file_id)
@@ -195,29 +186,29 @@ int fsdb_get_file_metadata(request_t *request,
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
                 r_warn("Could not find scan '%s'", scan_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
         
         fileset_t *fileset = scan_get_fileset(scan, fileset_id);
         if (fileset == NULL) {
                 r_warn("Could not find fileset '%s'", fileset_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
         
         file_t *file = fileset_get_file(fileset, file_id);
         if (file == NULL) {
                 r_warn("Could not find file '%s'", file_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
         
-        request_set_mimetype(request, "application/json");
-        return request_reply_json(request, file_get_metadata(file));
+        response_set_mimetype(response, "application/json");
+        return response_json(response, file_get_metadata(file));
 }
 
-int fsdb_get_metadata(request_t *request, list_t *query)
+int fsdb_get_metadata(response_t *response, list_t *query)
 {
         const char *db_id = list_get(query, char);
 
@@ -232,26 +223,26 @@ int fsdb_get_metadata(request_t *request, list_t *query)
         
         if (list_next(query) != NULL) {
                 r_warn("URI too long");
-                request_set_status(request, 400);
+                response_set_status(response, 400);
                 return -1;
         }
         if (!rstreq(db_id, "db")) {
                 r_warn("Invalid metadata id: '%s'", db_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
 
         if (scan_id == NULL)
-                return fsdb_get_db_metadata(request);
+                return fsdb_get_db_metadata(response);
         if (fileset_id == NULL)
-                return fsdb_get_scan_metadata(request, scan_id);
+                return fsdb_get_scan_metadata(response, scan_id);
         if (file_id == NULL)
-                return fsdb_get_fileset_metadata(request, scan_id, fileset_id);
+                return fsdb_get_fileset_metadata(response, scan_id, fileset_id);
         else 
-                return fsdb_get_file_metadata(request, scan_id, fileset_id, file_id);
+                return fsdb_get_file_metadata(response, scan_id, fileset_id, file_id);
 }
 
-int fsdb_get_data(request_t *request, list_t *query)
+int fsdb_get_data(response_t *response, list_t *query)
 {
         const char *db_id = list_get(query, char);
 
@@ -266,72 +257,72 @@ int fsdb_get_data(request_t *request, list_t *query)
 
         if (db_id == NULL || !rstreq(db_id, "db")) {
                 r_warn("Missing DB prefix");
-                request_set_status(request, 400);
+                response_set_status(response, 400);
                 return -1;
         }
         if (scan_id == NULL) {
                 r_warn("Missing scan ID");
-                request_set_status(request, 400);
+                response_set_status(response, 400);
                 return -1;
         }
         if (fileset_id == NULL) {
                 r_warn("Missing fileset ID");
-                request_set_status(request, 400);
+                response_set_status(response, 400);
                 return -1;
         }
         if (file_id == NULL) {
                 r_warn("Missing file ID");
-                request_set_status(request, 400);
+                response_set_status(response, 400);
                 return -1;
         }
         
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
                 r_warn("Could not find scan '%s'", scan_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
 
         fileset_t *fileset = scan_get_fileset(scan, fileset_id);
         if (fileset == NULL) {
                 r_warn("Could not find fileset '%s'", fileset_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
 
         file_t *file = fileset_get_file(fileset, file_id);
         if (file == NULL) {
                 r_warn("Could not find file '%s'", file_id);
-                request_set_status(request, 404);
+                response_set_status(response, HTTP_Status_Not_Found);
                 return -1;
         }
 
         char path[1024];
         if (file_path(file, path, sizeof(path)) != 0) {
                 r_warn("Failed to get the path of file '%s'", file_id);
-                request_set_status(request, 500);
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
                 return -1;
         }
 
         const char *mimetype = filename_to_mimetype(path);
         if (mimetype == NULL) {
                 r_warn("Failed to determine mimetype file '%s'", path);
-                request_set_status(request, 500);
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
                 return -1;
         }
-        request_set_mimetype(request, mimetype);
+        response_set_mimetype(response, mimetype);
 
         char buffer[1024];
         FILE *fp = fopen(path, "rb");
 
         while (!feof(fp) && !ferror(fp)) {
                 int n = fread(buffer, 1, sizeof(buffer), fp);
-                request_reply_append(request, buffer, n);
+                response_append(response, buffer, n);
         }
 
         if (ferror(fp)) {
                 r_err("An error occured reading file '%s'", path);
-                request_set_status(request, 500);
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
                 return -1;
         }
         
@@ -346,34 +337,34 @@ int fsdb_get_data(request_t *request, list_t *query)
 
 // file:    /data/db/<scan-id>/<fileset-id>/<file-id>
 
-int fsdb_get(void *data, request_t *request)
+void fsdb_get(void *data, request_t *request, response_t *response)
 {
         int err;
         const char *uri = request_uri(request);
         list_t *query = parse_uri(uri);
-        if (query == NULL) 
-                return -1;
-
+        if (query == NULL) {
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
+                return;
+        }
+        
         database_print(db);
         
         char *s = list_get(query, char);
         if (rstreq(s, "metadata"))
-                err = fsdb_get_metadata(request, list_next(query));
+                err = fsdb_get_metadata(response, list_next(query));
         else if (rstreq(s, "data"))
-                err = fsdb_get_data(request, list_next(query));
-        else err = -1;
+                err = fsdb_get_data(response, list_next(query));
+        else
+                err = -1;
         
         for (list_t *l = query; l != NULL; l = list_next(l))
                 r_free(list_get(l, char));
         delete_list(query);
-        
-        return err;
 }
 
-int fsdb_get_session(void *data, request_t *request)
+void fsdb_get_directory(void *data, request_t *request, response_t *response)
 {
-        request_reply_printf(request, "{\"db\": \"%s\", \"session\": \"%s\"}",
-                             database_path(db), scan_id(session));
+        response_printf(response, "{\"db\": \"%s\"}", database_path(db));
 }
 
 int fsdb_onmessage(void *userdata, messagelink_t *link, json_object_t message)

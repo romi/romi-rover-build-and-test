@@ -145,7 +145,7 @@ void realsense_broadcast()
         frame_count++;
 }
 
-int realsense_still(void *data, request_t *request)
+void realsense_still(void *data, request_t *request, response_t *response)
 {
         bool done = false;
         while (!done) {
@@ -160,7 +160,7 @@ int realsense_still(void *data, request_t *request)
                 r_debug("realsense_still: image len=%d", membuf_len(rgbbuf));
                 if (membuf_len(rgbbuf) > 0) {
                         r_debug("send_still_image: have_image=true");
-                        request_reply_append(request, membuf_data(rgbbuf), membuf_len(rgbbuf));
+                        response_append(response, membuf_data(rgbbuf), membuf_len(rgbbuf));
                         done = true;
                 }
                 membuf_unlock(rgbbuf);
@@ -172,7 +172,4 @@ int realsense_still(void *data, request_t *request)
         r_debug("send_still_image: want_image=false");
         want_image = false;
         mutex_unlock(mutex);
-        
-        request_set_status(request, 200);
-        return 0;
 }

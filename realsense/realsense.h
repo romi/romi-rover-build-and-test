@@ -8,7 +8,7 @@ extern "C" {
 int realsense_init(int argc, char **argv);
 void realsense_cleanup();
 void realsense_broadcast();
-int realsense_still(void *data, request_t *request);  
+void realsense_still(void *data, request_t *request, response_t *response);
 
 streamer_t *get_streamer_camera();
 streamer_t *get_streamer_depthsensor();

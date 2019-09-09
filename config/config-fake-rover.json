@@ -12,10 +12,6 @@
         "image": "/home/hanappe/projects/LettuceThink/DATA/2019/Chatelain/db/2019-08-26_15-10-48/images/00000.jpg"
     },
     
-    "fsdb": {
-        "directory": "data/db"
-    },
-    
     "weeder": {
         "workspace": [0, 410, 103, 474, 474, 0.600, 0.600],
         "z0": -0.010,
@@ -30,7 +26,7 @@
     
     "launch": {
         "general": {
-            "log-dir-HIDE": "log",
+            "sessions-dir": "/tmp/session",
             "user": "hanappe"
         },
         "registry": {
@@ -44,10 +40,10 @@
             "path": "build/fake_motors/fake_motors"
         }, {
             "path": "build/fake_camera/fake_camera",
-            "disabled": false
+            "disabled": true
         }, {
             "path": "build/video4linux/video4linux",
-            "disabled": true
+            "disabled": false
         }, {
             "path": "build/fake_cnc/fake_cnc"
         }, {

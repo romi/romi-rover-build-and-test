@@ -39,24 +39,17 @@ void configuration_cleanup()
                 json_unref(config);
 }
 
-int configuration_get(void *data, request_t *request)
+void configuration_get(void *data, request_t *request, response_t *response)
 {
         const char *uri = request_uri(request);
-
-        if (rstreq(uri, "/")) {
-                request_reply_json(request, config);
-                request_set_status(request, 200);
-                return 0;
-        }
-
-        if (uri[0] == '/')
-                uri++;
         
-        r_debug("get '%s'", uri);
-
-        json_object_t value = json_object_get(config, uri);
-        request_reply_json(request, value);
-        request_set_status(request, 200);
-        return 0;
+        if (rstreq(uri, "/")) {
+                response_json(response, config);
+                return;
+        } else {
+                if (uri[0] == '/')
+                        uri++;
+                response_json(response, json_object_get(config, uri));
+        }
 }
 

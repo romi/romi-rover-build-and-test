@@ -7,9 +7,9 @@
         {
             "type": "service",
             "topic": "db",
-            "resources": [{"name": "session",
+            "resources": [{"name": "directory",
                            "mimetype_out": "text/html",
-                           "onrequest": "fsdb_get_session"},
+                           "onrequest": "fsdb_get_directory"},
                           {"name": "*",
                            "mimetype_out": "text/html",
                            "onrequest": "fsdb_get"}]

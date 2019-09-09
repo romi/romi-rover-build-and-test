@@ -15,17 +15,19 @@ static database_t *db = NULL;
 static scan_t *scan = NULL;
 static fileset_t *fileset = NULL;
 
+static int recording_count = 0;
 static int recording = 0;
 static multipart_parser_t *parser = NULL;
 static vector_t position = {0};
 
 streamerlink_t *get_streamerlink_camera();
 messagelink_t *get_messagelink_db();
-
-void broadcast_db_message(const char *event,
-                          const char *scan_id,
-                          const char *fileset_id,
-                          const char *file_id)
+static void broadcast_db_message(void *userdata,
+                                 database_t *db,
+                                 const char *event,
+                                 const char *scan_id,
+                                 const char *fileset_id,
+                                 const char *file_id)
 {
         r_debug("broadcast_db_message: %s, %s, %s, %s",
                   event, scan_id, fileset_id, file_id);
@@ -33,7 +35,7 @@ void broadcast_db_message(const char *event,
         if (file_id)
                 messagelink_send_f(bus,
                                    "{\"event\": \"%s\", "
-                                   "\"source\": \"camera_recorder\", "
+                                   "\"source\": \"weeder\", "
                                    "\"scan\": \"%s\", "
                                    "\"fileset\": \"%s\", "
                                    "\"file\": \"%s\"}",
@@ -41,13 +43,13 @@ void broadcast_db_message(const char *event,
         else if (fileset_id)
                 messagelink_send_f(bus,
                                    "{\"event\": \"%s\", "
-                                   "\"source\": \"camera_recorder\", "
+                                   "\"source\": \"weeder\", "
                                    "\"scan\": \"%s\", "
                                    "\"fileset\": \"%s\"}",
                                    event, scan_id, fileset_id);
         else messagelink_send_f(bus,
                                 "{\"event\": \"%s\", "
-                                "\"source\": \"camera_recorder\", "
+                                "\"source\": \"weeder\", "
                                 "\"scan\": \"%s\"}",
                                 event, scan_id);
 }
@@ -70,17 +72,17 @@ void camera_recorder_onpose(void *userdata,
                 json_unref(data);
                 return;
         }
-        
+
         double px, py, pz;
         px = json_array_getnum(a, 0);
         py = json_array_getnum(a, 1);
         pz = json_array_getnum(a, 2);
         if (isnan(px) || isnan(py) || isnan(pz)) {
-                r_warn("camera_recorder_onpose: invalid position values"); 
+                r_warn("camera_recorder_onpose: invalid position values");
                 json_unref(data);
                 return;
         }
-        
+
         mutex_lock(position_mutex);
         position.x = px;
         position.y = py;
@@ -96,7 +98,7 @@ static int *camera_recorder_onimage(void *userdata,
                                     double timestamp)
 {
         mutex_lock(recording_mutex);
-        
+
         if (recording) {
                 // Check for valid JPEG signature
                 if ((image[0] != 0xff) || (image[1] != 0xd8)  || (image[2] != 0xff)) {
@@ -109,27 +111,25 @@ static int *camera_recorder_onimage(void *userdata,
                 }
 
                 double lag = clock_time() - timestamp;
-        
+
                 if (lag < 1.0f) {
                         vector_t p;
                         mutex_lock(position_mutex);
                         p = position;
                         mutex_unlock(position_mutex);
-                       
+
                         file_t *file = fileset_new_file(fileset);
                         if (file) {
                                 file_set_timestamp(file, timestamp);
                                 file_set_position(file, p);
                                 file_import_jpeg(file, image, len);
-                                broadcast_db_message("new", scan_id(scan),
-                                                     fileset_id(fileset), file_id(file));
                         }
-        
+
                 } else {
                         r_info("Too much lag. Skipping image.");
                 }
         }
-        
+
 unlock:
         mutex_unlock(recording_mutex);
 }
@@ -142,57 +142,44 @@ int camera_recorder_ondata(void *userdata, const char *buf, int len)
         return 0;
 }
 
-static int set_directory(const char *path)
+static char *get_fsdb_directory()
 {
-        if (directory != NULL) {
-                r_free(directory);
-                directory = NULL;
+        json_object_t fsdb = client_get("db", "directory");
+        if (!json_isobject(fsdb)) {
+                r_err("Failed to obtain the session information from fsdb");
+                return NULL;
         }
-        directory = r_strdup(path);
-        if (directory == NULL) {
-                r_err("Out of memory");
-                return -1;
+        const char *dir = json_object_getstr(fsdb, "db");
+        if (dir == NULL) {
+                r_err("The fsdb's session information does not contain the 'db' field");
+                return NULL;
         }
-        return 0;
+        char *copy = r_strdup(dir);
+        json_unref(fsdb);
+        return copy;
 }
 
-static int get_configuration()
+static char *get_directory()
 {
         if (directory != NULL)
-                return 0;
-
-        char buffer[1024];
-        r_err("Current working directory: %s", getcwd(buffer, 1024));
-        
-        int err = -1;
-        json_object_t path = json_null();
-        path = client_get("configuration", "fsdb.directory");
-        if (json_isstring(path)) {
-                set_directory(json_string_value(path));
-                r_info("using configuration file for directory: '%s'",
-                         json_string_value(path));
-                err = 0;
-        } else {
-                r_err("Failed to obtain a valid fsdb.directory setting");
-        }
-        json_unref(path);
-        return err;
+                return r_strdup(directory);
+        else
+                return get_fsdb_directory();
 }
 
-static int recorder_init()
+static int init_database()
 {
-        if (initialized)
+        if (db != NULL) 
                 return 0;
         
-        if (get_configuration() != 0)
+        char *dir = get_directory();
+        if (dir == NULL)
                 return -1;
         
-        db = new_database(directory);
-        if (db == NULL)
-                return -1;
+        db = new_database(dir);
+        database_set_listener(db, broadcast_db_message, NULL);
         
-        initialized = 1;
-        
+        r_free(dir);
         return 0;
 }
 
@@ -200,32 +187,19 @@ int camera_recorder_init(int argc, char **argv)
 {
         recording_mutex = new_mutex();
         position_mutex = new_mutex();
-        if (recording_mutex == NULL
-            || position_mutex == NULL)
+        if (recording_mutex == NULL || position_mutex == NULL)
                 return -1;
-        
+
         if (argc == 2) {
                 // FIXME: needs more checking
-                set_directory(argv[1]);
-                r_info("using command line argument for directory: '%s'", argv[1]);
-                
+                directory = r_strdup(argv[1]);
+                r_info("using command line argument for directory: '%s'", directory);
         }
-        
-        for (int i = 0; i < 10; i++) {
-                if (recorder_init() == 0)
-                        return 0;
-                r_err("recorder_init failed: attempt %d/10", i);
-                clock_sleep(0.2);
-        }
-
-        r_err("failed to initialize the camera recorder");        
-        return -1;
+        return 0;
 }
 
 void camera_recorder_cleanup()
 {
-        if (db)
-                delete_database(db);
         if (recording_mutex)
                 delete_mutex(recording_mutex);
         if (position_mutex)
@@ -234,6 +208,8 @@ void camera_recorder_cleanup()
                 delete_multipart_parser(parser);
         if (directory)
                 r_free(directory);
+        if (db)
+                delete_database(db);
 }
 
 int camera_recorder_onstart(void *userdata,
@@ -241,11 +217,14 @@ int camera_recorder_onstart(void *userdata,
                             json_object_t command,
                             membuf_t *message)
 {
-        if (recorder_init() != 0) {
-                membuf_printf(message, "Recorder not initialized");
-                return 0;
+        int err = 0;
+        char id[64]; 
+
+        if (init_database() != 0) {
+                membuf_printf(message, "Failed to initialize the database");
+                return -1;
         }
-        
+
         mutex_lock(recording_mutex);
 
         if (recording == 0) {
@@ -253,41 +232,42 @@ int camera_recorder_onstart(void *userdata,
                         delete_multipart_parser(parser);
                         parser = NULL;
                 }
-                
+
                 parser = new_multipart_parser(NULL, NULL,
                                               (multipart_onpart_t) camera_recorder_onimage);
-                
+
                 int err = streamerlink_connect(get_streamerlink_camera());
                 if (err != 0) {
                         membuf_printf(message, "Failed to connect");
-                        mutex_unlock(recording_mutex);
-                        return -1;
+                        err = -1;
+                        goto unlock_and_exit;
                 }
-                
-                scan = database_new_scan(db, NULL);
+
+                rprintf(id, sizeof(id), "camera-%04d", recording_count++); 
+
+                scan = database_new_scan(db, id);
                 if (scan == NULL) {
                         database_unload(db);
                         membuf_printf(message, "Failed to create a new scan");
-                        mutex_unlock(recording_mutex);
-                        return -1;
+                        err = -1;
+                        goto unlock_and_exit;
                 }
-                broadcast_db_message("new", scan_id(scan), NULL, NULL);
-                
+
                 fileset = scan_new_fileset(scan, "images");
                 if (fileset == NULL) {
                         database_unload(db);
                         scan = NULL;
                         membuf_printf(message, "Failed to create a new fileset");
-                        mutex_unlock(recording_mutex);
-                        return -1;
+                        err = -1;
+                        goto unlock_and_exit;
                 }
-                broadcast_db_message("new", scan_id(scan), fileset_id(fileset), NULL);
-                
+
                 recording = 1;
         }
         
+unlock_and_exit:
         mutex_unlock(recording_mutex);
-        return 0;
+        return err;
 }
 
 int camera_recorder_onstop(void *userdata,
@@ -295,27 +275,20 @@ int camera_recorder_onstop(void *userdata,
                            json_object_t command,
                            membuf_t *message)
 {
-        if (recorder_init() != 0) {
-                membuf_printf(message, "Recorder not initialized");
-                return 0;
-        }
-        
         mutex_lock(recording_mutex);
         recording = 0;
-        
+
         if (scan) {
-                //scan_store(scan);
-                broadcast_db_message("store", scan_id(scan), NULL, NULL);
                 database_unload(db);
                 scan = NULL;
                 fileset = NULL;
         }
-        
+
         if (parser != NULL) {
                 delete_multipart_parser(parser);
                 parser = NULL;
         }
-        
+
         mutex_unlock(recording_mutex);
 
         // Don't call streamerlink_disconnect() inside the
@@ -326,6 +299,6 @@ int camera_recorder_onstop(void *userdata,
                 membuf_printf(message, "Failed to disconnect");
                 return -1;
         }
-        
+
         return 0;
 }
