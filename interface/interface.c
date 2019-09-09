@@ -33,6 +33,7 @@ messagelink_t *get_messagelink_weeder();
 messagelink_t *get_messagelink_camera_recorder();
 messagelink_t *get_messagelink_navigation();
 messagehub_t *get_messagehub_log_interface();
+messagelink_t *get_messagelink_watchdog();
 
 json_object_t global_env;
 
@@ -112,20 +113,29 @@ static int move(membuf_t *message, double distance, double speed)
         return status_error(reply, message);
 }
 
-static int hoe(membuf_t *message, const char *method)
+int32 _iterator(const char* key, json_object_t value, json_object_t request)
+{
+        if (rstreq(key, "action"))
+                return 0;
+        json_object_set(request, key, value);
+        return 0;
+}
+
+static int hoe(membuf_t *message, const char *method, json_object_t action)
 {
         messagelink_t *weeder = get_messagelink_weeder();
         json_object_t reply;
 
-        r_debug("Sending hoe %s", method);
-
-        if (app_standalone()) {
-                clock_sleep(1);
-                return 0;
-        }
+        json_object_t request = json_object_create();;
+        json_object_setstr(request, "command", "hoe");
+        // Copy the parameters
+        json_object_foreach(action, (json_iterator_t) _iterator, request);
         
-        reply = messagelink_send_command_f(weeder, "{'command':'hoe','method':'%s'}",
-                                           method);
+        r_debug("Sending hoe %s", method);
+        
+        reply = messagelink_send_command(weeder, request);
+        json_unref(request);
+        
         return status_error(reply, message);
 }
 
@@ -163,27 +173,27 @@ static int stop_recording(membuf_t *message)
         
         reply = messagelink_send_command_f(recorder, "{'command':'stop'}");
         int err = status_error(reply, message);
-        if (err = 0) recording = 0;
+        if (err = 0)
+                recording = 0;
         
         return err;
 }
 
-/* static int shutdown_rover(membuf_t *message) */
-/* { */
-/*         messagelink_t *link = get_messagelink_shutdown(); */
-/*         json_object_t reply; */
+static int shutdown_rover(membuf_t *message)
+{
+        messagelink_t *watchdog = get_messagelink_watchdog();
+        json_object_t reply;
 
-/*         r_debug("Sending shutdown"); */
+        r_debug("Sending shutdown");
 
-/*         if (app_standalone()) { */
-/*                 clock_sleep(1); */
-/*                 return 0; */
-/*         } */
+        if (app_standalone()) {
+                clock_sleep(1);
+                return 0;
+        }
         
-/*         reply = messagelink_send_command_f(_shutdown, "{'command':'shutdown'}"); */
-/*         r_debug("shutdown replied: %.*s", message_len(reply), message_data(reply)); */
-/*         return 0; */
-/* } */
+        reply = messagelink_send_command_f(watchdog, "{'command':'shutdown'}");
+        return status_error(reply, message);
+}
 
 ////////////////////////////////////////////////////////
 
@@ -373,8 +383,8 @@ static int do_action(const char *name, json_object_t action,
         } else if (rstreq(name, "stop_recording")) {
                 err = stop_recording(message);
 
-        /* } else if (rstreq(name, "shutdown")) */
-        /*         return shutdown_rover(message); */
+        } else if (rstreq(name, "shutdown")) {
+                err = shutdown_rover(message);
 
         } else if (rstreq(name, "move")) {
                 double distance = json_object_getnum(action, "distance");
@@ -410,7 +420,7 @@ static int do_action(const char *name, json_object_t action,
                         r_err("Action 'hoe': invalid method");
                         return -1;
                 }
-                err = hoe(message, method);
+                err = hoe(message, method, action);
         } else {
                 r_err("Unknown action: '%s'", name);
                 membuf_printf(message, "Unknown action: '%s'", name);
@@ -747,30 +757,32 @@ void interface_cleanup()
 
 /////////////////////////////////////////////////////
 
-static int send_file(const char *path, const char *mimetype, request_t *request)
+static void send_file(const char *path, const char *mimetype,
+                      request_t *request, response_t *response)
 {
         FILE *fp = fopen(path, "r");
         if (fp == NULL) {
                 r_err("Failed to open %s", path);
-                return -1;
+                response_set_status(response, HTTP_Status_Not_Found);
+                return;
         }
 
-        request_set_mimetype(request, mimetype);
+        response_set_mimetype(response, mimetype);
 
         while (1) {
                 size_t num;
                 char buffer[256];
                 num = fread(buffer, 1, 256, fp);
-                request_reply_append(request, buffer, num);
+                response_append(response, buffer, num);
                 if (feof(fp)) break;
                 if (ferror(fp)) {
                         r_err("Failed to read %s", path);
                         fclose(fp);
-                        return -1;
+                        response_set_status(response, HTTP_Status_Internal_Server_Error);
+                        return;
                 }
         }
         fclose(fp);
-        return 0;
 }
 
 static int check_path(const char *filename, char *path, int len)
@@ -807,30 +819,30 @@ static int check_path(const char *filename, char *path, int len)
         return 0;
 }
 
-int send_local_file(const char *filename, request_t *request)
+void send_local_file(const char *filename, request_t *request, response_t *response)
 {
-        if (init() != 0)
-                return -1;
-
         char path[PATH_MAX];
         
         const char *mimetype = filename_to_mimetype(filename);
-        if (mimetype == NULL)
-                return -1;
+        if (mimetype == NULL) {
+                response_set_status(response, HTTP_Status_Bad_Request);
+                return;
+        }
         
-        if (check_path(filename, path, PATH_MAX) != 0)
-                return -1;
-        
-        return send_file(path, mimetype, request);
+        if (check_path(filename, path, PATH_MAX) != 0) {
+                response_set_status(response, HTTP_Status_Bad_Request);
+                return;
+        }
+        send_file(path, mimetype, request, response);
 }
 
 /////////////////////////////////////////////////////
 
-int interface_local_file(void *data, request_t *request)
+void interface_local_file(void *data, request_t *request, response_t *response)
 {
         if (init() != 0) {
-                request_set_status(request, HTTP_Status_Internal_Server_Error);
-                return -1;
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
+                return;
         }
 
 	const char *filename = request_uri(request);
@@ -840,44 +852,43 @@ int interface_local_file(void *data, request_t *request)
         else if (filename[0] == '/')
                 filename++;
         
-        return send_local_file(filename, request);
+        send_local_file(filename, request, response);
 }
 
-int interface_index(void *data, request_t *request)
+void interface_index(void *data, request_t *request, response_t *response)
 {
         if (init() != 0) {
-                request_set_status(request, HTTP_Status_Internal_Server_Error);
-                return -1;
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
+                return;
         }
-        return send_local_file("index.html", request);
+        send_local_file("index.html", request, response);
 }
 
-int interface_scripts(void *data, request_t *request)
+void interface_scripts(void *data, request_t *request, response_t *response)
 {
         if (init() != 0) {
-                request_set_status(request, HTTP_Status_Internal_Server_Error);
-                return -1;
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
+                return;
         }
 
-        request_reply_printf(request, "[");
+        response_printf(response, "[");
         
         for (list_t *l = scripts; l != NULL; l = list_next(l)) {
                 script_t *script = list_get(l, script_t);
-                request_reply_printf(request,
+                response_printf(response,
                                      "{\"name\":\"%s\",\"display_name\":\"%s\"}",
                                      script->name, script->display_name);
                 ;
                 if (list_next(l) != NULL) 
-                        request_reply_printf(request, ",");
+                        response_printf(response, ",");
         }
 
-        request_reply_printf(request, "]");
-        return 0;
+        response_printf(response, "]");
 }
 
-int interface_status(void *data, request_t *request)
+void interface_status(void *data, request_t *request, response_t *response)
 {
-        request_reply_printf(request,
+        response_printf(response,
                              "{\"status\": \"%s\", "
                              "\"position\": %f, "
                              "\"progress\": %d, "
@@ -885,176 +896,43 @@ int interface_status(void *data, request_t *request)
                              status, position, progress, recording);
 
         if (current_script != NULL) {
-                request_reply_printf(request,
+                response_printf(response,
                                      ", "
                                      "\"script\": {\"name\":\"%s\", "
                                      "\"display_name\": \"%s\"}}",
                                      current_script->name,
                                      current_script->display_name);
         } else {
-                request_reply_printf(request, "}");
+                response_printf(response, "}");
         }
-
-        return 0;
 }
 
-int interface_execute(void *data, request_t *request)
+void interface_execute(void *data, request_t *request, response_t *response)
 {
         if (init() != 0) {
-                request_set_status(request, HTTP_Status_Internal_Server_Error);
-                return -1;
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
+                return;
         }
 
         const char *arg = request_args(request);
         if (arg == NULL) {
-                request_set_status(request, HTTP_Status_Bad_Request);
-                return -1;
+                response_set_status(response, HTTP_Status_Bad_Request);
+                return;
         }
 
         r_debug("checking for script '%s'", arg);
 
         script_t *script = find_script(scripts, arg);
         if (script == NULL) {
-                request_set_status(request, HTTP_Status_Not_Found);
-                return -1;
+                response_set_status(response, HTTP_Status_Not_Found);
+                return;
         }
 
         int r = run_script(script);
         if (r == -1) {
-                request_set_status(request, HTTP_Status_Internal_Server_Error);
-                return -1;
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
+                return;
         }
 
-        return send_local_file("script.html", request);
+        send_local_file("script.html", request, response);
 }
-
-int interface_registry(void *data, request_t *request)
-{
-        request_reply_printf(request,
-                             "<!DOCTYPE html>\n"
-                             "<html lang=\"en\">\n"
-                             "  <head>\n"
-                             "    <meta charset=\"utf-8\">\n"
-                             "    <title>Registry</title>\n"
-                             "    <link rel=\"stylesheet\" href=\"css/bootstrap.min.css\">\n"
-                             "    <link rel=\"stylesheet\" href=\"css/registry.css\">\n"
-                             "  </head>\n"
-                             "  <body>\n"
-                             "    <div id=\"main\" class=\"container\">\n"
-                             "      <div id=\"nodes\">\n"
-                             "      Didn't load the information from the registry, yet.\n"
-                             "      </div>\n"
-                             "    </div>\n"
-                             "    <div id=\"main\" class=\"container\">\n"
-                             "      <ul class=\"nav nav-pills green\" id=\"viewer-nav\">\n"
-                             "      </ul>\n"
-                             "      <div class=\"tab-content clearfix\" id=\"viewers\">\n"
-                             "      </div>\n"
-                             "    </div>\n"
-                             "    <script src=\"js/jquery.min.js\"></script>\n"
-                             "    <script src=\"js/bootstrap.min.js\"></script>\n"
-                             "    <script src=\"js/registry.js\"></script>\n"
-                             "    <script src=\"js/svg.min.js\"></script>\n"
-                             "    <script>\n"
-                             "      $(document).ready(function() { showRegistry(\"ws://%s:%d\"); });\n"
-                             "    </script>\n"
-                             "  </body>\n"
-                             "</html>\n",
-                             get_registry_ip(), get_registry_port());
-        return 0;
-}
-
-int interface_db(void *data, request_t *request)
-{
-        addr_t *addr;
-        char b[52];
-        char c[52];
-
-        addr = registry_get_service("db");
-        addr_string(addr, b, 52);
-        delete_addr(addr);
-        
-        addr = registry_get_messagehub("db");
-        addr_string(addr, c, 52);
-        delete_addr(addr);
-
-        request_reply_printf(request,
-"<!DOCTYPE html>\n"
-"<html lang=\"en\">\n"
-"  <head>\n"
-"    <meta charset=\"utf-8\">\n"
-"    <title>Database</title>\n"
-"    <link rel=\"stylesheet\" href=\"css/bootstrap.min.css\">\n"
-"    <link rel=\"stylesheet\" href=\"css/db.css\">\n"
-"  </head>\n"
-"  <body>\n"
-"    <div id=\"main\" class=\"container\">\n"
-"      <ul class=\"nav nav-pills\" id=\"browser\" role=\"tablist\">\n"
-"        <li class=\"nav-item\">\n"
-"          <a class=\"nav-link active\" id=\"db-tab\" data-toggle=\"tab\" href=\"#db\"\n"
-"             role=\"tab\" aria-controls=\"db\" aria-selected=\"true\">DB</a>\n"
-"        </li>\n"
-"        <li class=\"nav-item\">\n"
-"          <a class=\"nav-link\" id=\"scan-tab\" data-toggle=\"tab\" href=\"#scan\"\n"
-"             role=\"tab\" aria-controls=\"scan\" aria-selected=\"false\">-</a>\n"
-"        </li>\n"
-"        <li class=\"nav-item\">\n"
-"          <a class=\"nav-link\" id=\"fileset-tab\" data-toggle=\"tab\" href=\"#fileset\"\n"
-"             role=\"tab\" aria-controls=\"fileset\" aria-selected=\"false\">-</a>\n"
-"        </li>\n"
-"        <li class=\"nav-item\">\n"
-"          <a class=\"nav-link\" id=\"file-tab\" data-toggle=\"tab\" href=\"#file\"\n"
-"             role=\"tab\" aria-controls=\"file\" aria-selected=\"false\">-</a>\n"
-"        </li>\n"
-"      </ul>\n"
-"      <div class=\"tab-content\" id=\"myTabContent\">\n"
-"        <div class=\"tab-pane show active\" id=\"db\" role=\"tabpanel\" aria-labelledby=\"db-tab\">\n"
-"          Database has not been loaded, yet.</div>\n"
-"        <div class=\"tab-pane\" id=\"scan\" role=\"tabpanel\" aria-labelledby=\"scan-tab\">\n"
-"          Select a scan in the DB tab.</div>\n"
-"        <div class=\"tab-pane\" id=\"fileset\" role=\"tabpanel\" aria-labelledby=\"fileset-tab\">\n"
-"          Select a fileset in the scan tab.</div>\n"
-"        <div class=\"tab-pane\" id=\"file\" role=\"tabpanel\" aria-labelledby=\"file-tab\">\n"
-"          Select a file in the fileset tab.</div>\n"
-"      </div>\n"
-"    </div>\n"
-"    <script src=\"js/jquery.min.js\"></script>\n"
-"    <script src=\"js/bootstrap.min.js\"></script>\n"
-"    <script src=\"js/db.js\"></script>\n"
-"    <script src=\"js/svg.min.js\"></script>\n"
-"    <script>\n"
-"      $(document).ready(function() { showDB(\"http://%s\", \"ws://%s\"); });\n"
-"    </script>\n"
-"  </body>\n"
-"</html>\n",
-                             b, c);
-        return 0;
-}
-
-/* int interface_listen(void *data, request_t *request) */
-/* { */
-/*         if (request_args(request) == NULL) { */
-/*                 return -1; */
-/*         } */
-
-/*         request_reply_printf(request, */
-/*                              "<!DOCTYPE html>\n" */
-/*                              "<html lang=\"en\">\n" */
-/*                              "  <head>\n" */
-/*                              "    <meta charset=\"utf-8\">\n" */
-/*                              "    <title>Registry</title>\n" */
-/*                              "    <link rel=\"stylesheet\" href=\"index.css\">\n" */
-/*                              "    <script src=\"js/jquery.min.js\"></script>\n" */
-/*                              "    <script src=\"js/bootstrap.min.js\"></script>\n" */
-/*                              "    <script src=\"js/listen.js\"></script>\n" */
-/*                              "  </head>\n" */
-/*                              "  <body>\n" */
-/*                              "    <div id=\"registry\"></div>\n" */
-/*                              "    <script>\n" */
-/*                              "      $(document).ready(function() { listenTo(\"ws://%s\"); });\n" */
-/*                              "    </script>\n" */
-/*                              "  </body>\n" */
-/*                              "</html>\n", */
-/*                              request_args(request));         */
-/*         return 0; */
-/* } */

@@ -21,15 +21,7 @@
                 { "name": "execute",
                   "mimetype_out": "text/html",
                   "onrequest": "interface_execute" },
-                
-                { "name": "registry.html",
-                  "mimetype_out": "text/html",
-                  "onrequest": "interface_registry" },
-                
-                { "name": "db.html",
-                  "mimetype_out": "text/html",
-                  "onrequest": "interface_db" },
-                
+                                
                 { "name": "*",
                   "mimetype_out": "text/html",
                   "onrequest": "interface_local_file" }
@@ -54,6 +46,10 @@
         {
             "type": "messagehub",
             "topic": "log_interface"            
+        },
+        {
+            "type": "messagelink",
+            "topic": "watchdog"            
         }
     ]
 }

@@ -153,7 +153,7 @@ function IndexQuery(registry, entry)
     }
 }
 
-function Registry(uri)
+function Registry()
 {
     var self = this;
 
@@ -215,7 +215,9 @@ function Registry(uri)
                     for (var k = 0; k < e.resources.length; k++) {
                         var r = e.resources[k];
                         h += 16;
-                        var a = group.link(r.uri);
+                        //var uri = r.uri;
+                        var uri = '/service/' + e.topic + '/' + r.name;
+                        var a = group.link(uri);
                         a.plain(r.name).font({family: 'Nunito',size: 14, weight: '400' }).move(30, h);
                     }
                     subframe.size(190, 18 + e.resources.length * 16);
@@ -320,7 +322,8 @@ function Registry(uri)
             for (var j = 0; j < node.entries.length; j++) {
                 var e = node.entries[j];
                 if (e.type == 'service') {
-                    $.getJSON('http://' + e.addr + '/index.json', new IndexQuery(this, e).handleResponse);
+                    //$.getJSON('http://' + e.addr + '/index.json', new IndexQuery(this, e).handleResponse);
+                    $.getJSON('/service/' + e.topic + '/index.json', new IndexQuery(this, e).handleResponse);
                 }
             }
         }
@@ -363,29 +366,29 @@ function Registry(uri)
         }
     }
 
-    if (uri) {
-        this.ws = new WebSocket(uri);
-
-        this.ws.onopen = function(e) {
-            console.log('Registry: websocket open');
-            self.requestList();
-        }
-
-        this.ws.onmessage = function(e) {
-            self.handleMessage(JSON.parse(e.data));
-        }
-
-        this.ws.onclose = function(e) {
-            console.log('Registry: websocket closed');
-        }
-
-        this.ws.onerror = function(e) {
-            console.log('Registry: websocket error: ' + e.toString());
-        }
+    var loc = window.location;
+    var uri = "ws://" + loc.host + "/messagehub/registry";
+    this.ws = new WebSocket(uri);
+    
+    this.ws.onopen = function(e) {
+        console.log('Registry: websocket open');
+        self.requestList();
+    }
+    
+    this.ws.onmessage = function(e) {
+        self.handleMessage(JSON.parse(e.data));
+    }
+    
+    this.ws.onclose = function(e) {
+        console.log('Registry: websocket closed');
+    }
+    
+    this.ws.onerror = function(e) {
+        console.log('Registry: websocket error: ' + e.toString());
     }
 }
 
-function showRegistry(uri)
+function showRegistry()
 {
-    registry = new Registry(uri);
+    registry = new Registry();
 }

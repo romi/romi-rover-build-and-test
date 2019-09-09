@@ -68,10 +68,10 @@ function Scan(id)
     }
 }
 
-function DB(uri, ws)
+function DB()
 {
-    this.uri = uri;
-    this.ws = ws;
+    this.uri = "/service/db";
+    this.ws = "ws://" + window.location.host + "/messagehub/db";
     this.scans = [];
     this.loaded = false;
     
@@ -356,7 +356,7 @@ function initWebSocket(uri)
 
     ws.onopen = function(e) {
         console.log('Registry: websocket open');
-        self.requestList();
+        //self.requestList();
     }
 
     ws.onmessage = function(e) {
@@ -372,14 +372,14 @@ function initWebSocket(uri)
     }
 }
 
-function showDB(uri, ws)
+function showDB()
 {
     console.log('showDB');
-    db = new DB(uri, ws);
-    $.getJSON(uri + '/metadata/db', function (data) {
+    db = new DB();
+    $.getJSON(db.uri + '/metadata/db', function (data) {
         console.log('showDB > getJSON > callback');
         db.updateScans(data.scans);
         updateDBBrowser();
-        initWebSocket(ws);
+        initWebSocket(db.ws);
     });
 }
