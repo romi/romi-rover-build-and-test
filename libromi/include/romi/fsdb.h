@@ -17,7 +17,8 @@ typedef void (*database_listener_t)(void *userdata,
                                     const char *event,
                                     const char *scan_id,
                                     const char *fileset_id,
-                                    const char *file_id);
+                                    const char *file_id,
+                                    const char *mimetype);
 
 /*
   Database

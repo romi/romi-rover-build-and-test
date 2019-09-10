@@ -90,10 +90,11 @@ static void broadcast_db_message(void *userdata,
                                  const char *event,
                                  const char *scan_id,
                                  const char *fileset_id,
-                                 const char *file_id)
+                                 const char *file_id,
+                                 const char *mimetype)
 {
-        r_debug("broadcast_db_message: %s, %s, %s, %s",
-                  event, scan_id, fileset_id, file_id);
+        r_debug("broadcast_db_message: %s, %s, %s, %s, %s",
+                event, scan_id, fileset_id, file_id, mimetype);
         messagelink_t *bus = get_messagelink_db();
         if (file_id)
                 messagelink_send_f(bus,
@@ -101,8 +102,9 @@ static void broadcast_db_message(void *userdata,
                                    "\"source\": \"weeder\", "
                                    "\"scan\": \"%s\", "
                                    "\"fileset\": \"%s\", "
-                                   "\"file\": \"%s\"}",
-                                   event, scan_id, fileset_id, file_id);
+                                   "\"file\": \"%s\", "
+                                   "\"mimetype\": \"%s\"}",
+                                   event, scan_id, fileset_id, file_id, mimetype);
         else if (fileset_id)
                 messagelink_send_f(bus,
                                    "{\"event\": \"%s\", "

@@ -369,8 +369,11 @@ void fsdb_get_directory(void *data, request_t *request, response_t *response)
 
 int fsdb_onmessage(void *userdata, messagelink_t *link, json_object_t message)
 {
-        r_debug("fsdb_onmessage");
-        const char *event = json_object_getstr(message, "event");
+        r_warn("************* fsdb_onmessage: FIXME: DON'T RELOAD DB At EVERY MESSAGE!");
+        if (database_unload(db) != 0)
+                r_err("Failed to unload the database");
+        if (database_load(db) != 0)
+                r_err("Failed to unload the database");
 
         messagehub_t *hub = get_messagehub_db();
         messagehub_broadcast_obj(hub, link, message);

@@ -11,6 +11,8 @@ void webproxy_cleanup()
 {
 }
 
+/***************************************************************************/
+
 void webproxy_get_service(request_t *request,
                           const char *topic,
                           const char *resource,
@@ -31,13 +33,24 @@ void webproxy_get_service(request_t *request,
                 response_set_status(response, HTTP_Status_Internal_Server_Error);
 }
 
+/***************************************************************************/
+
+static int *webproxy_onpart(void *userdata,
+                            const unsigned char *data, int len,
+                            const char *mimetype,
+                            double timestamp)
+{
+        return 0;
+}
+
 int webproxy_stream_onresponse(void *userdata, response_t *response)
 {
         return 0;
 }
 
-int webproxy_stream_ondata(void *userdata, const char *buf, int len)
+int webproxy_stream_ondata(multipart_parser_t *parser, const char *buf, int len)
 {
+        multipart_parser_process(parser, buf, len);
         return 0;
 }
 
@@ -47,19 +60,27 @@ void webproxy_get_stream(request_t *request,
                          response_t *response)
 {
         r_debug("webproxy_get_stream: topic %s, resource %s", topic, resource);
-        
+
+        /* multipart_parser_t *parser = NULL; */
+
+        /* parser = new_multipart_parser(NULL, NULL, */
+        /*                               (multipart_onpart_t) webproxy_onpart); */
+
         /* streamerlink_t *link = NULL; */
         /* link = registry_open_streamerlink("webproxy", */
         /*                                   topic, */
         /*                                   webproxy_stream_ondata,  */
         /*                                   webproxy_stream_onresponse, */
-        /*                                   void* userdata, */
+        /*                                   parser, */
         /*                                   1); */
         /* if (link == NULL) { */
         /*         response_set_status(response, HTTP_Status_Internal_Server_Error); */
         /*         return; */
         /* } */
+
 }
+
+/***************************************************************************/
 
 void webproxy_onrequest(void *data,
                         request_t *request,
@@ -119,6 +140,8 @@ void webproxy_onrequest(void *data,
         
         path_delete(elements);
 }
+
+/***************************************************************************/
 
 static void copy_message_to_client(messagelink_t *link_from_client,
                                    messagelink_t *link_to_hub,

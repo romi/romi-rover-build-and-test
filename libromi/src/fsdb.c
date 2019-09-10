@@ -10,106 +10,6 @@
 #include <r.h>
 #include "romi.h"
 
-/*
-
---------------------------------------------
-
-DB
-  - scan
-    - fileset
-      - file
-  - scan
-    - fileset
-      - file
-  ...
-
---------------------------------------------
-
-Session: regroups all data related to a session that starts when the device (scanner or robot) is turned on until turned off.
-Fileset: file sets are not always part of a scan. For example, log files.
-
-
-DB
-  - session
-    - scan  (ex. camera_recorder)
-      - fileset (ex. "images")
-        - file
-    - fileset (ex. logs, dump, weeding images)
-      - file
-  - session
-    - scan
-      - fileset
-        - file
-    - fileset (ex. logs, dump, weeding images)
-      - file
-  ...
-
---------------------------------------------
-
-DB
-  - scan == session
-    - fileset (ex. "log", "dump", "weeding-000")
-      - file
-
---------------------------------------------
-
-db == session
-  - scan (ex. camera_recorder)
-    - fileset
-      - file
-  - scan (ex. "log", "weeding-000")
-    - "files"
-      - file
-
---------------------------------------------
-
-db
-  - session
-    - scan  (ex. scan by camera_recorder)
-      - fileset (ex. "images")
-        - file
-    - scan  (ex. "device"???)
-      - fileset (ex. logs, dump, weeding images)
-        - file
-  ...
-
---------------------------------------------
-
-
-session
-  - log
-  - dump
-  - db
-    - scan  (ex. scan by camera_recorder)
-      - fileset (ex. "images")
-        - file
-    - weeding  (ex. scan by camera_recorder)
-      - fileset (ex. "images")
-        - file
-  ...
-
-
-
-session
-  - log
-  - dump
-  - db
-    - scan-00001
-      - images
-        - 00000.jpg
-    - weeding
-      - 2019-09-05_14-13-45
-        - 00000.jpg
-      - 2019-09-05_14-16-12
-        - 00000.jpg
-  ...
-
---------------------------------------------
-
- */
-
-/**************************************************************/
-
 static int database_create_scan_dir(database_t *db, scan_t *scan);
 static int database_get_scan_directory(database_t *db, scan_t *scan,
                                        char *buffer, int len);
@@ -142,6 +42,7 @@ static void scan_broadcast(scan_t *scan,
 static void fileset_broadcast(fileset_t *fileset,
                               const char *event,
                               file_t *file);
+static void file_broadcast(file_t *file, const char *event);
 
 // FIXME
 static int file_update_files(file_t *file);
@@ -229,6 +130,12 @@ int file_get_metadata_path(file_t *file, char *buffer, int len)
         return database_get_file_metadata_path(db, scan, fileset, file, buffer, len);
 }
 
+static void file_broadcast(file_t *file, const char *event)
+{
+        r_debug("file_broadcast %s", event);
+        fileset_broadcast(file->fileset, event, file);
+}
+
 static int file_update_files(file_t *file)
 {
         fileset_t *fileset = file_get_fileset(file);
@@ -249,11 +156,17 @@ int file_import_data(file_t *file,
 {
         char localfile[256];
         char path[1024];
+        int new_file = 1;
+
+        r_debug("file_import_data");
         
         rprintf(localfile, sizeof(localfile), "%s.%s", file->id, file_extension);
 
-        if (file->localfile != NULL)
-                r_free(file->localfile);        
+        if (file->localfile != NULL) {
+                r_free(file->localfile);
+                file->localfile = NULL;
+                new_file = 0;
+        }
         file->localfile = r_strdup(localfile);
         if (file->localfile == NULL)
                 return -1;
@@ -291,7 +204,14 @@ int file_import_data(file_t *file,
                 // FIXME: then what?
         }
 
-        return file_set_metadata_str(file, "mimetype", mimetype);
+        int err = file_set_metadata_str(file, "mimetype", mimetype);
+
+        if (new_file)
+                file_broadcast(file, "new");
+        else
+                file_broadcast(file, "update");
+        
+        return err;
 }
 
 int file_import_jpeg(file_t *file, const char *image, int len)
@@ -478,6 +398,7 @@ static void fileset_broadcast(fileset_t *fileset,
                               const char *event,
                               file_t *file)
 {
+        r_debug("fileset_broadcast");
         scan_broadcast(fileset->scan, event, fileset, file);
 }
 
@@ -660,7 +581,7 @@ file_t *fileset_new_file(fileset_t *fileset)
                 return NULL;
         }
         
-        fileset_broadcast(fileset, "new", file);
+        //fileset_broadcast(fileset, "new", file);
 
         return file;
 }
@@ -792,6 +713,7 @@ static void scan_broadcast(scan_t *scan,
                            fileset_t *fileset,
                            file_t *file)
 {
+        r_debug("scan_broadcast");
         database_broadcast(scan->db, event, scan, fileset, file);
 }
 
@@ -1352,8 +1274,13 @@ void database_broadcast(database_t *db,
         const char *scan_id = scan? scan->id : NULL;
         const char *fileset_id = fileset? fileset->id : NULL;
         const char *file_id = file? file->id : NULL;
-        if (db->listener)
-                db->listener(db->userdata, db, event, scan_id, fileset_id, file_id);
+        const char *mimetype = file? file->mimetype : NULL;
+        r_debug("database_broadcast");
+        if (db->listener) {
+                db->listener(db->userdata, db, event, scan_id,
+                             fileset_id, file_id, mimetype);
+                r_debug("database_broadcast: done");
+        }
 }
 
 const char *database_path(database_t *db)

@@ -32,15 +32,20 @@ function Fileset(id)
         return null;
     }
 
+    this.insertFile = function(file) {
+        this.files.push(file);
+        this.files.sort(function(a, b) { return a.id > b.id; });
+    }
+
     this.updateFiles = function(list) {
         for (let i = 0; i < list.length; i++) {
             let file = this.getFile(list[i].id);
             if (!file)
-                this.files.push(new File(list[i].id, list[i].mimetype));
+                this.insertFile(new File(list[i].id, list[i].mimetype));
         }
-        this.files.sort(function(a, b) { return a.id > b.id; });
         this.loaded = true;
     }
+
 }
 
 function Scan(id)
@@ -57,13 +62,17 @@ function Scan(id)
         return null;
     }
 
+    this.insertFileset = function(fileset) {
+        this.filesets.push(fileset);
+        this.filesets.sort(function(a, b) { return a.id > b.id; });
+    }
+    
     this.updateFilesets = function(list) {
         for (let i = 0; i < list.length; i++) {
             let fileset = this.getFileset(list[i].id);
             if (!fileset)
-                this.filesets.push(new Fileset(list[i].id));
+                this.insertFileset(new Fileset(list[i].id));
         }
-        this.filesets.sort(function(a, b) { return a.id > b.id; });
         this.loaded = true;
     }
 }
@@ -83,14 +92,102 @@ function DB()
         return null;
     }
 
+    this.insertScan = function(scan) {
+        this.scans.push(scan);
+        this.scans.sort(function(a, b) { return a.id > b.id; });    
+    }
+    
     this.updateScans = function(list) {
         for (let i = 0; i < list.length; i++) {
             let scan = this.getScan(list[i].id);
             if (!scan)
-                this.scans.push(new Scan(list[i].id));
+                this.insertScan(new Scan(list[i].id));
         }
-        this.scans.sort(function(a, b) { return a.id > b.id; });
         this.loaded = true;
+    }
+
+    this.handleNewFile = function(e) {
+        var scan = this.getScan(e.scan);
+        if (!scan) {
+            console.log("New file: couldn't find scan " + e.scan);
+            return;
+        }
+        if (!scan.loaded) {
+            $.getJSON(db.uri + '/metadata/db/' + e.scan, function (data) {
+                scan.updateFilesets(data.filesets);
+                handleEvent(e);
+            });
+            return;
+        }
+        var fileset = scan.getFileset(e.fileset);
+        if (!fileset) {
+            console.log("New file: couldn't find fileset " + e.fileset);
+            return;
+        }
+        if (!fileset.loaded) {
+            $.getJSON(db.uri + '/metadata/db/' + e.scan + '/' + e.fileset,
+                      function (data) {
+                          fileset.updateFiles(data.files);
+                          handleEvent(e);
+                      });
+            return;
+        }
+        var file = fileset.getFile(e.file);
+        if (!file)
+            fileset.insertFile(new File(e.file, e.mimetype));
+        else
+            file.mimetype = e.mimetype;
+        showFileset(e.scan, e.fileset);
+    }
+
+    this.handleNewFileset = function(e) {
+        var scan = this.getScan(e.scan);
+        if (!scan) {
+            console.log("New file: couldn't find scan " + e.scan);
+            return;
+        }
+        if (!scan.loaded) {
+            $.getJSON(db.uri + '/metadata/db/' + e.scan, function (data) {
+                scan.updateFilesets(data.filesets);
+                handleEvent(e);
+            });
+            return;
+        }
+        var fileset = scan.getFileset(e.fileset);
+        if (!fileset) {
+            fileset = new Fileset(e.fileset)
+            scan.insertFileset(fileset);
+        }
+        if (!fileset.loaded) {
+            $.getJSON(db.uri + '/metadata/db/' + e.scan + '/' + e.fileset,
+                      function (data) {
+                          fileset.updateFiles(data.files);
+                      });
+        }
+    }
+
+    this.handleNewScan = function(e) {
+        var scan = this.getScan(e.scan);
+        if (!scan) {
+            scan = new Scan(e.scan);
+            this.insertScan(scan);
+        }
+        if (!scan.loaded) {
+            $.getJSON(db.uri + '/metadata/db/' + e.scan, function (data) {
+                scan.updateFilesets(data.filesets);
+            });
+        }
+    }
+
+    this.handleUpdate = function(e) {
+        if (e.event == "new") {
+            if (e.file)
+                this.handleNewFile(e);
+            else if (e.fileset)
+                this.handleNewFileset(e);
+            else if (e.scan)
+                this.handleNewScan(e);
+        }
     }
 }
 
@@ -138,7 +235,9 @@ function showFilesetImages(scan, fileset, div)
     div.appendChild(row);
     
     for (let i = 0; i < fileset.files.length; i++) {
-        if (fileset.files[i].mimetype == 'image/jpeg') {
+        if (fileset.files[i].mimetype == 'image/jpeg'
+            || fileset.files[i].mimetype == 'image/png'
+            || fileset.files[i].mimetype == 'image/svg+xml') {
             let column = document.createElement('div');
             column.className = 'col-md-2';
 
@@ -182,18 +281,26 @@ function showFileset(scanID, filesetID)
     while (div.firstChild)
         div.removeChild(div.firstChild);
 
-    var tab = document.getElementById('fileset-tab');
-
+    var tab = document.getElementById('scan-tab');
+    if (!scanID) {
+        tab.innerHTML = "-";
+        return;
+    }
+    tab.innerHTML = scanID;
+    
+    tab = document.getElementById('fileset-tab');
     if (!filesetID) {
         tab.innerHTML = "-";
         return;
     }
-
     tab.innerHTML = filesetID;
     $('[href="#fileset"]').tab('show');
 
+
+    
     var scan = db.getScan(scanID);
-    if (!scan) return;
+    if (!scan)
+        return;
     if (!scan.loaded) {
         $.getJSON(db.uri + '/metadata/db/' + scanID, function (data) {
             scan.updateFilesets(data.filesets);
@@ -203,7 +310,8 @@ function showFileset(scanID, filesetID)
     }
 
     var fileset = scan.getFileset(filesetID);
-    if (!fileset) return;
+    if (!fileset)
+        return;
     if (!fileset.loaded) {
         $.getJSON(db.uri + '/metadata/db/' + scanID + '/' + filesetID,
                   function (data) {
@@ -217,7 +325,9 @@ function showFileset(scanID, filesetID)
     
     for (let i = 0; i < fileset.files.length; i++) {
         
-        if (fileset.files[i].mimetype != 'image/jpeg') {
+        if (fileset.files[i].mimetype != 'image/jpeg'
+            && fileset.files[i].mimetype != 'image/png'
+            && fileset.files[i].mimetype != 'image/svg+xml') {
             let a = document.createElement('button');
             a.className = 'btn  btn-light';
             a.innerHTML = fileset.files[i].id;
@@ -249,7 +359,8 @@ function showFile(scanID, filesetID, fileID)
     $('[href="#file"]').tab('show');
 
     var scan = db.getScan(scanID);
-    if (!scan) return;
+    if (!scan)
+        return;
     if (!scan.loaded) {
         $.getJSON(db.uri + '/metadata/db/' + scanID, function (data) {
             scan.updateFilesets(data.filesets);
@@ -259,7 +370,8 @@ function showFile(scanID, filesetID, fileID)
     }
 
     var fileset = scan.getFileset(filesetID);
-    if (!fileset) return;
+    if (!fileset)
+        return;
     if (!fileset.loaded) {
         $.getJSON(db.uri + '/metadata/db/' + scanID + '/' + filesetID,
                   function (data) {
@@ -270,7 +382,8 @@ function showFile(scanID, filesetID, fileID)
     }
 
     var file = fileset.getFile(fileID);
-    if (!file) return;
+    if (!file)
+        return;
     if (!file.loaded) {
         $.getJSON(db.uri + '/metadata/db/' + scanID + '/' + filesetID + '/' + fileID,
                   function (data) {
@@ -280,7 +393,9 @@ function showFile(scanID, filesetID, fileID)
         return;
     }
 
-    if (file.mimetype == 'image/jpeg') {
+    if (file.mimetype == 'image/jpeg'
+        || file.mimetype == 'image/png'
+        || file.mimetype == 'image/svg+xml') {
         let row = document.createElement('div');
         row.className = 'row';
         div.appendChild(row);
@@ -345,9 +460,9 @@ function Selector(scanId, filesetId, fileId)
     }
 }
 
-function handleEvent(data)
+function handleEvent(e)
 {
-    console.log(JSON.stringify(data));
+    db.handleUpdate(e);
 }
 
 function initWebSocket(uri)
@@ -360,6 +475,7 @@ function initWebSocket(uri)
     }
 
     ws.onmessage = function(e) {
+        console.log(e.data);
         handleEvent(JSON.parse(e.data));
     }
 
