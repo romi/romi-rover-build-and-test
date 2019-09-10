@@ -72,6 +72,7 @@ static int init_workspace()
                 return -1;
         }
         z0 = z;
+        r_info("z0 %.4f", z0);
 
         double threshold = json_object_getnum(config, "quincunx_threshold");
         if (isnan(threshold) || threshold < 0 || threshold > 1000.0) {
@@ -322,7 +323,7 @@ static int send_path(list_t *path, double z0, membuf_t *message)
         membuf_printf(buf, "{\"command\": \"travel\", \"path\": [");
         for (list_t *l = path; l != NULL; l = list_next(l)) {
                 point_t *p = list_get(l, point_t);
-                membuf_printf(buf, "[%.4f,%.4f,%.4f]", p->x, p->y, p->z);
+                membuf_printf(buf, "[%.4f,%.4f,%.4f]", p->x, p->y, z0);
                 if (list_next(l)) membuf_printf(buf, ",");
         }
         membuf_printf(buf, "]}");

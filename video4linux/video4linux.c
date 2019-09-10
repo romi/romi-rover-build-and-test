@@ -6,8 +6,8 @@ static const char *device = "/dev/video0";
 static camera_t* camera = NULL;
 static int want_image = 0;
 static membuf_t *rgbbuf = NULL;
-static int width = 1280;
-static int height = 960;
+static int width = 1920;
+static int height = 1080;
 
 streamer_t *get_streamer_camera();
 
@@ -24,7 +24,7 @@ int video4linux_init(int argc, char **argv)
         if (rgbbuf == NULL || membuf_assure(rgbbuf, 5 * 1024 * 1024) != 0)
                 return -1;
         
-        camera = new_camera(device, IO_METHOD_MMAP, 1280, 960, 90);
+        camera = new_camera(device, IO_METHOD_MMAP, width, height, 90);
         if (camera == NULL) {
                 r_err("Failed to open the camera");
                 return -1;

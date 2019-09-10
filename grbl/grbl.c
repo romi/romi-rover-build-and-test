@@ -261,6 +261,18 @@ int cnc_onmoveto(void *userdata,
                 membuf_printf(message, "Invalid coordinates");
                 return -1;
         }
+        if (hasx && (x < 0 || x > 2.0)) {
+                membuf_printf(message, "X value out of range [0,2]: %f", x);
+                return -1;
+        }
+        if (hasy && (y < 0 || y > 2.0)) {
+                membuf_printf(message, "Y value out of range [0,2]: %f", y);
+                return -1;
+        }
+        if (hasz && (z > 0 || z < -2.0)) {
+                membuf_printf(message, "Z value out of range [-2,0]: %f", z);
+                return -1;
+        }
 
         membuf_t *buf = new_membuf();
         membuf_printf(buf, "g0");
@@ -332,9 +344,22 @@ int cnc_ontravel(void *userdata,
                 double x = json_array_getnum(p, 0);
                 double y = json_array_getnum(p, 1);
                 double z = json_array_getnum(p, 2);
-                r_debug("point %d: %d %d %d", i, (int) x, (int) y, (int) z);
+                if (x < 0 || x > 2.0) {
+                        membuf_printf(message, "X value out of range [0,2]: %f", x);
+                        break;
+                }
+                if (y < 0 || y > 2.0) {
+                        membuf_printf(message, "Y value out of range [0,2]: %f", y);
+                        break;
+                }
+                if (z > 0 || z < -2.0) {
+                        membuf_printf(message, "Z value out of range [-2,0]: %f", z);
+                        break;
+                }
+
+                r_debug("point %d: %d %d %d", i, (int) (x * 1000.0), (int) (y * 1000.0), (int) (z * 1000.0));
                 membuf_clear(buf);
-                membuf_printf(buf, "g0 x%d y%d z%d", (int) x, (int) y, (int) z);
+                membuf_printf(buf, "g0 x%d y%d z%d", (int) (x * 1000.0), (int) (y * 1000.0), (int) (z * 1000.0));
                 membuf_append_zero(buf);
                 err = send_command_unlocked(membuf_data(buf), message);
                 if (err) break;
