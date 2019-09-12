@@ -1,5 +1,6 @@
 
 var db = null;
+var dbViewer = null;
 var ws = null;
 var selectedScan = null;
 var selectedFileset = null;
@@ -105,7 +106,7 @@ function DB()
         }
         this.loaded = true;
     }
-
+    
     this.handleNewFile = function(e) {
         var scan = this.getScan(e.scan);
         if (!scan) {
@@ -137,7 +138,6 @@ function DB()
             fileset.insertFile(new File(e.file, e.mimetype));
         else
             file.mimetype = e.mimetype;
-        showFileset(e.scan, e.fileset);
     }
 
     this.handleNewFileset = function(e) {
@@ -191,254 +191,254 @@ function DB()
     }
 }
 
-function showScan(scanID)
+function DBViewer(db)
 {
-    var div = document.getElementById('scan');
-    while (div.firstChild)
-        div.removeChild(div.firstChild);
+    this.db = db;
+    this.selectedScan = "-";
+    this.selectedFileset = "-";
+    this.selectedFile = "-";
+    this.selectedTab = "db";
 
-    var tab = document.getElementById('scan-tab');
+    this.updateDBView = function() {
+        var div = document.getElementById('db');
+        while (div.firstChild)
+            div.removeChild(div.firstChild);
 
-    if (!scanID) {
-        tab.innerHTML = "-";
-        return;
-    }
-
-    tab.innerHTML = scanID;
-    $('[href="#scan"]').tab('show');
-    
-    var scan = db.getScan(scanID);
-    if (!scan) return;
-    if (!scan.loaded) {
-        $.getJSON(db.uri + '/metadata/db/' + scanID, function (data) {
-            scan.updateFilesets(data.filesets);
-            showScan(scanID);
-        });
-        return;
-    }
-
-    for (let i = 0; i < scan.filesets.length; i++) {
-        let a = document.createElement("button");
-        a.className = "btn  btn-light";
-        a.innerHTML = scan.filesets[i].id;
-        a.onclick = new Selector(scanID, scan.filesets[i].id, null).updateBrowser;
-        div.appendChild(a);
-    }
-}
-
-function showFilesetImages(scan, fileset, div)
-{
-    let columns = 0;
-    
-    let row = document.createElement('div');
-    row.className = 'row';
-    div.appendChild(row);
-    
-    for (let i = 0; i < fileset.files.length; i++) {
-        if (fileset.files[i].mimetype == 'image/jpeg'
-            || fileset.files[i].mimetype == 'image/png'
-            || fileset.files[i].mimetype == 'image/svg+xml') {
-            let column = document.createElement('div');
-            column.className = 'col-md-2';
-
-            let thumb = document.createElement('div');
-            thumb.className = 'thumbnail';
-            
-            let a = document.createElement('a');
-            a.onclick = new Selector(scan.id, fileset.id,
-                                     fileset.files[i].id).updateBrowser;
-            
-            let img = document.createElement('img');
-            img.className = 'preview';
-            img.alt = fileset.files[i].id;
-            img.src = (db.uri + '/data/db/' + scan.id + '/' + fileset.id + '/'
-                       + fileset.files[i].id);
-            
-            let caption = document.createElement('div');
-            caption.className = 'caption text-center';
-            caption.innerHTML = fileset.files[i].id;
-            
-            a.appendChild(img);
-            a.appendChild(caption);
-            thumb.appendChild(a);
-            column.appendChild(thumb);
-            row.appendChild(column);
-            
-            columns += 1;
-            if (columns == 6) {
-                row = document.createElement('div');
-                row.className = 'row';
-                div.appendChild(row);
-                columns = 0;
-            }
-        }
-    }
-}
-
-function showFileset(scanID, filesetID)
-{
-    var div = document.getElementById('fileset');
-    while (div.firstChild)
-        div.removeChild(div.firstChild);
-
-    var tab = document.getElementById('scan-tab');
-    if (!scanID) {
-        tab.innerHTML = "-";
-        return;
-    }
-    tab.innerHTML = scanID;
-    
-    tab = document.getElementById('fileset-tab');
-    if (!filesetID) {
-        tab.innerHTML = "-";
-        return;
-    }
-    tab.innerHTML = filesetID;
-    $('[href="#fileset"]').tab('show');
-
-
-    
-    var scan = db.getScan(scanID);
-    if (!scan)
-        return;
-    if (!scan.loaded) {
-        $.getJSON(db.uri + '/metadata/db/' + scanID, function (data) {
-            scan.updateFilesets(data.filesets);
-            showFileset(scanID, filesetID);
-        });
-        return;
-    }
-
-    var fileset = scan.getFileset(filesetID);
-    if (!fileset)
-        return;
-    if (!fileset.loaded) {
-        $.getJSON(db.uri + '/metadata/db/' + scanID + '/' + filesetID,
-                  function (data) {
-                      fileset.updateFiles(data.files);
-                      showFileset(scanID, filesetID);
-                  });
-        return;
-    }
-
-    showFilesetImages(scan, fileset, div);
-    
-    for (let i = 0; i < fileset.files.length; i++) {
-        
-        if (fileset.files[i].mimetype != 'image/jpeg'
-            && fileset.files[i].mimetype != 'image/png'
-            && fileset.files[i].mimetype != 'image/svg+xml') {
-            let a = document.createElement('button');
-            a.className = 'btn  btn-light';
-            a.innerHTML = fileset.files[i].id;
-            a.onclick = new Selector(scanID, filesetID, fileset.files[i].id).updateBrowser;
+        for (let i = 0; i < this.db.scans.length; i++) {
+            let id = this.db.scans[i].id;
+            var a = document.createElement('button');
+            a.className = 'btn btn-light';
+            a.innerHTML = id;
+            a.onclick = new Selector(id, null, null).select;
             div.appendChild(a);
         }
     }
-}
 
-function showFile(scanID, filesetID, fileID)
-{
-    console.log('showFile');
-    
-    var div = document.getElementById('file');
-    while (div.firstChild)
-        div.removeChild(div.firstChild);
+    this.updateScanView = function() {
+        var div = document.getElementById('scan');
+        while (div.firstChild)
+            div.removeChild(div.firstChild);
 
-    if (!fileID)
-        return;
-    
-    var tab = document.getElementById('file-tab');
+        var tab = document.getElementById('scan-tab');
+        if (!this.selectedScan) {
+            tab.innerHTML = "-";
+            return;
+        }
+        tab.innerHTML = this.selectedScan;
+        
+        let scan = this.db.getScan(this.selectedScan);
+        if (!scan)
+            return;
+        if (!scan.loaded) {
+            $.getJSON(db.uri + '/metadata/db/' + scan.id, function (data) {
+                scan.updateFilesets(data.filesets);
+                updateView();
+            });
+            return;
+        }
 
-    if (!fileID) {
-        tab.innerHTML = "-";
-        return;
+        for (let i = 0; i < scan.filesets.length; i++) {
+            let a = document.createElement("button");
+            a.className = "btn  btn-light";
+            a.innerHTML = scan.filesets[i].id;
+            a.onclick = new Selector(scan.id, scan.filesets[i].id, null).select;
+            div.appendChild(a);
+        }
     }
 
-    tab.innerHTML = fileID;
-    $('[href="#file"]').tab('show');
-
-    var scan = db.getScan(scanID);
-    if (!scan)
-        return;
-    if (!scan.loaded) {
-        $.getJSON(db.uri + '/metadata/db/' + scanID, function (data) {
-            scan.updateFilesets(data.filesets);
-            showFile(scanID, filesetID, fileID);
-        });
-        return;
-    }
-
-    var fileset = scan.getFileset(filesetID);
-    if (!fileset)
-        return;
-    if (!fileset.loaded) {
-        $.getJSON(db.uri + '/metadata/db/' + scanID + '/' + filesetID,
-                  function (data) {
-                      fileset.updateFiles(data.files);
-                      showFile(scanID, filesetID, fileID);
-                  });
-        return;
-    }
-
-    var file = fileset.getFile(fileID);
-    if (!file)
-        return;
-    if (!file.loaded) {
-        $.getJSON(db.uri + '/metadata/db/' + scanID + '/' + filesetID + '/' + fileID,
-                  function (data) {
-                      file.updateMetadata(data);
-                      showFile(scanID, filesetID, fileID);
-                  });
-        return;
-    }
-
-    if (file.mimetype == 'image/jpeg'
-        || file.mimetype == 'image/png'
-        || file.mimetype == 'image/svg+xml') {
+    this.showFilesetImages = function(scan, fileset, div) {
+        let columns = 0;
+        
         let row = document.createElement('div');
         row.className = 'row';
         div.appendChild(row);
-    
-        let column = document.createElement('div');
-        column.className = 'col-md-12';
+        
+        for (let i = 0; i < fileset.files.length; i++) {
+            if (fileset.files[i].mimetype == 'image/jpeg'
+                || fileset.files[i].mimetype == 'image/png'
+                || fileset.files[i].mimetype == 'image/svg+xml') {
+                let column = document.createElement('div');
+                column.className = 'col-md-2';
 
-        let img = document.createElement('img');
-        img.className = 'fullview';
-        img.src = (db.uri + '/data/db/' + scan.id + '/' + fileset.id + '/' + file.id);
+                let thumb = document.createElement('div');
+                thumb.className = 'thumbnail';
+                
+                let a = document.createElement('a');
+                a.onclick = new Selector(scan.id, fileset.id,
+                                         fileset.files[i].id).select;
+                
+                let img = document.createElement('img');
+                img.className = 'preview';
+                img.alt = fileset.files[i].id;
+                img.src = (db.uri + '/data/db/' + scan.id + '/' + fileset.id + '/'
+                           + fileset.files[i].id);
+                
+                let caption = document.createElement('div');
+                caption.className = 'caption text-center';
+                caption.innerHTML = fileset.files[i].id;
+                
+                a.appendChild(img);
+                a.appendChild(caption);
+                thumb.appendChild(a);
+                column.appendChild(thumb);
+                row.appendChild(column);
+                
+                columns += 1;
+                if (columns == 6) {
+                    row = document.createElement('div');
+                    row.className = 'row';
+                    div.appendChild(row);
+                    columns = 0;
+                }
+            }
+        }
+    }
+
+    this.updateFilesetView = function() {
+        var div = document.getElementById('fileset');
+        while (div.firstChild)
+            div.removeChild(div.firstChild);
+
+        tab = document.getElementById('fileset-tab');
+        if (!this.selectedFileset) {
+            tab.innerHTML = "-";
+            return;
+        }
+        tab.innerHTML = this.selectedFileset;
+
+        var scan = this.db.getScan(this.selectedScan);
+        if (!scan || !scan.loaded)
+            return;
+        
+        var fileset = scan.getFileset(this.selectedFileset);
+        if (!fileset)
+            return;
+        if (!fileset.loaded) {
+            $.getJSON(db.uri + '/metadata/db/' + scan.id + '/' + fileset.id,
+                      function (data) {
+                          fileset.updateFiles(data.files);
+                          updateView();
+                      });
+            return;
+        }
+
+        this.showFilesetImages(scan, fileset, div);
+        
+        for (let i = 0; i < fileset.files.length; i++) {
             
-        column.appendChild(img);
+            if (fileset.files[i].mimetype != 'image/jpeg'
+                && fileset.files[i].mimetype != 'image/png'
+                && fileset.files[i].mimetype != 'image/svg+xml') {
+                let a = document.createElement('button');
+                a.className = 'btn  btn-light';
+                a.innerHTML = fileset.files[i].id;
+                a.onclick = new Selector(scan.id, fileset.id, fileset.files[i].id).select;
+                div.appendChild(a);
+            }
+        }
+    }
+    
+    this.updateFileView = function() {
+        var div = document.getElementById('file');
+        while (div.firstChild)
+            div.removeChild(div.firstChild);
+        
+        var tab = document.getElementById('file-tab');
+        if (!this.selectedFile) {
+            tab.innerHTML = "-";
+            return;
+        }
+        tab.innerHTML = this.selectedFile;
+
+        var scan = this.db.getScan(this.selectedScan);
+        if (!scan || !scan.loaded)
+            return;
+        var fileset = scan.getFileset(this.selectedFileset);
+        if (!fileset || !fileset.loaded)
+            return;
+
+        var file = fileset.getFile(this.selectedFile);
+        if (!file)
+            return;
+        if (!file.loaded) {
+            $.getJSON(db.uri + '/metadata/db/' + scan.id + '/' + fileset.id + '/' + file.id,
+                      function (data) {
+                          file.updateMetadata(data);
+                          updateView();
+                      });
+            return;
+        }
+
+        if (file.mimetype == 'image/jpeg'
+            || file.mimetype == 'image/png'
+            || file.mimetype == 'image/svg+xml') {
+            let row = document.createElement('div');
+            row.className = 'row';
+            div.appendChild(row);
+            
+            let column = document.createElement('div');
+            column.className = 'col-md-12';
+
+            let img = document.createElement('img');
+            img.className = 'fullview';
+            img.src = (db.uri + '/data/db/' + scan.id + '/' + fileset.id + '/' + file.id);
+            
+            column.appendChild(img);
+            row.appendChild(column);            
+        }
+
+        let row = document.createElement('div');
+        row.className = 'row';
+        div.appendChild(row);
+        let column = document.createElement('div');
+        column.className = 'col-md-12';   
+        column.innerHTML = JSON.stringify(file.metadata);
         row.appendChild(column);            
     }
-
-    let row = document.createElement('div');
-    row.className = 'row';
-    div.appendChild(row);
-    let column = document.createElement('div');
-    column.className = 'col-md-12';   
-    column.innerHTML = JSON.stringify(file.metadata);
-    row.appendChild(column);            
-}
-
-function updateDBBrowser()
-{
-    console.log('updateDBBrowser');
-    var div = document.getElementById('db');
-    while (div.firstChild)
-        div.removeChild(div.firstChild);
     
-    for (let i = 0; i < db.scans.length; i++) {
-        let a = document.createElement('button');
-        a.className = 'btn btn-light';
-        a.innerHTML = db.scans[i].id;
-        a.onclick = new Selector(db.scans[i].id, null, null).updateBrowser;
-        div.appendChild(a);
+    this.updateView = function() {
+        this.updateDBView();
+        this.updateScanView();
+        this.updateFilesetView();
+        this.updateFileView();
+    }
+
+    this.selectTab = function(tab) {
+        this.selectedTab = tab;
+        $('[href="#' + tab + '"]').tab('show');
+    }
+
+    this.select = function(scanID, filesetID, fileID) {
+        this.selectedScan = scanID;
+        this.selectedFileset = filesetID;
+        this.selectedFile = fileID;
+        this.updateView();
+        if (fileID)
+            this.selectTab('file');
+        else if (filesetID)
+            this.selectTab('fileset');
+        else if (scanID)
+            this.selectTab('scan');
+        else 
+            this.selectTab('db');
+    }
+
+    this.handleUpdate = function(e) {
+        this.db.handleUpdate(e);
+        if (e.event == "new" && e.fileset)
+            this.select(e.scan, e.fileset, null);
+        this.updateView();
     }
 }
 
-function updateBrowser()
+function updateView()
 {
-    updateDBBrowser();
+    dbViewer.updateView();
+}
+
+function handleEvent(e)
+{
+    dbViewer.handleUpdate(e);
 }
 
 function Selector(scanId, filesetId, fileId)
@@ -448,21 +448,9 @@ function Selector(scanId, filesetId, fileId)
     this.filesetId = filesetId;
     this.fileId = fileId;
 
-    this.updateBrowser = function(e) {
-        
-        if (fileId) {
-            showFile(scanId, filesetId, fileId);
-        } else if (filesetId) {
-            showFileset(scanId, filesetId);
-        } else if (scanId) {
-            showScan(scanId);
-        }
+    this.select = function(e) {
+        dbViewer.select(scanId, filesetId, fileId);
     }
-}
-
-function handleEvent(e)
-{
-    db.handleUpdate(e);
 }
 
 function initWebSocket(uri)
@@ -490,12 +478,13 @@ function initWebSocket(uri)
 
 function showDB()
 {
-    console.log('showDB');
     db = new DB();
+    dbViewer = new DBViewer(db);
+    
     $.getJSON(db.uri + '/metadata/db', function (data) {
-        console.log('showDB > getJSON > callback');
+        console.log(JSON.stringify(data));
         db.updateScans(data.scans);
-        updateDBBrowser();
+        updateView();
         initWebSocket(db.ws);
     });
 }

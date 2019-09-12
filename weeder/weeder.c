@@ -157,10 +157,11 @@ static int init_database()
         r_free(dir);
 
         database_load(db);
-
         database_set_listener(db, broadcast_db_message, NULL);
         
-        scan = database_new_scan(db, "weeding");
+        scan = database_get_scan(db, "weeding");
+        if (scan == NULL)
+                scan = database_new_scan(db, "weeding");
         if (scan == NULL)
                 return -1;
         
@@ -374,8 +375,6 @@ static int hoe(int method, json_object_t command, membuf_t *message)
         list_t *path = NULL;
         int err;
         double start_time = clock_time();
-
-        json_print(command, 0);
         
         double diameter_tool = 0.05f;
         if (json_object_has(command, "diameter-tool")) {
@@ -479,4 +478,146 @@ int weeder_onhoe(void *userdata,
 	}
 
         return hoe(weeding_method, command, message); 
+}
+
+static list_t *sample_path(list_t *path, float z0, float distance)
+{
+        /* point_t *p0 = list_get(path, point_t); */
+        /* list_t *l = list_next(path); */
+        /* float x = p0->x; */
+        /* float y = p0->y; */
+
+        /* while (l) { */
+        /*         point_t *p = list_get(path, point_t); */
+        /*         float d = ((p->x - x) * (p->x - x) + */
+        /*                    (p->y - y) * (p->y - y)); */
+        /*         if (d < distance * distance) { */
+        /*                 l = list_next(l); */
+        /*                 continue; */
+        /*         } */
+        /*         XXX */
+        /* } */
+        return NULL;
+}
+
+static int loosen(int method, json_object_t command, membuf_t *message)
+{
+        list_t *path = NULL;
+        int err;
+        double start_time = clock_time();
+
+#define SQRT_2_2 .70710678118654752440;
+        
+        double diameter_tool = 0.05f;
+        if (json_object_has(command, "diameter-tool")) {
+                        diameter_tool = json_object_getnum(command, "diameter-tool");
+                        if (isnan(diameter_tool)
+                            || diameter_tool < 0.01
+                            || diameter_tool > 1.0) {
+                                r_err("Invalid tool diameter (0.1<d<1)");
+                                membuf_printf(message, "Invalid tool diameter (0.1<d<1)");
+                                return -1;
+                        }
+                }
+        double distance_tool = 0.05f * SQRT_2_2;
+        double margin = 0.05f - distance_tool;
+
+        if (method == WEEDING_METHOD_QUINCUNX) {
+                double distance_plants = json_object_getnum(command, "distance-plants");
+                if (isnan(distance_plants)
+                    || distance_plants < 0.01
+                    || distance_plants > 2.0) {
+                        r_err("No distance between plant given");
+                        membuf_printf(message, "No distance between plant given");
+                        return -1;
+                }
+                double distance_rows = distance_plants;
+                if (json_object_has(command, "distance-rows")) {
+                        distance_rows = json_object_getnum(command, "distance-rows");
+                        if (isnan(distance_rows)
+                            || distance_rows < 0.01
+                            || distance_rows > 2.0) {
+                                r_err("Invalid distance between rows");
+                                membuf_printf(message, "Invalid distance between rows");
+                                return -1;
+                        }
+                }
+                double radius_zones = 0.10;
+                if (json_object_has(command, "radius-zones")) {
+                        json_object_getnum(command, "radius-zones");
+                        if (isnan(radius_zones)
+                            || radius_zones < 0.01
+                            || radius_zones > 2.0) {
+                                r_err("Invalid zone radius");
+                                membuf_printf(message, "Invalid zone radius");
+                                return -1;
+                        }
+                }
+                path = compute_quincunx(message,
+                                        distance_plants, distance_rows,
+                                        radius_zones, distance_tool,
+                                        start_time);
+        } else {
+                path = compute_boustrophedon(&workspace, distance_tool);
+        }
+                
+        if (path == NULL) {
+                r_err("Failed to compute the path");
+                membuf_printf(message, "Failed to compute the path");
+                return -1;
+        }
+
+        list_t *new_path = sample_path(path, z0, distance_tool);
+        
+        err = send_path(new_path, z0, message);
+
+        r_info("Finished executing path: %f s", clock_time() - start_time);
+        
+        for (list_t *l = path; l != NULL; l = list_next(l)) {
+                point_t *p = list_get(l, point_t);
+                delete_point(p);
+        }
+        delete_list(path);
+
+        for (list_t *l = new_path; l != NULL; l = list_next(l)) {
+                point_t *p = list_get(l, point_t);
+                delete_point(p);
+        }
+        delete_list(new_path);
+
+        return err;
+}
+
+int weeder_onloosen(void *userdata,
+                    messagelink_t *link,
+                    json_object_t command,
+                    membuf_t *message)
+{
+	r_debug("weeder_onloosen");
+
+        if (init_workspace() != 0) {
+                membuf_printf(message, "Workspace not intialized");
+                return -1;
+        }
+        if (init_database() != 0) {
+                membuf_printf(message, "Database not intialized");
+                return -1;
+        }
+
+        int weeding_method;
+
+	const char *method = json_object_getstr(command, "method");
+	if (method == NULL || rstreq(method, "boustrophedon")) {
+                r_debug("Doing boustrophedon.");
+                weeding_method = WEEDING_METHOD_BOUSTROPHEDON;
+	} else if (rstreq(method, "quincunx")) {
+                r_debug("Doing quincunx weeding method.");
+                weeding_method = WEEDING_METHOD_QUINCUNX;
+	} else {
+                r_err("Bad weeding method: %s", method);
+                membuf_printf(message, "Bad weeding method: %s", method);
+                return -1;
+	}
+
+        return loosen(weeding_method, command, message); 
 }

@@ -27,7 +27,8 @@
     "launch": {
         "general": {
             "sessions-dir": "/tmp/session",
-            "user": "hanappe"
+            "user": "hanappe",
+            "TODO-groups": ["dialout", "video"]
         },
         "registry": {
             "path": "/usr/local/bin/rcregistry"
