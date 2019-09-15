@@ -23,6 +23,8 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -38,15 +40,15 @@ typedef struct _camera_t camera_t;
 camera_t* new_camera(const char* dev, 
                      io_method io,
                      unsigned int width, 
-                     unsigned int height, 
-                     int jpeg_quality);
+                     unsigned int height);
 
 int delete_camera(camera_t* camera);
 
 int camera_capture(camera_t* camera);
 
-int camera_getimagesize(camera_t* camera);
-unsigned char* camera_getimagebuffer(camera_t* camera);
+int camera_width(camera_t* camera);
+int camera_height(camera_t* camera);
+uint8_t *camera_getimagebuffer(camera_t* camera);
 
 #ifdef __cplusplus
 }
