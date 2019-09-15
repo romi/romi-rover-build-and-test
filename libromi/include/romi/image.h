@@ -33,6 +33,7 @@ image_t *image_load_from_mem(const unsigned char *data, int len);
 int image_store(image_t* image, const char *filename, const char *type);
 int image_store_to_mem(image_t* image, membuf_t *out, const char *format);
 
+const char *image_type(const char *filename);
 const char *image_mimetype(const char *format);
 
 int image_contains(image_t *image, int x, int y);
@@ -65,11 +66,17 @@ image_t *FIXME_image_crop(image_t *image, int x, int y, int width, int height);
 
 // FIXME: should do a low-pass filter, but it doesn't
 image_t *FIXME_image_scale(image_t *image, int n);
+image_t *image_scale(image_t *image, int width, int height);
 
 int image_split_rgb(image_t *rgb_in, image_t **rgb_out);
 
 image_t* image_excess_green(image_t* image);
 
+
+int convert_to_jpeg(uint8_t* rgb, int width, int height, int quality, membuf_t *out);
+image_t *convert_to_image(uint8_t* rgb, int width, int height);
+
+        
 #ifdef __cplusplus
 }
 #endif

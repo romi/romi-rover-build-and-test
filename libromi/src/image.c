@@ -520,6 +520,8 @@ static void jpeg_bufferinit(j_compress_ptr cinfo)
         jpeg_dest_t* my_mgr = (jpeg_dest_t*) cinfo->dest;
         membuf_t* membuf = my_mgr->membuf;
 
+        membuf_clear(membuf);
+        membuf_assure(membuf, BLOCKSIZE);
         cinfo->dest->next_output_byte = (unsigned char*) membuf_data(membuf);
         cinfo->dest->free_in_buffer = membuf_available(membuf);
 }
@@ -569,7 +571,6 @@ int image_store_to_mem_jpeg(image_t* image, membuf_t *out)
 
         my_mgr = (jpeg_dest_t*) cinfo.dest;
         my_mgr->membuf = out;
-        membuf_assure(out, BLOCKSIZE);
 
         cinfo.image_width = image->width;	
         cinfo.image_height = image->height;
@@ -942,8 +943,6 @@ int image_type_jpeg(const char *filename)
         return buf[0] == 0xff && buf[1] == 0xd8 && buf[2] == 0xff;
 }
 
-// FIXME: This function shouldn't rely on the filename but check the
-// file signature.
 const char *image_type(const char *filename)
 {
         if (image_type_jpeg(filename)) {
@@ -1111,6 +1110,48 @@ image_t *FIXME_image_scale(image_t *image, int n)
         return scaled;
 }
 
+
+// FIXME
+image_t *image_scale(image_t *image, int width, int height)
+{
+        image_t *scaled = new_image(image->type, width, height);
+        float scale_x = (float) image->width / width;
+        float scale_y = (float) image->height / height;
+        
+        for (int y = 0; y < height; y++) {
+                float yi = (float) y * scale_y;
+                int y0 = (int) yi;
+                int y1 = y0 + 1;
+                float dy1 = yi - (int) y0;
+                float dy0 = 1.0f - dy1;
+                int im_offset_y0 = y0 * image->width;
+                int im_offset_y1 = y1 * image->width;
+                int scaled_offset_y = y * scaled->width;
+                for (int x = 0; x < width; x++) {
+                        float xi = (float) x * scale_x;
+                        int x0 = (int) xi;
+                        int x1 = x0 + 1;
+                        float dx1 = xi - x0;
+                        float dx0 = 1.0f - dx1;
+                        int ix0y0 = (im_offset_y0 + x0) * image->channels;
+                        int ix0y1 = (im_offset_y1 + x0) * image->channels;
+                        int ix1y0 = (im_offset_y0 + x1) * image->channels;
+                        int ix1y1 = (im_offset_y1 + x1) * image->channels;
+                        int offset_xy = (scaled_offset_y + x) * scaled->channels;
+                        
+                        for (int channel = 0; channel < image->channels; channel++) {
+                                // FIXME: dx1 * dy1 is out-of-range if x=width-1 and y=height-1
+                                scaled->data[offset_xy + channel] =
+                                        dx0 * dy0 * image->data[ix0y0 + channel]
+                                        + dx0 * dy1 * image->data[ix0y1 + channel]
+                                        + dx1 * dy0 * image->data[ix1y0 + channel]
+                                        + dx1 * dy1 * image->data[ix1y1 + channel];
+                        }
+                }
+        }
+        return scaled;
+}
+
 int image_split_rgb(image_t *rgb_in, image_t **rgb_out)
 {
         memset(rgb_out, 0, 3 * sizeof(image_t *));
@@ -1216,3 +1257,59 @@ image_t* image_excess_green(image_t* image)
         
         return exg;
 }
+
+int convert_to_jpeg(uint8_t* rgb, int width, int height, int quality, membuf_t *out)
+{
+        struct jpeg_compress_struct cinfo;
+        struct jpeg_error_mgr jerr;
+	jpeg_dest_t* my_mgr;
+        JSAMPROW row_pointer[1];
+
+        cinfo.err = jpeg_std_error(&jerr);
+        jpeg_create_compress(&cinfo);
+
+        cinfo.dest = (struct jpeg_destination_mgr *) 
+                (*cinfo.mem->alloc_small) ((j_common_ptr) &cinfo, JPOOL_PERMANENT,
+                                           sizeof(jpeg_dest_t));       
+        cinfo.dest->init_destination = &jpeg_bufferinit;
+        cinfo.dest->empty_output_buffer = &jpeg_bufferemptyoutput;
+        cinfo.dest->term_destination = &jpeg_bufferterminate;
+
+        my_mgr = (jpeg_dest_t*) cinfo.dest;
+        my_mgr->membuf = out;
+
+        cinfo.image_width = width;	
+        cinfo.image_height = height;
+        cinfo.input_components = 3;
+        cinfo.in_color_space = JCS_RGB;
+
+        jpeg_set_defaults(&cinfo);
+        jpeg_set_quality(&cinfo, quality, TRUE);
+
+        jpeg_start_compress(&cinfo, TRUE);
+
+        // feed data
+        while (cinfo.next_scanline < cinfo.image_height) {
+                unsigned int offset = cinfo.next_scanline * cinfo.image_width *  cinfo.input_components;
+                row_pointer[0] = (unsigned char *) rgb + offset;
+                jpeg_write_scanlines(&cinfo, row_pointer, 1);
+        }
+
+        jpeg_finish_compress(&cinfo);
+        jpeg_destroy_compress(&cinfo);
+
+        return 0;
+}
+
+image_t *convert_to_image(uint8_t* rgb, int width, int height)
+{
+        image_t *image = new_image_rgb(width, height);
+        if (image == NULL)
+                return NULL;
+        float *p = image->data;
+        int len = width * height;
+        for (int i = 0; i < len; i++)
+                *p++ = (float) *rgb / 255.0f;
+        return image;
+}
+
