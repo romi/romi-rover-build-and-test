@@ -19,11 +19,10 @@ void webproxy_get_service(request_t *request,
                           response_t *response)
 {
         int err;
-        r_debug("webproxy_get_service: topic %s, resource %s", topic, resource);
+
         if (request_args(request) != NULL) {
                 char buffer[1024]; 
                 rprintf(buffer, sizeof(buffer), "%s?%s", resource, request_args(request));
-                r_debug("   resource %s", buffer);
                 err = client_get_data(topic, buffer, &response);
                 
         } else
@@ -48,9 +47,10 @@ int webproxy_stream_onresponse(void *userdata, response_t *response)
         return 0;
 }
 
-int webproxy_stream_ondata(multipart_parser_t *parser, const char *buf, int len)
+int webproxy_stream_ondata(multipart_parser_t *parser, response_t *response,
+                           const char *buf, int len)
 {
-        multipart_parser_process(parser, buf, len);
+        multipart_parser_process(parser, response, buf, len);
         return 0;
 }
 
@@ -87,8 +87,6 @@ void webproxy_onrequest(void *data,
                         response_t *response)
 {
 	const char *path = request_uri(request);
-        r_debug("webproxy_onrequest: uri=%s", path);
-        
         list_t* elements = path_break(path);
         list_t* start = elements;
 
@@ -101,10 +99,7 @@ void webproxy_onrequest(void *data,
                 response_set_status(response, HTTP_Status_Bad_Request);
                 return;
         }
-        
         char *type = list_get(l_type, char);
-        r_debug("webproxy_onrequest: type %s", type);
-        
         if (rstreq(type, "coffee")) {
                 response_set_status(response, HTTP_Status_Im_A_Teapot);
                 return;
@@ -115,9 +110,7 @@ void webproxy_onrequest(void *data,
                 response_set_status(response, HTTP_Status_Bad_Request);
                 return;
         }
-        
         char *topic = list_get(l_topic, char);
-        r_debug("webproxy_onrequest: topic %s", topic);
         
         list_t* l_resource = list_next(l_topic);
         if (l_resource == NULL) {
@@ -127,14 +120,13 @@ void webproxy_onrequest(void *data,
 
         char resource[1024];
         int err = path_glue(l_resource, 1, resource, sizeof(resource));
-        r_debug("webproxy_onrequest: resource %s", resource);
 
         int r = 0;
         if (rstreq(type, "service")) {
                 webproxy_get_service(request, topic, resource, response);
 
         } else {
-                r_debug("webproxy_onrequest: Bad resquest: Unknown type '%s'", type);
+                r_warn("webproxy_onrequest: Bad request: Unknown type '%s'", type);
                 response_set_status(response, HTTP_Status_Bad_Request);
         }
         
@@ -147,7 +139,6 @@ static void copy_message_to_client(messagelink_t *link_from_client,
                                    messagelink_t *link_to_hub,
                                    json_object_t message)
 {
-        r_debug("copy_message_to_client");
         if (link_from_client)
                 messagelink_send_obj(link_from_client, message);
 }
@@ -156,7 +147,6 @@ static void copy_message_to_hub(messagelink_t *link_to_hub,
                                 messagelink_t *link_from_client,
                                 json_object_t message)
 {
-        r_debug("copy_message_to_hub");
         if (link_to_hub)
                 messagelink_send_obj(link_to_hub, message);
 }
@@ -164,7 +154,6 @@ static void copy_message_to_hub(messagelink_t *link_to_hub,
 static void link_from_client_closed(messagelink_t *link_to_hub,
                                     messagelink_t *link_from_client)
 {
-        r_debug("link_from_client_closed");
         registry_close_messagelink(link_to_hub);
         messagelink_set_userdata(link_from_client, NULL);
 }
@@ -173,7 +162,6 @@ int webproxy_onconnect(void *userdata, messagehub_t *hub,
                        request_t* request, messagelink_t *link_from_client)
 {
         const char *path = request_uri(request);
-        r_debug("webproxy_onconnect: uri '%s'", path);
         
         list_t* elements = path_break(path);
         list_t* start = elements;
@@ -187,7 +175,6 @@ int webproxy_onconnect(void *userdata, messagehub_t *hub,
                 return -1;
         
         char *type = list_get(l_type, char);
-        r_debug("webproxy_onconnect: type %s", type);
 
         if (!rstreq(type, "messagehub"))
                 return -1;
@@ -197,7 +184,6 @@ int webproxy_onconnect(void *userdata, messagehub_t *hub,
                 return -1;
         
         char *topic = list_get(l_topic, char);
-        r_debug("webproxy_onconnect: topic %s", topic);
         
         messagelink_t *link_to_hub = NULL;
         link_to_hub = registry_open_messagelink("webproxy",

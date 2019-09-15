@@ -180,14 +180,12 @@ function DB()
     }
 
     this.handleUpdate = function(e) {
-        if (e.event == "new") {
-            if (e.file)
-                this.handleNewFile(e);
-            else if (e.fileset)
-                this.handleNewFileset(e);
-            else if (e.scan)
-                this.handleNewScan(e);
-        }
+        if (e.event == "new-file")
+            this.handleNewFile(e);
+        else if (e.event == "new-fileset")
+            this.handleNewFileset(e);
+        else if (e.event == "new-scan")
+            this.handleNewScan(e);
     }
 }
 
@@ -271,7 +269,7 @@ function DBViewer(db)
                 img.className = 'preview';
                 img.alt = fileset.files[i].id;
                 img.src = (db.uri + '/data/db/' + scan.id + '/' + fileset.id + '/'
-                           + fileset.files[i].id);
+                           + fileset.files[i].id + "?thumbnail");
                 
                 let caption = document.createElement('div');
                 caption.className = 'caption text-center';
@@ -425,9 +423,15 @@ function DBViewer(db)
 
     this.handleUpdate = function(e) {
         this.db.handleUpdate(e);
-        if (e.event == "new" && e.fileset)
+        if (e.event == "new-file") {
+            if (e.fileset == this.selectedFileset
+                && this.selectedTab == "fileset")
+                this.updateFilesetView();
+        } else if (e.event == "new-fileset") {
             this.select(e.scan, e.fileset, null);
-        this.updateView();
+        } else if (e.event == "new-scan") {
+            this.select(e.scan, null, null);
+        }
     }
 }
 

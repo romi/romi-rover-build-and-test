@@ -41,22 +41,24 @@
             "path": "build/fake_motors/fake_motors"
         }, {
             "path": "build/fake_camera/fake_camera",
-            "disabled": false
+            "disabled": true
         }, {
             "path": "build/video4linux/video4linux",
-            "disabled": true
+            "disabled": false
         }, {
             "path": "build/fake_cnc/fake_cnc"
         }, {
             "path": "build/wheel_odometry/wheel_odometry"
         }, {
-            "path": "build/camera_recorder/camera_recorder"
+            "path": "build/camera_recorder/camera_recorder",
+            "disabled": false
         }, {
             "path": "build/weeder/weeder"
         }, {
             "path": "build/navigation/navigation"
         }, {
-            "path": "build/interface/interface"
+            "path": "build/interface/interface",
+            "disabled": false
         }, {
             "path": "build/watchdog/watchdog",
             "user": "root"
