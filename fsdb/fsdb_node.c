@@ -5,7 +5,7 @@ static database_t *db = NULL;
 
 streamer_t *get_streamer_camera();
 messagehub_t *get_messagehub_db();
-list_t *parse_uri(const char *uri);
+static list_t *parse_uri(const char *uri);
 
 int fsdb_node_init(int argc, char **argv)
 {
@@ -59,7 +59,8 @@ void fsdb_node_cleanup()
                 delete_database(db);
 }
 
-list_t *parse_uri(const char *uri)
+// FIXME: use fs.h's path_break()
+static list_t *parse_uri(const char *uri)
 {
         list_t *list = NULL;
         if (uri[0] != '/')
@@ -95,7 +96,7 @@ list_t *parse_uri(const char *uri)
         return list;
 }
 
-int fsdb_get_db_metadata(response_t *response)
+static int fsdb_get_db_metadata(response_t *response)
 {
         int add_comma = 0;
         response_printf(response, "{ \"scans\": [");
@@ -113,7 +114,7 @@ int fsdb_get_db_metadata(response_t *response)
         return 0;
 }
 
-int fsdb_get_scan_metadata(response_t *response, const char *scan_id)
+static int fsdb_get_scan_metadata(response_t *response, const char *scan_id)
 {
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
@@ -140,9 +141,9 @@ int fsdb_get_scan_metadata(response_t *response, const char *scan_id)
         return 0;
 }
 
-int fsdb_get_fileset_metadata(response_t *response,
-                              const char *scan_id,
-                              const char *fileset_id)
+static int fsdb_get_fileset_metadata(response_t *response,
+                                     const char *scan_id,
+                                     const char *fileset_id)
 {
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
@@ -178,10 +179,10 @@ int fsdb_get_fileset_metadata(response_t *response,
         return 0;
 }
         
-int fsdb_get_file_metadata(response_t *response,
-                           const char *scan_id,
-                           const char *fileset_id,
-                           const char *file_id)
+static int fsdb_get_file_metadata(response_t *response,
+                                  const char *scan_id,
+                                  const char *fileset_id,
+                                  const char *file_id)
 {
         scan_t *scan = database_get_scan(db, scan_id);
         if (scan == NULL) {
@@ -208,7 +209,7 @@ int fsdb_get_file_metadata(response_t *response,
         return response_json(response, file_get_metadata(file));
 }
 
-int fsdb_get_metadata(response_t *response, list_t *query)
+static int fsdb_get_metadata(response_t *response, list_t *query)
 {
         const char *db_id = list_get(query, char);
 
@@ -242,7 +243,113 @@ int fsdb_get_metadata(response_t *response, list_t *query)
                 return fsdb_get_file_metadata(response, scan_id, fileset_id, file_id);
 }
 
-int fsdb_get_data(response_t *response, list_t *query)
+static int fsdb_get_file(request_t *request, response_t *response, const char *path)
+{
+        char buffer[1024];
+        FILE *fp = fopen(path, "rb");
+
+        while (!feof(fp) && !ferror(fp)) {
+                int n = fread(buffer, 1, sizeof(buffer), fp);
+                response_append(response, buffer, n);
+        }
+
+        if (ferror(fp)) {
+                r_err("An error occured reading file '%s'", path);
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
+                return -1;
+        }
+        
+        fclose(fp);
+        return 0;
+}
+
+static int scale_image(const char *path, const char *alt, int width, int height)
+{
+        image_t *orig = image_load(path);
+        if (orig == NULL)
+                return -1;
+
+        int h = (int)((float) height * (float) orig->width / (float) width);
+        if (h < orig->height) {
+                // The original image is taller. Cut away a border at
+                // the top and bottom.
+                image_t *cropped = FIXME_image_crop(orig,
+                                                    0, (orig->height - h) / 2,
+                                                    orig->width, h);
+                delete_image(orig);
+                orig = cropped;
+        } else if (h > orig->height) {
+                // The original image is wider. Cut away a border on
+                // the left and right.
+                int w = (int)((float) width * (float) orig->height / (float) height);
+                image_t *cropped = FIXME_image_crop(orig,
+                                                    (orig->width - w) / 2, 0,
+                                                    w, orig->height);
+                delete_image(orig);
+                orig = cropped;
+        }
+        
+        image_t *scaled = image_scale(orig, width, height);
+        int err = image_store(scaled, alt, image_type(path));
+
+        delete_image(orig);
+        delete_image(scaled);
+        
+        return err;
+}
+
+/*
+ * thumbnail:  100x75        
+ * square:     150x150
+ * small:      320x240        
+ * medium:     800x600
+ * large:      1920x1080
+ * original
+*/
+static int fsdb_get_image(request_t *request, response_t *response, const char *path)
+{
+        const char *args = request_args(request);
+        if (args == NULL)
+                return fsdb_get_file(request, response, path);
+
+        char alt[2048];
+        int width = 0;
+        int height = 0;
+        if (rstreq(args, "original")) {
+                return fsdb_get_file(request, response, path);
+        } else if (rstreq(args, "thumbnail")) {
+                rprintf(alt, sizeof(alt), "%s.thumbnail", path);
+                width = 100;
+                height = 75;
+        } else if (rstreq(args, "square")) {
+                rprintf(alt, sizeof(alt), "%s.square", path);
+                width = 150;
+                height = 150;
+        } else if (rstreq(args, "small")) {
+                rprintf(alt, sizeof(alt), "%s.small", path);
+                width = 320;
+                height = 240;
+        } else if (rstreq(args, "medium")) {
+                rprintf(alt, sizeof(alt), "%s.medium", path);
+                width = 800;
+                height = 600;
+        } else if (rstreq(args, "large")) {
+                rprintf(alt, sizeof(alt), "%s.large", path);
+                width = 1920;
+                height = 1080;
+        } else {
+                return fsdb_get_file(request, response, path);
+        }
+
+        if (path_exists(alt))
+                return fsdb_get_file(request, response, alt);
+        else if (scale_image(path, alt, width, height) == 0)
+                return fsdb_get_file(request, response, alt);
+        else
+                return fsdb_get_file(request, response, path);
+}
+
+static int fsdb_get_data(request_t *request, response_t *response, list_t *query)
 {
         const char *db_id = list_get(query, char);
 
@@ -312,22 +419,11 @@ int fsdb_get_data(response_t *response, list_t *query)
         }
         response_set_mimetype(response, mimetype);
 
-        char buffer[1024];
-        FILE *fp = fopen(path, "rb");
-
-        while (!feof(fp) && !ferror(fp)) {
-                int n = fread(buffer, 1, sizeof(buffer), fp);
-                response_append(response, buffer, n);
-        }
-
-        if (ferror(fp)) {
-                r_err("An error occured reading file '%s'", path);
-                response_set_status(response, HTTP_Status_Internal_Server_Error);
-                return -1;
-        }
-        
-        fclose(fp);
-        return 0;
+        if (rstreq(mimetype, "image/jpeg")
+            || rstreq(mimetype, "image/png"))
+                return fsdb_get_image(request, response, path);
+        else
+                return fsdb_get_file(request, response, path);
 }
 
 // scans:   /metadata/db
@@ -347,13 +443,11 @@ void fsdb_get(void *data, request_t *request, response_t *response)
                 return;
         }
         
-        database_print(db);
-        
         char *s = list_get(query, char);
         if (rstreq(s, "metadata"))
                 err = fsdb_get_metadata(response, list_next(query));
         else if (rstreq(s, "data"))
-                err = fsdb_get_data(response, list_next(query));
+                err = fsdb_get_data(request, response, list_next(query));
         else
                 err = -1;
         
@@ -367,14 +461,83 @@ void fsdb_get_directory(void *data, request_t *request, response_t *response)
         response_printf(response, "{\"db\": \"%s\"}", database_path(db));
 }
 
+void fsdb_handle_new_scan(database_t *database, json_object_t message)
+{
+        const char *scan_id = json_object_getstr(message, "scan");
+        if (scan_id == NULL) {
+                r_warn("fsdb_handle_new_scan: Missing scan ID");
+                return;
+        }
+        database_import_scan(database, scan_id);
+}
+
+void fsdb_handle_new_fileset(database_t *database, json_object_t message)
+{
+        const char *scan_id = json_object_getstr(message, "scan");
+        const char *fileset_id = json_object_getstr(message, "fileset");
+
+        if (scan_id == NULL || fileset_id == NULL) {
+                r_warn("fsdb_handle_new_fileset: Missing info for new file");
+                return;
+        }
+
+        scan_t *scan = database_get_scan(database, scan_id);
+        if (scan == NULL) {
+                r_warn("Could not find scan '%s'", scan_id);
+                return;
+        }
+        scan_import_fileset(scan, fileset_id);
+}
+
+void fsdb_handle_new_file(database_t *database, json_object_t message)
+{
+        const char *scan_id = json_object_getstr(message, "scan");
+        const char *fileset_id = json_object_getstr(message, "fileset");
+        const char *file_id = json_object_getstr(message, "file");
+        const char *localfile = json_object_getstr(message, "localfile");
+        const char *mimetype = json_object_getstr(message, "mimetype");
+
+        if (scan_id == NULL
+            || fileset_id == NULL
+            || file_id == NULL
+            || localfile == NULL
+            || mimetype == NULL) {
+                r_warn("fsdb_handle_new_file: Missing info for new file");
+                return;
+        }
+        
+        scan_t *scan = database_get_scan(database, scan_id);
+        if (scan == NULL) {
+                r_warn("Could not find scan '%s'", scan_id);
+                return;
+        }
+        fileset_t *fileset = scan_get_fileset(scan, fileset_id);
+        if (fileset == NULL) {
+                r_warn("Could not find fileset '%s'", fileset_id);
+                return;
+        }
+        fileset_import_file(fileset, file_id, localfile, mimetype);
+}
+
+void fsdb_handle_message(database_t *database, json_object_t message)
+{
+        const char *event = json_object_getstr(message, "event");
+
+        if (event == NULL) {
+                r_warn("fsdb_handle_message: received a message without an event type");
+                return;
+        } else if (rstreq(event, "new-file")) {
+                fsdb_handle_new_file(database, message);
+        } else if (rstreq(event, "new-fileset")) {
+                fsdb_handle_new_fileset(database, message);
+        } else if (rstreq(event, "new-scan")) {
+                fsdb_handle_new_scan(database, message);
+        }
+}
+
 int fsdb_onmessage(void *userdata, messagelink_t *link, json_object_t message)
 {
-        r_warn("************* fsdb_onmessage: FIXME: DON'T RELOAD DB At EVERY MESSAGE!");
-        if (database_unload(db) != 0)
-                r_err("Failed to unload the database");
-        if (database_load(db) != 0)
-                r_err("Failed to unload the database");
-
+        fsdb_handle_message(db, message);
         messagehub_t *hub = get_messagehub_db();
         messagehub_broadcast_obj(hub, link, message);
 }
