@@ -28,30 +28,33 @@ static void broadcast_db_message(void *userdata,
                                  const char *scan_id,
                                  const char *fileset_id,
                                  const char *file_id,
-                                 const char *mimetype)
+                                 const char *mimetype,
+                                 const char *localfile)
 {
-        r_debug("broadcast_db_message: %s, %s, %s, %s",
-                  event, scan_id, fileset_id, file_id);
+        /* r_debug("broadcast_db_message: %s, %s, %s, %s, %s, %s", */
+        /*         event, scan_id, fileset_id, file_id, localfile, mimetype); */
         messagelink_t *bus = get_messagelink_db();
         if (file_id)
                 messagelink_send_f(bus,
                                    "{\"event\": \"%s\", "
-                                   "\"source\": \"weeder\", "
+                                   "\"source\": \"camera_recorder\", "
                                    "\"scan\": \"%s\", "
                                    "\"fileset\": \"%s\", "
                                    "\"file\": \"%s\", "
-                                   "\"mimetype\": \"%s\"}",
-                                   event, scan_id, fileset_id, file_id, mimetype);
+                                   "\"mimetype\": \"%s\", "
+                                   "\"localfile\": \"%s\"}",
+                                   event, scan_id, fileset_id,
+                                   file_id, mimetype, localfile);
         else if (fileset_id)
                 messagelink_send_f(bus,
                                    "{\"event\": \"%s\", "
-                                   "\"source\": \"weeder\", "
+                                   "\"source\": \"camera_recorder\", "
                                    "\"scan\": \"%s\", "
                                    "\"fileset\": \"%s\"}",
                                    event, scan_id, fileset_id);
         else messagelink_send_f(bus,
                                 "{\"event\": \"%s\", "
-                                "\"source\": \"weeder\", "
+                                "\"source\": \"camera_recorder\", "
                                 "\"scan\": \"%s\"}",
                                 event, scan_id);
 }
@@ -101,7 +104,12 @@ static int *camera_recorder_onimage(void *userdata,
 {
         mutex_lock(recording_mutex);
 
-        if (recording) {
+        if (!recording)
+                r_debug("camera_recorder_onimage: not recording!");
+        if (fileset == NULL) 
+                r_debug("camera_recorder_onimage: fileset is null!");
+
+        if (recording && fileset != NULL) {
                 // Check for valid JPEG signature
                 if ((image[0] != 0xff) || (image[1] != 0xd8)  || (image[2] != 0xff)) {
                         r_warn("Image has a bad signature.");
@@ -113,7 +121,7 @@ static int *camera_recorder_onimage(void *userdata,
                 }
 
                 double lag = clock_time() - timestamp;
-
+                //r_debug("lag %f, timestamp %f", lag, timestamp);
                 if (lag < 1.0f) {
                         vector_t p;
                         mutex_lock(position_mutex);
@@ -125,6 +133,9 @@ static int *camera_recorder_onimage(void *userdata,
                                 file_set_timestamp(file, timestamp);
                                 file_set_position(file, p);
                                 file_import_jpeg(file, image, len);
+                        } else {
+                                r_warn("camera_recorder_onimage: "
+                                       "Failed to create the file");
                         }
 
                 } else {
@@ -136,12 +147,11 @@ unlock:
         mutex_unlock(recording_mutex);
 }
 
-int camera_recorder_ondata(void *userdata, const char *buf, int len)
+int camera_recorder_ondata(void *userdata, response_t *response, const char *buf, int len)
 {
         if (parser == NULL)
                 return 0;
-        multipart_parser_process(parser, buf, len);
-        return 0;
+        return multipart_parser_process(parser, response, buf, len);
 }
 
 static char *get_fsdb_directory()
@@ -214,13 +224,28 @@ void camera_recorder_cleanup()
                 delete_database(db);
 }
 
+static scan_t *make_scan(database_t *database)
+{
+        char id[64];
+
+        database_load(database);
+        
+        while (!app_quit()) {
+                rprintf(id, sizeof(id), "camera-%04d", recording_count++);
+                scan_t *scan = database_get_scan(database, id);
+                if (scan == NULL)
+                        break;
+        }
+        database_unload(database);
+        return database_new_scan(database, id);
+}
+
 int camera_recorder_onstart(void *userdata,
                             messagelink_t *link,
                             json_object_t command,
                             membuf_t *message)
 {
         int err = 0;
-        char id[64]; 
 
         if (init_database() != 0) {
                 membuf_printf(message, "Failed to initialize the database");
@@ -244,27 +269,27 @@ int camera_recorder_onstart(void *userdata,
                         err = -1;
                         goto unlock_and_exit;
                 }
-
-                rprintf(id, sizeof(id), "camera-%04d", recording_count++); 
-
-                scan = database_new_scan(db, id);
-                if (scan == NULL) {
-                        database_unload(db);
-                        membuf_printf(message, "Failed to create a new scan");
-                        err = -1;
-                        goto unlock_and_exit;
-                }
-
-                fileset = scan_new_fileset(scan, "images");
-                if (fileset == NULL) {
-                        database_unload(db);
-                        scan = NULL;
-                        membuf_printf(message, "Failed to create a new fileset");
-                        err = -1;
-                        goto unlock_and_exit;
-                }
-
+                
                 recording = 1;
+        }
+        
+        scan = make_scan(db);
+        if (scan == NULL) {
+                recording = 0;
+                database_unload(db);
+                membuf_printf(message, "Failed to create a new scan");
+                err = -1;
+                goto unlock_and_exit;
+        }
+        
+        fileset = scan_new_fileset(scan, "images");
+        if (fileset == NULL) {
+                recording = 0;
+                database_unload(db);
+                scan = NULL;
+                membuf_printf(message, "Failed to create a new fileset");
+                err = -1;
+                goto unlock_and_exit;
         }
         
 unlock_and_exit:

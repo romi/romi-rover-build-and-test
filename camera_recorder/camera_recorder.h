@@ -14,6 +14,7 @@ int camera_recorder_onstop(void *userdata,
                            membuf_t *message);
 
 int camera_recorder_ondata(void *userdata,
+                           response_t *response,
                            const char *buf,
                            int len);
 

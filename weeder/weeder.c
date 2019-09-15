@@ -92,7 +92,8 @@ static void broadcast_db_message(void *userdata,
                                  const char *scan_id,
                                  const char *fileset_id,
                                  const char *file_id,
-                                 const char *mimetype)
+                                 const char *mimetype,
+                                 const char *localfile)
 {
         r_debug("broadcast_db_message: %s, %s, %s, %s, %s",
                 event, scan_id, fileset_id, file_id, mimetype);
@@ -104,8 +105,10 @@ static void broadcast_db_message(void *userdata,
                                    "\"scan\": \"%s\", "
                                    "\"fileset\": \"%s\", "
                                    "\"file\": \"%s\", "
-                                   "\"mimetype\": \"%s\"}",
-                                   event, scan_id, fileset_id, file_id, mimetype);
+                                   "\"mimetype\": \"%s\", "
+                                   "\"localfile\": \"%s\"}",
+                                   event, scan_id, fileset_id,
+                                   file_id, mimetype, localfile);
         else if (fileset_id)
                 messagelink_send_f(bus,
                                    "{\"event\": \"%s\", "
