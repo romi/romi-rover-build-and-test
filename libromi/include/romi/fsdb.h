@@ -18,7 +18,8 @@ typedef void (*database_listener_t)(void *userdata,
                                     const char *scan_id,
                                     const char *fileset_id,
                                     const char *file_id,
-                                    const char *mimetype);
+                                    const char *mimetype,
+                                    const char *localfile);
 
 /*
   Database
@@ -31,6 +32,7 @@ const char *database_path(database_t *db);
 
 // if id is NULL, the current date and time will be used.
 scan_t *database_new_scan(database_t *db, const char *id);
+scan_t *database_import_scan(database_t *db, const char *id);
 
 int database_count_scans(database_t *db);
 scan_t *database_get_scan_at(database_t *db, int i);
@@ -51,6 +53,7 @@ int scan_set_metadata_num(scan_t *scan, const char *key, double value);
 int scan_set_metadata(scan_t *scan, const char *key, json_object_t value);
 
 fileset_t *scan_new_fileset(scan_t *scan, const char *id);
+fileset_t *scan_import_fileset(scan_t *scan, const char *id);
 int scan_count_filesets(scan_t *scan);
 fileset_t *scan_get_fileset_at(scan_t *scan, int i);
 fileset_t *scan_get_fileset(scan_t *scan, const char *id);
@@ -62,6 +65,11 @@ const char *fileset_id(fileset_t *fileset);
 scan_t *fileset_get_scan(fileset_t *fileset);
 
 file_t *fileset_new_file(fileset_t *fileset);
+file_t *fileset_import_file(fileset_t *fileset,
+                            const char *id,
+                            const char *localfile,
+                            const char *mimetype);
+
 int fileset_count_files(fileset_t *fileset);
 file_t *fileset_get_file_at(fileset_t *fileset, int i);
 file_t *fileset_get_file(fileset_t *fileset, const char *id);
