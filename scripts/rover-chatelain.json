@@ -1,5 +1,41 @@
 [
     {
+        "name": "move-forward",
+        "display_name": "Forward 60cm",
+        "script": [
+            {"action": "move", "distance": 0.60, "speed": 400}
+        ]
+    },
+    {
+        "name": "move-backward",
+        "display_name": "Backward 60cm",
+        "script": [
+            {"action": "move", "distance": -0.60, "speed": 400}
+        ]
+    },
+    {
+        "name": "start_recording",
+        "display_name": "Start recording",
+        "script": [
+            {"action": "start_recording", "minimum-displacement": 0.04}
+        ]
+    },
+    {
+        "name": "stop_recording",
+        "display_name": "Stop recording",
+        "script": [
+            {"action": "stop_recording"}
+        ]
+    },
+    {
+        "name": "weeding",
+        "display_name": "Hoe salads",
+        "script": [
+            {"action": "hoe", "method": "quincunx", "rows": 3, 
+             "distance-plants": 0.30, "distance-rows": 0.20},
+        ]
+    },
+    {
         "name": "scan_8",
         "display_name": "Scan bed over 8m",
         "script": [
@@ -39,27 +75,6 @@
              "distance-plants": 0.30, "distance-rows": 0.20},        
             {"action": "move", "distance": -2.4, "speed": 400},
             {"action": "homing"}
-        ]
-    },
-    {
-        "name": "move-forward",
-        "display_name": "Forward 60cm",
-        "script": [
-            {"action": "move", "distance": 0.60, "speed": 300}
-        ]
-    },
-    {
-        "name": "move-backward",
-        "display_name": "Backward 60cm",
-        "script": [
-            {"action": "move", "distance": -0.60, "speed": 300}
-        ]
-    },
-    {
-        "name": "weeding",
-        "display_name": "Hoe salads",
-        "script": [
-            {"action": "hoe", "method": "quincunx", "rows": 3, "distance": 0.30}
         ]
     },
     {
