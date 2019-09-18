@@ -1,5 +1,6 @@
 #include <librealsense2/rs.hpp>
 #include <rcom.h>
+#include <romi.h>
 #include "convert.h"
 #include "realsense.h"
 
@@ -116,7 +117,7 @@ void realsense_broadcast()
                 r_debug("convert_rgb");
 
                 membuf_lock(rgbbuf);
-                convert_to_jpeg(color_frame.get_data(), rgb_width, rgb_height, 85, rgbbuf);
+                convert_to_jpeg((uint8_t*)color_frame.get_data(), rgb_width, rgb_height, 85, rgbbuf);
                 membuf_unlock(rgbbuf);
                 
                 streamer_send_multipart(get_streamer_camera(), 
