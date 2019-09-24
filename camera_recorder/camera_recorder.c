@@ -18,7 +18,9 @@ static fileset_t *fileset = NULL;
 static int recording_count = 0;
 static int recording = 0;
 static multipart_parser_t *parser = NULL;
-static vector_t position = {0};
+static vector_t position = { 0.0 };
+static vector_t last_position = { 0.0 };
+static double minimum_displacement = -1.0f;
 
 streamerlink_t *get_streamerlink_camera();
 messagelink_t *get_messagelink_db();
@@ -102,14 +104,28 @@ static int *camera_recorder_onimage(void *userdata,
                                     const char *mimetype,
                                     double timestamp)
 {
+        double displacement;
+        vector_t p;
+
+        mutex_lock(position_mutex);
+        p = position;
+        mutex_unlock(position_mutex);
+        
+        displacement = vector_distance(last_position, p);
+        last_position = p;
+        r_debug("displacement %.3f, minimum %.3f",
+                displacement, minimum_displacement);
+
         mutex_lock(recording_mutex);
 
         if (!recording)
                 r_debug("camera_recorder_onimage: not recording!");
         if (fileset == NULL) 
                 r_debug("camera_recorder_onimage: fileset is null!");
-
-        if (recording && fileset != NULL) {
+        
+        if (recording
+            && fileset != NULL
+            && displacement >= minimum_displacement) {
                 // Check for valid JPEG signature
                 if ((image[0] != 0xff) || (image[1] != 0xd8)  || (image[2] != 0xff)) {
                         r_warn("Image has a bad signature.");
@@ -247,6 +263,17 @@ int camera_recorder_onstart(void *userdata,
 {
         int err = 0;
 
+        double dist = -1.0;
+        if (json_object_has(command, "minimum-displacement")) {
+                dist = json_object_getnum(command, "minimum-displacement");
+                if (isnan(dist)) {
+                        membuf_printf(message,
+                                      "Invalid value for minimum displacement");
+                        return -1;
+                }
+        }
+        minimum_displacement = dist;
+        
         if (init_database() != 0) {
                 membuf_printf(message, "Failed to initialize the database");
                 return -1;
