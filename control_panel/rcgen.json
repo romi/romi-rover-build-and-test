@@ -1,0 +1,15 @@
+{
+    "name": "control_panel",
+    "com": [
+        {
+            "type": "controller",
+            "topic": "control_panel",
+            "commands": [{"name": "shutdown", "oncommand": "control_panel_shutdown"},
+                         {"name": "display", "oncommand": "control_panel_display"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}
