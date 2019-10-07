@@ -14,6 +14,10 @@
             "type": "controller",
             "topic": "navigation",
             "commands": [{"name": "move", "oncommand": "navigation_onmove"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }

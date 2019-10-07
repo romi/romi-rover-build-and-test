@@ -18,6 +18,10 @@
             "type": "messagehub",
             "topic": "db",
             "onmessage": "fsdb_onmessage"
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }

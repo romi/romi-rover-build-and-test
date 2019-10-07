@@ -5,8 +5,17 @@ static double _x = 0.0;
 static double _y = 0.0;
 static double _z = 0.0;
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 int fake_cnc_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
         mutex = new_mutex();
         return 0;
 }

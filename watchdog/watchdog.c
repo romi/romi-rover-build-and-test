@@ -2,8 +2,17 @@
 #include <unistd.h>
 #include "watchdog.h"
 
-int watchdog_init(int argc, char **argv)
+static void broadcast_log(void *userdata, const char* s)
 {
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
+int watchdog_init(int argc, char **argv)
+{ 
+        r_log_set_writer(broadcast_log, NULL);
         return 0;
 }
 

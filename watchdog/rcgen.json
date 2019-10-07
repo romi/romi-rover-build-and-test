@@ -5,6 +5,10 @@
             "type": "controller",
             "topic": "watchdog",
             "commands": [{"name": "shutdown", "oncommand": "watchdog_shutdown"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }

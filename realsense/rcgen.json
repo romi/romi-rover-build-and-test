@@ -18,6 +18,10 @@
             "resources": [{"name": "camera.jpg",
                            "mimetype_out": "image/jpeg",
                            "onrequest": "realsense_still"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }

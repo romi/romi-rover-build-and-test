@@ -18,6 +18,10 @@
                          {"name": "enable", "oncommand": "motorcontroller_onenable"},
                          {"name": "reset", "oncommand": "motorcontroller_onreset"},
                          {"name": "homing", "oncommand": "motorcontroller_onhoming"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }

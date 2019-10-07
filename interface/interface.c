@@ -37,6 +37,14 @@ messagelink_t *get_messagelink_watchdog();
 
 json_object_t global_env;
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 ////////////////////////////////////////////////////////
 
 static int status_error(json_object_t reply, membuf_t *message)
@@ -711,6 +719,8 @@ static void log_writer(messagehub_t *hub, const char* line)
 
 int interface_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
+        
         mutex = new_mutex();
         if (mutex == NULL)
                 return -1;

@@ -9,6 +9,10 @@
         {
             "type": "datahub",
             "topic": "pose"
-        }   
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
     ]
 }

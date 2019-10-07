@@ -7,6 +7,10 @@
             "port": 80,
             "onconnect": "webproxy_onconnect",
             "onrequest": "webproxy_onrequest"
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }

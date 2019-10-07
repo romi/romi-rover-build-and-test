@@ -21,6 +21,10 @@
         {
             "type": "messagelink",
             "topic": "db"
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }

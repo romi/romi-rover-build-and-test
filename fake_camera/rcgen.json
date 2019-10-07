@@ -13,6 +13,10 @@
             "resources": [{"name": "camera.jpg",
                            "mimetype_out": "image/jpeg",
                            "onrequest": "fake_camera_still"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }

@@ -23,6 +23,14 @@ static int request_buffer_index = 0;
 
 streamer_t *get_streamer_camera();
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 image_request_t *new_image_request(response_t *response)
 {
         image_request_t *r = r_new(image_request_t);
@@ -96,6 +104,8 @@ int wait_image_request(image_request_t *r)
 
 int video4linux_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
+        
         if (argc == 2)
                 device = argv[1];
         

@@ -7,12 +7,22 @@ streamer_t *get_streamer_camera();
 messagehub_t *get_messagehub_db();
 static list_t *parse_uri(const char *uri);
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 int fsdb_node_init(int argc, char **argv)
 {
         json_object_t path = json_null();
         const char *dir = NULL;
         char buffer[1024];
         
+        r_log_set_writer(broadcast_log, NULL);
+
         if (argc >= 2) {
                 dir = argv[1];
         } else if (app_get_session() != NULL) {

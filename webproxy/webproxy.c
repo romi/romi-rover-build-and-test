@@ -2,8 +2,17 @@
 #include <unistd.h>
 #include "webproxy.h"
 
+void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 int webproxy_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
         return 0;
 }
 
@@ -89,6 +98,8 @@ void webproxy_onrequest(void *data,
 	const char *path = request_uri(request);
         list_t* elements = path_break(path);
         list_t* start = elements;
+
+        r_info("%s", path);
 
         char *s = list_get(start, char);
         if (rstreq(s, "/"))

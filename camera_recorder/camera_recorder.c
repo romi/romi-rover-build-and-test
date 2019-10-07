@@ -24,6 +24,7 @@ static double minimum_displacement = -1.0f;
 
 streamerlink_t *get_streamerlink_camera();
 messagelink_t *get_messagelink_db();
+
 static void broadcast_db_message(void *userdata,
                                  database_t *db,
                                  const char *event,
@@ -59,6 +60,14 @@ static void broadcast_db_message(void *userdata,
                                 "\"source\": \"camera_recorder\", "
                                 "\"scan\": \"%s\"}",
                                 event, scan_id);
+}
+
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
 }
 
 void camera_recorder_onpose(void *userdata,
@@ -213,6 +222,8 @@ static int init_database()
 
 int camera_recorder_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
+        
         recording_mutex = new_mutex();
         position_mutex = new_mutex();
         if (recording_mutex == NULL || position_mutex == NULL)

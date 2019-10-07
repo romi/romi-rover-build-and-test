@@ -24,6 +24,14 @@ database_t *get_database()
         return db;
 }
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 static int status_error(json_object_t reply, membuf_t *message)
 {
         const char *status = json_object_getstr(reply, "status");
@@ -183,6 +191,8 @@ static int init()
 
 int weeder_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
+        
         if (argc == 2) {
                 // FIXME: needs more checking
                 directory = r_strdup(argv[1]);

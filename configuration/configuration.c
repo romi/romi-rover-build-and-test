@@ -2,11 +2,21 @@
 
 static json_object_t config;
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 int configuration_init(int argc, char **argv)
 {
         int err;
         char errmsg[256];
         const char *config_file = NULL;
+
+        r_log_set_writer(broadcast_log, NULL);
         
         if (argc == 2) {
                 config_file = argv[1];

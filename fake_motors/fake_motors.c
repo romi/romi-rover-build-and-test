@@ -16,6 +16,14 @@ static int rover_initialized = 0;
 datahub_t *get_datahub_encoders();
 messagehub_t *get_messagehub_status();
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 int init_rover()
 {
         static double last_attempt = 0.0;
@@ -59,6 +67,7 @@ int init_rover()
 
 int fake_motors_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
         mutex = new_mutex();
         init_rover();
         return 0;

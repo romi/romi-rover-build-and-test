@@ -5,10 +5,20 @@ static membuf_t *rgbbuf = NULL;
 
 streamer_t *get_streamer_camera();
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 int fake_camera_init(int argc, char **argv)
 {
         json_object_t path = json_null();
         const char *filename = NULL;
+
+        r_log_set_writer(broadcast_log, NULL);
         
         if (argc >= 2) {
                 filename = argv[1];

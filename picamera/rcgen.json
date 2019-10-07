@@ -13,6 +13,10 @@
             "resources": [{"name": "camera.jpg",
                            "mimetype_out": "image/jpeg",
                            "onrequest": "picamera_still"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }

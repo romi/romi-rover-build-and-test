@@ -18,8 +18,18 @@ static int error_count = 0;
 static bool want_image = false;
 static unsigned long frame_count = 0;
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 int realsense_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
+        
         try {
                 config cfg;
                 cfg.enable_stream(RS2_STREAM_COLOR,

@@ -21,6 +21,14 @@ static double k[] = { 0.0, 0.0, 0.0 };
 datahub_t *get_datahub_encoders();
 messagehub_t *get_messagehub_motorstatus();
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 static int open_serial(const char *dev)
 {
         r_info("Trying to open the serial connection on %s.", dev);
@@ -269,6 +277,8 @@ int motorcontroller_init()
 
 int brush_motors_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
+        
         mutex = new_mutex();
         if (mutex == NULL)
                 return -1;

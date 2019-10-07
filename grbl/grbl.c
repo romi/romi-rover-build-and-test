@@ -8,6 +8,14 @@ static serial_t *serial = NULL;
 static int serial_errors = 0;
 static membuf_t *reply = NULL;
 
+static void broadcast_log(void *userdata, const char* s)
+{
+        messagelink_t *get_messagelink_logger();
+        messagelink_t *log = get_messagelink_logger();
+        if (log)
+                messagelink_send_str(log, s);
+}
+
 static int open_serial(const char *dev)
 {
         r_info("Trying to open the serial connection on %s.", dev);
@@ -156,6 +164,8 @@ static int cnc_init()
 
 int grbl_init(int argc, char **argv)
 {
+        r_log_set_writer(broadcast_log, NULL);
+        
         mutex = new_mutex();
         reply = new_membuf();
         if (mutex == NULL || reply == NULL)

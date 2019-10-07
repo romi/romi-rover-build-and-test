@@ -20,6 +20,10 @@
                          },
                          { "name": "homing",
                            "oncommand": "cnc_onhoming"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
         }
     ]
 }
