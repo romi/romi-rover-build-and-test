@@ -2,7 +2,6 @@
 #include <raspicam/raspicam.h>
 #include <romi.h>
 #include "picamera.h"
-#include "convert.h"
 
 static int width = 640;
 static int height = 480;
@@ -52,7 +51,7 @@ void picamera_cleanup()
 {
         camera.release();
         if (data)
-                mem_free(data);
+                r_free(data);
         if (jpegbuf)
                 delete_membuf(jpegbuf);
 }
