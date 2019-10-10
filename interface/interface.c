@@ -67,6 +67,13 @@ static int status_error(json_object_t reply, membuf_t *message)
         return ret;
 }
 
+static int wait(membuf_t *message)
+{
+        r_debug("Waiting 1 sec");
+        clock_sleep(2);
+        return 0;
+}
+
 static int homing(membuf_t *message)
 {
         messagelink_t *motors = get_messagelink_motorcontroller();
@@ -387,6 +394,9 @@ static int do_action(const char *name, json_object_t action,
 
         } else if (rstreq(name, "start_recording")) {
                 err = start_recording(message);
+
+        } else if (rstreq(name, "wait")) {
+                err = wait(message);
 
         } else if (rstreq(name, "stop_recording")) {
                 err = stop_recording(message);

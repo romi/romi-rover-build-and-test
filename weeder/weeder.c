@@ -386,9 +386,15 @@ static int send_path(list_t *path, double z0, membuf_t *message)
 static int hoe(int method, json_object_t command, membuf_t *message)
 {
         list_t *path = NULL;
-        int err;
+        int err = 0;
         double start_time = clock_time();
-        
+        int do_path = 1;
+
+        if (json_object_has(command, "skip-execution")) {
+                r_info("Skipping execution of path)");
+                do_path = 0;
+        }
+
         double diameter_tool = 0.05f;
         if (json_object_has(command, "diameter-tool")) {
                         diameter_tool = json_object_getnum(command, "diameter-tool");
@@ -445,8 +451,9 @@ static int hoe(int method, json_object_t command, membuf_t *message)
                 membuf_printf(message, "Failed to compute the path");
                 return -1;
         }
-        
-        err = send_path(path, z0, message);
+
+        if (do_path)
+                err = send_path(path, z0, message);
 
         r_info("Finished executing path: %f s", clock_time() - start_time);
         
