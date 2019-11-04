@@ -1,0 +1,10 @@
+#ifndef _OQUAM_CONFIG_H_
+#define _OQUAM_CONFIG_H_
+
+//#define ENABLE_PIN_HIGH 0
+#define ENABLE_PIN_HIGH 1
+
+//#define ENCODER_REVERSED 0
+#define ENCODER_REVERSED 1
+
+#endif // _OQUAM_CONFIG_H_
