@@ -21,6 +21,11 @@
         },
         {
             "type": "messagelink",
+            "topic": "watchdog",
+            "onmessage": "watchdog_onmessage"
+        },
+        {
+            "type": "messagelink",
             "topic": "logger"
         }
     ]

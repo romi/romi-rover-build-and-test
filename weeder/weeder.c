@@ -2,6 +2,10 @@
 
 #include "weeding.h"
 #include "weeder.h"
+#include "otsu.h"
+#include "svm.h"
+#include "quincunx.h"
+#include "profiling.h"
 
 enum {
         WEEDING_METHOD_BOUSTROPHEDON,
@@ -15,6 +19,8 @@ static double quincunx_threshold = 1.0;
 static char *directory = NULL;
 static database_t *db = NULL;
 static scan_t *scan = NULL;
+static pipeline_t *pipeline = NULL;
+
 
 messagelink_t *get_messagelink_cnc();
 messagelink_t *get_messagelink_db();
@@ -156,6 +162,24 @@ static char *get_directory()
                 return get_fsdb_directory();
 }
 
+static int init_pipeline()
+{
+        if (pipeline != NULL)
+                return 0;
+        
+        segmentation_module_t *segmentation = new_otsu_module();
+        path_module_t *path = new_quincunx_module(0.3, 0.3, 0.1, 0.05, quincunx_threshold,
+                                                  workspace.width / workspace.width_meter / 3.0f); // FIXME!
+        if (segmentation == NULL || path == NULL)
+                return -1;
+            
+        pipeline = new_pipeline(&workspace, segmentation, path);
+        if (pipeline == NULL)
+                return -1;
+
+        return 0;
+}
+
 static int init_database()
 {
         if (db != NULL) 
@@ -184,6 +208,8 @@ static int init()
         if (initialized)
                 return 0;
         if (init_workspace() != 0)
+                return -1;        
+        if (init_pipeline() != 0)
                 return -1;        
         initialized = 1;
         return 0;
@@ -214,6 +240,8 @@ void weeder_cleanup()
 {
         if (db)
                 delete_database(db);
+        if (pipeline)
+                delete_pipeline(pipeline);
 }
 
 void weeder_onmessage_cnc(void *userdata,
@@ -247,51 +275,6 @@ static int move_away_arm()
         }
         delete_membuf(message);
         return 0;
-}
-
-static list_t *compute_quincunx(membuf_t *message,
-                                double distance_plants,
-                                double distance_rows,
-                                double radius_zone,
-                                double diameter_tool,
-                                double start_time)
-{
-        // Move away the arm before taking a picture of the workspace.
-        if (move_away_arm() != 0) {
-                r_err("Failed to move the arm");
-                membuf_printf(message, "Failed to move the arm");
-                return NULL;
-        }
-
-        response_t *response = NULL;
-        int err = client_get_data("camera", "camera.jpg", &response);
-        if (err != 0) {
-                r_err("Failed to obtain the camera image");
-                membuf_printf(message, "Failed to obatin the camera image");
-                return NULL;
-        }
-
-        r_info("Done grabbing image: %f s", clock_time() - start_time);
-
-        membuf_t *body = response_body(response);
-        image_t *image = image_load_from_mem(membuf_data(body), membuf_len(body));
-        if (image == NULL) {
-                r_err("Failed to decompress the image");
-                membuf_printf(message, "Failed to decompress the image");
-                delete_response(response);
-                return NULL;
-        }
-        r_info("Done decompressing image: %f s", clock_time() - start_time);
-        
-        float confidence;
-        list_t *path = compute_path(scan, NULL, image, &workspace,
-                                    distance_plants, distance_rows,
-                                    radius_zone, diameter_tool,
-                                    &confidence);
-        
-        delete_response(response);
-        delete_image(image);
-        return path;
 }
 
 static int send_path(list_t *path, double z0, membuf_t *message)
@@ -383,85 +366,104 @@ static int send_path(list_t *path, double z0, membuf_t *message)
         return 0;
 }
 
+static int32 _set_param(const char* key, json_object_t value, void* data)
+{
+        membuf_t *message = (membuf_t *) data;
+        
+        if (rstreq(key, "skip-execution"))
+                return 0;
+        if (rstreq(key, "method"))
+                return 0;
+        
+        if (pipeline_set(pipeline, key, value, message) < 0)
+                return -1;
+        
+        return 0;
+}
+
+static image_t *grab_camera(membuf_t *message)
+{
+        // Move away the arm before taking a picture of the workspace.
+        if (move_away_arm() != 0) {
+                r_err("Failed to move the arm");
+                membuf_printf(message, "Failed to move the arm");
+                return NULL;
+        }
+
+        // Get the camera image
+        response_t *response = NULL;
+        int err = client_get_data("camera", "camera.jpg", &response);
+        if (err != 0) {
+                r_err("Failed to obtain the camera image");
+                membuf_printf(message, "Failed to obatin the camera image");
+                return NULL;
+        }
+
+        membuf_t *body = response_body(response);
+        image_t *image = image_load_from_mem(membuf_data(body), membuf_len(body));
+        if (image == NULL) {
+                r_err("Failed to decompress the image");
+                membuf_printf(message, "Failed to decompress the image");
+                delete_response(response);
+                return NULL;
+        }
+        
+        delete_response(response);
+        
+        return image;
+}
+
 static int hoe(int method, json_object_t command, membuf_t *message)
 {
+        image_t *camera = NULL;
         list_t *path = NULL;
-        int err = 0;
-        double start_time = clock_time();
-        int do_path = 1;
+        fileset_t *fileset;
+        int err = -1;
+        json_object_t w;
+        
+        // Set the parameters of the pipeline
+        if (json_object_foreach(command, _set_param, message) != 0)
+                goto cleanup;
+        
+        // Grab the camera image
+        camera = grab_camera(message);
+        if (camera == NULL)
+                goto cleanup;
 
+        // Create a fileset to store the intermediary data
+        fileset = create_fileset(scan, NULL);
+        if (fileset == NULL)
+                goto cleanup;
+
+        w = workspace_to_json(&workspace);
+        err = fileset_set_metadata(fileset, "workspace", w);
+        json_unref(w);
+        if (err)
+                goto cleanup;
+
+        // Run the pipeline to compute the path
+        path = pipeline_run(pipeline, camera, fileset, message);
+        if (path == NULL)
+                goto cleanup;
+
+        // Execute the path
         if (json_object_has(command, "skip-execution")) {
                 r_info("Skipping execution of path)");
-                do_path = 0;
-        }
-
-        double diameter_tool = 0.05f;
-        if (json_object_has(command, "diameter-tool")) {
-                        diameter_tool = json_object_getnum(command, "diameter-tool");
-                        if (isnan(diameter_tool)
-                            || diameter_tool < 0.01
-                            || diameter_tool > 1.0) {
-                                r_err("Invalid tool diameter (0.1<d<1)");
-                                membuf_printf(message, "Invalid tool diameter (0.1<d<1)");
-                                return -1;
-                        }
-                }
-
-        if (method == WEEDING_METHOD_QUINCUNX) {
-                double distance_plants = json_object_getnum(command, "distance-plants");
-                if (isnan(distance_plants)
-                    || distance_plants < 0.01
-                    || distance_plants > 2.0) {
-                        r_err("No distance between plant given");
-                        membuf_printf(message, "No distance between plant given");
-                        return -1;
-                }
-                double distance_rows = distance_plants;
-                if (json_object_has(command, "distance-rows")) {
-                        distance_rows = json_object_getnum(command, "distance-rows");
-                        if (isnan(distance_rows)
-                            || distance_rows < 0.01
-                            || distance_rows > 2.0) {
-                                r_err("Invalid distance between rows");
-                                membuf_printf(message, "Invalid distance between rows");
-                                return -1;
-                        }
-                }
-                double radius_zones = 0.10;
-                if (json_object_has(command, "radius-zones")) {
-                        json_object_getnum(command, "radius-zones");
-                        if (isnan(radius_zones)
-                            || radius_zones < 0.01
-                            || radius_zones > 2.0) {
-                                r_err("Invalid zone radius");
-                                membuf_printf(message, "Invalid zone radius");
-                                return -1;
-                        }
-                }
-                path = compute_quincunx(message,
-                                        distance_plants, distance_rows,
-                                        radius_zones, diameter_tool,
-                                        start_time);
         } else {
-                path = compute_boustrophedon(&workspace, diameter_tool);
-        }
-                
-        if (path == NULL) {
-                r_err("Failed to compute the path");
-                membuf_printf(message, "Failed to compute the path");
-                return -1;
-        }
-
-        if (do_path)
                 err = send_path(path, z0, message);
-
-        r_info("Finished executing path: %f s", clock_time() - start_time);
+        }
         
+        r_info("Finished executing path");
+
+        err = 0;
+        
+cleanup:
         for (list_t *l = path; l != NULL; l = list_next(l)) {
                 point_t *p = list_get(l, point_t);
                 delete_point(p);
         }
         delete_list(path);
+        delete_image(camera);
 
         return err;
 }
@@ -500,112 +502,9 @@ int weeder_onhoe(void *userdata,
         return hoe(weeding_method, command, message); 
 }
 
-static list_t *sample_path(list_t *path, float z0, float distance)
-{
-        /* point_t *p0 = list_get(path, point_t); */
-        /* list_t *l = list_next(path); */
-        /* float x = p0->x; */
-        /* float y = p0->y; */
-
-        /* while (l) { */
-        /*         point_t *p = list_get(path, point_t); */
-        /*         float d = ((p->x - x) * (p->x - x) + */
-        /*                    (p->y - y) * (p->y - y)); */
-        /*         if (d < distance * distance) { */
-        /*                 l = list_next(l); */
-        /*                 continue; */
-        /*         } */
-        /*         XXX */
-        /* } */
-        return NULL;
-}
-
 static int loosen(int method, json_object_t command, membuf_t *message)
 {
-        list_t *path = NULL;
-        int err;
-        double start_time = clock_time();
-
-#define SQRT_2_2 .70710678118654752440;
-        
-        double diameter_tool = 0.05f;
-        if (json_object_has(command, "diameter-tool")) {
-                        diameter_tool = json_object_getnum(command, "diameter-tool");
-                        if (isnan(diameter_tool)
-                            || diameter_tool < 0.01
-                            || diameter_tool > 1.0) {
-                                r_err("Invalid tool diameter (0.1<d<1)");
-                                membuf_printf(message, "Invalid tool diameter (0.1<d<1)");
-                                return -1;
-                        }
-                }
-        double distance_tool = 0.05f * SQRT_2_2;
-        double margin = 0.05f - distance_tool;
-
-        if (method == WEEDING_METHOD_QUINCUNX) {
-                double distance_plants = json_object_getnum(command, "distance-plants");
-                if (isnan(distance_plants)
-                    || distance_plants < 0.01
-                    || distance_plants > 2.0) {
-                        r_err("No distance between plant given");
-                        membuf_printf(message, "No distance between plant given");
-                        return -1;
-                }
-                double distance_rows = distance_plants;
-                if (json_object_has(command, "distance-rows")) {
-                        distance_rows = json_object_getnum(command, "distance-rows");
-                        if (isnan(distance_rows)
-                            || distance_rows < 0.01
-                            || distance_rows > 2.0) {
-                                r_err("Invalid distance between rows");
-                                membuf_printf(message, "Invalid distance between rows");
-                                return -1;
-                        }
-                }
-                double radius_zones = 0.10;
-                if (json_object_has(command, "radius-zones")) {
-                        json_object_getnum(command, "radius-zones");
-                        if (isnan(radius_zones)
-                            || radius_zones < 0.01
-                            || radius_zones > 2.0) {
-                                r_err("Invalid zone radius");
-                                membuf_printf(message, "Invalid zone radius");
-                                return -1;
-                        }
-                }
-                path = compute_quincunx(message,
-                                        distance_plants, distance_rows,
-                                        radius_zones, distance_tool,
-                                        start_time);
-        } else {
-                path = compute_boustrophedon(&workspace, distance_tool);
-        }
-                
-        if (path == NULL) {
-                r_err("Failed to compute the path");
-                membuf_printf(message, "Failed to compute the path");
-                return -1;
-        }
-
-        list_t *new_path = sample_path(path, z0, distance_tool);
-        
-        err = send_path(new_path, z0, message);
-
-        r_info("Finished executing path: %f s", clock_time() - start_time);
-        
-        for (list_t *l = path; l != NULL; l = list_next(l)) {
-                point_t *p = list_get(l, point_t);
-                delete_point(p);
-        }
-        delete_list(path);
-
-        for (list_t *l = new_path; l != NULL; l = list_next(l)) {
-                point_t *p = list_get(l, point_t);
-                delete_point(p);
-        }
-        delete_list(new_path);
-
-        return err;
+        return 0;
 }
 
 int weeder_onloosen(void *userdata,

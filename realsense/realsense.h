@@ -12,6 +12,7 @@ void realsense_still(void *data, request_t *request, response_t *response);
 
 streamer_t *get_streamer_camera();
 streamer_t *get_streamer_depthsensor();
+messagelink_t *get_messagelink_logger();
 
 #ifdef __cplusplus
 }

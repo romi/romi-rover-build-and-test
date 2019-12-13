@@ -13,3 +13,8 @@ int control_panel_display(void *userdata,
                           json_object_t command,
                           membuf_t *message);
 
+void watchdog_onmessage(void *userdata,
+                        messagelink_t *link,
+                        json_object_t message);
+
+void watchdog_onidle();

@@ -44,10 +44,6 @@
             "topic": "navigation"            
         },
         {
-            "type": "messagehub",
-            "topic": "log_interface"            
-        },
-        {
             "type": "messagelink",
             "topic": "watchdog"            
         },

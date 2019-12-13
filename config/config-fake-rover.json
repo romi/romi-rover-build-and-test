@@ -23,6 +23,14 @@
         "html": "interface/html",
         "scripts": "scripts/chatelain-lite.json"
     },
+
+    "control_panel": {
+        "device": "/dev/ttyACM0"
+    },
+    
+    "watchdog": {
+        "apps": ["fake_motors"]
+    },
     
     "launch": {
         "general": {

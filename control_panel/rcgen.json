@@ -1,5 +1,6 @@
 {
     "name": "control_panel",
+    "idle": "watchdog_onidle",
     "com": [
         {
             "type": "controller",
@@ -10,6 +11,11 @@
         {
             "type": "messagelink",
             "topic": "logger"
+        },
+        {
+            "type": "messagehub",
+            "topic": "watchdog",
+            "onmessage": "watchdog_onmessage"
         }
     ]
 }

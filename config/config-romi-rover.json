@@ -21,10 +21,6 @@
         "device": "/dev/ttyACM0"
     },
     
-    "fake_camera": {
-        "image": "data/camera.jpg"
-    },
-    
     "fsdb": {
         "directory": "data/db"
     },
@@ -38,50 +34,38 @@
     },
     
     "interface": {
-        "html": "interface/html",
-        "scripts": "scripts/rover-chatelain.json"
+        "html": "<romi-rover>/interface/html",
+        "scripts": "/home/romi/scripts/rover-default.json"
     },
     
     "launch": {
         "general": {
-            "log-dir-HIDE": "log"
+            "sessions-dir": "/home/romi/data",
+            "user": "romi"
         },
         "registry": {
             "path": "/usr/local/bin/rcregistry"
         },
         "nodes": [{
-            "path": "build/configuration/configuration"
+            "path": "/usr/local/bin/configuration"
         }, {
-            "path": "build/fsdb/fsdb"
+            "path": "/usr/local/bin/fsdb"
         }, {
-            "path": "build/brush_motors/brush_motors",
-            "disabled": false
+            "path": "/usr/local/bin/brush_motors"
         }, {
-            "path": "build/fake_camera/fake_camera",
-            "disabled": true
+            "path": "/usr/local/bin/video4linux"
         }, {
-            "path": "build/video4linux/video4linux",
-            "disabled": false
+            "path": "/usr/local/bin/grbl"
         }, {
-            "path": "build/grbl/grbl",
-            "disabled": false
+            "path": "/usr/local/bin/wheel_odometry"
         }, {
-            "path": "build/fake_cnc/fake_cnc",
-            "disabled": true
+            "path": "/usr/local/bin/camera_recorder"
         }, {
-            "path": "build/wheel_odometry/wheel_odometry",
-            "disabled": false
+            "path": "/usr/local/bin/weeder"
         }, {
-            "path": "build/camera_recorder/camera_recorder"
+            "path": "/usr/local/bin/navigation"
         }, {
-            "path": "build/weeder/weeder",
-            "disabled": false
-        }, {
-            "path": "build/navigation/navigation",
-            "disabled": false
-        }, {
-            "path": "build/interface/interface",
-            "disabled": false
+            "path": "/usr/local/bin/interface"
         }]
     }
 }

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(brush_motors brush_motors.c brush_motors_main.c)
-target_link_libraries(brush_motors romi rcom m)
+target_link_libraries(brush_motors romi rcom r m)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/brush_motors_main.c

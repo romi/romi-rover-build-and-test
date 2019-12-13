@@ -3,40 +3,101 @@
 
 #include <r.h>
 #include <romi.h>
+#include "workspace.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ *   The segmentation module takes an RGB image as input and computes
+ *   a BW mask with white pixels for the crop and black pixels for the
+ *   soil.
+ */
+typedef struct _segmentation_module_t segmentation_module_t;
 
-////////////////////////////////////////////////////////////////////
+typedef image_t *(*segmentation_module_compute_t)(segmentation_module_t *module,
+                                                  image_t *image,
+                                                  fileset_t *fileset,
+                                                  membuf_t *message);
 
-// (x0,y0) are the pixel coordinates of the origin of the CNC in the
-// topcam image.
-//
-// theta is the angle, in degrees, over which the image should rotated
-// (around x0,y0) to align the topcam image withe frame of the rover
-// topcam image. Only a rotation around the z-axis is considered for
-// now.
-//
-// width_px and height_px are the width and height of the workspace,
-// measured in pixels, as seen in the topcam image.
-// 
-// width_mm, height_mm are the width and the height of the real
-// workspace, measured in millimeters.
+typedef void (*segmentation_module_cleanup_t)(segmentation_module_t *);
 
-typedef struct _workspace_t {
-        double theta;
-        int x0;
-        int y0;
-        int width;
-        int height;
-        double width_meter;
-        double height_meter;
-} workspace_t;
+struct _segmentation_module_t {
+        segmentation_module_compute_t segment;
+        segmentation_module_cleanup_t cleanup;
+};
 
-int workspace_parse(workspace_t *workspace, json_object_t obj);
-json_object_t workspace_to_json(workspace_t *workspace);
+image_t *segmentation_module_segment(segmentation_module_t *module,
+                                     image_t *image,
+                                     fileset_t *fileset,
+                                     membuf_t *message);
+
+void delete_segmentation_module(segmentation_module_t *module);
+
+
+/**
+ *   The path module takes a BW image and computes a path going over
+ *   the black pixels.
+ */
+
+typedef struct _path_module_t path_module_t;
+
+typedef list_t *(*path_module_compute_t)(path_module_t *module,
+                                         image_t *image,
+                                         fileset_t *fileset,
+                                         membuf_t *message);
+
+typedef int (*path_module_set_t)(path_module_t *module,
+                                 const char *name,
+                                 json_object_t value,
+                                 membuf_t *message);
+
+typedef void (*path_module_cleanup_t)(path_module_t *module);
+
+struct _path_module_t {
+        path_module_compute_t compute;
+        path_module_cleanup_t cleanup;
+        path_module_set_t set;
+};
+
+list_t *path_module_compute(path_module_t *module,
+                            image_t *image,
+                            fileset_t *fileset,
+                            membuf_t *message);
+
+void delete_path_module(path_module_t *module);
+
+int path_module_set(path_module_t *module,
+                    const char *name,
+                    json_object_t value,
+                    membuf_t *message);
+
+
+/**
+ *   The pipeline combines a segmentation and path module.
+ */
+
+typedef struct _pipeline_t {
+        workspace_t *workspace;
+        segmentation_module_t *segmentation_module;
+        path_module_t *path_module;
+} pipeline_t;
+
+pipeline_t *new_pipeline(workspace_t *workspace,
+                         segmentation_module_t *segmentation_module,
+                         path_module_t *path_module);
+void delete_pipeline(pipeline_t *pipeline);
+
+list_t *pipeline_run(pipeline_t *pipeline,
+                     image_t *image,
+                     fileset_t *fileset,
+                     membuf_t *message);
+
+int pipeline_set(pipeline_t *pipeline,
+                 const char *name,
+                 json_object_t value,
+                 membuf_t *message);
 
 ////
 
@@ -50,21 +111,9 @@ void point_set(point_t *p, float x, float y, float z);
 
 ////
 
-list_t *compute_path(scan_t *session,
-                     const char *fileset_id,
-                     image_t *camera,
-                     workspace_t *workspace,
-                     double distance_plants,
-                     double distance_rows,
-                     double radius_zone,
-                     double diameter_tool,
-                     float *confidence);
+image_t *get_workspace_view(fileset_t *fileset, image_t *camera, workspace_t *workspace);
 list_t *compute_boustrophedon(workspace_t *workspace, double diameter_tool);
 
-////
-
-int set_weeding_data_directory(const char *directory);
-void free_weeding_data_directory();
 
         
 #ifdef __cplusplus

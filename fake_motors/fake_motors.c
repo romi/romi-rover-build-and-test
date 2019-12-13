@@ -12,6 +12,16 @@ static double wheel_circumference;
 static double encoder_steps;
 static int rover_initialized = 0;
 
+enum {
+        APP_STATE_INITIALIZING = 0,
+        APP_STATE_INITIALIZED,
+        APP_STATE_POWERING_UP,
+        APP_STATE_POWERED_UP,
+        APP_STATE_ERROR
+};
+
+static int state = APP_STATE_INITIALIZING;
+
 
 datahub_t *get_datahub_encoders();
 messagehub_t *get_messagehub_status();
@@ -28,7 +38,7 @@ int init_rover()
 {
         static double last_attempt = 0.0;
 
-        if (rover_initialized)
+        if (state >= APP_STATE_INITIALIZED)
                 return 0;
         
         double now = clock_time();
@@ -59,7 +69,7 @@ int init_rover()
         wheel_circumference = M_PI * diam;
         encoder_steps = steps;
         steps_per_meter = encoder_steps / wheel_circumference;
-        rover_initialized = 1;
+        state = APP_STATE_INITIALIZED;
 
         json_unref(config);
         return 0;
@@ -170,7 +180,8 @@ void broadcast_encoders(void *userdata, datahub_t *hub)
         
         double timestamp = clock_time();
 
-        if (!rover_initialized && init_rover() != 0) 
+        if (state == APP_STATE_INITIALIZING
+            && init_rover() != 0) 
                 return;
         
         mutex_lock(mutex);
@@ -214,4 +225,38 @@ void broadcast_status()
                  speed[0], speed[1], speed[0], speed[1]);
         mutex_unlock(mutex);
         clock_sleep(1);
+}
+
+static const char *state_str(int s)
+{
+        switch (s) {
+        case APP_STATE_INITIALIZING:
+                return "initializing";
+        case APP_STATE_INITIALIZED:
+                return "initialized";
+        case APP_STATE_POWERING_UP:
+                return "powering_up";
+        case APP_STATE_POWERED_UP:
+                return "powered_up";
+        case APP_STATE_ERROR: 
+        default:
+                return "error";
+        }
+}
+
+void watchdog_onmessage(void *userdata,
+                        messagelink_t *link,
+                        json_object_t message)
+{
+        //r_debug("watchdog_onmessage");
+        const char *r = json_object_getstr(message, "request");
+        if (r == NULL)
+                r_warn("watchdog_onmessage: invalid message: empty request");
+        else if (rstreq(r, "state?"))
+                messagelink_send_f(link,
+                                   "{\"request\": \"state\", "
+                                   "\"name\": \"fake_motors\", "
+                                   "\"state\": \"%s\"}", state_str(state));
+        else if (rstreq(r, "power_up"))
+                state = APP_STATE_POWERED_UP;
 }

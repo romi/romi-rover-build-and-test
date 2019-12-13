@@ -2,6 +2,10 @@
 #include <getopt.h>
 #include <romi.h>
 #include "weeding.h"
+#include "otsu.h"
+#include "svm.h"
+#include "quincunx.h"
+#include "profiling.h"
 
 static workspace_t workspace;
 static double quincunx_threshold = 0.0;
@@ -42,6 +46,85 @@ static int init_workspace(const char *config_file)
         
         json_unref(config);
         return 0;
+}
+
+static image_t *compute_mask(fileset_t *fileset, image_t *image)
+{
+        segmentation_module_t *segmentation = new_otsu_module();
+        image_t *mask = segmentation_module_segment(segmentation, image, fileset, NULL);
+        delete_segmentation_module(segmentation);
+        return mask;
+}
+
+static list_t *_path_compute(fileset_t *fileset,
+                            image_t *mask,
+                            double distance_plants,
+                            double distance_rows,
+                            double radius_zones,
+                            double diameter_tool,
+                            double meters_to_pixels)
+{
+        path_module_t *module = new_quincunx_module(distance_plants, distance_rows,
+                                                    radius_zones, diameter_tool,
+                                                    0.5, meters_to_pixels);
+        list_t *path = path_module_compute(module, mask, fileset, NULL);
+        delete_path_module(module);
+        return path;
+}
+
+list_t *compute_path(scan_t *session, const char *fileset_id, image_t *camera,
+                     workspace_t *workspace, double distance_plants,
+                     double distance_rows, double radius_zones,
+                     double diameter_tool, float *confidence)
+{
+        list_t *path = NULL;
+        image_t *image = NULL;
+        image_t *mask = NULL;
+        fileset_t *fileset = NULL;
+        
+        // If fileset is NULL, continue anyway
+        fileset = create_fileset(session, fileset_id);
+        json_object_t w = workspace_to_json(workspace);
+        fileset_set_metadata(fileset, "workspace", w);
+        json_unref(w);
+        
+        // 1. preprocessing: rotate, crop, and scale the camera image
+        image = get_workspace_view(fileset, camera, workspace);
+        if (image == NULL)
+                goto cleanup_and_exit;
+
+        // 2. compute the binary mask (plants=white, soil=black...)
+        mask = compute_mask(fileset, image);
+        if (mask == NULL)
+                goto cleanup_and_exit;
+
+        // 3. compute the path
+        double meters_to_pixels = mask->width / workspace->width_meter;
+        path = _path_compute(fileset, mask,
+                             distance_plants,
+                             distance_rows,
+                             radius_zones,
+                             diameter_tool,
+                             meters_to_pixels);
+        if (path == NULL)
+                goto cleanup_and_exit;
+        
+        // 4. Change the coordinates from pixels to meters
+        for (list_t *l = path; l != NULL; l = list_next(l)) {
+                point_t *p = list_get(l, point_t);
+                p->y = mask->height - p->y;
+                p->y = (float) workspace->height_meter * p->y / (float) mask->height;
+                p->x = (float) workspace->width_meter * p->x / (float) mask->width;
+        }
+        
+cleanup_and_exit:
+        
+        // Cleaning up
+        delete_image(image);
+        delete_image(mask);
+
+        // done
+        return path;
 }
 
 int main(int argc, char **argv)

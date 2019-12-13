@@ -40,7 +40,7 @@ image_t *load_computed_mask(fileset_t *fileset)
         return load_image(fileset, "mask");
 }
 
-file_t *create_file(fileset_t *fileset, const char *name)
+static file_t *create_file(fileset_t *fileset, const char *name)
 {
         file_t *file = fileset_new_file(fileset);
         if (file == NULL)

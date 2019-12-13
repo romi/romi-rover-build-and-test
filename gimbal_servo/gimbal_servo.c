@@ -24,7 +24,7 @@ static int open_serial(const char *dev)
         r_info("Trying to open the serial connection on %s.", dev);
 	
         mutex_lock(mutex);        
-        serial = new_serial(dev, 115200);
+        serial = new_serial(dev, 115200, 1);
         mutex_unlock(mutex);        
 	
         if (serial == NULL)

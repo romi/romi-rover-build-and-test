@@ -24,9 +24,13 @@ messagehub_t *get_messagehub_motorstatus();
 static void broadcast_log(void *userdata, const char* s)
 {
         messagelink_t *get_messagelink_logger();
+        static int _inside_log_writer = 0;
         messagelink_t *log = get_messagelink_logger();
-        if (log)
+        if (log != NULL && _inside_log_writer == 0) {
+                _inside_log_writer = 1;
                 messagelink_send_str(log, s);
+                _inside_log_writer = 0;
+        }
 }
 
 static int open_serial(const char *dev)
@@ -34,7 +38,7 @@ static int open_serial(const char *dev)
         r_info("Trying to open the serial connection on %s.", dev);
 	
         mutex_lock(mutex);        
-        serial = new_serial(dev, 115200);
+        serial = new_serial(dev, 115200, 1);
         mutex_unlock(mutex);        
 	
         if (serial == NULL)
@@ -77,6 +81,8 @@ static int send_command(const char *cmd, membuf_t *message)
         
         mutex_lock(mutex);        
 
+        membuf_clear(message);
+        
         if (cmd[0] != 'e' && cmd[0] != 'S') r_debug("send_command @2");
         
         if (serial == NULL) {
@@ -291,8 +297,8 @@ int brush_motors_init(int argc, char **argv)
         if (status == NULL)
                 return -1;
 
-        if (argc > 2) {
-                r_debug("using serial device '%s'", device);
+        if (argc > 1) {
+                r_debug("using serial device '%s'", argv[1]);
                 if (set_device(argv[1]) != 0)
                         return -1;
         }
@@ -453,4 +459,17 @@ void broadcast_status()
         const char *r = membuf_data(encoders);
         messagehub_broadcast_f(get_messagehub_motorstatus(), NULL, r + 1);
         clock_sleep(1);
+}
+
+void watchdog_onmessage(void *userdata,
+                        messagelink_t *link,
+                        json_object_t message)
+{
+        const char *r = json_object_getstr(message, "request");
+        if (r == NULL)
+                r_warn("watchdog_onmessage: invalid message: empty request");
+        else if (rstreq(r, "ready?"))
+                messagelink_send_f(link,
+                                   "{\"request\": \"set-ready\", "
+                                   "\"name\": \"brush_motors\"}");
 }

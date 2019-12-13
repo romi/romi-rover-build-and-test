@@ -25,3 +25,7 @@ int motorcontroller_onhoming(void *userdata,
 
 void broadcast_encoders();
 void broadcast_status();
+
+void watchdog_onmessage(void *userdata,
+                        messagelink_t *link,
+                        json_object_t message);

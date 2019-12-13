@@ -4,13 +4,13 @@ project(weeder)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE DEBUG)
 
-add_executable(weeder weeder.c weeder_main.c weeding.c)
+add_executable(weeder weeder.c weeder_main.c weeding.c svm.c otsu.c quincunx.c profiling.c workspace.c point.c)
 target_link_libraries(weeder rcom romi r m)
 
-add_executable(weeder_compute weeder_compute.c weeding.c)
+add_executable(weeder_compute weeder_compute.c weeding.c svm.c otsu.c quincunx.c profiling.c workspace.c point.c)
 target_link_libraries(weeder_compute romi r m)
 
-add_executable(weeder_eval weeder_eval.c weeding.c)
+add_executable(weeder_eval weeder_eval.c weeding.c svm.c otsu.c quincunx.c profiling.c workspace.c point.c)
 target_link_libraries(weeder_eval romi r m)
 
 ADD_CUSTOM_COMMAND(

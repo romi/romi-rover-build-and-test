@@ -23,28 +23,60 @@
 
  */
 
+#include <LiquidCrystal.h>
 #include "Parser.h"
 
-#define pinRelay1 8
-#define pinRelay2 9
-#define pinOnButton 10
-#define pinLedOnButton 11
-#define pinOffButton 12
-#define pinLedOffButton 13
+#define PIN_RELAY1 8
+#define PIN_RELAY2 9
+#define PIN_LED_ONBUTTON 10
+#define PIN_LED_OFFBUTTON 11
+#define PIN_ONBUTTON 12
+#define PIN_OFFBUTTON 13
+
+//#define EN
+#define FR 1
+
+#if EN
+const char *strings[] = {
+        "Error", "Starting up", "Powering up", "Ready", "Shutting down", "Off" 
+};
+#endif
+
+#if FR
+const char *strings[] = {
+        "Erreur", "Demarrage", "Activation", "Pret", "Arret", "Eteint" 
+};
+#endif
 
 enum {
-        STATE_ERROR = -1,
-        STATE_OFF = 0,
-        STATE_ON = 1,
-        STATE_STARTING_UP = 2,
-        STATE_SHUTTING_DOWN = 3
+        STATE_ERROR = 0,
+        STATE_STARTING_UP,
+        STATE_POWERING_UP,
+        STATE_ON,
+        STATE_SHUTTING_DOWN,
+        STATE_OFF,
 };
 
-int state = STATE_OFF;
-int blink_count = 0;
-unsigned long off_timestamp;
+enum {
+        BUTTON_UP = 0,
+        BUTTON_DOWN = 1
+};
+
+enum {
+        ONBUTTON = 0,
+        OFFBUTTON = 1
+};
 
 Parser parser("SD", "s?");
+
+int state = STATE_OFF;
+unsigned int blink_count = 0;
+unsigned long shutting_down_start;
+char button_state[2];
+unsigned long button_timestamp[2];
+
+const char rs = 7, en = 6, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 void setup()
 {
@@ -52,143 +84,192 @@ void setup()
         while (!Serial)
                 ;
 
-        pinMode(pinOnButton, INPUT_PULLUP);
-        pinMode(pinOffButton, INPUT_PULLUP);
-        pinMode(pinLedOnButton, OUTPUT);
-        pinMode(pinLedOffButton, OUTPUT);
-        pinMode(pinRelay1, OUTPUT);
-        pinMode(pinRelay2, OUTPUT);
+        pinMode(PIN_ONBUTTON, INPUT_PULLUP);
+        pinMode(PIN_OFFBUTTON, INPUT_PULLUP);
+        pinMode(PIN_LED_ONBUTTON, OUTPUT);
+        pinMode(PIN_LED_OFFBUTTON, OUTPUT);
+        pinMode(PIN_RELAY1, OUTPUT);
+        pinMode(PIN_RELAY2, OUTPUT);
 
-        digitalWrite(pinRelay1, LOW);
-        digitalWrite(pinRelay2, LOW);
+        digitalWrite(PIN_RELAY1, LOW);
+        digitalWrite(PIN_RELAY2, LOW);
+
+        lcd.begin(16, 2);
+        display_state();
 }
 
-int onButtonPressed()
+int update_buttons()
 {
-        return (digitalRead(pinOnButton) == LOW);
+        int pressed;
+        unsigned long t = millis();
+        
+        pressed = (digitalRead(PIN_ONBUTTON) == LOW);
+        if (pressed && button_state[ONBUTTON] == BUTTON_UP) {
+                button_state[ONBUTTON] = BUTTON_DOWN;
+                button_timestamp[ONBUTTON] = t;
+        } 
+        if (!pressed && button_state[ONBUTTON] == BUTTON_DOWN) {
+                button_state[ONBUTTON] = BUTTON_UP;
+                button_timestamp[ONBUTTON] = t;
+        }
+        
+        pressed = (digitalRead(PIN_OFFBUTTON) == LOW);
+        if (pressed && button_state[OFFBUTTON] == BUTTON_UP) {
+                button_state[OFFBUTTON] = BUTTON_DOWN;
+                button_timestamp[OFFBUTTON] = t;
+        }
+        if (!pressed && button_state[OFFBUTTON] == BUTTON_DOWN) {
+                button_state[OFFBUTTON] = BUTTON_UP;
+                button_state[OFFBUTTON] = t;
+        }
 }
 
-int offButtonPressed()
+#define button_pressed(__id)  (button_state[__id] == BUTTON_DOWN)
+#define time_pressed(__id) (millis() - button_timestamp[__id])
+
+void display_state()
 {
-        return (digitalRead(pinOffButton) == LOW);
+        display0(strings[state]);
 }
 
-void updateState()
+void update_state()
 {
-        if (onButtonPressed()) {
-                Serial.println("on");
+        
+        if (button_pressed(ONBUTTON) && button_pressed(OFFBUTTON)) {
+                if (time_pressed(ONBUTTON) > 5000
+                    && time_pressed(OFFBUTTON) > 5000)
+                        state = STATE_OFF;
+                
+        } else if (button_pressed(ONBUTTON)) {
                 switch (state) {
                 case STATE_OFF:
-                        Serial.println("starting up");
                         state = STATE_STARTING_UP;
-                        blink_count = 0;
+                        display_state();
                         break;
                 case STATE_STARTING_UP:
+                case STATE_POWERING_UP:
                 case STATE_ON:
                 case STATE_SHUTTING_DOWN: 
                 case STATE_ERROR:
                         break;
                 }
-        }
-        if (offButtonPressed()) {
-                Serial.println("off");
+                
+        } else if (button_pressed(OFFBUTTON)) {
                 switch (state) {
                 case STATE_ON:
-                        Serial.println("shutting down");
                         state = STATE_SHUTTING_DOWN;
-                        blink_count = 0;
+                        shutting_down_start = millis();
+                        display_state();
                         break;
                 case STATE_OFF:
                 case STATE_STARTING_UP:
+                case STATE_POWERING_UP:
                 case STATE_SHUTTING_DOWN: 
                 case STATE_ERROR:
                         break;
                 }
         }
-        if (
+        if (state == STATE_SHUTTING_DOWN
+            && millis() - shutting_down_start > 60000) { 
+                state = STATE_OFF;
+        }
+        
 }
 
-void setState(int value)
+void set_state(int value)
 {
-        switch (state) {
+        switch (value) {
+        case STATE_OFF:
         case STATE_STARTING_UP:
-        case STATE_ON:
         case STATE_SHUTTING_DOWN: 
+                break;
+        case STATE_POWERING_UP:
+        case STATE_ON:
         case STATE_ERROR:
                 state = value;
-                break;
-        case STATE_OFF:
-                state = value;
-                off_timestamp = millis();
+                display_state();
                 break;
         default:
                 break;
         }
 }
 
-void updateLEDs()
+void update_leds()
 {
+        unsigned int n8 = blink_count & 0x07;
+        unsigned int n4 = blink_count & 0x03;
+        
         switch (state) {
         case STATE_OFF:
-                if (millis() - off_timestamp < 20000) {
-                        digitalWrite(pinLedOnButton, LOW);
-                        digitalWrite(pinLedOffButton, blink_count < 5? HIGH : LOW);
-                } else {
-                        digitalWrite(pinLedOnButton, LOW);
-                        digitalWrite(pinLedOffButton, HIGH);
-                }
+                digitalWrite(PIN_LED_ONBUTTON, LOW);
+                digitalWrite(PIN_LED_OFFBUTTON, HIGH);
                 break;
         case STATE_STARTING_UP:
-                digitalWrite(pinLedOnButton, blink_count < 5? HIGH : LOW);
-                digitalWrite(pinLedOffButton, LOW);
+                digitalWrite(PIN_LED_ONBUTTON, n8 < 4? HIGH : LOW);
+                digitalWrite(PIN_LED_OFFBUTTON, LOW);
+                break;
+        case STATE_POWERING_UP:
+                digitalWrite(PIN_LED_ONBUTTON, n4 < 2? HIGH : LOW);
+                digitalWrite(PIN_LED_OFFBUTTON, LOW);
                 break;
         case STATE_ON:
-                digitalWrite(pinLedOnButton, HIGH);
-                digitalWrite(pinLedOffButton, LOW);
+                digitalWrite(PIN_LED_ONBUTTON, HIGH);
+                digitalWrite(PIN_LED_OFFBUTTON, LOW);
                 break;
         case STATE_SHUTTING_DOWN: 
-                digitalWrite(pinLedOnButton, LOW);
-                digitalWrite(pinLedOffButton, blink_count < 5? HIGH : LOW);
+                digitalWrite(PIN_LED_ONBUTTON, LOW);
+                digitalWrite(PIN_LED_OFFBUTTON, n8 < 4? HIGH : LOW);
                 break;
         case STATE_ERROR:
-                digitalWrite(pinLedOnButton, blink_count < 5? HIGH : LOW);
-                digitalWrite(pinLedOffButton, blink_count < 5? HIGH : LOW);
+                digitalWrite(PIN_LED_ONBUTTON, n8 < 4? HIGH : LOW);
+                digitalWrite(PIN_LED_OFFBUTTON, n8 < 4? HIGH : LOW);
                 break;
         }
         
         blink_count++;
-        if (blink_count == 10)
-                blink_count = 0;
-        
 }
 
-void updateRelay()
+void update_relays()
 {
         switch (state) {
         case STATE_OFF:
-                digitalWrite(pinRelay2, LOW);
-                if (millis() - off_timestamp < 20000)
-                        digitalWrite(pinRelay1, HIGH);
-                else 
-                        digitalWrite(pinRelay1, LOW);
+                digitalWrite(PIN_RELAY2, LOW);
+                digitalWrite(PIN_RELAY1, LOW);
                 break;
         case STATE_ERROR:
-                digitalWrite(pinRelay1, LOW);
-                digitalWrite(pinRelay2, LOW);
+                digitalWrite(PIN_RELAY1, LOW);
+                digitalWrite(PIN_RELAY2, LOW);
                 break;
         case STATE_STARTING_UP:
         case STATE_SHUTTING_DOWN: 
-                digitalWrite(pinRelay1, HIGH);
-                digitalWrite(pinRelay2, LOW);
+                digitalWrite(PIN_RELAY1, HIGH);
+                digitalWrite(PIN_RELAY2, LOW);
                 break;
+        case STATE_POWERING_UP:
         case STATE_ON:
-                digitalWrite(pinRelay1, HIGH);
-                digitalWrite(pinRelay2, HIGH);
+                digitalWrite(PIN_RELAY1, HIGH);
+                digitalWrite(PIN_RELAY2, HIGH);
                 break;
         }
 }
 
-void handleSerialInput()
+void display0(const char *text)
+{
+        lcd.setCursor(0, 0);
+        lcd.print("                ");
+        lcd.setCursor(0, 0);
+        lcd.print(text);
+}
+
+void display1(const char *text)
+{
+        lcd.setCursor(0, 1);
+        lcd.print("                ");
+        lcd.setCursor(0, 1);
+        lcd.print(text);
+}
+
+void handle_serial_input()
 {
         while (Serial.available()) {
                 char c = Serial.read();
@@ -197,10 +278,10 @@ void handleSerialInput()
                         default: break;
                         case 'S':
                                 if (parser.length() == 1) {
-                                        Serial.print("OK set state");
-                                        setState(parser.value());
+                                        Serial.println("OK set state");
+                                        set_state(parser.value());
                                 } else {
-                                        Serial.print("ERR bad args");
+                                        Serial.println("ERR bad args");
                                 }
                                 break;
                         case 's':
@@ -208,8 +289,8 @@ void handleSerialInput()
                                 Serial.println(state);
                                 break;
                         case 'D':
-                                Serial.println(parser.text());
-                                Serial.print("OK display");
+                                display1(parser.text());
+                                Serial.println("OK display");
                                 break;
                         case '?':
                                 Serial.print("?[\"RomiControlPanel\",\"0.1\"]"); 
@@ -221,10 +302,11 @@ void handleSerialInput()
 
 void loop()
 {
-        handleSerialInput();
-        updateState();
-        updateRelay();
-        updateLEDs();
+        handle_serial_input();
+        update_buttons();
+        update_state();
+        update_relays();
+        update_leds();
         delay(100);
 }
 

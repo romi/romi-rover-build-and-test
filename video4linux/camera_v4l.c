@@ -67,7 +67,6 @@
 #include <sys/ioctl.h>
 #include <asm/types.h>
 #include <linux/videodev2.h>
-/* #include <jpeglib.h> */
 #include <malloc.h>
 #include <rcom.h>
 #include "camera_v4l.h"
@@ -102,14 +101,10 @@ typedef struct _camera_t {
         char* device_name;
         unsigned int width;
         unsigned int height;
-        /* unsigned char jpeg_quality; */
         buffer_t* buffers;
         unsigned int n_buffers;
         unsigned char* rgb_buffer;
         int rgb_buffer_size;
-        /* unsigned char* jpeg_buffer; */
-        /* int jpeg_buffer_size; */
-        /* int image_size; */
         int state;
 } camera_t;
 
@@ -122,12 +117,8 @@ static int camera_close(camera_t *camera);
 static int camera_cleanup(camera_t *camera);
 static int camera_read(camera_t *camera);
 static int camera_convert(camera_t *camera, void* p);
-//static int camera_converttojpeg(camera_t *camera);
 
 static void convert_yuv422_to_rgb888(int width, int height, unsigned char *src, unsigned char *dst);
-/* static void jpeg_bufferinit(j_compress_ptr cinfo); */
-/* static boolean jpeg_bufferemptyoutput(j_compress_ptr cinfo); */
-/* static void jpeg_bufferterminate(j_compress_ptr cinfo); */
 
 #ifdef IO_READ
 static int camera_readinit(camera_t *camera, unsigned int buffer_size);
@@ -158,14 +149,10 @@ camera_t* new_camera(const char* dev,
         camera->device_name = strdup(dev);
         camera->width = width;
         camera->height = height;
-        /* camera->jpeg_quality = jpeg_quality; */
         camera->buffers = NULL;
         camera->n_buffers = 0;
         camera->rgb_buffer = NULL;
         camera->rgb_buffer_size = 0;
-        /* camera->jpeg_buffer = NULL; */
-        /* camera->jpeg_buffer_size = 0; */
-        /* camera->image_size = 0; */
         camera->state = CAMERA_CLEAN;
 
         return camera;
@@ -263,11 +250,6 @@ int camera_capture(camera_t *camera)
         return 0;
 }
 
-/* int camera_getimagesize(camera_t *camera) */
-/* { */
-/*         return camera->image_size; */
-/* } */
-
 int camera_width(camera_t* camera)
 {
         return camera->width;
@@ -346,93 +328,6 @@ int xioctl(int fd, int request, void* argp)
         return r;
 }
 
-
-/* typedef struct _jpeg_my_dest_mgr_t { */
-/*         struct jpeg_destination_mgr mgr; */
-/*         camera_t *camera; */
-/* } jpeg_my_dest_mgr_t; */
-
-
-/* static void jpeg_bufferinit(j_compress_ptr cinfo) */
-/* { */
-/*         jpeg_my_dest_mgr_t* my_mgr = (jpeg_my_dest_mgr_t*) cinfo->dest; */
-/*         camera_t *camera = my_mgr->camera; */
-
-/*         cinfo->dest->next_output_byte = camera->jpeg_buffer; */
-/*         cinfo->dest->free_in_buffer = camera->jpeg_buffer_size; */
-/* } */
-
-/* static boolean jpeg_bufferemptyoutput(j_compress_ptr cinfo) */
-/* { */
-/*         jpeg_my_dest_mgr_t* my_mgr = (jpeg_my_dest_mgr_t*) cinfo->dest; */
-/*         camera_t *camera = my_mgr->camera; */
-        
-/*         int oldsize = camera->jpeg_buffer_size; */
-/*         camera->jpeg_buffer = (unsigned char*) realloc(camera->jpeg_buffer,  */
-/*                                                        camera->jpeg_buffer_size + BLOCKSIZE); */
-/*         if (camera->jpeg_buffer == NULL) { */
-/*                 r_err("Camera: Out of memory"); */
-/*                 return 0; */
-/*         } */
-/*         camera->jpeg_buffer_size += BLOCKSIZE; */
-/*         cinfo->dest->next_output_byte = &camera->jpeg_buffer[oldsize]; */
-/*         cinfo->dest->free_in_buffer = BLOCKSIZE; */
-
-/*         return 1; */
-/* } */
-
-/* static void jpeg_bufferterminate(j_compress_ptr cinfo) */
-/* { */
-/*         jpeg_my_dest_mgr_t* my_mgr = (jpeg_my_dest_mgr_t*) cinfo->dest; */
-/*         camera_t *camera = my_mgr->camera; */
-/*         camera->image_size = camera->jpeg_buffer_size - cinfo->dest->free_in_buffer; */
-/* } */
-
-/* static int camera_converttojpeg(camera_t *camera) */
-/* { */
-/*         struct jpeg_compress_struct cinfo; */
-/*         struct jpeg_error_mgr jerr; */
-/* 	jpeg_my_dest_mgr_t* my_mgr; */
-
-/*         JSAMPROW row_pointer[1]; */
-
-/*         cinfo.err = jpeg_std_error(&jerr); */
-/*         jpeg_create_compress(&cinfo); */
-
-/*         cinfo.dest = (struct jpeg_destination_mgr *)  */
-/*                 (*cinfo.mem->alloc_small) ((j_common_ptr) &cinfo, JPOOL_PERMANENT, */
-/*                                            sizeof(jpeg_my_dest_mgr_t));        */
-/*         cinfo.dest->init_destination = &jpeg_bufferinit; */
-/*         cinfo.dest->empty_output_buffer = &jpeg_bufferemptyoutput; */
-/*         cinfo.dest->term_destination = &jpeg_bufferterminate; */
-
-/*         my_mgr = (jpeg_my_dest_mgr_t*) cinfo.dest; */
-/*         my_mgr->camera = camera; */
-
-/*         cinfo.image_width = camera->width;	 */
-/*         cinfo.image_height = camera->height; */
-/*         cinfo.input_components = 3; */
-/*         cinfo.in_color_space = JCS_RGB; */
-/*         //cinfo.in_color_space = JCS_BGR; */
-
-/*         jpeg_set_defaults(&cinfo); */
-/*         jpeg_set_quality(&cinfo, camera->jpeg_quality, TRUE); */
-
-/*         jpeg_start_compress(&cinfo, TRUE); */
-
-/*         // feed data */
-/*         while (cinfo.next_scanline < cinfo.image_height) { */
-/*                 row_pointer[0] = &camera->rgb_buffer[cinfo.next_scanline * cinfo.image_width *  cinfo.input_components]; */
-/*                 jpeg_write_scanlines(&cinfo, row_pointer, 1); */
-/*         } */
-
-/*         jpeg_finish_compress(&cinfo); */
-
-/*         jpeg_destroy_compress(&cinfo); */
-
-/*         return 0; */
-/* } */
-
 /**
    process image read
 */
@@ -454,18 +349,6 @@ static int camera_convert(camera_t *camera, void* src)
         }
 
         convert_yuv422_to_rgb888(camera->width, camera->height, src, camera->rgb_buffer);
-
-        /* if (camera->jpeg_buffer == NULL) { */
-        /*         camera->jpeg_buffer = (unsigned char*) realloc(camera->jpeg_buffer, BLOCKSIZE); */
-        /*         if (camera->jpeg_buffer == NULL) { */
-        /*                 r_err("Camera: Out of memory"); */
-        /*                 return -1; */
-        /*         } */
-        /*         camera->jpeg_buffer_size = BLOCKSIZE; */
-        /* } */
-
-        /* if (camera_converttojpeg(camera) != 0) */
-        /*         return -1; */
 
         return 0;
 }
@@ -731,9 +614,6 @@ static int camera_cleanup(camera_t *camera)
         if (camera->rgb_buffer != NULL) 
                 free(camera->rgb_buffer);
 
-        /* if (camera->jpeg_buffer != NULL)  */
-        /*         free(camera->jpeg_buffer); */
-
         return 0;
 }
 
@@ -932,6 +812,35 @@ static int camera_setctrl(camera_t *camera, int id, int value)
         return 0;
 }
 
+static int camera_setctrl_default(camera_t *camera, int id)
+{
+        struct v4l2_queryctrl queryctrl;
+        struct v4l2_control control;
+
+        memset(&queryctrl, 0, sizeof(queryctrl));
+        queryctrl.id = id;
+
+        if (-1 == ioctl(camera->fd, VIDIOC_QUERYCTRL, &queryctrl)) {
+                if (errno != EINVAL) {
+                        r_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
+                        return -1;
+                } else {
+                        r_warn("Camera: control %d is not supported", id);
+                }
+        } else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
+                r_warn("Camera: Control %d is not supported", id);
+        } else {
+                memset(&control, 0, sizeof (control));
+                control.id = id;
+                control.value = queryctrl.default_value;
+                if (-1 == ioctl(camera->fd, VIDIOC_S_CTRL, &control)) {
+                        r_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
+                        return -1;
+                }
+        }
+        return 0;
+}
+
 static int camera_init(camera_t *camera)
 {
         struct v4l2_capability cap;
@@ -1068,87 +977,18 @@ static int camera_init(camera_t *camera)
 
         camera_setctrl(camera, V4L2_CID_CONTRAST, 127);
         camera_setctrl(camera, V4L2_CID_BRIGHTNESS, 127);
-        camera_setctrl(camera, V4L2_CID_HUE, 127);
+        /* camera_setctrl(camera, V4L2_CID_HUE, 127); */
+        
         /* camera_setctrl(camera, V4L2_CID_GAMMA, 127); */
         /* camera_setctrl(camera, V4L2_CID_RED_BALANCE, 127); */
         /* camera_setctrl(camera, V4L2_CID_BLUE_BALANCE, 127); */
         /* camera_setctrl(camera, V4L2_CID_EXPOSURE, 127); */
 
-        struct v4l2_queryctrl queryctrl;
-        struct v4l2_control control;
-
-        memset(&queryctrl, 0, sizeof (queryctrl));
-        queryctrl.id = V4L2_CID_BRIGHTNESS;
-
-        if (-1 == ioctl(camera->fd, VIDIOC_QUERYCTRL, &queryctrl)) {
-                if (errno != EINVAL) {
-                        r_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
-                        return -1;
-                } else {
-                        r_warn("Camera: V4L2_CID_BRIGHTNESS is not supported\n");
-                }
-        } else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-                r_warn("Camera: V4L2_CID_BRIGHTNESS is not supported\n");
-        } else {
-                memset(&control, 0, sizeof (control));
-                control.id = V4L2_CID_BRIGHTNESS;
-                control.value = queryctrl.default_value;
-
-                if (-1 == ioctl(camera->fd, VIDIOC_S_CTRL, &control)) {
-                        r_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
-                        return -1;
-                }
-        }
-
-
-        memset(&queryctrl, 0, sizeof (queryctrl));
-        queryctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
-
-        if (-1 == ioctl(camera->fd, VIDIOC_QUERYCTRL, &queryctrl)) {
-                if (errno != EINVAL) {
-                        r_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
-                        return -1;
-                } else {
-                        r_warn("Camera: V4L2_CID_AUTO_WHITE_BALANCE is not supported\n");
-                }
-        } else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-                r_warn("Camera: V4L2_CID_AUTO_WHITE_BALANCE is not supported\n");
-        } else {
-                memset(&control, 0, sizeof (control));
-                control.id = V4L2_CID_AUTO_WHITE_BALANCE;
-                control.value = 1;
-
-                if (-1 == ioctl(camera->fd, VIDIOC_S_CTRL, &control)) {
-                        r_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
-                        return -1;
-                }
-        }
-
-
-        memset(&queryctrl, 0, sizeof (queryctrl));
-        queryctrl.id = V4L2_CID_AUTOGAIN;
-
-        if (-1 == ioctl(camera->fd, VIDIOC_QUERYCTRL, &queryctrl)) {
-                if (errno != EINVAL) {
-                        r_err("Camera: VIDIOC_QUERYCTRL: error %d, %s", errno, strerror(errno));
-                        return -1;
-                } else {
-                        r_warn("Camera: V4L2_CID_AUTOGAIN is not supported\n");
-                }
-        } else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-                r_warn("Camera: V4L2_CID_AUTOGAIN is not supported\n");
-        } else {
-                memset(&control, 0, sizeof (control));
-                control.id = V4L2_CID_AUTOGAIN;
-                control.value = 1;
-
-                if (-1 == ioctl(camera->fd, VIDIOC_S_CTRL, &control)) {
-                        r_err("Camera: VIDIOC_S_CTRL: error %d, %s", errno, strerror(errno));
-                        return -1;
-                }
-        }
+        camera_setctrl_default(camera, V4L2_CID_BRIGHTNESS);
+        camera_setctrl(camera, V4L2_CID_AUTO_WHITE_BALANCE, 1);
+        camera_setctrl(camera, V4L2_CID_AUTOGAIN, 1);
  
-       camera->state = CAMERA_INIT;
+        camera->state = CAMERA_INIT;
 
         return 0;
 }

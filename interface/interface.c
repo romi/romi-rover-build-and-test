@@ -32,7 +32,6 @@ messagelink_t *get_messagelink_motorcontroller();
 messagelink_t *get_messagelink_weeder();
 messagelink_t *get_messagelink_camera_recorder();
 messagelink_t *get_messagelink_navigation();
-messagehub_t *get_messagehub_log_interface();
 messagelink_t *get_messagelink_watchdog();
 
 json_object_t global_env;
@@ -40,9 +39,13 @@ json_object_t global_env;
 static void broadcast_log(void *userdata, const char* s)
 {
         messagelink_t *get_messagelink_logger();
+        static int _inside_log_writer = 0;
         messagelink_t *log = get_messagelink_logger();
-        if (log)
+        if (log != NULL && _inside_log_writer == 0) {
+                _inside_log_writer = 1;
                 messagelink_send_str(log, s);
+                _inside_log_writer = 0;
+        }
 }
 
 ////////////////////////////////////////////////////////
@@ -270,125 +273,11 @@ static script_t *find_script(list_t *list, const char *name)
         return NULL;
 }
 
-//////////////////////////////////////////////////////
-
-static json_object_t eval(json_object_t obj, list_t *environments);
-static json_object_t eval_expr(const char *expr, list_t* environments);
-static json_object_t eval_string(json_object_t str, list_t* environments);
-static json_object_t eval_object(json_object_t obj, list_t *environments);
-static json_object_t eval_array(json_object_t obj, list_t *environments);
-
-static json_object_t eval_expr(const char *expr, list_t* environments)
-{
-        for (list_t *l = environments; l != NULL; l = list_next(l)) {
-                json_object_t env = list_get(l, base_t);
-                json_object_t value = json_object_get(env, expr);
-                if (!json_falsy(value))
-                        return value;
-        }
-        r_err("Failed to evaluate the expression '%s'", expr);
-        return json_null();
-}
-
-// Check out https://github.com/codeplea/tinyexpr
-static json_object_t eval_string(json_object_t str, list_t* environments)
-{
-        const char *s = json_string_value(str);
-        
-        if (strchr(s, '$') == NULL)
-                return json_string_create(s);
-
-        int len = strlen(s);
-        if (s[0] == '$' && s[1] == '(' && s[len-1] == ')') {
-                char *expr = r_alloc(len-2);
-                if (expr == NULL) return json_null();
-                memcpy(expr, s+2, len-3);
-                expr[len-3] = '\0';
-                json_object_t value = eval_expr(expr, environments);
-                json_ref(value);
-                r_free(expr);
-                return value;
-                
-        } else {
-                return json_string_create(s);
-        }
-}
-
-static int32 eval_object_field(const char* key, json_object_t value, void* data)
-{
-        list_t* stuff = (list_t*) data;
-        json_object_t obj = list_get(stuff, base_t);
-        list_t* environments = list_next(stuff);
-        json_object_t new_value = eval(value, environments);
-        if (json_isundefined(new_value))
-                return -1;
-        json_object_set(obj, key, new_value);
-        json_unref(new_value);
-        return 0;
-}
-
-static json_object_t eval_object(json_object_t obj, list_t *environments)
-{
-        json_object_t o = json_object_create();
-        list_t *stuff = list_prepend(environments, o);
-        int err = json_object_foreach(obj, eval_object_field, stuff);
-        if (err != 0) {
-                json_unref(o);
-                delete1_list(stuff);
-                return json_null();
-        }
-        delete1_list(stuff);
-        return o;
-}
-
-static json_object_t eval_array(json_object_t obj, list_t *environments)
-{
-        json_object_t a = json_array_create();
-        for (int i = 0; i < json_array_length(obj); i++) {
-                json_object_t e = json_array_get(obj, i);
-                e = eval(e, environments);
-                if (json_isnull(e)) {
-                        json_unref(a);
-                        return json_null();
-                }
-                json_array_push(a, e);
-                json_unref(e);
-        }
-        return a;
-}
-
-static json_object_t eval(json_object_t obj, list_t *environments)
-{
-        if (json_isnumber(obj)) {
-                return json_number_create(json_number_value(obj));
-
-        } else if (json_isstring(obj)) {
-                return eval_string(obj, environments);
-                
-        } else if (json_isarray(obj)) {
-                return eval_array(obj, environments);
-                
-        } else if (json_isobject(obj)) {
-                return eval_object(obj, environments);
-                
-        } else {
-                return obj;
-        }
-}
-
-//////////////////////////////////////////////////////
-
 static int do_action(const char *name, json_object_t action,
                      list_t *environments, membuf_t *message)
 {
         int err;
-        /* json_object_t args; */
-        
-        /* args = eval(action, environments); */
-        /* if (json_isnull(args)) { */
-        /*         return -1; */
-        /* } */
-        
+
         if (rstreq(name, "homing")) {
                 err = homing(message);
 
@@ -708,25 +597,6 @@ static int init()
         return 0;
 }
 
-static void log_writer(messagehub_t *hub, const char* line)
-{
-        static int _inside_log_writer = 0;
-        
-        // FIXME
-        if (hub == NULL) {
-                if (get_messagehub_log_interface() != NULL)
-                        r_log_set_writer((log_writer_t) log_writer,
-                                         get_messagehub_log_interface());
-                return;
-        }
-        if (_inside_log_writer)
-                return;
-        
-        _inside_log_writer = 1;
-        messagehub_broadcast_str(hub, NULL, line);
-        _inside_log_writer = 0;
-}
-
 int interface_init(int argc, char **argv)
 {
         r_log_set_writer(broadcast_log, NULL);
@@ -734,10 +604,6 @@ int interface_init(int argc, char **argv)
         mutex = new_mutex();
         if (mutex == NULL)
                 return -1;
-
-        // FIXME: the messagehub has not been created yet when
-        // interface_init is called.
-        r_log_set_writer((log_writer_t) log_writer, NULL);
         
         if (argc == 3) {
                 if (set_server_dir(argv[1]) != 0)
