@@ -1,0 +1,47 @@
+{
+    "name": "script_engine",
+    "com": [
+        {
+            "type": "service",
+            "topic": "script_engine",
+            "resources": [
+                
+                { "name": "scripts.json",
+                  "mimetype_out": "application/json",
+                  "onrequest": "script_engine_scripts" },
+                
+                { "name": "status.json",
+                  "mimetype_out": "application/json",
+                  "onrequest": "script_engine_status" },
+                
+                { "name": "execute",
+                  "mimetype_out": "text/html",
+                  "onrequest": "script_engine_execute" }
+            ]
+        },
+        {
+            "type": "messagelink",
+            "topic": "motorcontroller"            
+        },
+        {
+            "type": "messagelink",
+            "topic": "weeder"            
+        },
+        {
+            "type": "messagelink",
+            "topic": "camera_recorder"            
+        },
+        {
+            "type": "messagelink",
+            "topic": "navigation"            
+        },
+        {
+            "type": "messagelink",
+            "topic": "watchdog"            
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}
