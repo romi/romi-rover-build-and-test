@@ -1,6 +1,5 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "action.h"
 
 #ifndef _OQUAM_STEPPER_H_
 #define _OQUAM_STEPPER_H_
@@ -10,7 +9,6 @@
  */
 enum {
         STATE_THREAD_IDLE,
-        STATE_THREAD_STARTING,
         STATE_THREAD_EXECUTING
 };
 
@@ -60,6 +58,8 @@ void init_reset_step_pins_timer();
 
 #define disable_stepper_timer()                                         \
         {                                                               \
+                /* Set the status of the stepper thread */              \
+                thread_state = STATE_THREAD_IDLE;                       \
                 /* Disable Timer1 interrupt */                          \
                 TIMSK1 &= ~(1 << OCIE1A);                               \
         }

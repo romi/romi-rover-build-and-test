@@ -197,9 +197,10 @@ bool Parser::process(char c)
                 } else if (CLOSEBRACKET(c)) {
                         if (_length < 32)
                                 _value[_length++] = _tmpval;
-                        _state = wait_opcode;
+                        //_state = wait_opcode;
+                        _state = wait_separator;
                         //Serial.println("wait_opcode");
-                        return true;
+                        return false;
                 } else {
                         _state = wait_opcode;
                         //Serial.println("wait_opcode");

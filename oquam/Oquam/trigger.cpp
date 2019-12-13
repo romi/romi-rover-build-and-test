@@ -1,7 +1,7 @@
 #include "trigger.h"
 
-#define TRIGGER_BUFFER_SIZE 8
-#define TRIGGER_BUFFER_SIZE_MASK 0x07
+#define TRIGGER_BUFFER_SIZE 4
+#define TRIGGER_BUFFER_SIZE_MASK 0x03
 
 /**
  * \brief The 'trigger_buffer' is a circular buffer of trigger IDs.
@@ -35,9 +35,6 @@ int trigger_buffer_put(int16_t id)
         
         trigger_buffer.trigger[trigger_buffer.writepos] = id;
         
-        // if (++trigger_buffer.writepos == TRIGGER_BUFFER_SIZE)
-        //         trigger_buffer.writepos = 0;
-        
         trigger_buffer.writepos = ((trigger_buffer.writepos + 1)
                                    & TRIGGER_BUFFER_SIZE_MASK);
         
@@ -60,16 +57,16 @@ uint8_t trigger_buffer_available()
 int16_t trigger_buffer_get()
 {
         /* The execution of this function may be interrupted by the
-         * stepper timer timer. Take some care before incrementing the
-         * readpos to make sure we have the value in a local variable
-         * and that we don't temporarily set the readpos to an illegal
-         * value such as TRIGGER_BUFFER_SIZE. */
+         * stepper timer timer. Take some care. */
         
-        uint16_t v = trigger_buffer.trigger[trigger_buffer.readpos];
-        uint8_t n = trigger_buffer.readpos + 1;
-        if (n == TRIGGER_BUFFER_SIZE)
-                trigger_buffer.readpos = 0;
-        else 
-                trigger_buffer.readpos = n;
-        return v;
+        int16_t id = trigger_buffer.trigger[trigger_buffer.readpos];
+        
+        trigger_buffer.readpos = ((trigger_buffer.readpos + 1)
+                                  & TRIGGER_BUFFER_SIZE_MASK);
+        return id;
+}
+
+void trigger_buffer_clear()
+{
+        trigger_buffer.readpos = trigger_buffer.writepos;
 }

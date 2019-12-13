@@ -9,11 +9,6 @@
 void init_trigger_buffer();
 
 /**
- * \brief Empties the buffer.
- */
-#define trigger_buffer_clear() init_trigger_buffer()
-
-/**
  * \brief Adds a trigger to the send list.
  *
  * If the buffer is full, the trigger will be discarded and -1 will be
@@ -34,5 +29,11 @@ uint8_t trigger_buffer_available();
  * trigger_buffer_available() first.
  */
 int16_t trigger_buffer_get();
+
+
+/**
+ * \brief Removes all the triggers.
+ */
+void trigger_buffer_clear();
 
 #endif // _OQUAM_TRIGGER_H_
