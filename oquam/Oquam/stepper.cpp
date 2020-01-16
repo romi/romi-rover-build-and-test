@@ -3,12 +3,12 @@
 // Timer 2: Reset step pins
 
 #include "Arduino.h"
+#include "config.h"
 #include "block.h"
 #include "trigger.h"
 #include "stepper.h"
-#include "pins.h"
 
-volatile int16_t stepper_position[3];
+volatile int32_t stepper_position[3];
 volatile int32_t accumulation_error[3];
 volatile int32_t dt;
 volatile int16_t step_dir[3];
@@ -246,6 +246,7 @@ ISR(TIMER1_COMPA_vect)
                         step_dir[0] = 1;
                         step_dir[1] = 1;
                         step_dir[2] = 1;
+                        
                         if (current_block->data[DX] < 0) {
                                 toggle_dir(dir, X_DIRECTION_BIT);
                                 current_block->data[DX] = -current_block->data[DX];
@@ -263,6 +264,7 @@ ISR(TIMER1_COMPA_vect)
                         }
 
                         /* Set the direction output pins */
+                        //Serial.println(dir);
                         set_dir_pins(dir);
                         
                         
@@ -271,13 +273,13 @@ ISR(TIMER1_COMPA_vect)
                          * the length of the segment in milliseconds
                          * times the number of interrupts per
                          * millisecond. */
-                        dt = INTERRUPTS_PER_MILLISECOND * current_block->data[DT];
+                        dt = INTERRUPTS_PER_MILLISECOND * (int32_t) current_block->data[DT];
                         
                         /* Initialize the accumulation error for the
                          * Bresenham algorithm. */
-                        accumulation_error[0] = current_block->data[DX] - dt / 2;
-                        accumulation_error[1] = current_block->data[DY] - dt / 2;
-                        accumulation_error[2] = current_block->data[DZ] - dt / 2;
+                        accumulation_error[0] = (int32_t) current_block->data[DX] - dt / 2;
+                        accumulation_error[1] = (int32_t) current_block->data[DY] - dt / 2;
+                        accumulation_error[2] = (int32_t) current_block->data[DZ] - dt / 2;
                         
                 } else if (current_block->type == BLOCK_DELAY) {
                         /* Sanity check */

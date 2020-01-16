@@ -1,15 +1,25 @@
 #ifndef _OQUAM_CONFIG_H_
 #define _OQUAM_CONFIG_H_
 
-//#define ENABLE_PIN_HIGH 0
-#define ENABLE_PIN_HIGH 1
+/*
+                  Board        Encoders   Limits   
+gShield           Uno          0          1
+Ext. controller   Mega 2560    1          1
+RAMPS             Mega 2560   
 
-//#define ENCODER_REVERSED 0
-#define ENCODER_REVERSED 1
+*/
 
-#define PRESCALING 1
-#define FREQUENCY_STEPPER 25000
-#define INTERRUPTS_PER_MILLISECOND 25
+#define USE_GSHIELD 0
+#define USE_EXT_CONTROLLER 1
+
+#if USE_GSHIELD
+#include "gshield.h"
+#endif
+
+#if USE_EXT_CONTROLLER
+#include "extctrlr.h"
+#endif
+
 
 //#define PRESCALING 8
 //#define FREQUENCY_STEPPER 10000

@@ -30,7 +30,7 @@ static void delete_section_list(list_t *list)
                 section_t *section = list_get(l, section_t);
                 delete_section(section);
         }
-        delete_section_list(list);
+        delete_list(list);
 }
 
 section_t *new_section()
@@ -128,6 +128,20 @@ static list_t *section_slice(section_t *section, double period, double maxlen)
         }
         
         return slices;
+}
+
+static void section_print(section_t *section, const char *prefix)
+{
+        printf("%s: ", prefix);
+        printf("p0(%0.3f,%0.3f,%0.3f)-p1(%0.3f,%0.3f,%0.3f); ",
+               section->p0[0], section->p0[1], section->p0[2],
+               section->p1[0], section->p1[1], section->p1[2]);
+        printf("v0(%0.3f,%0.3f,%0.3f)-v1(%0.3f,%0.3f,%0.3f); ",
+               section->v0[0], section->v0[1], section->v0[2],
+               section->v1[0], section->v1[1], section->v1[2]);
+        printf("a(%0.3f,%0.3f,%0.3f)",
+               section->a[0], section->a[1], section->a[2]);
+        printf("\n");
 }
 
 /**************************************************************************/
@@ -270,6 +284,20 @@ static list_t *atdc_list_slice(atdc_t *atdc_list, double period, double maxlen)
         }
         
         return list;
+}
+
+static void atdc_print(atdc_t *atdc)
+{
+        atdc_t *s = atdc;
+        while (s != NULL) {
+                section_print(&s->accelerate, "A");
+                section_print(&s->travel, "T");
+                section_print(&s->decelerate, "D");
+                section_print(&s->curve, "C");
+                s = s->next;
+                if (s)
+                        printf("-\n");
+        }
 }
 
 static void atdc_delete(atdc_t *atdc)
@@ -544,9 +572,8 @@ static void segment_compute_curve(segment_t *s0, atdc_t *t0, double d, double *a
         double wymax = sqrt(2.0 * am * d);
         double vscale = 1.0;
         
-        if (fabs(wy0) > wymax) {
+        if (fabs(wy0) > wymax)
                 vscale = wymax / wy0;
-        } 
 
         wx0 *= vscale;
         wy0 *= vscale;
@@ -638,6 +665,7 @@ static void segment_compute_accelerations(segment_t *s0, atdc_t *t0,
         // p0 and v0 are already set
         vsub(dv, s0->section.v0, t0->accelerate.v0);
         vdiv(dt, dv, amax);
+        vabs(dt, dt);
         t0->accelerate.t = vmax(dt);                             // t
         if (t0->accelerate.t == 0) {
                 vzero(t0->accelerate.a);                         // a
@@ -663,6 +691,7 @@ static void segment_compute_accelerations(segment_t *s0, atdc_t *t0,
         vcopy(t0->decelerate.v1, t0->curve.v0);                  // v1
         vsub(dv, t0->decelerate.v0, t0->decelerate.v1);
         vdiv(dt, dv, amax);
+        vabs(dt, dt);
         t0->decelerate.t = vmax(dt);                             // t
         
         if (t0->decelerate.t == 0.0) {
@@ -921,8 +950,19 @@ static atdc_t *segments_to_atdc(segment_t *path, double d, double *vmax, double 
 {
         check_max_speeds(path, vmax);
         atdc_t *atdc = copy_segments_to_atdc(path);
+
         compute_curves_and_speeds(path, atdc, d, amax);
+                
+        /* printf("Curves and speed:\n"); */
+        /* atdc_print(atdc); */
+        /* printf("\n\n"); */
+        
         compute_accelerations(path, atdc, amax);
+                
+        /* printf("Accelerations:\n"); */
+        /* atdc_print(atdc); */
+        /* printf("\n\n"); */
+
         return atdc;
 }
 
@@ -950,6 +990,15 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                 action_t *action = list_get(actions, action_t);
                 
                 if (action->type == ACTION_MOVE) {
+
+                        /* If the displacement is less then 0.05 mm, skip it. */
+                        double d[3];
+                        vsub(d, action->p, pos); 
+                        if (norm(d) < 0.00005) {
+                                actions = list_next(actions);
+                                continue;
+                        }
+                        
                         segment_t *segment = new_segment();
                         if (segment == NULL)
                                 return NULL;
@@ -974,10 +1023,11 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                              segment->section.p0); 
                         
                         // v0 and v1
+                        double len = norm(segment->section.d);
                         normalize(segment->section.v0, segment->section.d);
                         smul(segment->section.v0, segment->section.v0, action->v);
                         vcopy(segment->section.v1, segment->section.v0);
-
+                        
                         // a
                         vzero(segment->section.a);
 

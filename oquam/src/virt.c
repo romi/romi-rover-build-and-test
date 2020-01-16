@@ -10,10 +10,9 @@
 
 typedef struct _virtual_stepper_controller_t {
         stepper_controller_t stepper;
-        
+        double period;        
         char *output;
-        char *svg;
-        
+        double step[3];
 } virtual_stepper_controller_t;
 
 static void delete_virtual_controller(controller_t *controller);
@@ -25,32 +24,28 @@ static int virtual_stepper_controller_execute(virtual_stepper_controller_t* cont
                                               block_t *block, int len);
 
 
-controller_t *new_virtual_stepper_controller(const char *output, const char *svg)
+controller_t *new_virtual_stepper_controller(const char *output,
+                                             double *xmax, double *vmax, double *amax,
+                                             double *scale, double period)
 {
         virtual_stepper_controller_t *controller = r_new(virtual_stepper_controller_t);
         if (controller == NULL)
                 return NULL;
-
-        controller->stepper.interface.xmax[0] = 0.7; // m
-        controller->stepper.interface.xmax[1] = 0.7;
-        controller->stepper.interface.xmax[2] = 0.4;
-
-        // vmax: x, y: 1200 revolutions/minute x 0.020 m/revolutions / 60 s/minute
-        controller->stepper.interface.vmax[0] = 0.020 * 1200.0 / 60.0; // m/s
-        controller->stepper.interface.vmax[1] = 0.020 * 1200.0 / 60.0;
-        // vmax: z:  1200 revolutions/minute x 0.002 m/revolutions / 60 s/minute
-        controller->stepper.interface.vmax[2] = 0.002 * 1200.0 / 60.0;
-
-        // TODO
-        controller->stepper.interface.amax[0] = 1.0f; // m/s²
-        controller->stepper.interface.amax[1] = 1.0f;
-        controller->stepper.interface.amax[2] = 0.1f;
+        
+        controller->period = period;        
+        vcopy(controller->stepper.interface.xmax, xmax);
+        vcopy(controller->stepper.interface.vmax, vmax);
+        vcopy(controller->stepper.interface.amax, amax);
+        vcopy(controller->stepper.scale, scale);
 
         controller->stepper.interface.run = virtual_stepper_controller_run;
         controller->stepper.interface.position = virtual_stepper_controller_position;
         controller->stepper.interface.moveat = virtual_stepper_controller_moveat;
         controller->stepper.interface.del = delete_virtual_controller;
+        controller->stepper.execute = (stepper_controller_execute_blocks_t) virtual_stepper_controller_execute;
 
+        vzero(controller->step);
+        
         ////
 
         if (stepper_controller_init(&controller->stepper) != 0) {
@@ -58,19 +53,7 @@ controller_t *new_virtual_stepper_controller(const char *output, const char *svg
                 return NULL;
         }
 
-        controller->stepper.execute = (stepper_controller_execute_blocks_t)
-                virtual_stepper_controller_execute;
-        
-        // scale: x, y: 200 steps -> 0.02 m => 1m -> 10000 steps => 1 step = 0.1 mm
-        controller->stepper.scale[0] = 10000.0f;
-        controller->stepper.scale[1] = 10000.0f;
-        // scale: z: 200 steps -> 0.002 m => 1m -> 100000 steps 
-        controller->stepper.scale[2] = 100000.0f;
-
-        ////
-                
         controller->output = output? r_strdup(output) : NULL;
-        controller->svg = svg? r_strdup(svg) : NULL;
         
         return (controller_t*) controller;
 }
@@ -82,8 +65,6 @@ void delete_virtual_controller(controller_t *controller)
                 stepper_controller_cleanup((stepper_controller_t*) controller);
                 if (c->output) 
                         r_free(c->output);
-                if (c->svg) 
-                        r_free(c->svg);
                 r_delete(c);
         }
 }
@@ -91,35 +72,64 @@ void delete_virtual_controller(controller_t *controller)
 static int virtual_stepper_controller_execute(virtual_stepper_controller_t* controller,
                                               block_t *block, int len)
 {
+        double dt;
+        
+        char filename[1024];
+        rprintf(filename, sizeof(filename), "%s.txt", controller->output);
+
+        FILE *fp = fopen(filename, "w");
+        if (fp == NULL) {
+                r_err("Failed to open file: %s", filename);
+                return -1;
+        }
+        
         for (int i = 0; i < len; i++) {
                 switch (block[i].type) {
                 case BLOCK_WAIT:
+                        fprintf(fp, "W\n");
                         printf("W\n");
                         break;
+                        
                 case BLOCK_MOVE:
+                        fprintf(fp, "M[%d,%d,%d,%d]\n",
+                               block[i].data[0],
+                               block[i].data[1],
+                               block[i].data[2],
+                               block[i].data[3]);
                         printf("M[%d,%d,%d,%d]\n",
                                block[i].data[0],
                                block[i].data[1],
                                block[i].data[2],
                                block[i].data[3]);
+                        dt = (double) block[i].data[0] / 1000.0;
+                        clock_sleep(dt);
+                        controller->step[0] += block[i].data[1];
+                        controller->step[1] += block[i].data[2];
+                        controller->step[2] += block[i].data[3];
                         break;
+                        
                 case BLOCK_DELAY:
+                        fprintf(fp, "D%d\n", block[i].data[0]);
                         printf("D%d\n", block[i].data[0]);
+                        dt = (double) block[i].data[0] / 1000.0;
+                        clock_sleep(dt);
                         break;
+                        
                 case BLOCK_TRIGGER:
+                        fprintf(fp, "T%d\n", block[i].data[0]);
                         printf("T%d\n", block[i].data[0]);
+                        stepper_controller_do_trigger(&controller->stepper, block[i].data[0]);
                         break;
-                case BLOCK_BEGIN:
-                        printf("B%d\n", block[i].data[0]);
-                        break;
-                case BLOCK_FINISHED:
-                        printf("Q\n");
-                        break;
+                        
                 default:
-                        printf("ERR Unknown block type\n");
+                        fprintf(fp, "ERR Unknown block type\n");
                         break;
                 }
         }
+        
+        fclose(fp);
+        
+        return 0;
 }
 
 static int virtual_stepper_controller_run(controller_t* controller, cnc_t *cnc,
@@ -128,15 +138,18 @@ static int virtual_stepper_controller_run(controller_t* controller, cnc_t *cnc,
         stepper_controller_t *stepper = (stepper_controller_t*) controller;
         virtual_stepper_controller_t *c = (virtual_stepper_controller_t*) controller;
 
-        list_t *slices = planner_slice(planner, 0.010, 32.0);
+        list_t *slices = planner_slice(planner, c->period, 32.0);
         if (slices == NULL)
                 return -1;
         
         if (stepper_controller_compile(stepper, slices, cnc, planner) != 0)
                 return -1;
 
-        if (c->svg) {
-                print_paths(c->svg,
+        if (c->output) {
+                char svg[1024];
+                rprintf(svg, sizeof(svg), "%s.svg", c->output);
+                
+                print_paths(svg,
                             planner_get_segments_list(planner),
                             planner_get_atdc_list(planner),
                             slices,
@@ -157,8 +170,7 @@ static int virtual_stepper_controller_run(controller_t* controller, cnc_t *cnc,
 static int virtual_stepper_controller_position(controller_t* controller, double *p)
 {
         virtual_stepper_controller_t *c = (virtual_stepper_controller_t*) controller;
-        r_warn("virtual_stepper_controller_position: not implemented");
-        vzero(p);
+        vdiv(p, c->step, c->stepper.scale);        
         return 0;
 }
 

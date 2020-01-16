@@ -107,6 +107,17 @@ static int stepper_controller_push_trigger(stepper_controller_t* stepper,
         return 0;
 }
 
+static trigger_t *stepper_controller_get_trigger(stepper_controller_t* stepper, int id)
+{
+        return &stepper->trigger[id];
+}
+
+void stepper_controller_do_trigger(stepper_controller_t* stepper, int id)
+{
+        trigger_t *trigger = stepper_controller_get_trigger(stepper, id);
+        trigger->callback(trigger->userdata, trigger->cnc, trigger->arg);
+}
+
 static int stepper_controller_push_wait(stepper_controller_t* stepper)
 {
         block_t block;
@@ -126,10 +137,17 @@ static int stepper_controller_push_move(stepper_controller_t* stepper,
         p1[2] = (int32_t) (section->p1[2] * stepper->scale[2]);
 
         block.data[0] = (int16_t) (1000.0 * section->t);
+        if (block.data[0] == 0)
+                return 0;
+        
         block.data[1] = (int16_t) (p1[0] - pos_steps[0]);
         block.data[2] = (int16_t) (p1[1] - pos_steps[1]);
         block.data[3] = (int16_t) (p1[2] - pos_steps[2]);
-
+        if (block.data[1] == 0
+            && block.data[2] == 0
+            && block.data[3] == 0)
+                return 0;
+        
         block.id = stepper->block_id++;
         
         // Keep the IDs reasonbly low so that the messages don't
@@ -237,6 +255,10 @@ int stepper_controller_compile(stepper_controller_t* stepper,
         int32_t pos_steps[3];
         section_t *section = list_get(slices, section_t);
 
+        stepper->block_id = 0;
+        stepper->num_blocks = 0;
+        stepper->num_triggers = 0;
+        
         if (section) {
                 pos_steps[0] = (int32_t) (section->p0[0] * stepper->scale[0]);
                 pos_steps[1] = (int32_t) (section->p0[1] * stepper->scale[1]);

@@ -30,6 +30,16 @@ void init_stepper_timer();
  */
 void init_reset_step_pins_timer();
 
+/**
+ * \brief Disable/enable the stepper driver.
+ */
+#if ENABLE_PIN_HIGH
+#define enable_driver()  set_enable_pin_high()
+#define disable_driver() set_enable_pin_low()
+#else
+#define enable_driver()  set_enable_pin_low()
+#define disable_driver() set_enable_pin_high()
+#endif
 
 #define enable_reset_step_pins_timer()                                  \
         {                                                               \
@@ -44,7 +54,6 @@ void init_reset_step_pins_timer();
                 /* Disable Timer2 interrupt */                          \
                 TIMSK2 &= ~(1 << OCIE2A);                               \
         }
-
 
 #define enable_stepper_timer()                                          \
         {                                                               \

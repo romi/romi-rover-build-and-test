@@ -9,7 +9,8 @@ extern "C" {
 #endif
 
 controller_t *new_virtual_stepper_controller(const char *output,
-                                             const char *svg);
+                                             double *xmax, double *vmax, double *amax,
+                                             double *scale, double period);
 
 #ifdef __cplusplus
 }

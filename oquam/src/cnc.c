@@ -35,6 +35,10 @@ int cnc_begin_script(cnc_t *cnc, double d)
                 delete_script(cnc->script);
                 cnc->script = NULL;
         }
+        if (cnc->planner != NULL) {
+                delete_planner(cnc->planner);
+                cnc->planner = NULL;
+        }
         cnc->script = new_script(d);
         if (cnc->script == NULL)
                 return -1;
@@ -129,3 +133,11 @@ int cnc_get_position(cnc_t *cnc, double *p)
 /*         } */
 /*         return planner_plot(cnc->planner, filepath); */
 /* } */
+
+int cnc_moveto(cnc_t *cnc, double x, double y, double z, double v)
+{
+      cnc_begin_script(cnc, 0.0);
+      cnc_move(cnc, x, y, z, v);
+      cnc_end_script(cnc);
+      cnc_run_script(cnc, 0);
+}

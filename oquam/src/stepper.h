@@ -12,9 +12,7 @@ enum {
         BLOCK_MOVE,
         BLOCK_MOVEAT,
         BLOCK_DELAY,
-        BLOCK_TRIGGER,
-        BLOCK_BEGIN,
-        BLOCK_FINISHED
+        BLOCK_TRIGGER
 };
 
 typedef struct _block_t {
@@ -59,7 +57,8 @@ struct _stepper_controller_t {
 
         /** 
          * The scale converts a distance in meters to the
-         * corresponding number of steps, steps = meters x scale.
+         * corresponding number of steps, steps = meters x scale, 
+         * or meters = steps/scale.
          */
         double scale[3];
         
@@ -75,6 +74,7 @@ int stepper_controller_compile(stepper_controller_t* stepper,
                                planner_t *planner);
 int stepper_controller_execute(stepper_controller_t* stepper, int async);
 
+void stepper_controller_do_trigger(stepper_controller_t* stepper, int id);
 
 #ifdef __cplusplus
 }

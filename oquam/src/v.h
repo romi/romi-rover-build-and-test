@@ -17,6 +17,7 @@ double *vdiv(double *r, double *a, double *b);
 double vmax(double *a);
 double vmin(double *a);
 
+double *vabs(double *r, double *a);
 double *vcopy(double *r, double *a);
 double *vzero(double *r);
 double *vset(double *r, double v);

@@ -1,7 +1,8 @@
 #include "block.h"
 #include "trigger.h"
 #include "stepper.h"
-#include "pins.h"
+#include "config.h"
+#include "limit.h"
 #include "encoder.h"
 #include "Parser.h"
 
@@ -15,74 +16,77 @@ enum {
 extern volatile uint8_t thread_state;
 extern volatile int32_t interrupts;
 extern volatile int32_t counter_reset_timer;
-extern volatile int16_t stepper_position[3];
+extern volatile int32_t stepper_position[3];
 extern volatile int16_t milliseconds;
 extern volatile int16_t block_id;
 extern volatile int16_t block_ms;
 extern volatile int8_t stepper_reset;
-extern volatile int16_t encoder_position[3];
 
 uint8_t controller_state;
 uint8_t error_number;
-Parser parser("MDTV", "?SCWXP");
+Parser parser("MDTV", "?SCWXZ");
 
 // DEBUG
 extern int32_t accumulation_error[3];
 
-static char state_string[32];
-static char position_string[50];
+static char reply_string[80];
+
+#define set_reply(__s)  snprintf(reply_string, sizeof(reply_string), "%s", __s)
+
 
 char* get_state_string()
 {
         uint8_t n = block_buffer_available();
-        char *s;
+        char *status;
+        int16_t trigger = -1;
         
-        switch (thread_state) {
-        case STATE_THREAD_EXECUTING:
-                s = "e";
-                break;
-        case STATE_THREAD_IDLE:
-                s = "i";
-                break;
-        }
-        
-        snprintf(state_string, sizeof(state_string),
-                 "['%s',%d,%d,%d,%d,%d]",
-                 s, (int) n, (int) block_id, (int) block_ms,
-                 (int) milliseconds, (int) interrupts);
-        return state_string;
-}
-
-void send_state()
-{
         if (trigger_buffer_available() > 0) {
-                int16_t id = trigger_buffer_get();
-                Serial.print("T");
-                Serial.println(id);
+                status = "t";
+                trigger = trigger_buffer_get();
         } else {
-                Serial.print("S");
-                Serial.println(get_state_string());
+                switch (thread_state) {
+                case STATE_THREAD_EXECUTING:
+                        status = "e";
+                        break;
+                case STATE_THREAD_IDLE:
+                        status = "i";
+                        break;
+                }
         }
-}
-
-char* get_position_string()
-{
-        snprintf(position_string, sizeof(position_string),
-                 "[%d,%d,%d,%d,%d,%d,%lu]",
-                 (int) stepper_position[0],
-                 (int) stepper_position[1],
-                 (int) stepper_position[2],
-                 (int) encoder_position[0],
-                 (int) encoder_position[1],
-                 (int) encoder_position[2],
+        
+        snprintf(reply_string, sizeof(reply_string),
+                 "S['%s',%d,%d,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%lu]",
+                 status,
+                 (int) block_buffer_available(),
+                 (int) block_id,
+                 (int) block_ms,
+                 (int) milliseconds,
+                 (int) interrupts,
+                 (int) trigger,
+                 (int32_t) stepper_position[0],
+                 (int32_t) stepper_position[1],
+                 (int32_t) stepper_position[2],
+                 (int32_t) encoder_position[0],
+                 (int32_t) encoder_position[1],
+                 (int32_t) encoder_position[2],
                  millis());
-        return position_string;
+        return reply_string;
 }
 
-void send_position()
+void reset()
 {
-        Serial.print("P");
-        Serial.println(get_position_string());
+        stepper_reset = 1;
+        block_buffer_clear();
+        trigger_buffer_clear();
+}
+
+void zero()
+{
+        for (int i = 0; i < 3; i++) {
+                stepper_position[i] = 0;
+                encoder_position[i] = 0;
+                accumulation_error[i] = 0;
+        }
 }
 
 /**
@@ -98,6 +102,7 @@ void handle_input()
                 if (parser.process(c)) {                        
                         switch (parser.opcode()) {
                         default:
+                                set_reply("ERR Unknown command");
                                 break;
                                 
                                 /* First handle the commands 'M', 'V',
@@ -109,8 +114,7 @@ void handle_input()
                                     && parser.value(0) > 0) {
                                         block_t *block = block_buffer_get_empty();
                                         if (block == 0) {
-                                                Serial.print("RE ");
-                                                Serial.println(get_state_string());
+                                                set_reply("RE M");
                                         } else {
                                                 block->type = BLOCK_MOVE;
                                                 block->data[DT] = parser.value(0);
@@ -120,23 +124,24 @@ void handle_input()
                                                 if (parser.length() == 5)
                                                         block->id = parser.value(4);
                                                 block_buffer_ready();
-                                                Serial.print("OK ");
-                                                Serial.println(get_state_string());
+
+                                                snprintf(reply_string, sizeof(reply_string), "OK M[%d,%d,%d,%d,%d]", 
+                                                         block->data[DT], block->data[DX], block->data[DY],
+                                                         block->data[DZ], block->id);
+                                                
                                         }
                                 } else if (parser.value(0) <= 0) {
                                         // Zero duration: just skip
-                                        Serial.print("OK ");
-                                        Serial.println(get_state_string());
+                                        set_reply("OK M");
                                 } else if (parser.length() < 4) {
-                                        Serial.println("ERR missing args");
+                                        set_reply("ERR missing args");
                                 }
                                 break;
                         case 'V':
                                 if (parser.length() >= 3) {
                                         block_t *block = block_buffer_get_empty();
                                         if (block == 0) {
-                                                Serial.print("RE ");
-                                                Serial.println(get_state_string());
+                                                set_reply("RE V");
                                         } else {
                                                 block->type = BLOCK_MOVEAT;
                                                 block->data[DT] = 1000;
@@ -146,11 +151,10 @@ void handle_input()
                                                 if (parser.length() == 4)
                                                         block->id = parser.value(3);
                                                 block_buffer_ready();
-                                                Serial.print("OK ");
-                                                Serial.println(get_state_string());
+                                                set_reply("OK V");
                                         }
                                 } else if (parser.length() < 3) {
-                                        Serial.println("ERR missing args");
+                                        set_reply("ERR missing args");
                                 }
                                 break;
                         case 'D':
@@ -158,16 +162,15 @@ void handle_input()
                                     && parser.value(0) > 0) {
                                         block_t *block = block_buffer_get_empty();
                                         if (block == 0) {
-                                                Serial.println("RE");
+                                                set_reply("RE D");
                                         } else {
                                                 block->type = BLOCK_DELAY;
                                                 block->data[0] = parser.value(0);
                                                 block_buffer_ready();
-                                                Serial.print("OK ");
-                                                Serial.println(block_buffer_available());
+                                                set_reply("OK D");
                                         }
                                 } else {
-                                        Serial.println("ERR bad arg");
+                                        set_reply("ERR bad arg");
                                 }
                                 break;
                         case 'T':
@@ -179,32 +182,30 @@ void handle_input()
                                                 arg = parser.value(1);
                                         block_t *block = block_buffer_get_empty();
                                         if (block == 0) {
-                                                Serial.println("RE");
+                                                set_reply("RE T");
                                         } else {
                                                 block->type = BLOCK_TRIGGER;
                                                 block->data[0] = id;
                                                 block->data[1] = arg;
                                                 block_buffer_ready();
-                                                Serial.print("OK ");
-                                                Serial.println(block_buffer_available());
+                                                set_reply("OK T");
                                         }
                                 } else {
-                                        Serial.println("ERR bad arg");
+                                        set_reply("ERR bad arg");
                                 }
                                 break;
                         case 'W':
                                 if (1) {
                                         block_t *block = block_buffer_get_empty();
                                         if (block == 0) {
-                                                Serial.println("RE");
+                                                set_reply("RE W");
                                         } else {
                                                 block->type = BLOCK_WAIT;
                                                 block_buffer_ready();
-                                                Serial.print("OK ");
-                                                Serial.println(block_buffer_available());
+                                                set_reply("OK W");
                                         }
                                 } else {
-                                        Serial.println("ERR bad arg");
+                                        set_reply("ERR bad arg");
                                 }
                                 break;
 
@@ -212,24 +213,26 @@ void handle_input()
                                 
                         case 'C':
                                 enable_stepper_timer();
-                                Serial.println("OK Cont");
+                                set_reply("OK Cont");
                                 break;
                         case 'S':
-                                send_state();
-                                break;
-                        case 'P':
-                                send_position();
+                                get_state_string();
                                 break;
                         case 'X':
-                                stepper_reset = 1;
-                                block_buffer_clear();
-                                trigger_buffer_clear();
-                                Serial.println("OK Clear");
+                                reset();
+                                set_reply("OK Clear");
+                                break;
+                        case 'Z':
+                                reset();
+                                zero();
+                                set_reply("OK Zero");
                                 break;
                         case '?':
-                                Serial.print("?[\"Oquam\",\"0.1\"]"); 
+                                set_reply("?[\"Oquam\",\"0.1\"]"); 
                                 break;
                         }
+                        
+                        Serial.println(reply_string);
                 }
         }
 }
@@ -250,7 +253,8 @@ void check_accuracy()
 
 void setup()
 {
-        Serial.begin(115200);
+        //Serial.begin(115200);
+        Serial.begin(38400);
         while (!Serial)
                 ;
 
@@ -306,19 +310,37 @@ void loop()
                         }
                         last_time = time;
                 }
+        }
 
-                if (time - last_print_time > 50) {
+        if (0) {
+                unsigned long time = millis();
+                if (block_id >= 0 && time - last_print_time > 50) {
                         Serial.print(block_id);
                         Serial.print(":");
                         Serial.print(milliseconds);
                         Serial.print(":");
                         Serial.print(interrupts);
                         Serial.print(":");
-                        Serial.print(block_buffer_readpos());
-                        Serial.print(":");
-                        Serial.print(block_buffer_writepos());
+                        Serial.print(stepper_position[0]);
+                        Serial.print(",");
+                        Serial.print(stepper_position[1]);
+                        Serial.print(",");
+                        Serial.print(stepper_position[2]);
                         Serial.println();
                         last_print_time = time;
+                }
+        }
+
+        if (0) {
+                unsigned long time = millis();
+                if (time - last_time > 100) {
+                        last_time = time;
+                        if (reached_x_limit())
+                                Serial.println("x");
+                        if (reached_y_limit())
+                                Serial.println("y");
+                        // if (reached_z_limit())
+                        //         Serial.println("z");
                 }
         }
 }

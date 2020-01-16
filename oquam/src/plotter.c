@@ -131,10 +131,27 @@ static void print_rect(svg_t *svg, double x, double y, double w, double h)
         membuf_printf(svg->buffer,
                       "      <rect x=\"%f\" y=\"%f\" width=\"%f\" height=\"%f\" "
                       "style=\"fill:none;stroke:#cecece;"
-                      "stroke-width:0.001;stroke-linecap:butt;"
+                      "stroke-width:0.002;stroke-linecap:butt;"
                       "stroke-linejoin:miter;stroke-miterlimit:4;"
                       "stroke-opacity:1;stroke-dasharray:none\" />\n",
                       x, y, w, h);
+}
+
+static void print_text(svg_t *svg, const char *s, double x, double y)
+{
+        membuf_printf(svg->buffer,
+                      "      <g transform=\"matrix(1,0,0,-1,0,%f)\" >"
+                      "<text x=\"%f\" y=\"%f\" "
+                      "style=\"font-weight:300;"
+                      "font-size:0.03px;"
+                      "font-family:'serif';"
+                      "font-style:italic;"
+                      "fill:#000000;"
+                      "text-anchor:end;"
+                      "text-align:end;"
+                      "fill-opacity:1;\" >"
+                      "%s</text></g>\n",
+                      2 * y, x, y, s);
 }
 
 static void print_atdc_ij(svg_t *svg, atdc_t *path,
@@ -547,78 +564,96 @@ static void print_axes(svg_t *svg)
         
         // xy
         print_rect(svg, svg->xy.x, svg->xy.y, svg->xy.w, svg->xy.h);
+        print_text(svg, "x", svg->xy.x + svg->xy.w / 2, svg->xy.y - 0.3 * svg->d);
+        print_text(svg, "y", svg->xy.x - 0.15 * svg->d, svg->xy.y + svg->xy.h / 2);
 
         // xz
         print_rect(svg, svg->xz.x, svg->xz.y, svg->xz.w, svg->xz.h);
+        print_text(svg, "x", svg->xz.x + svg->xz.w / 2, svg->xz.y - 0.3 * svg->d);
+        print_text(svg, "z", svg->xz.x - 0.15 * svg->d, svg->xz.y + svg->xz.h / 2);
 
         // yz
         print_rect(svg, svg->yz.x, svg->yz.y, svg->yz.w, svg->yz.h);
+        print_text(svg, "y", svg->yz.x + svg->yz.w / 2, svg->yz.y - 0.3 * svg->d);
+        print_text(svg, "z", svg->yz.x - 0.15 * svg->d, svg->yz.y + svg->yz.h / 2);
 
         // vx
         print_line(svg,
                    svg->v[0].x, svg->v[0].y,
                    svg->v[0].x + svg->v[0].w, svg->v[0].y,
-                   "#000000");
+                   "#cecece");
         
         print_line(svg,
                    svg->v[0].x, svg->v[0].y - svg->v[0].h,
                    svg->v[0].x, svg->v[0].y + svg->v[0].h,
-                   "#000000");
+                   "#cecece");
+
+        print_text(svg, "vx", svg->v[0].x - 0.15 * svg->d, svg->v[0].y);
         
         // vy
         print_line(svg,
                    svg->v[1].x, svg->v[1].y,
                    svg->v[1].x + svg->v[1].w, svg->v[1].y,
-                   "#000000");
+                   "#cecece");
         
         print_line(svg,
                    svg->v[1].x, svg->v[1].y - svg->v[1].h,
                    svg->v[1].x, svg->v[1].y + svg->v[1].h,
-                   "#000000");
+                   "#cecece");
+        
+        print_text(svg, "vy", svg->v[1].x - 0.15 * svg->d, svg->v[1].y);
         
         // vz
         print_line(svg,
                    svg->v[2].x, svg->v[2].y,
                    svg->v[2].x + svg->v[2].w, svg->v[2].y,
-                   "#000000");
+                   "#cecece");
         
         print_line(svg,
                    svg->v[2].x, svg->v[2].y - svg->v[2].h,
                    svg->v[2].x, svg->v[2].y + svg->v[2].h,
-                   "#000000");
+                   "#cecece");
 
+        print_text(svg, "vz", svg->v[2].x - 0.15 * svg->d, svg->v[2].y);
+        
         // ax
         print_line(svg,
                    svg->a[0].x, svg->a[0].y,
                    svg->a[0].x + svg->a[0].w, svg->a[0].y,
-                   "#000000");
+                   "#cecece");
         
         print_line(svg,
                    svg->a[0].x, svg->a[0].y - svg->a[0].h,
                    svg->a[0].x, svg->a[0].y + svg->a[0].h,
-                   "#000000");
+                   "#cecece");
+        
+        print_text(svg, "ax", svg->a[0].x - 0.15 * svg->d, svg->a[0].y);
         
         // ay
         print_line(svg,
                    svg->a[1].x, svg->a[1].y,
                    svg->a[1].x + svg->a[1].w, svg->a[1].y,
-                   "#000000");
+                   "#cecece");
         
         print_line(svg,
                    svg->a[1].x, svg->a[1].y - svg->a[1].h,
                    svg->a[1].x, svg->a[1].y + svg->a[1].h,
-                   "#000000");
+                   "#cecece");
+        
+        print_text(svg, "ay", svg->a[1].x - 0.15 * svg->d, svg->a[1].y);
         
         // az
         print_line(svg,
                    svg->a[2].x, svg->a[2].y,
                    svg->a[2].x + svg->a[2].w, svg->a[2].y,
-                   "#000000");
+                   "#cecece");
         
         print_line(svg,
                    svg->a[2].x, svg->a[2].y - svg->a[2].h,
                    svg->a[2].x, svg->a[2].y + svg->a[2].h,
-                   "#000000");
+                   "#cecece");
+        
+        print_text(svg, "az", svg->a[2].x - 0.15 * svg->d, svg->a[2].y);
         
         membuf_printf(svg->buffer, "    </g>\n");
 }

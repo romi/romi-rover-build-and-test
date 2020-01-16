@@ -8,6 +8,14 @@ double norm(double *v)
        return sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
+double *vabs(double *r, double *a)
+{
+        r[0] = fabs(a[0]);
+        r[1] = fabs(a[1]);
+        r[2] = fabs(a[2]);
+        return r;
+}
+
 double *vcopy(double *r, double *a)
 {
         r[0] = a[0];

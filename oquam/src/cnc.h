@@ -3,6 +3,7 @@
 #define _OQUAM_CNC_H_
 
 #include <stdint.h>
+#include "controller.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,8 +12,9 @@ extern "C" {
 typedef struct _cnc_t cnc_t;
 typedef void (*cnc_callback_t)(void *userdata, cnc_t *cnc, int16_t arg);
 
-cnc_t *new_cnc();
+cnc_t *new_cnc(controller_t *controller);
 void delete_cnc(cnc_t *cnc);
+
 
 int cnc_begin_script(cnc_t *cnc, double d);
 
@@ -44,16 +46,44 @@ int cnc_trigger(cnc_t *cnc, cnc_callback_t cb, void *userdata, int arg);
  */
 int cnc_wait(cnc_t *cnc);
 
+int cnc_end_script(cnc_t *cnc);
+
+int cnc_run_script(cnc_t *cnc, int async);
+
+int cnc_plot_script(cnc_t *cnc, const char *filepath);
+
+
 /**
  * \brief Resume the execution.
  */
 int cnc_continue(cnc_t *cnc);
 
-int cnc_end_script(cnc_t *cnc);
-int cnc_plot_script(cnc_t *cnc, const char *filepath);
-int cnc_run_script(cnc_t *cnc, int async);
-
 int cnc_get_position(cnc_t *cnc, double *p);
+
+/**
+ * \brief Directly move to a given position in a straight line.
+ *
+ * This function is provided for convenience. It is equivalent to the
+ * following code:
+ *
+ *      cnc_begin_script(cnc, 0.0);
+ *      cnc_move(cnc, x, y, z, v);
+ *      cnc_end_script(cnc);
+ *      cnc_run_script(cnc, 0);
+ *
+ * The CNC will move in a straight line taking into the maximum
+ * acceleration/deceleration. It will come to a standstill at the end
+ * of the traveling.
+ *
+ */
+int cnc_moveto(cnc_t *cnc, double x, double y, double z, double v);
+
+
+/**
+ * \brief Instantly move at a given speed.
+ *
+ */
+int cnc_moveat(cnc_t *cnc, double vx, double vy, double vz);
 
 #ifdef __cplusplus
 }
