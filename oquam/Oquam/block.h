@@ -40,6 +40,7 @@
 enum {
         BLOCK_WAIT = 0,
         BLOCK_MOVE,
+        BLOCK_MOVETO,
         BLOCK_MOVEAT,
         BLOCK_DELAY,
         BLOCK_TRIGGER

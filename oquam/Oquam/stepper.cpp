@@ -33,6 +33,7 @@
 
 volatile int32_t stepper_position[3];
 volatile int32_t accumulation_error[3];
+volatile int32_t delta[3];
 volatile int32_t dt;
 volatile int16_t step_dir[3];
 volatile uint8_t thread_state;
@@ -252,6 +253,7 @@ ISR(TIMER1_COMPA_vect)
                 milliseconds = 0;
                 
                 if (current_block->type == BLOCK_MOVE
+                    || current_block->type == BLOCK_MOVETO
                     || current_block->type == BLOCK_MOVEAT) {
 
                         /* Sanity check */
@@ -270,28 +272,60 @@ ISR(TIMER1_COMPA_vect)
                         step_dir[1] = 1;
                         step_dir[2] = 1;
                         
-                        if (current_block->data[DX] < 0) {
+                        delta[0] = (int32_t) current_block->data[DX];
+                        delta[1] = (int32_t) current_block->data[DY];
+                        delta[2] = (int32_t) current_block->data[DZ];
+
+                        /* For moveto events, substract the current
+                         * position of the CNCN. */
+                        if (current_block->type == BLOCK_MOVETO) {
+                                delta[0] -= stepper_position[0];
+                                delta[1] -= stepper_position[1];
+                                delta[2] -= stepper_position[2];
+                        }
+
+                        /* Check the directions */
+                        if (delta[0] < 0) {
                                 toggle_dir(dir, X_DIRECTION_BIT);
-                                current_block->data[DX] = -current_block->data[DX];
+                                delta[0] = -delta[0];
                                 step_dir[0] = -1;
                         }
-                        if (current_block->data[DY] < 0) {
+                        if (delta[1] < 0) {
                                 toggle_dir(dir, Y_DIRECTION_BIT);
-                                current_block->data[DY] = -current_block->data[DY];
+                                delta[1] = -delta[1];
                                 step_dir[1] = -1;
                         }
-                        if (current_block->data[DZ] < 0) {
+                        if (delta[2] < 0) {
                                 toggle_dir(dir, Z_DIRECTION_BIT);
-                                current_block->data[DZ] = -current_block->data[DZ];
+                                delta[2] = -delta[2];
                                 step_dir[2] = -1;
                         }
 
                         /* Set the direction output pins */
-                        //Serial.println(dir);
                         set_dir_pins(dir);
+
+                        /* For a moveto, compute the duration of the
+                         * movement (in ms), based on the requested
+                         * speed given in current_block->data[DT] (in
+                         * steps/s).
+                         * 
+                         * T = 1000 ms/s x n steps / V steps/s
+                         */
+                        if (current_block->type == BLOCK_MOVETO) {
+                                int32_t n = delta[0];
+                                if (delta[1] > n)
+                                        n = delta[1];
+                                if (delta[2] > n)
+                                        n = delta[2];
+                                int32_t T = 1000 * n / (int32_t) current_block->data[DT];
+                                
+                                // Replace the speed value in the
+                                // current block by the computed
+                                // duration.
+                                current_block->data[DT] = (int16_t) T;
+                        }
                         
-                        
-                        /* The number of time steps during which the
+                        /* The number of interrupts during which the
                          * stepper positions are updated is equal to
                          * the length of the segment in milliseconds
                          * times the number of interrupts per
@@ -300,9 +334,9 @@ ISR(TIMER1_COMPA_vect)
                         
                         /* Initialize the accumulation error for the
                          * Bresenham algorithm. */
-                        accumulation_error[0] = (int32_t) current_block->data[DX] - dt / 2;
-                        accumulation_error[1] = (int32_t) current_block->data[DY] - dt / 2;
-                        accumulation_error[2] = (int32_t) current_block->data[DZ] - dt / 2;
+                        accumulation_error[0] = delta[0] - dt / 2;
+                        accumulation_error[1] = delta[1] - dt / 2;
+                        accumulation_error[2] = delta[2] - dt / 2;
                         
                 } else if (current_block->type == BLOCK_DELAY) {
                         /* Sanity check */
@@ -332,6 +366,7 @@ ISR(TIMER1_COMPA_vect)
          * (https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm).
          */
         if (current_block->type == BLOCK_MOVE
+            || current_block->type == BLOCK_MOVETO
             || current_block->type == BLOCK_MOVEAT) {
                 
                 uint8_t pins = 0;
@@ -342,7 +377,7 @@ ISR(TIMER1_COMPA_vect)
                         stepper_position[0] += step_dir[0];
                         accumulation_error[0] -= dt;
                 }
-                accumulation_error[0] += current_block->data[DX];
+                accumulation_error[0] += delta[0];
 
                 // Y-axis
                 if (accumulation_error[1] > 0) {
@@ -350,7 +385,7 @@ ISR(TIMER1_COMPA_vect)
                         stepper_position[1] += step_dir[1];
                         accumulation_error[1] -= dt;
                 }
-                accumulation_error[1] += current_block->data[DY];
+                accumulation_error[1] += delta[1];
 
                 // Z-axis
                 if (accumulation_error[2] > 0) {
@@ -358,7 +393,7 @@ ISR(TIMER1_COMPA_vect)
                         stepper_position[2] += step_dir[2];
                         accumulation_error[2] -= dt;
                 }
-                accumulation_error[2] += current_block->data[DZ];
+                accumulation_error[2] += delta[2];
 
                 // Raise the STEP pins, if needed, and schedule a
                 // reset pins event.
@@ -369,6 +404,8 @@ ISR(TIMER1_COMPA_vect)
 
                 // Check whether we have to move to the next block
                 if ((current_block->type == BLOCK_MOVE 
+                     && milliseconds >= current_block->data[DT])
+                    || (current_block->type == BLOCK_MOVETO 
                      && milliseconds >= current_block->data[DT])
                     || (current_block->type == BLOCK_MOVEAT
                         && block_buffer_available() > 0)) {

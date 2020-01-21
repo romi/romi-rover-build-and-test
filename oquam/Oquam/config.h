@@ -32,8 +32,8 @@ RAMPS             Mega 2560
 
 */
 
-#define USE_GSHIELD 0
-#define USE_EXT_CONTROLLER 1
+#define USE_GSHIELD 1
+#define USE_EXT_CONTROLLER 0
 
 #if USE_GSHIELD
 #include "gshield.h"

@@ -47,7 +47,7 @@ extern volatile int8_t stepper_reset;
 
 uint8_t controller_state;
 uint8_t error_number;
-Parser parser("MDTV", "?SCWXZ");
+Parser parser("mMDTV", "?SCWXZ");
 
 // DEBUG
 extern int32_t accumulation_error[3];
@@ -128,10 +128,37 @@ void handle_input()
                                 set_reply("ERR Unknown command");
                                 break;
                                 
-                                /* First handle the commands 'M', 'V',
-                                 * 'D, 'T', 'W' to create a new block.
+                                /* First handle the commands 'm', 'M',
+                                 * 'V', 'D, 'T', 'W' to create a new
+                                 * block.
                                  */
                                 
+                        case 'm':
+                                if (parser.length() >= 4
+                                    && parser.value(0) > 0) {
+                                        block_t *block = block_buffer_get_empty();
+                                        if (block == 0) {
+                                                set_reply("RE m");
+                                        } else {
+                                                block->type = BLOCK_MOVETO;
+                                                block->data[DT] = parser.value(0);
+                                                block->data[DX] = parser.value(1);
+                                                block->data[DY] = parser.value(2);
+                                                block->data[DZ] = parser.value(3);
+                                                if (parser.length() == 5)
+                                                        block->id = parser.value(4);
+                                                block_buffer_ready();
+
+                                                snprintf(reply_string, sizeof(reply_string),
+                                                         "OK m");
+                                                
+                                        }
+                                } else if (parser.value(0) <= 0) {
+                                        set_reply("ERR invalid speed");
+                                } else if (parser.length() < 4) {
+                                        set_reply("ERR missing args");
+                                }
+                                break;
                         case 'M':
                                 if (parser.length() >= 4
                                     && parser.value(0) > 0) {
@@ -148,10 +175,8 @@ void handle_input()
                                                         block->id = parser.value(4);
                                                 block_buffer_ready();
 
-                                                snprintf(reply_string, sizeof(reply_string), "OK M[%d,%d,%d,%d,%d]", 
-                                                         block->data[DT], block->data[DX], block->data[DY],
-                                                         block->data[DZ], block->id);
-                                                
+                                                snprintf(reply_string, sizeof(reply_string),
+                                                         "OK M");
                                         }
                                 } else if (parser.value(0) <= 0) {
                                         // Zero duration: just skip
