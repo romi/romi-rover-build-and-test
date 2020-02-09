@@ -24,9 +24,7 @@
 #include <r.h>
 #include <float.h>
 #include "v.h"
-#include "planner.h"
-#include "plotter.h"
-
+#include "script_priv.h"
 
 /**************************************************************************/
 
@@ -67,7 +65,7 @@ section_t *new_section()
 static section_t *new_section_init(double t, double at,
                                    double *p0, double *p1,
                                    double *v0, double *v1,
-                                   double *a)
+                                   double *a, int id)
 {
         section_t *section = new_section();
         if (section == NULL)
@@ -81,6 +79,7 @@ static section_t *new_section_init(double t, double at,
         vcopy(section->v1, v1);
         vcopy(section->a, a);
         vsub(section->d, section->p1, section->p0);
+        section->id = id;
         
         return section;
 }
@@ -97,7 +96,7 @@ void delete_section(section_t *section)
         }
 }
 
-static list_t *section_slice(section_t *section, double period, double maxlen)
+static list_t *section_slice(section_t *section, double period, double maxlen, int id)
 {
         list_t *slices = NULL;
         double tmp[3];        
@@ -137,7 +136,7 @@ static list_t *section_slice(section_t *section, double period, double maxlen)
                 
                 section_t *s = new_section_init(dt, section->at + t,
                                                 p0, p1, v0, v1,
-                                                section->a);
+                                                section->a, id);
                 if (s == NULL) {
                         delete_section_list(slices);
                         return NULL;
@@ -153,9 +152,9 @@ static list_t *section_slice(section_t *section, double period, double maxlen)
         return slices;
 }
 
-static void section_print(section_t *section, const char *prefix)
+void section_print(section_t *section, const char *prefix, int id)
 {
-        printf("%s: ", prefix);
+        printf("%s[%d]: ", prefix, id);
         printf("p0(%0.3f,%0.3f,%0.3f)-p1(%0.3f,%0.3f,%0.3f); ",
                section->p0[0], section->p0[1], section->p0[2],
                section->p1[0], section->p1[1], section->p1[2]);
@@ -169,8 +168,6 @@ static void section_print(section_t *section, const char *prefix)
 
 /**************************************************************************/
 
-void delete_segment(segment_t *segment);
-
 segment_t *new_segment()
 {
         segment_t *segment = r_new(segment_t);
@@ -182,37 +179,25 @@ segment_t *new_segment()
 void delete_segment(segment_t *segment)
 {
         if (segment) {
-                for (list_t *l = segment->actions; l; l = list_next(l)) {
+                for (list_t *l = segment->section.actions; l; l = list_next(l)) {
                         action_t *a = list_get(l, action_t);
                         delete_action(a);
                 }
-                delete_list(segment->actions);
+                delete_list(segment->section.actions);
                 r_delete(segment);
         }
 }
 
-static void segments_delete(segment_t *path)
+void segments_print(segment_t *segment)
 {
-        segment_t *s = path;
+        segment_t *s = segment;
         while (s != NULL) {
-                segment_t *next = s->next;
-                delete_segment(s);
-                s = next;
+                section_print(&s->section, "S", s->section.id);
+                s = s->next;
         }
-}
-
-static void segment_list_delete(list_t *paths)
-{
-        for (list_t *l = paths; l != NULL; l = list_next(l)) {
-                segment_t *path = list_get(l, segment_t);
-                segments_delete(path);
-        }
-        delete_list(paths);
 }
 
 /**************************************************************************/
-
-void delete_atdc(atdc_t *atdc);
 
 atdc_t *new_atdc()
 {
@@ -239,7 +224,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         list_t *list = NULL;
         
         if (atdc->accelerate.t > 0) {
-                list_t *slices = section_slice(&atdc->accelerate, period, maxlen);
+                list_t *slices = section_slice(&atdc->accelerate, period, maxlen, atdc->id);
                 if (slices == NULL) {
                         delete_section_list(list);
                         return NULL;
@@ -248,7 +233,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         }
         
         if (atdc->travel.t > 0) {
-                list_t *slices = section_slice(&atdc->travel, period, maxlen);
+                list_t *slices = section_slice(&atdc->travel, period, maxlen, atdc->id);
                 if (slices == NULL) {
                         delete_section_list(list);
                         return NULL;
@@ -257,7 +242,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         }
         
         if (atdc->decelerate.t > 0) {
-                list_t *slices = section_slice(&atdc->decelerate, period, maxlen);
+                list_t *slices = section_slice(&atdc->decelerate, period, maxlen, atdc->id);
                 if (slices == NULL) {
                         delete_section_list(list);
                         return NULL;
@@ -266,7 +251,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         }
         
         if (atdc->curve.t > 0) {
-                list_t *slices = section_slice(&atdc->curve, period, maxlen);
+                list_t *slices = section_slice(&atdc->curve, period, maxlen, atdc->id);
                 if (slices == NULL) {
                         delete_section_list(list);
                         return NULL;
@@ -275,7 +260,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         }
 
         if (atdc->actions != NULL) {
-                // Add an empty section with only actions
+                // FIXME: Add an empty section with only actions
                 section_t *section = new_section();
                 if (section == NULL)
                         return NULL;
@@ -309,76 +294,31 @@ static list_t *atdc_list_slice(atdc_t *atdc_list, double period, double maxlen)
         return list;
 }
 
-static void atdc_print(atdc_t *atdc)
+void segment_print(segment_t *segment)
+{
+        segment_t *s = segment;
+        while (s != NULL) {
+                section_print(&s->section, "S", s->section.id);
+                printf("\n");
+                s = s->next;
+        }
+}
+
+void atdc_print(atdc_t *atdc)
 {
         atdc_t *s = atdc;
         while (s != NULL) {
-                section_print(&s->accelerate, "A");
-                section_print(&s->travel, "T");
-                section_print(&s->decelerate, "D");
-                section_print(&s->curve, "C");
+                section_print(&s->accelerate, "A", s->id);
+                section_print(&s->travel, "T", s->id);
+                section_print(&s->decelerate, "D", s->id);
+                section_print(&s->curve, "C", s->id);
                 s = s->next;
                 if (s)
                         printf("-\n");
         }
 }
 
-static void atdc_delete(atdc_t *atdc)
-{
-        atdc_t *s = atdc;
-        while (s != NULL) {
-                atdc_t *next = s->next;
-                delete_atdc(s);
-                s = next;
-        }
-}
-
-static void atdc_list_delete(list_t *atdc_list)
-{
-        for (list_t *l = atdc_list; l != NULL; l = list_next(l)) {
-                atdc_t *atdc = list_get(l, atdc_t);
-                atdc_delete(atdc);
-        }
-        delete_list(atdc_list);
-}
-
 /**************************************************************************/
-
-struct _planner_t {
-        cnc_t *cnc;
-        controller_t *controller;
-
-        list_t *segments;
-        list_t *atdc_list;
-};
-
-static int planner_convert_script(planner_t *planner, script_t *script);
-
-planner_t *new_planner(cnc_t *cnc, controller_t *controller, script_t *script)
-{
-        planner_t *planner = r_new(planner_t);
-        if (planner == NULL)
-                return NULL;
-
-        planner->cnc = cnc;
-        planner->controller = controller;
-
-        if (planner_convert_script(planner, script) != 0) {
-                delete_planner(planner);
-                return NULL;
-        }
-        
-        return planner;
-}
-
-void delete_planner(planner_t *planner)
-{
-        if (planner) {
-                segment_list_delete(planner->segments);
-                atdc_list_delete(planner->atdc_list);
-                r_delete(planner);
-        }
-}
 
 static void segment_compute_curve(segment_t *s0, atdc_t *t0, double d, double *amax)
 {
@@ -456,7 +396,7 @@ static void segment_compute_curve(segment_t *s0, atdc_t *t0, double d, double *a
         vsub(ey, w0, w1);
         smul(ey, ey, 0.5);        
         double wy0 = norm(ey);
-        smul(ey, ey, -1/wy0);
+        smul(ey, ey, -1 / wy0);
 
 
         /* Compute the maximum allowed acceleration in the direction
@@ -669,8 +609,7 @@ static void segment_compute_curve(segment_t *s0, atdc_t *t0, double d, double *a
         t0->curve.t = fabs(2.0 * wy0 / am);                      // t
 }
 
-static void segment_compute_accelerations(segment_t *s0, atdc_t *t0,
-                                          double *amax, double at)
+static void segment_compute_accelerations(atdc_t *t0, double *v, double *amax, double at)
 {
         double dv[3];
         double dt[3];
@@ -678,15 +617,13 @@ static void segment_compute_accelerations(segment_t *s0, atdc_t *t0,
         double a[3];
         double tmp[3];
         
-        double v = norm(s0->section.v0);
-
         vsub(dx, t0->curve.p0, t0->accelerate.p0);
         double len = norm(dx);
 
         /* Accelerate */
         
         // p0 and v0 are already set
-        vsub(dv, s0->section.v0, t0->accelerate.v0);
+        vsub(dv, v, t0->accelerate.v0);
         vdiv(dt, dv, amax);
         vabs(dt, dt);
         t0->accelerate.t = vmax(dt);                             // t
@@ -697,7 +634,7 @@ static void segment_compute_accelerations(segment_t *s0, atdc_t *t0,
                 vcopy(t0->accelerate.p1, t0->accelerate.p0);     // p1
         } else {
                 sdiv(t0->accelerate.a, dv, t0->accelerate.t);    // a
-                vcopy(t0->accelerate.v1, s0->section.v0);        // v1
+                vcopy(t0->accelerate.v1, v);                     // v1
                 smul(dx, t0->accelerate.v0, t0->accelerate.t);
                 smul(tmp, t0->accelerate.a, 0.5 * t0->accelerate.t * t0->accelerate.t);
                 vadd(dx, dx, tmp);
@@ -709,7 +646,7 @@ static void segment_compute_accelerations(segment_t *s0, atdc_t *t0,
 
         /* Decelerate */
         
-        vcopy(t0->decelerate.v0, s0->section.v0);                // v0
+        vcopy(t0->decelerate.v0, v);                             // v0
         vcopy(t0->decelerate.p1, t0->curve.p0);                  // p1
         vcopy(t0->decelerate.v1, t0->curve.v0);                  // v1
         vsub(dv, t0->decelerate.v0, t0->decelerate.v1);
@@ -722,7 +659,7 @@ static void segment_compute_accelerations(segment_t *s0, atdc_t *t0,
                 vzero(t0->decelerate.d);                         // d
                 vcopy(t0->decelerate.p0, t0->decelerate.p1);     // p0
         } else {
-                sdiv(t0->decelerate.a, dv, -t0->decelerate.t);    // a
+                sdiv(t0->decelerate.a, dv, -t0->decelerate.t);   // a
                 smul(dx, t0->decelerate.v0, t0->decelerate.t);
                 smul(tmp, t0->decelerate.a, 0.5 * t0->decelerate.t * t0->decelerate.t);
                 vadd(dx, dx, tmp);
@@ -735,52 +672,57 @@ static void segment_compute_accelerations(segment_t *s0, atdc_t *t0,
         /* Travel at constant speed for the remaining lenght */
         if (len_a + len_d < len) {
                 double len_t = len - len_a - len_d;
-                t0->travel.t = len_t / v;                          // t
+                double vn = norm(v);
+                t0->travel.t = len_t / vn;                         // t
                 vcopy(t0->travel.p0, t0->accelerate.p1);           // p0
                 vcopy(t0->travel.p1, t0->decelerate.p0);           // p1
-                vcopy(t0->travel.v0, s0->section.v0);              // v0
-                vcopy(t0->travel.v1, s0->section.v0);              // v1
+                vcopy(t0->travel.v0, v);                           // v0
+                vcopy(t0->travel.v1, v);                           // v1
                 vzero(t0->travel.a);                               // a
                 vsub(t0->travel.d, t0->travel.p1, t0->travel.p0);  // d
                 
         } else {
-                // Update the accelerate and decelerate sections
-                double v1 = norm(t0->curve.v0);
 
-                /* The time it takes to slow down from v0 to v1 */
-                vsub(dv, t0->accelerate.v0, t0->curve.v0);
+                /* There isn't enough space to accelerate to the
+                 * maximum speed and decelerate again. In this case,
+                 * we use a simpler strategy: instead of the
+                 * accelerate-travel-decelarate combo, we apply a
+                 * constant acceleration to change the speed from the
+                 * start and end value. */
+
+                r_debug("** constant acceleration from start to end **");
+
+                if (t0->id == 36) {
+                        double dummy = fabs(0.0); 
+                }
+                
+                vsub(dv, t0->curve.v0, t0->accelerate.v0);
                 vdiv(dt, dv, amax);
-                double dt1 = vmax(dt);
-                sdiv(a, dv, dt1);
-                
-                /* The distance travelled during that time */
-                smul(dx, t0->accelerate.v0, dt1);
-                smul(tmp, a, -0.5 * dt1 * dt1);
-                vadd(dx, dx, tmp);
-                len_d = norm(dx);
+                vabs(dt, dt);
+                double t = vmax(dt);
+                sdiv(a, dv, t);
 
-                /* Set the acceleration to zero */
-                
-                /* NOTE: It is possible to accelerate for a short
-                 * distance and decelerate early. However, it is
-                 * simpler, and perhaps better for the motors, just to
-                 * move at constant speed. */
-                t0->accelerate.t = 0.0;                       // t
-                vcopy(t0->accelerate.p1, t0->accelerate.p0);  // p1
-                vcopy(t0->accelerate.v1, t0->accelerate.v0);  // v1
-                vzero(t0->accelerate.a);                      // a
-                vzero(t0->accelerate.d);                      // d
-
-                // Travel the remaning length
-                double v0 = norm(t0->accelerate.v0);
-                double len_t = len - len_d;
-                t0->travel.t = len_t / v0;                     // t
-                vcopy(t0->travel.p0, t0->accelerate.p1);       // p0
-                vcopy(t0->travel.p1, t0->decelerate.p0);       // p1
-                vcopy(t0->travel.v0, t0->accelerate.v0);       // v0
-                vcopy(t0->travel.v1, t0->accelerate.v0);       // v1
-                vzero(t0->travel.a);                           // a
-                vsub(t0->travel.d, t0->travel.p1, t0->travel.p0);  // d
+                t0->accelerate.t = t;                        // t
+                vcopy(t0->accelerate.a, a);                  // a
+                vcopy(t0->accelerate.p1, t0->curve.p0);      // p1
+                vsub(t0->accelerate.d, t0->accelerate.p1, t0->accelerate.p0); // d
+                vcopy(t0->accelerate.v1, t0->curve.v0);      // v1
+                                                
+                t0->travel.t = 0;                            // t
+                vzero(t0->travel.a);                         // a
+                vzero(t0->travel.d);                         // d
+                vcopy(t0->travel.p0, t0->accelerate.p1);     // p0
+                vcopy(t0->travel.p1, t0->accelerate.p1);     // p1
+                vcopy(t0->travel.v0, t0->curve.v0);          // v0
+                vcopy(t0->travel.v1, t0->curve.v0);          // v1
+                        
+                t0->decelerate.t = 0;                        // t
+                vzero(t0->decelerate.a);                     // a
+                vzero(t0->decelerate.d);                     // d
+                vcopy(t0->decelerate.p0, t0->accelerate.p1); // p0
+                vcopy(t0->decelerate.p1, t0->accelerate.p1); // p1
+                vcopy(t0->decelerate.v0, t0->curve.v0);      // v0
+                vcopy(t0->decelerate.v1, t0->curve.v0);      // v1
         }
 
         t0->accelerate.at = at;             
@@ -929,7 +871,7 @@ static void compute_accelerations(segment_t *path, atdc_t *atdc, double *amax)
         double at = 0.0;
         
         while (s0) {
-                segment_compute_accelerations(s0, t0, amax, at);
+                segment_compute_accelerations(t0, s0->section.v0, amax, at);
                 at = t0->curve.at + t0->curve.t;
                 s0 = s0->next;
                 t0 = t0->next;
@@ -959,8 +901,10 @@ static atdc_t *copy_segments_to_atdc(segment_t *path)
                 }
                 prev = atdc;
                 
+                atdc->id = segment->section.id;
+                
                 // Clone the list of actions
-                for (list_t *l = segment->actions; l; l = list_next(l)) {
+                for (list_t *l = segment->section.actions; l; l = list_next(l)) {
                         action_t *a = list_get(l, action_t);
                         atdc->actions = list_append(atdc->actions, action_clone(a));
                 }
@@ -976,15 +920,15 @@ static atdc_t *segments_to_atdc(segment_t *path, double d, double *vmax, double 
 
         compute_curves_and_speeds(path, atdc, d, amax);
                 
-        /* printf("Curves and speed:\n"); */
-        /* atdc_print(atdc); */
-        /* printf("\n\n"); */
+        printf("Curves and speed:\n");
+        atdc_print(atdc);
+        printf("\n\n");
         
         compute_accelerations(path, atdc, amax);
                 
-        /* printf("Accelerations:\n"); */
-        /* atdc_print(atdc); */
-        /* printf("\n\n"); */
+        printf("Accelerations:\n");
+        atdc_print(atdc);
+        printf("\n\n");
 
         return atdc;
 }
@@ -1003,7 +947,7 @@ static list_t *segment_list_to_atdc_list(list_t *paths, double d, double *vmax, 
 
 static list_t *script_to_segment_list(script_t *script, double *pos)
 {
-        list_t *actions = script_actions(script);
+        list_t *actions = script->actions;
         list_t *paths = NULL;
         segment_t *prev = NULL;
         segment_t *last = NULL;
@@ -1016,7 +960,7 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
 
                         /* If the displacement is less then 0.05 mm, skip it. */
                         double d[3];
-                        vsub(d, action->p, pos); 
+                        vsub(d, action->data.move.p, pos); 
                         if (norm(d) < 0.00005) {
                                 actions = list_next(actions);
                                 continue;
@@ -1035,10 +979,12 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                         
                         prev = segment;
                         last = segment;
-                        
+
+                        segment->section.id = action->data.move.id; 
+
                         // p0 and p1
                         vcopy(segment->section.p0, pos); 
-                        vcopy(segment->section.p1, action->p); 
+                        vcopy(segment->section.p1, action->data.move.p); 
 
                         // d
                         vsub(segment->section.d,
@@ -1048,14 +994,14 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                         // v0 and v1
                         double len = norm(segment->section.d);
                         normalize(segment->section.v0, segment->section.d);
-                        smul(segment->section.v0, segment->section.v0, action->v);
+                        smul(segment->section.v0, segment->section.v0, action->data.move.v);
                         vcopy(segment->section.v1, segment->section.v0);
                         
                         // a
                         vzero(segment->section.a);
 
                         // update current position
-                        vcopy(pos, action->p); 
+                        vcopy(pos, action->data.move.p); 
                         
                 } else {
 
@@ -1069,8 +1015,8 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                         }
 
                         // Execute the action to the end of the current segment
-                        last->actions = list_append(last->actions,
-                                                    action_clone(action));
+                        last->section.actions = list_append(last->section.actions,
+                                                            action_clone(action));
 
                         if (action->type == ACTION_DELAY
                            || action->type == ACTION_WAIT)
@@ -1086,50 +1032,255 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
 
 /******************************************************************/
 
-list_t *planner_slice(planner_t *planner, double period, double maxlen)
-{
-        list_t *list = NULL;
-        for (list_t *l = planner->atdc_list; l != NULL; l = list_next(l)) {
-                atdc_t *atdc = list_get(l, atdc_t);
-                list_t *slices = atdc_list_slice(atdc, period, maxlen);
-                if (slices == NULL) {
-                        delete_section_list(list);
-                        return NULL;
-                }
-                list = list_concat(list, slices);
-        }
-        return list;
-}
-
-static int planner_convert_script(planner_t *planner, script_t *script)
+int planner_convert_script(script_t *script, double *position,
+                           double *vmax, double *amax, double deviation)
 {
         int err = 0;
         double pos[3];
         
-        if (controller_position(planner->controller, pos) != 0)
-                return -1;
+        /* if (controller_position(controller, pos) != 0) */
+        /*         return -1; */
 
-        planner->segments = script_to_segment_list(script, pos);
-        if (planner->segments == NULL)
+        vcopy(pos, position);
+        
+        script->segments = script_to_segment_list(script, pos);
+        if (script->segments == NULL)
                 return -1;
         
-        planner->atdc_list = segment_list_to_atdc_list(planner->segments,
-                                                       script_deviation(script),
-                                                       planner->controller->vmax,
-                                                       planner->controller->amax);
-        if (planner->atdc_list == NULL)
+        script->atdc_list = segment_list_to_atdc_list(script->segments, deviation, vmax, amax);
+        if (script->atdc_list == NULL)
                 return -1;
         
         return 0;
 }
 
-list_t *planner_get_segments_list(planner_t *planner)
+int planner_slice(script_t *script, double period, double maxlen)
 {
-        return planner->segments;
+        list_t *list = NULL;
+        for (list_t *l = script->atdc_list; l != NULL; l = list_next(l)) {
+                atdc_t *atdc = list_get(l, atdc_t);
+                list_t *slices = atdc_list_slice(atdc, period, maxlen);
+                if (slices == NULL) {
+                        delete_section_list(list);
+                        return -1;
+                }
+                list = list_concat(list, slices);
+        }
+        script->slices = list;
+        return 0;
 }
 
-list_t *planner_get_atdc_list(planner_t *planner)
-{
-        return planner->atdc_list;
-}
+/******************************************************************/
+
+/* static int planner_expand_blocks(script_t* script) */
+/* { */
+/*         int len; */
+/*         block_t *p; */
         
+/*         len = script->block_length + 1024; */
+/*         p = (block_t *) r_realloc(script->block, len * sizeof(block_t)); */
+/*         if (p == NULL) */
+/*                 return -1; */
+        
+/*         script->block = p; */
+/*         script->block_length = len; */
+/*         return 0; */
+/* } */
+
+/* static int planner_push_block(script_t* script, block_t *block) */
+/* { */
+/*         if (script->num_blocks == script->block_length */
+/*             && planner_expand_blocks(script) != 0) */
+/*                 return -1; */
+        
+/*         block_t *p = &script->block[script->num_blocks]; */
+/*         memcpy(p, block, sizeof(block_t)); */
+/*         script->num_blocks++; */
+/*         return 0; */
+/* } */
+
+/* static int planner_expand_triggers(script_t* script) */
+/* { */
+/*         int len; */
+/*         trigger_t *p; */
+        
+/*         len = script->trigger_length + 256; */
+/*         p = (trigger_t *) r_realloc(script->trigger, len * sizeof(trigger_t)); */
+/*         if (p == NULL) */
+/*                 return -1; */
+        
+/*         script->trigger = p; */
+/*         script->trigger_length = len; */
+/*         return 0; */
+/* } */
+
+/* static int planner_push_trigger(script_t* script, trigger_t *trigger) */
+/* { */
+/*         if (script->num_triggers == script->trigger_length */
+/*             && planner_expand_triggers(script) != 0) */
+/*                 return -1; */
+        
+/*         trigger_t *p = &script->trigger[script->num_triggers]; */
+/*         memcpy(p, trigger, sizeof(trigger_t)); */
+/*         script->num_triggers++; */
+/*         return 0; */
+/* } */
+
+/* static int planner_push_wait(script_t* script) */
+/* { */
+/*         block_t block; */
+/*         block.type = BLOCK_WAIT; */
+/*         return planner_push_block(script, &block); */
+/* } */
+
+/* static int planner_push_move(script_t* script, double *scale, */
+/*                              section_t *section, int32_t *pos_steps) */
+/* { */
+/*         block_t block; */
+/*         block.type = BLOCK_MOVE; */
+
+/*         int32_t p1[3]; */
+/*         p1[0] = (int32_t) (section->p1[0] * scale[0]); */
+/*         p1[1] = (int32_t) (section->p1[1] * scale[1]); */
+/*         p1[2] = (int32_t) (section->p1[2] * scale[2]); */
+
+/*         block.data[0] = (int16_t) (1000.0 * section->t); */
+/*         if (block.data[0] == 0) */
+/*                 return 0; */
+        
+/*         block.data[1] = (int16_t) (p1[0] - pos_steps[0]); */
+/*         block.data[2] = (int16_t) (p1[1] - pos_steps[1]); */
+/*         block.data[3] = (int16_t) (p1[2] - pos_steps[2]); */
+/*         if (block.data[1] == 0 */
+/*             && block.data[2] == 0 */
+/*             && block.data[3] == 0) */
+/*                 return 0; */
+        
+/*         block.id = script->block_id++; */
+        
+/*         // Keep the IDs reasonbly low so that the messages don't */
+/*         // become too long. */
+/*         if (script->block_id == 10000)  */
+/*                 script->block_id = 0; */
+                
+/*         pos_steps[0] = p1[0]; */
+/*         pos_steps[1] = p1[1]; */
+/*         pos_steps[2] = p1[2]; */
+        
+/*         return planner_push_block(script, &block); */
+/* } */
+
+/* static int planner_push_delay(script_t* script, action_t *action) */
+/* { */
+/*         block_t block; */
+/*         uint32_t milliseconds; */
+
+/*         milliseconds = (uint32_t) (action->data.delay.duration * 1000.0f);         */
+/*         block.type = BLOCK_DELAY; */
+        
+/*         while (milliseconds > 0) { */
+/*                 if (milliseconds > 32767) { */
+/*                         block.data[0] = 32767; */
+/*                         milliseconds -= 32767; */
+/*                 } else { */
+/*                         block.data[0] = milliseconds; */
+/*                         milliseconds = 0; */
+/*                 } */
+/*                 if (planner_push_block(script, &block) != 0) */
+/*                         return -1; */
+/*         } */
+/*         return 0; */
+/* } */
+
+/* static int planner_push_trigger_action(script_t *script, action_t *action) */
+/* { */
+/*         block_t block; */
+/*         trigger_t trigger; */
+
+/*         trigger.id = script->num_triggers; */
+/*         trigger.arg = action->data.trigger.arg; */
+/*         trigger.callback = action->data.trigger.callback; */
+/*         trigger.userdata = action->data.trigger.userdata; */
+/*         trigger.delay = action->data.trigger.delay; */
+        
+/*         block.type = BLOCK_TRIGGER; */
+/*         block.data[0] = trigger.id; */
+        
+/*         if (planner_push_trigger(script, &trigger) != 0) */
+/*                 return -1; */
+
+/*         if (planner_push_block(script, &block) != 0) */
+/*                 return -1; */
+        
+/*         return 0; */
+/* } */
+
+/* static int planner_push_action(script_t* script, action_t *action) */
+/* { */
+/*         int err = 0; */
+        
+/*         switch (action->type) { */
+/*         case ACTION_WAIT: */
+/*                 err = planner_push_wait(script); */
+/*                 break; */
+/*         case ACTION_MOVE: */
+/*                 r_err("Found move action while compiling"); */
+/*                 err = -1; */
+/*                 break; */
+/*         case ACTION_DELAY: */
+/*                 err = planner_push_delay(script, action); */
+/*                 break; */
+/*         case ACTION_TRIGGER: */
+/*                 err = planner_push_trigger_action(script, action); */
+/*                 break; */
+/*         } */
+        
+/*         return err; */
+/* } */
+
+/* static int planner_push_actions(script_t* script, section_t *section) */
+/* { */
+/*         for (list_t *l = section->actions; l != NULL; l = list_next(l)) { */
+/*                 action_t *action = list_get(l, action_t); */
+/*                 if (planner_push_action(script, action) != 0) */
+/*                         return -1; */
+/*         } */
+/*         return 0; */
+/* } */
+
+/* int planner_compile_for_stepper(script_t *script, double *scale) */
+/* { */
+/*         int err = -1; */
+/*         int32_t pos_steps[3]; */
+/*         section_t *section = list_get(script->slices, section_t); */
+
+/*         script->block_id = 0; */
+/*         script->num_blocks = 0; */
+/*         script->num_triggers = 0; */
+        
+/*         if (section) { */
+/*                 pos_steps[0] = (int32_t) (section->p0[0] * scale[0]); */
+/*                 pos_steps[1] = (int32_t) (section->p0[1] * scale[1]); */
+/*                 pos_steps[2] = (int32_t) (section->p0[2] * scale[2]); */
+/*         } */
+        
+/*         for (list_t *l = script->slices; l != NULL; l = list_next(l)) { */
+/*                 section = list_get(l, section_t); */
+
+/*                 if (section->t > 0) { */
+/*                         if (planner_push_move(script, scale, section, pos_steps) != 0) */
+/*                                 goto unlock_and_return; */
+                        
+/*                 } else if (section->actions) { */
+/*                         if (planner_push_actions(script, section) != 0) */
+/*                                 goto unlock_and_return; */
+/*                 } */
+/*         } */
+
+/*         err = 0; */
+        
+/* unlock_and_return: */
+/*         return err; */
+/* } */
+
+

@@ -39,6 +39,14 @@ double *vabs(double *r, double *a)
         return r;
 }
 
+double *vsqrt(double *r, double *a)
+{
+        r[0] = sqrt(a[0]);
+        r[1] = sqrt(a[1]);
+        r[2] = sqrt(a[2]);
+        return r;
+}
+
 double *vcopy(double *r, double *a)
 {
         r[0] = a[0];
@@ -61,6 +69,14 @@ double *vset(double *r, double v)
         r[1] = v;
         r[2] = v;
         return r;
+}
+
+double *sadd(double *w, double *v, double s)
+{
+        w[0] = v[0] + s;
+        w[1] = v[1] + s;
+        w[2] = v[2] + s;
+        return w;
 }
 
 double *smul(double *w, double *v, double s)

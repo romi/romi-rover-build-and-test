@@ -277,11 +277,22 @@ ISR(TIMER1_COMPA_vect)
                         delta[2] = (int32_t) current_block->data[DZ];
 
                         /* For moveto events, substract the current
-                         * position of the CNCN. */
+                         * position of the CNC. */
                         if (current_block->type == BLOCK_MOVETO) {
-                                delta[0] -= stepper_position[0];
-                                delta[1] -= stepper_position[1];
-                                delta[2] -= stepper_position[2];
+                                if (delta[0] < 0)
+                                        delta[0] = 0;
+                                else
+                                        delta[0] -= stepper_position[0];
+                                
+                                if (delta[1] < 0)
+                                        delta[1] = 0;
+                                else
+                                        delta[1] -= stepper_position[1];
+                                
+                                if (delta[2] < 0)
+                                        delta[2] = 0;
+                                else
+                                        delta[2] -= stepper_position[2];
                         }
 
                         /* Check the directions */
@@ -434,8 +445,31 @@ ISR(TIMER1_COMPA_vect)
         /* Trigger block: Send the trigger ID to the calling
          * program. */
         if (current_block->type == BLOCK_TRIGGER) {
-                trigger_buffer_put(current_block->data[0]);
-                current_block = 0;
+                
+                if (current_block->data[0] >= 0) {
+                        /* This is the first time the trigger block is
+                         * handled by the interrupt handler: add the
+                         * trigger to the queue and mark it as
+                         * sent. */
+                        trigger_buffer_put(current_block->data[0]);
+                        current_block->data[0] = -1;
+
+                        /* If an "infinite" delay is requested, put
+                         * the timer to sleep and wait for a continue
+                         * command. */
+                        if (current_block->data[1] < 0) {
+                                disable_stepper_timer();
+                                current_block = 0;
+                                return;
+                        }
+                }
+
+                /* If an finite delay is requested, do the same as a
+                 * delay command: wait out the requested number of
+                 * milliseconds. */
+                if (milliseconds == current_block->data[1])
+                        current_block = 0;
+                
                 return;
         }
 }

@@ -21,22 +21,24 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#include <avr/io.h>
+#include <avr/interrupt.h>
 
-#ifndef _OQUAM_VIRT_H_
-#define _OQUAM_VIRT_H_
+#ifndef _OQUAM_PINS_EXTCTRLR_H_
+#define _OQUAM_PINS_EXTCTRLR_H_
 
-#include "controller.h"
+#if USE_EXT_CONTROLLER
 
-#ifdef __cplusplus
-extern "C" {
+#define USE_UNO            0
+#define USE_MEGA2560       1
+
+#if USE_MEGA2560
+#include "extctrlr_mega2560.h"
 #endif
 
-controller_t *new_virtual_stepper_controller(const char *output,
-                                             double *xmax, double *vmax, double *amax,
-                                             double *scale, double period);
-
-#ifdef __cplusplus
-}
+#if USE_UNO
+#include "extctrlr_uno.h"
 #endif
 
-#endif // _OQUAM_VIRT_H_
+#endif // USE_EXT_CONTROLLER
+#endif // _OQUAM_PINS_EXTCTRLR_H_

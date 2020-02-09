@@ -224,17 +224,17 @@ void handle_input()
                         case 'T':
                                 if (parser.length() == 1
                                     || parser.length() == 2) {
-                                        int16_t id, arg = 0;
+                                        int16_t id, delay = 0;
                                         id = parser.value(2);
                                         if (parser.length() == 2)
-                                                arg = parser.value(1);
+                                                delay = parser.value(1);
                                         block_t *block = block_buffer_get_empty();
                                         if (block == 0) {
                                                 set_reply("RE T");
                                         } else {
                                                 block->type = BLOCK_TRIGGER;
                                                 block->data[0] = id;
-                                                block->data[1] = arg;
+                                                block->data[1] = delay;
                                                 block_buffer_ready();
                                                 set_reply("OK T");
                                         }

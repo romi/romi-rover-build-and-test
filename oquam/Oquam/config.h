@@ -25,15 +25,31 @@
 #define _OQUAM_CONFIG_H_
 
 /*
+
+Required pins:
+  What         Num   I/O   Interupt 
+* step:         3     O
+* direction:    3     O
+* encoders (A): 3     I    yes
+  encoders (B): 3     I    
+* limit switch: 1(3)  I    yes
+* enable:       1     O
+* serial:       2    I/O   yes
+-------------------------------
+* total        16(18)      6(8)
+
+
                   Board        Encoders   Limits   
 gShield           Uno          0          1
 Ext. controller   Mega 2560    1          1
 RAMPS             Mega 2560   
 
+
+
 */
 
-#define USE_GSHIELD 1
-#define USE_EXT_CONTROLLER 0
+#define USE_GSHIELD 0
+#define USE_EXT_CONTROLLER 1
 
 #if USE_GSHIELD
 #include "gshield.h"

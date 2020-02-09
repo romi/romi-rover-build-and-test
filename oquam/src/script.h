@@ -21,8 +21,7 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include <r.h>
-#include "action.h"
+#include "script_priv.h"
 
 #ifndef _OQUAM_SCRIPT_H_
 #define _OQUAM_SCRIPT_H_
@@ -31,13 +30,31 @@
 extern "C" {
 #endif
 
-typedef struct _script_t script_t;
-
-script_t *new_script(double d);
+script_t *new_script();
 void delete_script(script_t *script);
-void script_append(script_t *script, action_t *action);
-list_t *script_actions(script_t *script);
-double script_deviation(script_t *script);
+
+/**
+ * \brief Add a move action to the current script.
+ *
+ * Move to absolute position (x,y,z) in meters at a speed of v m/s.
+ */
+int script_moveto(script_t *script, double x, double y, double z, double v, int id);
+
+/**
+ * \brief Add a delay instruction to the current script.
+ *
+ * \brief Delay the execution for a given number of seconds.
+ */
+int script_delay(script_t *script, double seconds);
+
+/**
+ * \brief Add a trigger action to the current script.
+ *
+ * Triggers a callback.
+ */
+int script_trigger(script_t *script, trigger_callback_t cb,
+                   void *userdata, int16_t arg, double delay);
+
 
 #ifdef __cplusplus
 }
