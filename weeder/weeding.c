@@ -69,7 +69,7 @@ list_t *path_module_compute(path_module_t *module,
 int path_module_set(path_module_t *module, const char *name,
                     json_object_t value, membuf_t *message)
 {
-        if (module->compute) {
+        if (module->set) {
                 return module->set(module, name, value, message);
         } else {
                 r_warn("path module has no set function");
