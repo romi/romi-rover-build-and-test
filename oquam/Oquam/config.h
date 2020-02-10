@@ -27,16 +27,19 @@
 /*
 
 Required pins:
-  What         Num   I/O   Interupt 
-* step:         3     O
-* direction:    3     O
-* encoders (A): 3     I    yes
-  encoders (B): 3     I    
-* limit switch: 1(3)  I    yes
-* enable:       1     O
-* serial:       2    I/O   yes
--------------------------------
-* total        16(18)      6(8)
+
+  What                          Num   I/O   Interupt 
+----------------------------------------------------
+* step:                          3     O
+* direction:                     3     O
+* encoders (A):                  3     I    yes
+  encoders (B):                  3     I    
+* limit switch (xyx, min/max):   1(6)  I    yes
+* enable:                        1     O
+* spindle:                       1     O    
+* serial:                        2    I/O   yes
+----------------------------------------------------
+* Total                        17(22)       6(10)
 
 
                   Board        Encoders   Limits   

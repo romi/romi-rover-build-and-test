@@ -15,6 +15,14 @@
         "name": "weeding",
         "display_name": "Weeding",
         "script": [
+            {"action": "hoe", "method": "quincunx",
+             "distance-plants": 0.30, "distance-rows": 0.2}
+        ]
+    },
+    {
+        "name": "weeding3x",
+        "display_name": "3x Weeding",
+        "script": [
             {"action": "homing"},
             {"action": "move", "distance": 1.2},
             {"action": "hoe", "method": "quincunx",

@@ -199,7 +199,7 @@ function Registry()
             root.removeChild(root.firstChild);
         }
 
-        var draw = SVG('nodes').size(1000, 1000);
+        var draw = SVG('nodes').size(1600, 1000);
         var y = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]; // FIXME!
         
         for (let i = 0; i < this.nodes.length; i++) {

@@ -38,7 +38,7 @@
             "user": "hanappe",
             "TODO-groups": ["dialout", "video"]
         },
-        "registry": {
+         "registry": {
             "path": "/usr/local/bin/rcregistry"
         },
         "nodes": [{
@@ -51,12 +51,15 @@
             "path": "build/fake_motors/fake_motors"
         }, {
             "path": "build/fake_camera/fake_camera",
-            "disabled": true
-        }, {
-            "path": "build/video4linux/video4linux",
             "disabled": false
         }, {
-            "path": "build/fake_cnc/fake_cnc"
+            "path": "build/video4linux/video4linux",
+            "disabled": true
+        }, {
+            "path": "build/fake_cnc/fake_cnc",
+            "disabled": true
+        }, {
+            "path": "build/oquam/oquam"
         }, {
             "path": "build/wheel_odometry/wheel_odometry"
         }, {
@@ -65,17 +68,19 @@
         }, {
             "path": "build/weeder/weeder"
         }, {
-            "path": "build/navigation/navigation"
+            "path": "build/navigation/navigation",
+            "disabled": false
         }, {
             "path": "build/interface/interface",
             "disabled": false
         }, {
             "path": "build/watchdog/watchdog",
-            "user": "root"
+            "user": "root",
+            "disabled": true
         }, {
             "path": "build/webproxy/webproxy",
             "user": "root",
-            "disabled": true
+            "disabled": false
         }]
     }
 }
