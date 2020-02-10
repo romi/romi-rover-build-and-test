@@ -27,6 +27,7 @@ add_subdirectory(webproxy)
 add_subdirectory(logger)
 add_subdirectory(control_panel)
 add_subdirectory(gimbal_servo)
+add_subdirectory(oquam)
 
 if(WITH_REALSENSE)
   add_subdirectory(realsense)
