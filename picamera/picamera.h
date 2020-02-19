@@ -31,12 +31,13 @@ extern "C" {
 #endif
 
 streamer_t *get_streamer_camera();
+messagelink_t *get_messagelink_logger();
 
 int picamera_init(int argc, char **argv);
 void picamera_cleanup();
 void picamera_broadcast();
-int picamera_still(void *data, request_t *request);  
-
+void picamera_still(void *data, request_t *request, response_t *response);  
+        
 #ifdef __cplusplus
 }
 #endif
