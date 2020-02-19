@@ -36,3 +36,6 @@ endif(WITH_REALSENSE)
 if(WITH_PICAMERA)
   add_subdirectory(picamera)
 endif(WITH_PICAMERA)
+
+install(DIRECTORY scripts DESTINATION share/romi FILES_MATCHING PATTERN "*.json")
+install(DIRECTORY config DESTINATION share/romi FILES_MATCHING PATTERN "*.json")
