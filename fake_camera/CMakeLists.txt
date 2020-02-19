@@ -6,6 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(fake_camera fake_camera.c fake_camera_main.c)
 target_link_libraries(fake_camera rcom r)
+install(TARGETS fake_camera DESTINATION romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/fake_camera_main.c

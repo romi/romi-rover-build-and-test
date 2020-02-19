@@ -6,6 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(webproxy webproxy.c webproxy_main.c)
 target_link_libraries(webproxy rcom r m)
+install(TARGETS webproxy DESTINATION romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/webproxy_main.c

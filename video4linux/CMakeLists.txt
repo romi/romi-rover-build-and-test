@@ -6,6 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(video4linux video4linux.c video4linux_main.c camera_v4l.c)
 target_link_libraries(video4linux romi rcom r jpeg)
+install(TARGETS video4linux DESTINATION romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/video4linux_main.c

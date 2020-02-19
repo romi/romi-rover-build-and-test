@@ -6,6 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(logger logger.c logger_main.c)
 target_link_libraries(logger rcom romi r)
+install(TARGETS logger DESTINATION romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/logger_main.c

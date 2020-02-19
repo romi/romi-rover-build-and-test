@@ -6,6 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(realsense realsense.cc realsense_main.c convert.c)
 target_link_libraries(realsense rcom romi r jpeg png realsense2)
+install(TARGETS realsense DESTINATION romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/realsense_main.c

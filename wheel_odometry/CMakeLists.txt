@@ -12,3 +12,4 @@ ADD_CUSTOM_COMMAND(
 
 add_executable(wheel_odometry wheel_odometry.c wheel_odometry_main.c)
 target_link_libraries(wheel_odometry rcom romi r m)
+install(TARGETS wheel_odometry DESTINATION romi)

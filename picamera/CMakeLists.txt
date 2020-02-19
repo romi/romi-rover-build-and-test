@@ -6,6 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(picamera picamera.cc picamera_main.c)
 target_link_libraries(picamera rcom romi r raspicam)
+install(TARGETS picamera DESTINATION romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/picamera_main.c

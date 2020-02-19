@@ -6,6 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(gimbal_servo gimbal_servo.c gimbal_servo_main.c)
 target_link_libraries(gimbal_servo romi rcom r m)
+install(TARGETS gimbal_servo DESTINATION romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/gimbal_servo_main.c

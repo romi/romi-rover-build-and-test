@@ -12,3 +12,4 @@ ADD_CUSTOM_COMMAND(
 
 add_executable(script_engine script_engine.c script_engine_main.c)
 target_link_libraries(script_engine romi rcom r)
+install(TARGETS script_engine DESTINATION romi)

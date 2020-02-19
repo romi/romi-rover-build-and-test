@@ -6,6 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(fake_cnc fake_cnc.c fake_cnc_main.c)
 target_link_libraries(fake_cnc rcom r)
+install(TARGETS fake_cnc DESTINATION romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/fake_cnc_main.c
