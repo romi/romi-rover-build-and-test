@@ -35,13 +35,13 @@ int picamera_init(int argc, char **argv)
         //camera.setAWB(xxx);
         //camera.setAWB_RB(xxx);
 
-        data = (unsigned char*) mem_alloc(width * height * 3);
+        data = (unsigned char*) r_alloc(width * height * 3);
         jpegbuf = new_membuf();
         if (data == NULL || jpegbuf == NULL)
                 return -1;
   
         if (!camera.open()) {
-                log_err("Failed to ope the camera");
+                r_err("Failed to ope the camera");
                 return -1;
         }
         return 0;
@@ -60,18 +60,18 @@ void picamera_broadcast()
 {
         streamer_t *streamer = get_streamer_camera();
         if (streamer_has_clients(streamer)) {
-                log_debug("grab");
+                r_debug("grab");
                 camera.grab();
                 camera.retrieve(data);
-                log_debug("convert");
+                r_debug("convert");
                 convert_to_jpeg(data, width, height, 90, jpegbuf);
                 double timestamp = clock_time();
-                log_debug("send");
+                r_debug("send");
                 streamer_send_multipart(streamer, 
                                         membuf_data(jpegbuf),
                                         membuf_len(jpegbuf),
                                         "image/jpeg", timestamp);
-                log_debug("sleep");
+                r_debug("sleep");
                 clock_sleep(1);
         } 
 }
