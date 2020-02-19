@@ -27,15 +27,8 @@
 #ifndef _OQUAM_GSHIELD_H_
 #define _OQUAM_GSHIELD_H_
 
-#if USE_GSHIELD
-
-#define USE_GSHIELD_PINS   1
-#define USE_UNO            1
-#define USE_ENCODERS       0
-#define USE_LIMITS         1
 #define ENABLE_PIN_HIGH    0
-
-//#define ENCODER_REVERSED 0
+#define ENCODER_REVERSED 0
 #define PRESCALING         1
 #define FREQUENCY_STEPPER  25000
 #define INTERRUPTS_PER_MILLISECOND 25
@@ -140,6 +133,10 @@ void init_output_pins();
                 __mask |= (1 << __axis);                \
         }
 
+#define toggle_x_step(__mask)  toggle_step(__axis, X_STEP_BIT)
+#define toggle_y_step(__mask)  toggle_step(__axis, Y_STEP_BIT)
+#define toggle_z_step(__mask)  toggle_step(__axis, Z_STEP_BIT)
+
 /**
  * \brief Enable the DIR pins according to mask.
  */
@@ -157,6 +154,10 @@ void init_output_pins();
                 __mask |= (1 << __axis);                \
         }
 
+#define toggle_x_dir(__mask)  toggle_dir(__mask, X_DIRECTION_BIT)
+#define toggle_y_dir(__mask)  toggle_dir(__mask, Y_DIRECTION_BIT)
+#define toggle_z_dir(__mask)  toggle_dir(__mask, Z_DIRECTION_BIT)
+
 /**
  * \brief Read the X-encoder B pin.
  */
@@ -172,5 +173,4 @@ void init_output_pins();
  */
 #define get_limit_bits()  (LIMIT_PIN & LIMIT_MASK)
 
-#endif // USE_GSHIELD
 #endif // _OQUAM_GSHIELD_H_

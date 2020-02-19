@@ -32,9 +32,9 @@ Required pins:
 ----------------------------------------------------
 * step:                          3     O
 * direction:                     3     O
-* encoders (A):                  3     I    yes
+* encoders (A):                  3     I    yes  (Ext. interrupt)
   encoders (B):                  3     I    
-* limit switch (xyx, min/max):   1(6)  I    yes
+* limit switch (xyx, min/max):   1(6)  I    yes  (PCINT)
 * enable:                        1     O
 * spindle:                       1     O    
 * serial:                        2    I/O   yes
@@ -42,29 +42,27 @@ Required pins:
 * Total                        17(22)       6(10)
 
 
-                  Board        Encoders   Limits   
-gShield           Uno          0          1
-Ext. controller   Mega 2560    1          1
-RAMPS             Mega 2560   
-
+Configuration     Board        Encoders   Limit switch   
+------------------------------------------------------------
+gShield           Uno          no         yes (min, not max)
+RAMPS             Mega 2560              
+Ext. controller   Uno                      
 
 
 */
 
 #define USE_GSHIELD 0
-#define USE_EXT_CONTROLLER 1
+#define USE_RAMPS 1
+#define USE_EXT_CONTROLLER 0
 
 #if USE_GSHIELD
 #include "gshield.h"
-#endif
 
-#if USE_EXT_CONTROLLER
+#elif USE_RAMPS
+#include "ramps.h"
+
+#elif USE_EXT_CONTROLLER
 #include "extctrlr.h"
 #endif
-
-
-//#define PRESCALING 8
-//#define FREQUENCY_STEPPER 10000
-//#define INTERRUPTS_PER_MILLISECOND 10
 
 #endif // _OQUAM_CONFIG_H_

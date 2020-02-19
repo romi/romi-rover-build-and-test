@@ -384,7 +384,7 @@ ISR(TIMER1_COMPA_vect)
 
                 // X-axis
                 if (accumulation_error[0] > 0) {
-                        toggle_step(pins, X_STEP_BIT);
+                        toggle_x_step(pins);
                         stepper_position[0] += step_dir[0];
                         accumulation_error[0] -= dt;
                 }
@@ -392,7 +392,7 @@ ISR(TIMER1_COMPA_vect)
 
                 // Y-axis
                 if (accumulation_error[1] > 0) {
-                        toggle_step(pins, Y_STEP_BIT);
+                        toggle_y_step(pins);
                         stepper_position[1] += step_dir[1];
                         accumulation_error[1] -= dt;
                 }
@@ -400,7 +400,7 @@ ISR(TIMER1_COMPA_vect)
 
                 // Z-axis
                 if (accumulation_error[2] > 0) {
-                        toggle_step(pins, Z_STEP_BIT);
+                        toggle_z_step(pins);
                         stepper_position[2] += step_dir[2];
                         accumulation_error[2] -= dt;
                 }

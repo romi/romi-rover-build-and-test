@@ -24,8 +24,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-#ifndef _OQUAM_PINS_EXTCTRLR_H_
-#define _OQUAM_PINS_EXTCTRLR_H_
+#ifndef _OQUAM_PINS_RAMPS_H_
+#define _OQUAM_PINS_RAMPS_H_
 
 #define ENABLE_PIN_HIGH    1
 #define ENCODER_REVERSED   0
@@ -44,11 +44,11 @@
  * Define step pulse output pins. NOTE: All step bit pins must be on
  * the same port. 
  */
-#define STEP_DDR          DDRB
-#define STEP_PORT         PORTB
-#define X_STEP_BIT        0  // Uno Digital Pin 8
-#define Y_STEP_BIT        1  // Uno Digital Pin 9
-#define Z_STEP_BIT        2  // Uno Digital Pin 10
+#define STEP_DDR          DDRH
+#define STEP_PORT         PORTH
+#define X_STEP_BIT        4  // Mega Digital Pin 7
+#define Y_STEP_BIT        5  // Mega Digital Pin 8
+#define Z_STEP_BIT        6  // Mega Digital Pin 9
 #define STEP_MASK         ((1 << X_STEP_BIT) | (1 << Y_STEP_BIT) | (1 << Z_STEP_BIT))
 
 /** 
@@ -57,32 +57,35 @@
  */
 #define DIRECTION_DDR     DDRB
 #define DIRECTION_PORT    PORTB
-#define X_DIRECTION_BIT   3  // Uno Digital Pin 11
-#define Y_DIRECTION_BIT   4  // Uno Digital Pin 12
-#define Z_DIRECTION_BIT   5  // Uno Digital Pin 13
+#define X_DIRECTION_BIT   5  // Mega Digital Pin 11
+#define Y_DIRECTION_BIT   6  // Mega Digital Pin 12
+#define Z_DIRECTION_BIT   7  // Mega Digital Pin 13
 #define DIRECTION_MASK    ((1<<X_DIRECTION_BIT)|(1<<Y_DIRECTION_BIT)|(1<<Z_DIRECTION_BIT))
 
 /**
  * Define stepper driver enable/disable output pin.
  */
-#define STEPPERS_DISABLE_DDR    DDRD
-#define STEPPERS_DISABLE_PORT   PORTD
-#define STEPPERS_DISABLE_BIT    7  // Uno Digital Pin 7
+#define STEPPERS_DISABLE_DDR    DDRB
+#define STEPPERS_DISABLE_PORT   PORTB
+#define STEPPERS_DISABLE_BIT    4  // Mega Digital Pin 10
 #define STEPPERS_DISABLE_MASK   (1 << STEPPERS_DISABLE_BIT)
 
 /**
  * Define the pins for the X and Y encoders.
  */
-#define X_ENCODER_A         2
+#define X_ENCODER_B_PORT    PING
+#define X_ENCODER_B_BIT     5 // Mega Digital Pin 4
+#define X_ENCODER_B_MASK    (1 << X_ENCODER_B_BIT)
+#define X_ENCODER_INTERRUPT INT.0 // Mega Digital Pin 21
+#define X_ENCODER_A         21
 #define X_ENCODER_B         4
-#define X_ENCODER_B_MASK    (1 << X_ENCODER_B)
-#define X_ENCODER_B_PORT    PIND
-#define X_ENCODER_INTERRUPT INT.0
-#define Y_ENCODER_A         3  // Uno Digital Pin 3
-#define Y_ENCODER_B         5  // Uno Digital Pin 5
-#define Y_ENCODER_B_MASK    (1 << Y_ENCODER_B)
-#define Y_ENCODER_B_PORT    PIND
-#define Y_ENCODER_INTERRUPT INT.1
+
+#define Y_ENCODER_B_PORT    PINE
+#define Y_ENCODER_B_BIT     3  // Mega Digital Pin 5
+#define Y_ENCODER_B_MASK    (1 << Y_ENCODER_B_BIT)
+#define Y_ENCODER_INTERRUPT INT.1  // Mega Digital Pin 20
+#define Y_ENCODER_A         20
+#define Y_ENCODER_B         5
 
 /**
  * Define the pins for the limit switches.
@@ -90,8 +93,8 @@
 #define LIMIT_DDR         DDRD
 #define LIMIT_PIN         PIND
 #define LIMIT_PORT        PORTD
-#define X_LIMIT_BIT       6  // Uno Digital Pin 6
-#define Y_LIMIT_BIT       7  // Uno Digital Pin 7
+#define X_LIMIT_BIT       6  // Mega Digital Pin 6
+#define Y_LIMIT_BIT       7  // Mega Digital Pin 7
 //#define Z_LIMIT_BIT	  ???
 #define LIMIT_MASK        ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT))
 
@@ -179,4 +182,4 @@ void init_output_pins();
  */
 #define get_limit_bits()  0
 
-#endif // _OQUAM_PINS_EXTCTRLR_H_
+#endif // _OQUAM_PINS_RAMPS_H_
