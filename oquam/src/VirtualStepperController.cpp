@@ -40,6 +40,7 @@ int VirtualStepperController::delay()
                         break;
                 clock_sleep(0.1);
         }
+        return 0;
 }
 
 int VirtualStepperController::execute(block_t *block)
