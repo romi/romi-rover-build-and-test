@@ -27,7 +27,7 @@
 
 static const char *device = "/dev/video0";
 static camera_t* camera = NULL;
-static membuf_t *rgbbuf = NULL;
+static membuf_t *jpegbuf = NULL;
 static int width = 1920;
 static int height = 1080;
 
@@ -42,7 +42,6 @@ typedef struct _image_request_t {
 static mutex_t *request_mutex = NULL;
 static image_request_t *request_buffer[REQUEST_BUFFER_SIZE];
 static int request_buffer_index = 0;
-/* static list_t *request_list = NULL; */
 
 streamer_t *get_streamer_camera();
 
@@ -78,26 +77,6 @@ void delete_image_request(image_request_t *r)
         }
 }
 
-/* image_request_t *obtain_image_request(response_t *response) */
-/* { */
-/*         image_request_t *r = NULL; */
-        
-/*         mutex_lock(request_mutex); */
-/*         if (request_list != NULL) { */
-/*                 r = list_get(request_list, image_request_t); */
-/*                 request_list = list_next(request_list); */
-/*         } */
-/*         mutex_unlock(request_mutex); */
-        
-/*         if (r == NULL) */
-/*                 r = new_image_request(response); */
-/*         else { */
-/*                 r->timestamp = 0.0; */
-/*                 r->response = response; */
-/*         } */
-/*         return r; */
-/* } */
-
 int add_image_request(image_request_t *r)
 {
         int err = 0;
@@ -107,9 +86,6 @@ int add_image_request(image_request_t *r)
                 request_buffer[request_buffer_index++] = r;
         else
                 err = -1;
-        /* request_list = list_append(request_list, r); */
-        /* if (request_list == NULL) */
-        /*         err = -1; */
         mutex_unlock(request_mutex);
 
         return err;
@@ -136,8 +112,8 @@ int video4linux_init(int argc, char **argv)
         if (request_mutex == NULL)
                 return -1;
         
-        rgbbuf = new_membuf();
-        if (rgbbuf == NULL || membuf_assure(rgbbuf, 3 * width * height) != 0)
+        jpegbuf = new_membuf();
+        if (jpegbuf == NULL || membuf_assure(jpegbuf, 3 * width * height) != 0)
                 return -1;
         
         camera = new_camera(device, IO_METHOD_MMAP, width, height);
@@ -154,8 +130,8 @@ void video4linux_cleanup()
                 delete_camera(camera);
         if (request_mutex)
                 delete_mutex(request_mutex);
-        if (rgbbuf)
-                delete_membuf(rgbbuf);
+        if (jpegbuf)
+                delete_membuf(jpegbuf);
 }
 
 void video4linux_broadcast()
@@ -184,16 +160,16 @@ void video4linux_broadcast()
                 convert_to_jpeg(camera_getimagebuffer(camera),
                                 camera_width(camera),
                                 camera_height(camera),
-                                90, rgbbuf);
+                                90, jpegbuf);
         } else {
                 clock_sleep(0.2);
         }
         
         if (stream_requested) {
                 //r_debug("timestamp %f", timestamp);
-                //r_debug("image length %d", membuf_len(rgbbuf));
-                streamer_send_multipart(streamer, membuf_data(rgbbuf),
-                                        membuf_len(rgbbuf),
+                //r_debug("image length %d", membuf_len(jpegbuf));
+                streamer_send_multipart(streamer, membuf_data(jpegbuf),
+                                        membuf_len(jpegbuf),
                                         "image/jpeg", timestamp);
         }
         
@@ -205,7 +181,7 @@ void video4linux_broadcast()
                         
                         membuf_lock(buf);
                         membuf_clear(buf);
-                        membuf_append(buf, membuf_data(rgbbuf), membuf_len(rgbbuf));
+                        membuf_append(buf, membuf_data(jpegbuf), membuf_len(jpegbuf));
                         r->timestamp = timestamp;
                         condition_signal(r->condition);
                         membuf_unlock(buf);
