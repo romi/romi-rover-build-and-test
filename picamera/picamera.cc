@@ -127,10 +127,9 @@ void picamera_broadcast()
         streamer_t *streamer = get_streamer_camera();
         int image_requested = 0;
         int stream_requested = 0;
-        
-        r_debug("grab");
+
+        // Always grab images to keep the camera alive
         camera.grab();
-        camera.retrieve(data);
 
         double timestamp = clock_time();
         
@@ -143,6 +142,7 @@ void picamera_broadcast()
         streamer_unlock_clients(streamer);
 
         if (image_requested || stream_requested) {
+                camera.retrieve(data);
                 convert_to_jpeg(data, width, height, 90, jpegbuf);
         } else {
                 clock_sleep(1);
@@ -155,7 +155,9 @@ void picamera_broadcast()
                                         membuf_data(jpegbuf),
                                         membuf_len(jpegbuf),
                                         "image/jpeg", timestamp);
-                r_debug("sleep");
+                //r_debug("sleep");
+
+                // FIXME: Reduce the framerate
                 clock_sleep(1);
         }
         
