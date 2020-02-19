@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(fake_motors fake_motors.c fake_motors_main.c)
 target_link_libraries(fake_motors rcom r m)
-install(TARGETS fake_motors DESTINATION romi)
+install(TARGETS fake_motors DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/fake_motors_main.c

@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(camera_recorder camera_recorder.c camera_recorder_main.c)
 target_link_libraries(camera_recorder rcom romi r)
-install(TARGETS camera_recorder DESTINATION romi)
+install(TARGETS camera_recorder DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/camera_recorder_main.c

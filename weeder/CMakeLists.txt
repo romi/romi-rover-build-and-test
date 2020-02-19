@@ -19,4 +19,4 @@ ADD_CUSTOM_COMMAND(
   DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
   )
 
-install(TARGETS weeder weeder_eval weeder_compute DESTINATION romi)
+install(TARGETS weeder weeder_eval weeder_compute DESTINATION bin/romi)

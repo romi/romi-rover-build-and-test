@@ -30,11 +30,11 @@ target_link_libraries(liboquam r m)
 add_executable(oquam oquam.cpp oquam.hpp oquam_main.c)
 target_link_libraries(oquam liboquam rcom)
 target_include_directories(oquam PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src")
-install(TARGETS oquam DESTINATION romi)
+install(TARGETS oquam DESTINATION bin/romi)
 
 add_executable(oquam_test src/oquam_test.cpp)
 target_link_libraries(oquam_test liboquam)
-install(TARGETS oquam_test DESTINATION romi)
+install(TARGETS oquam_test DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/oquam_main.c

@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(control_panel control_panel.c control_panel_main.c)
 target_link_libraries(control_panel rcom r m)
-install(TARGETS control_panel DESTINATION romi)
+install(TARGETS control_panel DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/control_panel_main.c

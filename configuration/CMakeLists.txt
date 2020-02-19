@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 add_executable(configuration configuration.c configuration_main.c)
 target_link_libraries(configuration rcom r)
-install(TARGETS configuration DESTINATION romi)
+install(TARGETS configuration DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/configuration_main.c

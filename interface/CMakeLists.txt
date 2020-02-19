@@ -12,4 +12,4 @@ ADD_CUSTOM_COMMAND(
 
 add_executable(interface interface.c interface_main.c)
 target_link_libraries(interface romi rcom r)
-install(TARGETS interface DESTINATION romi)
+install(TARGETS interface DESTINATION bin/romi)
