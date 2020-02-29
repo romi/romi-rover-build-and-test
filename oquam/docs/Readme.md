@@ -26,6 +26,8 @@ Two segments of the path are shown in the following figure:
 
 ![](path1.svg)
 
+<img src="path1.svg" alt="drawing" width="200"/>
+
 
 In most cases, there will be a discontinuity in the speed at the
 junction point. This discontinuity requires a very high (theoretically
