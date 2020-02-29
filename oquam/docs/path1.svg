@@ -9,9 +9,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="94.318062mm"
-   height="32.060616mm"
-   viewBox="0 0 94.318061 32.060615"
+   width="137.32161mm"
+   height="45.090923mm"
+   viewBox="0 0 137.32161 45.090923"
    version="1.1"
    id="svg5471"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
@@ -107,8 +107,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="168.30213"
-     inkscape:cy="-30.900213"
+     inkscape:cx="251.0244"
+     inkscape:cy="60.050274"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -137,150 +137,154 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(105.70442,-32.124126)">
-    <path
-       id="path24972"
-       d="M -101.3703,47.158585 -54.33086,57.983"
-       style="fill:none;stroke:#000000;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker7000);marker-end:url(#marker7000)"
-       inkscape:connector-curvature="0" />
-    <path
-       id="path24974"
-       d="m -54.33086,57.983 34.6114,-22.45064"
-       style="fill:none;stroke:#000000;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker7418);marker-end:url(#marker7586)"
-       inkscape:connector-curvature="0" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker1551)"
-       d="m -101.3703,47.158585 9.98109,2.315104"
-       id="path24976"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cc" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker3855)"
-       d="m -54.33086,57.983 12.98869,-8.418568"
-       id="path24980"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cc" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="-73.829582"
-       y="52.012516"
-       id="text24990"><tspan
-         sodipodi:role="line"
-         id="tspan24988"
-         x="-73.829582"
+     transform="translate(127.59135,-25.608972)">
+    <g
+       id="g10349"
+       transform="matrix(1.5,0,0,1.5,29.465275,-24.077217)">
+      <path
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#000000;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker7000);marker-end:url(#marker7000)"
+         d="M -101.3703,47.158585 -54.33086,57.983"
+         id="path24972" />
+      <path
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#000000;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker7418);marker-end:url(#marker7586)"
+         d="m -54.33086,57.983 34.6114,-22.45064"
+         id="path24974" />
+      <path
+         sodipodi:nodetypes="cc"
+         inkscape:connector-curvature="0"
+         id="path24976"
+         d="m -101.3703,47.158585 9.98109,2.315104"
+         style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker1551)" />
+      <path
+         sodipodi:nodetypes="cc"
+         inkscape:connector-curvature="0"
+         id="path24980"
+         d="m -54.33086,57.983 12.98869,-8.418568"
+         style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker3855)" />
+      <text
+         id="text24990"
          y="52.012516"
-         style="font-size:3.52777767px;stroke-width:0.26458332"><tspan
-           id="tspan24984"
-           style="font-weight:bold">s</tspan><tspan
-           id="tspan24986"
-           style="font-size:64.99999762%;baseline-shift:sub">i   </tspan></tspan></text>
-    <text
-       id="text24998"
-       y="41.240192"
-       x="-36.693432"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       xml:space="preserve"><tspan
-         style="font-size:3.52777767px;stroke-width:0.26458332"
-         y="41.240192"
+         x="-73.829582"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+         xml:space="preserve"><tspan
+           style="font-size:3.52777767px;stroke-width:0.26458332"
+           y="52.012516"
+           x="-73.829582"
+           id="tspan24988"
+           sodipodi:role="line"><tspan
+             style="font-weight:bold"
+             id="tspan24984">s</tspan><tspan
+             style="font-size:64.99999762%;baseline-shift:sub"
+             id="tspan24986">i   </tspan></tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
          x="-36.693432"
-         id="tspan24996"
-         sodipodi:role="line"><tspan
-           style="font-weight:bold"
-           id="tspan24992">s</tspan><tspan
-           style="font-size:64.99999762%;baseline-shift:sub"
-           id="tspan24994">i+1</tspan></tspan></text>
-    <text
-       id="text25006"
-       y="46.90984"
-       x="-94.202492"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       xml:space="preserve"><tspan
-         style="font-size:3.52777767px;stroke-width:0.26458332"
+         y="41.240192"
+         id="text24998"><tspan
+           sodipodi:role="line"
+           id="tspan24996"
+           x="-36.693432"
+           y="41.240192"
+           style="font-size:3.52777767px;stroke-width:0.26458332"><tspan
+             id="tspan24992"
+             style="font-weight:bold">s</tspan><tspan
+             id="tspan24994"
+             style="font-size:64.99999762%;baseline-shift:sub">i+1</tspan></tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+         x="-94.202492"
          y="46.90984"
-         x="-94.202492"
-         id="tspan25004"
-         sodipodi:role="line"><tspan
-           style="font-weight:bold"
-           id="tspan25000">v</tspan><tspan
-           style="font-size:64.99999762%;baseline-shift:sub"
-           id="tspan25002">i</tspan></tspan></text>
-    <text
-       id="text25022"
-       y="50.500614"
-       x="-50.489544"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       xml:space="preserve"><tspan
-         style="font-size:3.52777767px;stroke-width:0.26458332"
-         y="50.500614"
+         id="text25006"><tspan
+           sodipodi:role="line"
+           id="tspan25004"
+           x="-94.202492"
+           y="46.90984"
+           style="font-size:3.52777767px;stroke-width:0.26458332"><tspan
+             id="tspan25000"
+             style="font-weight:bold">v</tspan><tspan
+             id="tspan25002"
+             style="font-size:64.99999762%;baseline-shift:sub">i</tspan></tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
          x="-50.489544"
-         id="tspan25020"
-         sodipodi:role="line"><tspan
-           style="font-weight:bold"
-           id="tspan25016">v</tspan><tspan
-           style="font-size:64.99999762%;baseline-shift:sub"
-           id="tspan25018">i+1</tspan></tspan></text>
-    <text
-       id="text6178"
-       y="60.479187"
-       x="-57.4254"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       xml:space="preserve"><tspan
-         style="font-size:3.52777767px;stroke-width:0.26458332"
-         y="60.479187"
+         y="50.500614"
+         id="text25022"><tspan
+           sodipodi:role="line"
+           id="tspan25020"
+           x="-50.489544"
+           y="50.500614"
+           style="font-size:3.52777767px;stroke-width:0.26458332"><tspan
+             id="tspan25016"
+             style="font-weight:bold">v</tspan><tspan
+             id="tspan25018"
+             style="font-size:64.99999762%;baseline-shift:sub">i+1</tspan></tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
          x="-57.4254"
-         id="tspan6176"
-         sodipodi:role="line"><tspan
-           style="font-weight:bold"
-           id="tspan6172">p</tspan><tspan
-           style="font-size:64.99999762%;baseline-shift:sub"
-           id="tspan6174">i</tspan></tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="-20.38373"
-       y="38.783348"
-       id="text6186"><tspan
-         sodipodi:role="line"
-         id="tspan6184"
-         x="-20.38373"
+         y="60.479187"
+         id="text6178"><tspan
+           sodipodi:role="line"
+           id="tspan6176"
+           x="-57.4254"
+           y="60.479187"
+           style="font-size:3.52777767px;stroke-width:0.26458332"><tspan
+             id="tspan6172"
+             style="font-weight:bold">p</tspan><tspan
+             id="tspan6174"
+             style="font-size:64.99999762%;baseline-shift:sub">i</tspan></tspan></text>
+      <text
+         id="text6186"
          y="38.783348"
-         style="font-size:3.52777767px;stroke-width:0.26458332"><tspan
-           id="tspan6180"
-           style="font-weight:bold">p</tspan><tspan
-           id="tspan6182"
-           style="font-size:64.99999762%;baseline-shift:sub">i+1</tspan></tspan></text>
-    <text
-       id="text6194"
-       y="50.954185"
-       x="-102.93372"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       xml:space="preserve"><tspan
-         style="font-size:3.52777767px;stroke-width:0.26458332"
-         y="50.954185"
+         x="-20.38373"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+         xml:space="preserve"><tspan
+           style="font-size:3.52777767px;stroke-width:0.26458332"
+           y="38.783348"
+           x="-20.38373"
+           id="tspan6184"
+           sodipodi:role="line"><tspan
+             style="font-weight:bold"
+             id="tspan6180">p</tspan><tspan
+             style="font-size:64.99999762%;baseline-shift:sub"
+             id="tspan6182">i+1</tspan></tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
          x="-102.93372"
-         id="tspan6192"
-         sodipodi:role="line"><tspan
-           style="font-weight:bold"
-           id="tspan6188">p</tspan><tspan
-           style="font-size:64.99999762%;baseline-shift:sub"
-           id="tspan6190">i-1</tspan></tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="-94.202492"
-       y="57.493176"
-       id="text6229"><tspan
-         sodipodi:role="line"
-         id="tspan6227"
-         x="-94.202492"
+         y="50.954185"
+         id="text6194"><tspan
+           sodipodi:role="line"
+           id="tspan6192"
+           x="-102.93372"
+           y="50.954185"
+           style="font-size:3.52777767px;stroke-width:0.26458332"><tspan
+             id="tspan6188"
+             style="font-weight:bold">p</tspan><tspan
+             id="tspan6190"
+             style="font-size:64.99999762%;baseline-shift:sub">i-1</tspan></tspan></text>
+      <text
+         id="text6229"
          y="57.493176"
-         style="font-size:3.52777767px;stroke-width:0.26458332"><tspan
-   id="tspan6223"
-   style="font-weight:bold">|v<tspan
+         x="-94.202492"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+         xml:space="preserve"><tspan
+           style="font-size:3.52777767px;stroke-width:0.26458332"
+           y="57.493176"
+           x="-94.202492"
+           id="tspan6227"
+           sodipodi:role="line"><tspan
+   style="font-weight:bold"
+   id="tspan6223">|v<tspan
+   id="tspan6233"
+   style="font-size:64.99999762%;baseline-shift:sub">i</tspan>| = </tspan>v<tspan
    style="font-size:64.99999762%;baseline-shift:sub"
-   id="tspan6233">i</tspan>| = </tspan>v<tspan
-   id="tspan6225"
-   style="font-size:64.99999762%;baseline-shift:sub">i</tspan></tspan></text>
+   id="tspan6225">i</tspan></tspan></text>
+    </g>
   </g>
 </svg>
