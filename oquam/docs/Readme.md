@@ -53,11 +53,12 @@ of the speed values in segment s[i] and s[i+1]. As we will see below,
 the error made by the curve depends on the entry speed and of the
 maximum force (read: acceleration) that the motors can apply. 
 
-To define the curve, we have to compute the entry and exit points, the
-value of the speed throughout the curve, and the acceleration that we
-have to apply. This calculation is simplified by putting the origin in
-the junction point and the xy-plane in the plane defined by the two
-segments. The x and y-axes are placed as shown in the figure below. 
+To define the curve, we have to compute the entry and exit points (the
+points q0 and q1 in the figure below), the value of the speed
+throughout the curve, and the acceleration that we have to apply. This
+calculation is simplified by putting the origin in the junction point
+and the xy-plane in the plane defined by the two segments. The x and
+y-axes are placed as shown in the figure below.
 
 ![](path4.svg)
 
@@ -69,19 +70,19 @@ Using this reference frame, the speed along the x-axis is constant,
 
           ∆vy = vy1 - vy0
            
-The equation for the speed is (vy0 and a have opposite
+The equation for the speed is (*vy0* and *a* have opposite
 signs):
 
         vy1 = vy0 + a·∆t ⇒ ∆t = -2vy0/a                      (1)
           
 The equation for the y position is:
 
-    y = y0 + vy0·t + a.t²/2
+        y = y0 + vy0·t + a.t²/2
 
 When t = ∆t/2, y reaches its minimim ym  
 
-     ⇒ ym = y0 + vy0·∆t/2 + a.(∆t/2)²/2, using (1) and develop
-     ⇒ ym = y0 - vy0²/2a                                      (2)
+        ⇒ ym = y0 + vy0·∆t/2 + a.(∆t/2)²/2, using (1) and develop
+        ⇒ ym = y0 - vy0²/2a                                      (2)
           
 The time it takes to follow the speed curve is the same as
 the time it takes to follow the two segments of the original
@@ -90,13 +91,13 @@ the fact the the speed along the x-axis remains constant in
 both cases. Following the orginal straight path for ∆t/2,
 the junction at 0 is reached:
           
-          y0 + vy0·∆t/2 = 0 ⇒ y0 = vy0²/a                      (3)
+         y0 + vy0·∆t/2 = 0 ⇒ y0 = vy0²/a                      (3)
           
 (2) and (3) combined gives: ym = vy0²/2a
           
 The error ym should be smaller than the maximim deviation d.
 
-    ym < d ⇒ vy0²/2a < d ⇒ vy0 < √2ad               
+          ym < d ⇒ vy0²/2a < d ⇒ vy0 < √2ad               
           
 If the requested speed is larger than the maximum, all
 speed components will be scaled linearly.
