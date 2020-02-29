@@ -65,7 +65,7 @@ We will be using the indices 0 and 1, instead of i and i+1, to refer
 to the properties before and after the curve.
 
 Using this reference frame, the speed along the x-axis is constant,
-$v_x0 = v_x1$. The speed along the y axis reverses, $v_y0 = -v_y1$.
+'v_x0 = v_x1'. The speed along the y axis reverses, 'v_y0 = -v_y1'.
 
 
 
