@@ -67,21 +67,21 @@ to the properties before and after the curve.
 Using this reference frame, the speed along the x-axis is constant,
 *v_x0 = v_x1*. The speed along the y axis reverses, *v_y0 = -v_y1*.
 
-          ∆wy = wy1 - wy0 = -|_w0 - _w1| 
+          ∆vy = vy1 - vy0
            
-The equation for the speed is (wy0 and a have opposite
+The equation for the speed is (vy0 and a have opposite
 signs):
 
-        wy1 = wy0 + a·∆t ⇒ ∆t = -2wy0/a                      (1)
+        vy1 = vy0 + a·∆t ⇒ ∆t = -2vy0/a                      (1)
           
 The equation for the y position is:
 
-    y = y0 + wy0·t + a.t²/2
+    y = y0 + vy0·t + a.t²/2
 
 When t = ∆t/2, y reaches its minimim ym  
 
-     ⇒ ym = y0 + wy0·∆t/2 + a.(∆t/2)²/2, using (1) and develop
-     ⇒ ym = y0 - wy0²/2a                                      (2)
+     ⇒ ym = y0 + vy0·∆t/2 + a.(∆t/2)²/2, using (1) and develop
+     ⇒ ym = y0 - vy0²/2a                                      (2)
           
 The time it takes to follow the speed curve is the same as
 the time it takes to follow the two segments of the original
@@ -90,13 +90,13 @@ the fact the the speed along the x-axis remains constant in
 both cases. Following the orginal straight path for ∆t/2,
 the junction at 0 is reached:
           
-          y0 + wy0·∆t/2 = 0 ⇒ y0 = wy0²/a                      (3)
+          y0 + vy0·∆t/2 = 0 ⇒ y0 = vy0²/a                      (3)
           
-(2) and (3) combined gives: ym = wy0²/2a
+(2) and (3) combined gives: ym = vy0²/2a
           
 The error ym should be smaller than the maximim deviation d.
 
-    ym < d ⇒ wy0²/2a < d ⇒ wy0 < √2ad               
+    ym < d ⇒ vy0²/2a < d ⇒ vy0 < √2ad               
           
 If the requested speed is larger than the maximum, all
 speed components will be scaled linearly.
@@ -105,10 +105,10 @@ We already calculated the y coordinate of the entry and exit
 points in (3). The x coordinates of the entry and exit
 points are:
           
-          ∆x = wx0·∆t
-          ⇒ ∆x = -2wy0.wx0/a,   using (1)           
-          ⇒ x0 = -∆x/2 = wy0.wx0/a
-             and x1 = ∆x/2 = -wy0·wx0/a
+          ∆x = vx0·∆t
+          ⇒ ∆x = -2vy0.vx0/a,   using (1)           
+          ⇒ x0 = -∆x/2 = vy0.vx0/a
+             and x1 = ∆x/2 = -vy0·vx0/a
 
 To obtain the acceleration to apply on the stepper motors, we have to
 rotate the acceleration back into the coordinate space of the CNC.
