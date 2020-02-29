@@ -105,8 +105,10 @@ We already calculated the y coordinate of the entry and exit
 points in (3). The x coordinates of the entry and exit
 points are:
           
-          ∆x = wx0·∆t => ∆x = -2wy0.wx0/a,            using (1)           
-          => x0 = -∆x/2 = wy0.wx0/a and x1 = ∆x/2 = -wy0·wx0/a
+          ∆x = wx0·∆t
+          => ∆x = -2wy0.wx0/a,   using (1)           
+          => x0 = -∆x/2 = wy0.wx0/a
+             and x1 = ∆x/2 = -wy0·wx0/a
 
 To obtain the acceleration to apply on the stepper motors,
 we have to rotate the acceleration (0,ay,0) back into the
