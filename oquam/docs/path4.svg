@@ -11,7 +11,7 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="159.25034mm"
    height="76.307587mm"
-   viewBox="0 0 159.25033 76.307587"
+   viewBox="0 0 159.25034 76.307587"
    version="1.1"
    id="svg8823"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
@@ -262,8 +262,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="316.97715"
-     inkscape:cy="164.27778"
+     inkscape:cx="253.11095"
+     inkscape:cy="208.566"
      inkscape:document-units="mm"
      inkscape:current-layer="g10476"
      showgrid="false"
@@ -719,6 +719,21 @@
              id="tspan1261">e</tspan><tspan
              id="tspan1263"
              style="font-size:1.43089557px;baseline-shift:sub;stroke-width:0.16510335">x</tspan></tspan></text>
+      <text
+         id="text2630"
+         y="164.21927"
+         x="-261.47266"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+         xml:space="preserve"><tspan
+           style="font-size:3.52777767px;stroke-width:0.26458332"
+           y="164.21927"
+           x="-261.47266"
+           id="tspan2628"
+           sodipodi:role="line"><tspan
+             style="font-weight:bold;stroke-width:0.26458332"
+             id="tspan2624">r</tspan><tspan
+             style="font-size:2.2930553px;baseline-shift:sub;stroke-width:0.26458332"
+             id="tspan2626">0</tspan></tspan></text>
       <path
          sodipodi:nodetypes="cc"
          inkscape:connector-curvature="0"
@@ -731,52 +746,38 @@
          id="path18626"
          inkscape:connector-curvature="0"
          sodipodi:nodetypes="cc" />
-      <flowRoot
-         xml:space="preserve"
-         id="flowRoot20262"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:10px;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-         transform="matrix(0.26458333,0,0,0.26458333,-250.5186,-42.722854)"><flowRegion
-           id="flowRegion20220"
-           style="line-height:10px;text-align:start;text-anchor:start"><rect
-             id="rect20218"
-             width="377.79706"
-             height="153.03812"
-             x="44.95179"
-             y="863.30109"
-             style="line-height:10px;text-align:start;text-anchor:start" /></flowRegion><flowPara
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start"
-           id="flowPara20256"><flowSpan
-             id="flowSpan34443"
-             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans'">Dx</flowSpan></flowPara><flowPara
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start"
-           id="flowPara20258" /><flowPara
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start"
-           id="flowPara20260" /></flowRoot>      <path
+      <path
          sodipodi:nodetypes="cc"
          inkscape:connector-curvature="0"
          id="path20332"
          d="m -277.42765,166.99944 v 14.75997"
          style="fill:none;stroke:#000000;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.60000001, 0.60000001;stroke-dashoffset:0;stroke-opacity:1;marker-start:url(#marker20336);marker-end:url(#marker20844)" />
-      <flowRoot
-         transform="matrix(0.26458333,0,0,0.26458333,-288.5997,-57.180444)"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:10px;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-         id="flowRoot24942"
-         xml:space="preserve"><flowRegion
-           style="line-height:10px;text-align:start;text-anchor:start"
-           id="flowRegion24934"><rect
-             style="line-height:10px;text-align:start;text-anchor:start"
-             y="863.30109"
-             x="44.95179"
-             height="153.03812"
-             width="377.79706"
-             id="rect24932" /></flowRegion><flowPara
-           id="flowPara24936"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start"><flowSpan
-             id="flowSpan34445"
-             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans'">Dy</flowSpan></flowPara><flowPara
-           id="flowPara24938"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start" /><flowPara
-           id="flowPara24940"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start" /></flowRoot>    </g>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+         x="-276.47369"
+         y="174.3755"
+         id="text11392"><tspan
+           sodipodi:role="line"
+           id="tspan11390"
+           x="-276.47369"
+           y="174.3755"
+           style="font-size:3.52777767px;stroke-width:0.26458332"><tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'TeX Gyre Schola Math';-inkscape-font-specification:'TeX Gyre Schola Math'"
+   id="tspan11400">∆</tspan>y</tspan></text>
+      <text
+         id="text11396"
+         y="189.07533"
+         x="-241.99593"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+         xml:space="preserve"><tspan
+           style="font-size:3.52777767px;stroke-width:0.26458332"
+           y="189.07533"
+           x="-241.99593"
+           id="tspan11394"
+           sodipodi:role="line"><tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'TeX Gyre Schola Math';-inkscape-font-specification:'TeX Gyre Schola Math'"
+   id="tspan11398">∆</tspan>x</tspan></text>
+    </g>
   </g>
 </svg>
