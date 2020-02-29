@@ -26,8 +26,6 @@ Two segments of the path are shown in the following figure:
 
 ![](path1.svg)
 
-<img src="path1.svg" alt="drawing" width="200"/>
-
 
 In most cases, there will be a discontinuity in the speed at the
 junction point. This discontinuity requires a very high (theoretically
@@ -67,7 +65,7 @@ We will be using the indices 0 and 1, instead of i and i+1, to refer
 to the properties before and after the curve.
 
 Using this reference frame, the speed along the x-axis is constant,
-vx0 = vx1. The speed along the y axis reverses, vy0 = -vy1.
+$v_x0 = v_x1$. The speed along the y axis reverses, $v_y0 = -v_y1$.
 
 
 
