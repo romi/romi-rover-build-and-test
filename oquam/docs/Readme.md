@@ -94,7 +94,8 @@ the junction at 0 is reached:
 (2) and (3) combined gives: ym = wy0²/2a
           
 The error ym should be smaller than the maximim deviation d.
-ym < d => wy0²/2a < d => wy0 < sqrt(2ad)               
+
+    ym < d => wy0²/2a < d => wy0 < sqrt(2ad)               
           
 If the requested speed is larger than the maximum, all
 speed components will be scaled linearly.
