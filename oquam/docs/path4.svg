@@ -261,11 +261,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
+     inkscape:zoom="1.979899"
      inkscape:cx="316.97715"
      inkscape:cy="164.27778"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g10476"
      showgrid="false"
      fit-margin-top="3"
      fit-margin-left="3"
@@ -719,21 +719,6 @@
              id="tspan1261">e</tspan><tspan
              id="tspan1263"
              style="font-size:1.43089557px;baseline-shift:sub;stroke-width:0.16510335">x</tspan></tspan></text>
-      <text
-         id="text2630"
-         y="164.21927"
-         x="-261.47266"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-         xml:space="preserve"><tspan
-           style="font-size:3.52777767px;stroke-width:0.26458332"
-           y="164.21927"
-           x="-261.47266"
-           id="tspan2628"
-           sodipodi:role="line"><tspan
-             style="font-weight:bold;stroke-width:0.26458332"
-             id="tspan2624">r</tspan><tspan
-             style="font-size:2.2930553px;baseline-shift:sub;stroke-width:0.26458332"
-             id="tspan2626">0</tspan></tspan></text>
       <path
          sodipodi:nodetypes="cc"
          inkscape:connector-curvature="0"
@@ -760,9 +745,9 @@
              y="863.30109"
              style="line-height:10px;text-align:start;text-anchor:start" /></flowRegion><flowPara
            style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start"
-           id="flowPara20256">∆<flowSpan
-   id="flowSpan34443"
-   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans'">x</flowSpan></flowPara><flowPara
+           id="flowPara20256"><flowSpan
+             id="flowSpan34443"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans'">Dx</flowSpan></flowPara><flowPara
            style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start"
            id="flowPara20258" /><flowPara
            style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start"
@@ -786,9 +771,9 @@
              width="377.79706"
              id="rect24932" /></flowRegion><flowPara
            id="flowPara24936"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start">∆<flowSpan
-   id="flowSpan34445"
-   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans'">y</flowSpan></flowPara><flowPara
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start"><flowSpan
+             id="flowSpan34445"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans'">Dy</flowSpan></flowPara><flowPara
            id="flowPara24938"
            style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.33333397px;line-height:10px;font-family:'TeX Gyre Pagella Math';-inkscape-font-specification:'TeX Gyre Pagella Math';text-align:start;text-anchor:start" /><flowPara
            id="flowPara24940"

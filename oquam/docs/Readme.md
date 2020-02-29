@@ -110,9 +110,8 @@ points are:
           ⇒ x0 = -∆x/2 = wy0.wx0/a
              and x1 = ∆x/2 = -wy0·wx0/a
 
-To obtain the acceleration to apply on the stepper motors,
-we have to rotate the acceleration (0,ay,0) back into the
-coordinate space of the CNC. 
+To obtain the acceleration to apply on the stepper motors, we have to
+rotate the acceleration back into the coordinate space of the CNC.
 
 
 
