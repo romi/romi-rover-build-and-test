@@ -85,12 +85,12 @@ When t = ∆t/2, y reaches its minimim ym
         ⇒ ym = y0 + vy0·∆t/2 + a.(∆t/2)²/2, using (1) and develop
         ⇒ ym = y0 - vy0²/2a                                      (2)
           
-The time it takes to follow the speed curve is the same as
-the time it takes to follow the two segments of the original
-path that go through the junction point. This follows from
-the fact the the speed along the x-axis remains constant in
-both cases. Following the orginal straight path for ∆t/2,
-the junction, with y=0, is reached:
+The time it takes to follow the speed curve is the same as the time it
+takes to follow the two segments of the original path that go through
+the junction point. This follows from the fact the the speed along the
+x-axis remains the same in both cases. Following the orginal straight
+path for ∆t/2 the junction y=0 is reached starting from y0 with speed
+vy0 after a time ∆t/2:
           
          y0 + vy0·∆t/2 = 0 ⇒ y0 = vy0²/a                      (3)
           
