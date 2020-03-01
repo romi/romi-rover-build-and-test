@@ -94,7 +94,9 @@ reached after a time ∆t/2:
           
          y0 + vy0·∆t/2 = 0 ⇒ y0 = vy0²/a                      (3)
           
-(2) and (3) combined gives us that: ym = vy0²/2a
+(2) and (3) combined gives us that:
+
+         ym = vy0²/2a
           
 The error ym should be smaller than the maximim deviation d.
 
