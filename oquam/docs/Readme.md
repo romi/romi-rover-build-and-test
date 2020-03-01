@@ -98,16 +98,18 @@ reached after a time ∆t/2:
 
          ym = vy0²/2a
           
-The error ym should be smaller than the maximim deviation d.
+The error ym should be smaller than the maximim deviation d:
 
-          ym < d ⇒ vy0²/2a < d ⇒ vy0 < √2ad               
+          ym < d
+          ⇒ vy0²/2a < d
+          ⇒ vy0 < √2ad                                          (4)
           
-If the requested speed is larger than the maximum, all
-speed components will be scaled linearly.
+If the requested speed at the entry of the curve is larger than the
+√2ad, the speed components in the xyz directions have to scaled
+linearly to satisfy the constraint (4).
           
-We already calculated the y coordinate of the entry and exit
-points in (3). The x coordinates of the entry and exit
-points are:
+We already calculated the y coordinate of the entry and exit points in
+(3). The x coordinates of the entry and exit points are:
           
           ∆x = vx0·∆t
           ⇒ ∆x = -2vy0.vx0/a,   using (1)           
@@ -115,7 +117,8 @@ points are:
              and x1 = ∆x/2 = -vy0·vx0/a
 
 To obtain the acceleration to apply on the stepper motors, we have to
-rotate the acceleration back into the coordinate space of the CNC.
+rotate the acceleration back from the reference frame above into the
+coordinate space of the CNC.
 
 
 
