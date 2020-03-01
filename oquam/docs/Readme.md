@@ -65,7 +65,7 @@ y-axes are placed as shown in the figure below.
 We will be using the indices 0 and 1, instead of i and i+1, to refer
 to the properties before and after the curve.
 
-Using this reference frame, the speed along the x-axis is constant,
+In this new reference frame, the speed along the x-axis is constant,
 *v_x0 = v_x1*. The speed along the y axis reverses, *v_y0 = -v_y1*.
 
           ∆vy = vy1 - vy0
@@ -73,7 +73,8 @@ Using this reference frame, the speed along the x-axis is constant,
 The equation for the speed is (*vy0* and *a* have opposite
 signs):
 
-        vy1 = vy0 + a·∆t ⇒ ∆t = -2vy0/a                      (1)
+        vy1 = vy0 + a·∆t
+        ⇒ ∆t = -2vy0/a                      (1)
           
 The equation for the y position is:
 
@@ -89,7 +90,7 @@ the time it takes to follow the two segments of the original
 path that go through the junction point. This follows from
 the fact the the speed along the x-axis remains constant in
 both cases. Following the orginal straight path for ∆t/2,
-the junction at 0 is reached:
+the junction, with y=0, is reached:
           
          y0 + vy0·∆t/2 = 0 ⇒ y0 = vy0²/a                      (3)
           
