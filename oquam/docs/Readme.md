@@ -89,12 +89,12 @@ The time it takes to follow the speed curve is the same as the time it
 takes to follow the two segments of the original path that go through
 the junction point. This follows from the fact the the speed along the
 x-axis remains the same in both cases. Following the orginal straight
-path for ∆t/2 the junction y=0 is reached starting from y0 with speed
-vy0 after a time ∆t/2:
+path and starting from y0 with a speed of vy0, the junction y=0 is
+reached after a time ∆t/2:
           
          y0 + vy0·∆t/2 = 0 ⇒ y0 = vy0²/a                      (3)
           
-(2) and (3) combined gives: ym = vy0²/2a
+(2) and (3) combined gives us that: ym = vy0²/2a
           
 The error ym should be smaller than the maximim deviation d.
 
