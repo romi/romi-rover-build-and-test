@@ -39,24 +39,37 @@ and in the
 header.
 
 To use the library your application should instatiate a subclass of
-Controller during the start-up initialization. The Controller
-subclasses implemented a specific hardware set-up (see
+Controller during the initialization of your program. The Controller
+subclasses implement a specific hardware configuration (see
 below). Following that, whenever you want the CNC to travel a certain
 path, you should take the following steps:
 
 * create a new script object,
-* register all the points of the polygone path using *script_moveto()*,
+* register all the points of the polygone path using *script_moveto()* - all points have absolute positions,
 * call *controller->run()* with the script as argument, and
 * delete the script when done using *delete_script()*. 
 
 ```c++
 #include <oquam/oquam.hpp>
 
+const char *device_name = "/dev/ttyUSB0";
+double xmax[3] = { 1.0, 1.0, 0.5 };   // in meter
+double vmax[3] = { 0.1, 0.1, 0.005 }; // max speed in m/s
+double amax[3] = { 0.3, 0.3, 0.03 };  // max acceleration in m/s²
+double scale[3] = { 40000, 40000, -100000 }; // steps/m
+double period = 0.014; // in seconds
+
+// The points of the polygone
+double p[][3] = {{0, 0, 0}, ... };
+
+// The travel speed of each segment in m/s
+double v[] = { 0.1, ... };
+
+// The number of points
+int n = sizeof(p) / (3 * sizeof(double));
+
 int main(int argc, char **argv)
 {
-        double p[][3] = {{0, 0, 0}, ... };
-        double v[] = { 0.1, ... };
-        int n = sizeof(p) / (3 * sizeof(double));
         Controller *controller = new OquamStepperController(device_name,
                                                     xmax, vmax, amax, deviation,
                                                     scale, period);
