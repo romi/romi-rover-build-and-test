@@ -1,8 +1,9 @@
 
 # Overview
 
-Oqual is a small C++ library and rcom application to compute a smooth path
-and to control a CNC. 
+Oquam is both a small C++ library and an rcom application to control a
+CNC and to convert a given polygone path into a smooth, continuous
+path.
 
 # Installation
 
