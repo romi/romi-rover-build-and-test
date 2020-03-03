@@ -1,5 +1,118 @@
 
-# Overview   
+# Overview
+
+Oqual is a small C++ library and rcom application to compute a smooth path
+and to control a CNC. 
+
+# Installation
+
+Oquam can be installed separately from the
+[romi-rover](https://github.com/romi/romi-rover) suite of models using
+the standard cmake approach:
+
+
+Then proceed to the compilation and installation:
+```bash
+$ cd oquam
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+```
+
+This creates both the *liboquam* library and the *oquam*
+[rcom](https://github.com/romi/rcom) node.
+
+liboquam provides all the functionnality discussed below. It does not
+depend on rcom and can be used in other projects.
+
+
+# Using the library
+
+The header to include is <oquam/oquam.hpp>. The main API is defined by
+the abstract class Controller (see Controller.hpp).
+
+The main usage is to instatiate a subclass of Controller that is
+implemented for a specific hardware set-up (see below). Next, the
+steps to make the CNC travel a smooth path is
+
+* create a new script object,
+* register all the points of the polygone path,
+* call controller->run() with the script as argument.
+
+```c++
+double p[][3] = {{0, 0, 0}, ... };
+double v[] = { 0.1, ... };
+int n = sizeof(p) / (3 * sizeof(double));
+Controller *controller = new OquamStepperController(device_name,
+                                                    xmax, vmax, amax, deviation,
+                                                    scale, period);
+script_t *script = new_script();
+
+for (int i = 0; i < n; i++)
+        script_moveto(script,  p[i].x, p[i].y, p[i].y, v[i], i);
+
+controller->run(script);                
+delete_script(script);
+delete controller;
+```
+
+The path planner needs a few parameters in order to compute the smooth
+curve:
+
+* xmax: the dimensions of the CNC,
+* vmax: the maximum allowed speeds in the x, y, and z directions,
+* amax: the maximum allowed accelerations in the x, y, and z directions,
+* deviation: the maximum allowed deviation from the theoretical path.
+
+If the deviation is zero, the CNC will reduce the speed to zero in all
+the junction points of the path. For larger than zero deviations, the
+CNC will curve in the junctions and perform a continuous travel.
+
+## Triggers and delays
+
+It is also possible to insert trigger into the script. Triggers allow
+you to synchronise other actions with the traveling of the CNC, for
+example, grabbing an image from a camera.
+
+```c++
+void do_trigger(void *userdata, int16_t arg)
+{
+        printf("Trigger %d\n", arg);
+}
+
+double delay = 1.0; // seconds
+
+for (int i = 0; i < n; i++) {
+        script_moveto(script,  p[i].x, p[i].y, p[i].y, v[i], i);
+        script_trigger(script, do_trigger, NULL, i, delay);
+}
+```
+
+During the execution of the script, the trigger's callback function
+will be called and the CNC will pause the subsequent move request for
+a given delay. If the delay is equal to zero, the CNC will wait
+indefinitely, or until controller->continue_script() is called.
+
+You can also add a simply delay into the script using
+script_delay(). This may be useful for example if you want to be sure
+the CNC is at complete rest before grabbing the image.
+
+## Direct commands
+
+The controller also provides two methods that you can call directly
+without creating a script:
+
+* moveat: Move at a given speed in the x, y, and z direction
+* moveto: Move to an absolute position
+
+
+# Using the rcom node
+
+
+
+
+# Implementation
 
 Consider the code below. We have a list of points that we want the
 path to go through in the array p[]. For each segment going from
