@@ -7,12 +7,10 @@ continuous path.
 
 # Installation
 
-Oquam can be installed separately from the
-[romi-rover](https://github.com/romi/romi-rover) suite of models using
-the standard cmake approach:
+Oquam is currently part of the
+[romi-rover](https://github.com/romi/romi-rover) suite but it can be
+installed separately using the standard cmake approach:
 
-
-Then proceed to the compilation and installation:
 ```bash
 $ cd oquam
 $ mkdir build
