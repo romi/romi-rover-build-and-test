@@ -37,24 +37,27 @@ implemented for a specific hardware set-up (see below). Next, the
 steps to make the CNC travel a smooth path is
 
 * create a new script object,
-* register all the points of the polygone path,
+* register all the points of the polygone path using script_moveto(),
 * call controller->run() with the script as argument.
 
 ```c++
-double p[][3] = {{0, 0, 0}, ... };
-double v[] = { 0.1, ... };
-int n = sizeof(p) / (3 * sizeof(double));
-Controller *controller = new OquamStepperController(device_name,
+int main(int argc, char **argv)
+{
+        double p[][3] = {{0, 0, 0}, ... };
+        double v[] = { 0.1, ... };
+        int n = sizeof(p) / (3 * sizeof(double));
+        Controller *controller = new OquamStepperController(device_name,
                                                     xmax, vmax, amax, deviation,
                                                     scale, period);
-script_t *script = new_script();
+        script_t *script = new_script();
 
-for (int i = 0; i < n; i++)
-        script_moveto(script,  p[i].x, p[i].y, p[i].y, v[i], i);
+        for (int i = 0; i < n; i++)
+                script_moveto(script,  p[i].x, p[i].y, p[i].y, v[i], i);
 
-controller->run(script);                
-delete_script(script);
-delete controller;
+        controller->run(script);                
+        delete_script(script);
+        delete controller;
+}
 ```
 
 The path planner needs a few parameters in order to compute the smooth
@@ -69,6 +72,7 @@ If the deviation is zero, the CNC will reduce the speed to zero in all
 the junction points of the path. For larger than zero deviations, the
 CNC will curve in the junctions and perform a continuous travel.
 
+
 ## Triggers and delays
 
 It is also possible to insert trigger into the script. Triggers allow
@@ -81,11 +85,17 @@ void do_trigger(void *userdata, int16_t arg)
         printf("Trigger %d\n", arg);
 }
 
-double delay = 1.0; // seconds
+int main(int argc, char **argv)
+{
+        double delay = 1.0; // seconds
+        // ...
 
-for (int i = 0; i < n; i++) {
-        script_moveto(script,  p[i].x, p[i].y, p[i].y, v[i], i);
-        script_trigger(script, do_trigger, NULL, i, delay);
+        for (int i = 0; i < n; i++) {
+                script_moveto(script,  p[i].x, p[i].y, p[i].y, v[i], i);
+                script_trigger(script, do_trigger, NULL, i, delay);
+        }
+        
+        // ...
 }
 ```
 
@@ -107,9 +117,25 @@ without creating a script:
 * moveto: Move to an absolute position
 
 
+## Controller implementations
+
+Currently, there are two implementations of the controller interface:
+
+* OquamStepperController: A controller for stepper motors. This
+  controller connects to an Arduino over a serial connection. The
+  Arduino must run the Oquam firmware that is part of [this
+  repository](https://github.com/romi/romi-rover/tree/master/oquam/Oquam).
+
+* VirtualStepperController: A virtual stepper controller for testing
+  purposes.
+
+Both implementations are a subclass of StepperController, which itself
+sublasses Controller.
+
+
 # Using the rcom node
 
-
+The oquam node exports the CNC function to other rcom nodes. 
 
 
 # Implementation
