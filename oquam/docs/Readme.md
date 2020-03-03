@@ -5,6 +5,11 @@ Oquam is both a small C++ library and an rcom application to control a
 CNC and to convert a polygone path given by the user into a smooth,
 continuous path.
 
+The main functionnality is contained in liboquam. This library can be
+used in other projects. It does not depend on rcom but does require
+[libr](https://github.com/romi/libr).
+
+
 # Installation
 
 Oquam is currently part of the
@@ -20,10 +25,8 @@ $ make
 ```
 
 This creates both the *liboquam* library and the *oquam*
-[rcom](https://github.com/romi/rcom) node.
-
-liboquam provides all the functionnality discussed below. It does not
-depend on rcom and can be used in other projects.
+[rcom](https://github.com/romi/rcom) node. If you only need the
+libary, you can run "make liboquam" instead of make.
 
 
 # Using the library
