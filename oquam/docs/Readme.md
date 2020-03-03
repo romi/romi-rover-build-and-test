@@ -31,9 +31,9 @@ libary, you can run "make liboquam" instead of make.
 
 # Using the library
 
-The header to include is <oquam/oquam.hpp>. The main API is defined by
-the abstract class Controller (see Controller.hpp) and the script.h
-header.
+The header to include is <oquam/oquam.hpp>. The library's API is
+defined in the abstract class Controller (see Controller.hpp) and in
+the script.h header.
 
 To use the library your application should instatiate a subclass of
 Controller during the start-up initialization. The Controller
