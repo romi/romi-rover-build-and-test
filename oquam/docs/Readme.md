@@ -2,8 +2,8 @@
 # Overview
 
 Oquam is both a small C++ library and an rcom application to control a
-CNC and to convert a given polygone path into a smooth, continuous
-path.
+CNC and to convert a polygone path given by the user into a smooth,
+continuous path.
 
 # Installation
 
