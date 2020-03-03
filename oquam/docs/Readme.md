@@ -32,15 +32,19 @@ libary, you can run "make liboquam" instead of make.
 # Using the library
 
 The header to include is <oquam/oquam.hpp>. The main API is defined by
-the abstract class Controller (see Controller.hpp).
+the abstract class Controller (see Controller.hpp) and the script.h
+header.
 
-The main usage is to instatiate a subclass of Controller that is
-implemented for a specific hardware set-up (see below). Next, the
-steps to make the CNC travel a smooth path is
+To use the library your application should instatiate a subclass of
+Controller during the start-up initialization. The Controller
+subclasses implemented a specific hardware set-up (see
+below). Following that, whenever you want the CNC to travel a certain
+path, you should take the following steps:
 
 * create a new script object,
-* register all the points of the polygone path using script_moveto(),
-* call controller->run() with the script as argument.
+* register all the points of the polygone path using *script_moveto()*,
+* call *controller->run()* with the script as argument, and
+* delete the script when done using *delete_script()*. 
 
 ```c++
 #include <oquam/oquam.hpp>
