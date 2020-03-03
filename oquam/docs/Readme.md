@@ -53,7 +53,7 @@ path, you should take the following steps:
 #include <oquam/oquam.hpp>
 
 const char *device_name = "/dev/ttyUSB0";
-double xmax[3] = { 1.0, 1.0, 0.5 };   // in meter
+double xmax[3] = { 0.7, 0.7, 0.5 };   // in meter
 double vmax[3] = { 0.1, 0.1, 0.005 }; // max speed in m/s
 double amax[3] = { 0.3, 0.3, 0.03 };  // max acceleration in m/s²
 double scale[3] = { 40000, 40000, -100000 }; // steps/m
@@ -87,14 +87,18 @@ int main(int argc, char **argv)
 The path planner needs a few parameters in order to compute the smooth
 curve:
 
-* xmax: the dimensions of the CNC,
-* vmax: the maximum allowed speeds in the x, y, and z directions,
-* amax: the maximum allowed accelerations in the x, y, and z directions,
-* deviation: the maximum allowed deviation from the theoretical path.
+* xmax: the dimensions of the CNC in meters,
+* vmax: the maximum allowed speeds in the x, y, and z directions in m/s,
+* amax: the maximum allowed accelerations in the x, y, and z directions in m/s²,
+* deviation: the maximum allowed deviation from the theoretical path in meter.
 
 If the deviation is zero, the CNC will reduce the speed to zero in all
 the junction points of the path. For larger than zero deviations, the
 CNC will curve in the junctions and perform a continuous travel.
+
+The stepper controller also needs to know the following:
+* scale: the number of motor steps per meter in each direction,
+* period: the time interval with which the path will be sliced (see below).
 
 
 ## Triggers and delays
