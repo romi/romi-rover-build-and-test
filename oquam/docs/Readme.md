@@ -49,6 +49,8 @@ path, you should take the following steps:
 * call *controller->run()* with the script as argument, and
 * delete the script when done using *delete_script()*. 
 
+The following code shows a simple example to get started:  
+
 ```c++
 #include <oquam/oquam.hpp>
 
@@ -103,7 +105,7 @@ The stepper controller also needs to know the following:
 
 ## Triggers and delays
 
-It is also possible to insert trigger into the script. Triggers allow
+It is also possible to insert triggers into the script. Triggers allow
 you to synchronise other actions with the traveling of the CNC, for
 example, grabbing an image from a camera.
 
@@ -128,13 +130,19 @@ int main(int argc, char **argv)
 ```
 
 During the execution of the script, the trigger's callback function
-will be called and the CNC will pause the subsequent move request for
-a given delay. If the delay is equal to zero, the CNC will wait
-indefinitely, or until controller->continue_script() is called.
+will be called with two arguments, a pointer to a user-defined data
+structure and the trigger ID. Both arguments are passed to *script_trigger()*.
 
-You can also add a simply delay into the script using
-script_delay(). This may be useful for example if you want to be sure
-the CNC is at complete rest before grabbing the image.
+The last argument, "delay", tells the CNC to pause the executions of
+the script for a given amount of time. If the delay is less than zero,
+the CNC will wait indefinitely, or until
+*controller->continue_script()* is called.
+
+You can also add a delay into the script without a trigger using
+*script_delay()*. This may be useful for example if you want to be
+sure the CNC is completely at rest before doing an operation such as
+grabbing the image.
+
 
 ## Direct commands
 
