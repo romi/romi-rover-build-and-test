@@ -43,6 +43,8 @@ steps to make the CNC travel a smooth path is
 * call controller->run() with the script as argument.
 
 ```c++
+#include <oquam/oquam.hpp>
+
 int main(int argc, char **argv)
 {
         double p[][3] = {{0, 0, 0}, ... };
