@@ -166,12 +166,25 @@ Currently, there are two implementations of the controller interface:
   purposes.
 
 Both implementations are a subclass of StepperController, which itself
-sublasses Controller.
+is a sublass of Controller.
 
 
 # Using the rcom node
 
-The oquam node exports the CNC function to other rcom nodes. 
+The oquam node makes the CNC functions available to other rcom
+nodes. It exports the following commands:
+
+* moveto: parameters: "x", "y", "z", "v".
+  Example: { "command": "moveto", "x": "0.7", "v": 0.05 }
+
+* travel: parameters: "path".
+  Example: { "command": "travel", "path": [[0,0,0,0.1], [0.5,0,0,0.1]], [0.5,0.5,0,0.1], [0,0.5,0,0.1], [0,0,0,0.1]] }
+
+
+* spindle: not implemented, yet
+
+* homing: not implemented, yet
+
 
 
 # Implementation
