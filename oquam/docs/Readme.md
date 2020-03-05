@@ -41,6 +41,16 @@ This creates both the *liboquam* library and the *oquam*
 [rcom](https://github.com/romi/rcom) node. If you only need the
 libary, you can run "make liboquam" instead of make.
 
+# Arduino firmware
+
+The directory Oquam contains the Arduino code. It can be uploaded
+using the Arduino IDE.
+
+As of writing, the current implementation is not complete, yet. Test
+have been done with the Arduino Uno and the gShield. Check
+[config.h](https://github.com/romi/romi-rover/blob/master/oquam/Oquam/config.h)
+for more information about support hardware.
+
 
 # Using the library
 
