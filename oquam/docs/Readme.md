@@ -12,15 +12,16 @@ used in other projects. It does not depend on rcom but does require
 
 # Background
 
-Before the development of oquam we were using Grbl running on an
-Arduino Uno to control the CNC of the Romi Rover, a weeding robot for
-organic, market farms (https://romi-project.eu). One of the biggest
-problems we had was that the weeding arm got stuck in the soil and the
-CNC looses its position. We wanted to add encoders on the motors but
-this was not so easy to add to Grbl. In addition, it seemed more
-natural to us to perform some of the more complex path smoothening on
-the host instead of on the Arduino. This opens up the possibility to
-use different types of motor drivers as a back-end as well.
+Before we started the development of oquam we were using Grbl running
+on an Arduino Uno to control the CNC of the Romi Rover, a weeding
+robot for organic, market farms (https://romi-project.eu). One of the
+biggest problems we had was that the weeding arm got stuck in the soil
+and the CNC looses its position. We wanted to add encoders on the
+motors but this was not so easy to add to Grbl. In addition, it seemed
+more natural to us to perform some of the more complex path
+smoothening on the host instead of on the Arduino. This opens up the
+possibility to use different types of motor drivers as a back-end as
+well.
 
 
 # Installation
@@ -393,7 +394,7 @@ to determine when a step pin should be raised.
 
 ### Communication speed & minimum duration of move actions
 
-Oquam's protocal is based on textual commands sent over a serial
+Oquam's protocol is based on textual commands sent over a serial
 connection for convenience. Serial makes it easy to connect a terminal
 to the controller and type in a command. It also makes it easy to
 upload new versions of the firmware.
