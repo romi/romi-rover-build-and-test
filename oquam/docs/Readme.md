@@ -436,8 +436,12 @@ Too summarize:
 * If the slice interval is too small: actions are executed faster than can be transmitted
 * If the slice interval is too big: accelerations are not very smooth
 
-Suppose we send a move action M[T,dx,dy,dz,id]. The length of a
+
+(Suppose we send a move action M[T,dx,dy,dz,id]. The length of a
 message, for short moves is 20 bytes long including the newline
-character at the end (ex. M[10,10,10,10,1000]).
+character at the end (ex. M[10,10,10,10,1000]). With a baudrate of
+38400, the time to transfer the message is 20*8/38400 = 4.2 ms.)
+
+
 
 
