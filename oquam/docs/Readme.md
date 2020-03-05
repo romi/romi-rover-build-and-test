@@ -10,6 +10,19 @@ used in other projects. It does not depend on rcom but does require
 [libr](https://github.com/romi/libr).
 
 
+# Background
+
+Before the development of oquam we were using Grbl running on an
+Arduino Uno to control the CNC of the Romi Rover, a weeding robot for
+organic, market farms (https://romi-project.eu). One of the biggest
+problems we had was that the weeding arm got stuck in the soil and the
+CNC looses its position. We wanted to add encoders on the motors but
+this was not so easy to add to Grbl. In addition, it seemed more
+natural to us to perform some of the more complex path smoothening on
+the host instead of on the Arduino. This opens up the possibility to
+use different types of motor drivers as a back-end as well.
+
+
 # Installation
 
 Oquam is currently part of the
@@ -180,7 +193,6 @@ nodes. It exports the following commands:
 * travel: parameters: "path".
   Example: { "command": "travel", "path": [[0,0,0,0.1], [0.5,0,0,0.1]], [0.5,0.5,0,0.1], [0,0.5,0,0.1], [0,0,0,0.1]] }
 
-
 * spindle: not implemented, yet
 
 * homing: not implemented, yet
@@ -215,24 +227,25 @@ Two segments of the path are shown in the following figure:
 ![](path1.svg)
 
 
-In most cases, there will be a discontinuity in the speed at the
-junction point. This discontinuity requires a very high (theoretically
-infinite) acceleration. The change in speed corresponds to a change in
-value, a change in direction, or both.
+In most cases, there will be a discontinuity at the speed at the
+junction point that requires a very high (theoretically infinite)
+acceleration. The change in speed corresponds to a change in value, a
+change in direction, or both.
 
 ![](path2.svg)
 
-In order to remove the dicontinuity and create a smooth path, we
-replace the junction with a round curve. During the curve, the speed
-has a constant absolute value but changes direction. Before the curve,
-the CNC may have to slow down so as to enter the curve with a lower
-speed.  After the curve, the CNC may have to speed up again to reach
-the desired speed.
+In order to remove the discontinuity and create a smooth path with
+acceptable accelerations, we replace the junction with a round
+curve. Before the curve, the CNC may have to slow down so as to enter
+the curve with a lower speed. During the curve, the speed has a
+constant absolute value but changes direction. After the curve, the
+CNC may have to speed up again to reach the desired speed.
 
 The curve introduces an error, as the path no longer goes through the
 junction point. When the path is calculated, the application must
-therefore specify what the maximum allowed deviation is, that is, the
-maxumum allowed distance between the junction point and the curve.
+therefore specify what the maximum allowed deviation is, that is, what
+the maximum allowed distance is between the junction point and the
+curve.
 
 ![](path3.svg)
 
@@ -310,5 +323,59 @@ coordinate space of the CNC.
 
 
 
+## Acceleration - travel - deceleration - curve
+
+Each segment of the polygone will be replaced by four sections: an
+acceleration, a travel, a deceleration, and a curve section or, as we
+named it in the code, an ATDC.
+
+![](path5.svg)
+
+In the travel section, the arm moves at the constant speed that was
+requested for that segment. The acceleration brings the arm up to
+speed from a stand-still or after a curve. The deceleration slow the
+arm down to a stand-still or to the entry speed of the curve. During
+the curve, a constant acceleration is applied to chenge the direction
+of the arm movement. Any of the sections may be absent.
+
+An exception that is handled separately is when the segment is too
+short to reach the requested speed. In that case, the speed is
+interpolated linearly between the entry speed and the exit speed.
+
+It is possible also that the speed at the entry of a segment is too
+high and the segment is not long enough to slow down to the maximum
+entry speed of the curve at the end of the segment. In this case, We
+must scale back the speed at the start of this segment. This change
+will have to be propagated back to the previous segments. This will be
+done during the backward traversal of the segments.
+
+The conversion of a polygone consisting of segments with constant
+speed produces a list of ATDC elements that describes the position and
+speed as a continuous function. The acceleration is a step-wise
+function with a capped maximum value.
+
+
+## Stepper controller
+
+The stepper controller implements an acceleration as a sequence of
+small segments with constant speed. The speed from one segment to the
+next increases or decreases as needed. To obtain the sequence of small
+segments, the ATDC list is sliced and converted into a long list of
+move commands.
+
+![](path6.svg)
+
+All this preparative work is done on the host PC. To execute the path,
+the stepper driver will send the move commands to the Arduino over a
+serial connection. The Arduino uses a circular buffer to store the
+move commands and informs the host if the buffer is full and to try
+sending data again a bit later.
+
+The Arduino executes the move commands. Similar to the Grbl
+implementation, it uses a timer interupt to generate the standard step
+signals used by most stepper drivers. Again, like Grbl, it uses
+[Bresenham's
+algorithm](https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)
+to determine when a step pin should be raised.
 
 
