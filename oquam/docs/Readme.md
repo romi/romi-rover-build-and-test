@@ -12,17 +12,20 @@ used in other projects. It does not depend on rcom but does require
 
 # Background
 
-Before we started the development of oquam we were using Grbl running
-on an Arduino Uno to control the CNC of the Romi Rover, a weeding
-robot for organic, market farms (https://romi-project.eu). One of the
-biggest problems we had was that the weeding arm got stuck in the soil
-and the CNC looses its position. We wanted to add encoders on the
-motors but this was not so easy to add to Grbl. In addition, it seemed
-more natural to us to perform some of the more complex path
-smoothening on the host instead of on the Arduino. This opens up the
-possibility to use different types of motor drivers as a back-end as
-well.
+We developed oquam to control the CNC of the Romi Rover, a weeding
+robot for organic, market farms (https://romi-project.eu). Initially,
+we were using Grbl running on an Arduino Uno to control the CNC. One
+of the biggest problems we had was that the weeding arm would get
+stuck in the soil and the CNC would loose its position. We wanted to
+add encoders on the motors but this was not so easy to add to Grbl. In
+addition, it seemed more natural to us to perform some of the more
+complex path smoothening on the host instead of on the Arduino. This
+opens up the possibility to use different types of motor drivers as a
+back-end as well.
 
+
+***The implementation of the position tracking and error handling
+   mechanism is currently still ongoing.***
 
 # Installation
 
