@@ -164,13 +164,13 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="218.87194"
-     inkscape:cy="174.58749"
+     inkscape:cx="305.74506"
+     inkscape:cy="191.76008"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1025"
+     inkscape:window-width="2560"
+     inkscape:window-height="1385"
      inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
@@ -187,7 +187,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -418,5 +418,17 @@
          x="-75.044083"
          id="tspan15252"
          sodipodi:role="line">travel</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="64.12767"
+       y="133.34003"
+       id="text4820"
+       transform="rotate(90)"><tspan
+         sodipodi:role="line"
+         id="tspan4818"
+         x="64.12767"
+         y="133.34003"
+         style="stroke-width:0.26458332">⇒</tspan></text>
   </g>
 </svg>
