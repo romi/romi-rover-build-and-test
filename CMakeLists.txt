@@ -58,8 +58,7 @@ if (BUILD_TESTS)
     # we then manually add the bin path so that we can call it later.
     download_project(   PROJ              lcov
                         URL               https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz
-#                        URL               http://downloads.sourceforge.net/ltp/lcov-1.14.tar.gz
-                        PREFIX            ${CMAKE_BINARY_DIR}/lcov
+                        PREFIX            ${CMAKE_DOWNLOAD_DIRECTORY}/lcov
                         TIMEOUT           180
                         ${UPDATE_DISCONNECTED_IF_AVAILABLE}
             )
