@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(CI_CD_Testing)
+project(romi-rover-build-and-test)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -18,6 +18,7 @@ option(COVERAGE_TESTS "Generate coverage." OFF)
 
 if (BUILD_TESTS)
     set(CMAKE_MODULES_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
+    set(CMAKE_DOWNLOAD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/download)
 
     include(CTest)
 
@@ -43,6 +44,7 @@ if (BUILD_TESTS)
     download_project(   PROJ                googletest
                         GIT_REPOSITORY      https://github.com/google/googletest.git
                         GIT_TAG             master
+                        PREFIX              ${CMAKE_DOWNLOAD_DIRECTORY}/googletest
                         ${UPDATE_DISCONNECTED_IF_AVAILABLE}
             )
 
