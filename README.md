@@ -24,9 +24,14 @@ The first thing you'll notice is that there is a lot more in your romi-rover-tes
 Let's explain the structure a bit.
 
 ###_romi-rover-test-and-build/download/_
-When the cmake is run to download and configure the system, you don't necessarily want to re-download all the supporting libs every time you configure a build locally. To save your bandwidth, and a small portion of your sanity, supporting libs are downloaded to this folder. 
 
-The reason that they are downloaded to their own downloads area rather than keeping it all and neat in the <build-directory> is that often when building we'll re-configure cmake to create a different build type (debug, release, coverage etc), and often we'll completely clean out the <build-directory> so keeping the downloads in a separate download area saves re-downloading every time you do a new cmake.
+When the cmake is run to download and configure the system, you don't necessarily want to re-download all the supporting libs every time you configure a build locally. 
+To save your bandwidth, and a small portion of your sanity, supporting libs are downloaded to named folders under the "download" folder. 
+
+The reason that they are downloaded to their own downloads area, rather than keeping it all neat and tidy in the <build-directory> is this:
+often when building we'll re-configure cmake to create a different build type (debug, release, coverage etc), and often we'll completely clean out the <build-directory> so keeping the downloads in a separate download area saves re-downloading every time you do a new cmake.
+It also removes the duplicate libraries that would be created per build configuration.
+
 
 
 
