@@ -8,13 +8,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
-# Options. Build tests by default. We want to test whether we are debveloping or building a release.
+# Options. Build tests by default. We want to test whether we are developing or building a release.
 # I mean... why wouldn't you? :)
 option(BUILD_TESTS "Build all tests." ON)
-
-# Options. Turn on with 'cmake -DCOVERAGE_TESTS=ON'.
-option(COVERAGE_TESTS "Generate coverage." OFF)
 
 if (BUILD_TESTS)
     set(CMAKE_MODULES_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
@@ -68,10 +64,44 @@ if (BUILD_TESTS)
 
 endif() # BUILD_TESTS
 
-add_subdirectory(TestLib)
-add_subdirectory(TestExe)
+# Options. Turn on with 'cmake -DCLONE_ROMI_LIB_REPOS=ON'.
+# WARNING: Cloning the Romi repos will overwrite any repos you already have. INCLUDING UN-PUSHED CHANGES!
+option(CLONE_ROMI_LIB_REPOS "We don't want to clone the romi libs every time we configure cmake." OFF)
+
+if (CLONE_ROMI_LIB_REPOS)
+    download_project(
+            PROJ              libr
+            GIT_REPOSITORY    https://github.com/romi/libr.git
+            GIT_TAG           master
+            TIMEOUT           180
+            SOURCE_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/libr
+            BINARY_DIR        ${CMAKE_BINARY_DIR}/libr
+            ${UPDATE_DISCONNECTED_IF_AVAILABLE})
+    add_subdirectory(${libr_SOURCE_DIR} ${libr_BINARY_DIR})
+    message( "LIBR Binary dir is:" ${libr_BINARY_DIR} )
+
+    download_project(
+            PROJ              rcom
+            GIT_REPOSITORY    https://github.com/romi/rcom.git
+            GIT_TAG           master
+            TIMEOUT           180
+            SOURCE_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/rcom
+            BINARY_DIR        ${CMAKE_BINARY_DIR}/rcom
+            ${UPDATE_DISCONNECTED_IF_AVAILABLE})
+    add_subdirectory(${rcom_SOURCE_DIR} ${rcom_BINARY_DIR})
+    message( "RCOM Binary dir is:" ${rcom_BINARY_DIR} )
+
+else()
+            add_subdirectory(libr)
+            add_subdirectory(rcom)
+endif()
+
+#add_subdirectory(TestLib)
+#add_subdirectory(TestExe)
 
 if (BUILD_TESTS)
     # All tests added at the end due to dependencies.
-    add_subdirectory(TestLib/test)
+#    add_subdirectory(TestLib/test)
+    add_subdirectory(libr/test)
+    add_subdirectory(rcom/test)
 endif() # BUILD_TESTS
