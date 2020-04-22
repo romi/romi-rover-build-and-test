@@ -11,8 +11,22 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Options. Build tests by default. We want to test whether we are developing or building a release.
 # I mean... why wouldn't you? :)
 option(BUILD_TESTS "Build all tests." ON)
+option(BUILD_COVERAGE "Build coverage." ON)
 
-if (BUILD_TESTS)
+# Options.
+# Build the developer example applications. These cannot be built with Coverage enabled.
+option(BUILD_EXAMPLES "Build example applications." OFF)
+
+# Test early on if all the complimentary options are enabled. Exit if flags aren't correct.
+# This avoids downloading libs and supporting tools when the confifure won't work later on.
+if (BUILD_EXAMPLES)
+    if (BUILD_COVERAGE)
+        Message(FATAL_ERROR "Turn Coverage off with -DBUILD_COVERAGE=OFF to build examples.")
+    endif()
+endif()
+
+
+if(BUILD_TESTS)
     set(CMAKE_MODULES_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
     set(CMAKE_DOWNLOAD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/download)
 
@@ -26,7 +40,9 @@ if (BUILD_TESTS)
             "*/googlemock/*"
             "*test/*")
 
-    append_coverage_compiler_flags()
+    if (BUILD_COVERAGE)
+        append_coverage_compiler_flags()
+    endif()
 
     enable_testing()
 
@@ -105,3 +121,10 @@ if (BUILD_TESTS)
     add_subdirectory(libr/test)
     add_subdirectory(rcom/test)
 endif() # BUILD_TESTS
+
+# We've checked above for the correct build options, but another check of the coverage flag won't hurt.
+if (BUILD_EXAMPLES)
+    if (NOT BUILD_COVERAGE)
+        add_subdirectory(rcom/examples)
+    endif()
+endif()

@@ -31,7 +31,10 @@ The reason that they are downloaded to their own downloads area rather than keep
 ###_romi-rover-test-and-build/libr/_
 ###_romi-rover-test-and-build/rcom/_
 TBD
+cmake -DCMAKE_BUILD_TYPE=Debug ..
 cmake -DCLONE_ROMI_LIB_REPOS=ON ..
+
+cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLES=ON -DBUILD_COVERAGE=OFF ..
 
 
 
