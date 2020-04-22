@@ -10,7 +10,7 @@ before_script:
   - cd build_tests_coverage
   # run cmake; here we assume that the project's
   # top-level CMakeLists.txt is located at '..' Coverage is on by default.
-  - cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DCLONE_ROMI_LIB_REPOS=ON ..
 
 script:
   # once CMake has done its job we just build using make as usual
