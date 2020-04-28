@@ -4,7 +4,7 @@ project(romi-rover-build-and-test)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -31,6 +31,8 @@ if (BUILD_EXAMPLES)
     endif()
 endif()
 
+
+MESSAGE("Cmake Source = " ${CMAKE_SOURCE_DIR})
 ############################################################
 
 if(BUILD_TESTS)
@@ -84,43 +86,16 @@ if (BUILD_COVERAGE AND BUILD_TESTS)
     append_coverage_compiler_flags()
     set( COVERAGE_EXCLUDES
             "/usr/*"
-            "*/googletest/*"
-            "*/googlemock/*"
+            "${CMAKE_SOURCE_DIR}/thirdparty/*"
             "*test/*")
 endif()
 
 ######################################
 
-if (NOT DEFINED libr_SOURCE_DIR)
-    download_project(
-            PROJ              libr
-            GIT_REPOSITORY    https://github.com/romi/libr.git
-            GIT_TAG           ci_dev
-            TIMEOUT           180
-            SOURCE_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/libr
-#            BINARY_DIR        ${CMAKE_BINARY_DIR}/libr
-            ${UPDATE_DISCONNECTED_IF_AVAILABLE})
-    # For coverage we want to add the test to the local build.
-    set(BUILD_TESTS  OFF)
-    add_subdirectory(${libr_SOURCE_DIR} ${libr_BINARY_DIR})
-    set(BUILD_TESTS  ON)
-endif()
+add_subdirectory(libr)
+add_subdirectory(rcom)
 
-###########################################################3
-
-if (NOT DEFINED rcom_SOURCE_DIR)
-    download_project(
-            PROJ              rcom
-            GIT_REPOSITORY    https://github.com/romi/rcom.git
-            GIT_TAG           ci_dev
-            TIMEOUT           180
-            SOURCE_DIR        ${CMAKE_CURRENT_SOURCE_DIR}/rcom
-#            BINARY_DIR        ${CMAKE_BINARY_DIR}/rcom
-            ${UPDATE_DISCONNECTED_IF_AVAILABLE})
-    add_subdirectory(${rcom_SOURCE_DIR} ${rcom_BINARY_DIR})
-endif()
-
-###########################################################3
+######################################
 
 # We've checked above for the correct build options, but another check of the coverage flag won't hurt.
 if (BUILD_EXAMPLES)

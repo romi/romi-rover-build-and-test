@@ -4,20 +4,22 @@ compiler:
   - gcc
 
 before_script:
-  # create a build folder for the out-of-source build
-  - mkdir build_tests_coverage
-  # switch to build directory
-  - cd build_tests_coverage
-  # run cmake; here we assume that the project's
-  # top-level CMakeLists.txt is located at '..' Coverage is on by default.
-  - cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - cd libr
+  - git checkout ci_dev
+  - cd ..
+  - cd rcom
+  - git checkout ci_dev
+  - cd ..
+  # out-of-source build
+  - mkdir build_tests
+  - cd build_tests
+  - cmake -DCMAKE_BUILD_TYPE=DEBUG ..
 
 script:
-  # once CMake has done its job we just build using make as usual
   - make
-  # if the project uses ctest we can run the tests like this
+  # if the project uses ctest run the tests.
   - ctest -V
 
 after_success:
+  - make r_unit_tests_coverage
   - make rcom_unit_tests_coverage
-  - bash <(curl -s https://codecov.io/bash)
