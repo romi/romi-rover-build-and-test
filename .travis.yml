@@ -5,10 +5,10 @@ compiler:
 
 before_script:
   - cd libr
-  - git checkout ci_dev
+  - git checkout master
   - cd ..
   - cd rcom
-  - git checkout ci_dev
+  - git checkout master
   - cd ..
   # out-of-source build
   - mkdir build_tests
