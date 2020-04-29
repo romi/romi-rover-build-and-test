@@ -1,3 +1,4 @@
+# romi-rover-build-and-test
 [![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)
 
 # libr 
@@ -8,7 +9,7 @@
 [![Build Status](https://travis-ci.org/romi/rcom.svg?branch=master)](https://travis-ci.org/romi/rcom)
 [![codecov](https://codecov.io/gh/romi/rcom/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/rcom)
 
-# romi-rover-build-and-test
+
 The purpose of this repo is to provide a single point of interaction to download, build, test, and optionally generate a code coverage test report for the romi-rover and all it's dependencies.
 Since the romi-rover uses CMake as it's build system, CMake is also used to download the project and dependencies in addition to building the rover.
 
