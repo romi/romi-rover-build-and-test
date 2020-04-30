@@ -27,8 +27,8 @@ This will clone all the submodules, but it will leave the submodules in a detach
 2) From a terminal in your favourite flavour of linux, change into the romi-rover-build-and-test directory.  
 **cd romi-rover-build-and-test** 
 3) Now we want to setup the out of source build:  
-**mkdir <build-directory>**  
-**cd <build-directory>**  
+**mkdir my-build-directory**  
+**cd my-build-directory**  
 4) Configure the build. Everything is forced to Debug at present. For a basic build that will build the rover and testsuite use:  
 **cmake ..**  
 5) Build the project:  
@@ -81,13 +81,13 @@ You've just cloned and built the project using the fantastically clear(!) instru
 **git checkout master**
 2) Now we make our changes in libr. We build and test them (using the commands above), get the code reviewed (more on that later). 
 Were happy that everything is good and want to push back to the repo. We do that using the normal git flow.
-**git commit <whatever>**
+**git commit (whatever)**
 **git push**
 3) Now this is where things get interesting. If anyone else were to pull the super project at this point, and clone everything they would still get the old version of libr.
 This is because, as we said above, the superproject is linked to specific commits of the submodule. So lets update this superproject to point to the 
 new libr we just changed.  
 **cd romi-rover-build-and-test**
-4) If you check the git status at this point you'll see that the super-project knows there are changes in the submodule.
+4) If you check the git status at this point you'll see that the super-project knows there are changes in the submodule.  
 **git status** returns info similar to  
 	*modified:   libr (modified content)*  
 5) Now lets update the super-project to point to the new libr we just changed. It's just a normal git workflow but with an extra little spice. 
