@@ -4,12 +4,6 @@ compiler:
   - gcc
 
 before_script:
-  - cd libr
-  - git checkout master
-  - cd ..
-  - cd rcom
-  - git checkout master
-  - cd ..
   # out-of-source build
   - mkdir build_tests
   - cd build_tests
