@@ -92,7 +92,8 @@ new libr we just changed.
 	*modified:   libr (modified content)*  
 5) Now lets update the super-project to point to the new libr we just changed. It's just a normal git workflow but with an extra little spice. 
 See the explanation in the gotcha section below.  
-**git commit libr**  
+**git add libr**  
+**git commit (whatever)**    
 **git push --recurse-submodules=on-demand**  
 
 That's it!
