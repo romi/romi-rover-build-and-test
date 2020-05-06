@@ -1,7 +1,7 @@
 # romi-rover-build-and-test
-master  
-[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)  
-ci_dev  
+master: 
+[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test) 
+ci_dev: 
 [![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)
 # libr 
 master  
