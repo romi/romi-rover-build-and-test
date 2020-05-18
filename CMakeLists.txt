@@ -8,14 +8,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# For now everything is debug
-set(CMAKE_BUILD_TYPE Debug)
-# TBD: Turn Warning on and fix them
-# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-# set(CMAKE_CXX_FLAGS_DEBUG "-O0")
-# set(CMAKE_C_FLAGS "-Wall -Wextra")
-# set(CMAKE_C_FLAGS_DEBUG "-O0")
-
 ############################################################
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -28,6 +20,18 @@ option(BUILD_COVERAGE "Build coverage." ON)
 
 # Build the developer example applications. These cannot be built with Coverage enabled.
 option(BUILD_EXAMPLES "Build example applications." OFF)
+
+# Address sanitizer build is off by default in sub-projects. Override this here by re-declaring the option and setting to ON.
+option(ADDRESS_SANITISER_BUILD "Enable build settings to allow address sanitiser" OFF) # default to off
+SET(ADDRESS_SANITISER_BUILD ON)
+
+if(ADDRESS_SANITISER_BUILD)
+    message(WARNING "Enabling GCC address sanitiser will disable all Valgrind tasks due to compatibility errors")
+    set( PROJECT_SANITISE_FLAGS
+            "-fsanitize=address,undefined,shift,integer-divide-by-zero,unreachable,vla-bound,null,return,signed-integer-overflow,bounds,alignment,object-size,float-divide-by-zero,float-cast-overflow,nonnull-attribute,returns-nonnull-attribute,bool,enum,vptr")
+else()
+    set( PROJECT_SANITISE_FLAGS "")
+endif()
 
 ############################################################
 
