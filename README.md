@@ -31,7 +31,7 @@ This project uses CMake to download these external dependencies required to buil
 Note: Everything is currently a debug build. This will change as the project progresses and is more thoroughly tested.
 
 1) Clone this repo. Since it contains submodules use the command:   
-**git clone --recurse-submodules https://github.com/romi/romi-rover-build-and-test.git**  
+**git clone --branch ci_dev --recurse-submodules https://github.com/romi/romi-rover-build-and-test.git**  
 This will clone all the submodules, but it will leave the submodules in a detached state. This is normal. Don't panic! Leave that to me.
 2) From a terminal in your favourite flavour of linux, change into the romi-rover-build-and-test directory.  
 **cd romi-rover-build-and-test** 
@@ -87,7 +87,7 @@ So lets look at a working practice for making a change to **libr** contained in 
 You've just cloned and built the project using the fantastically clear(!) instructions above. Now we want to make a change to libr.
 1) The first thing we need to do is tell git what branch we're working on as submodules are cloned in a detached head state.  
 **cd romi-rover-build-and-test/libr**  
-**git checkout master**
+**git checkout ci_dev**
 2) Now we make our changes in libr. We build and test them (using the commands above), get the code reviewed (more on that later). 
 Were happy that everything is good and want to push back to the repo. We do that using the normal git flow.
 **git commit (whatever)**
