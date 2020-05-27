@@ -7,6 +7,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# Since submodules are forced to debug we need to make sure google tools are also debug for now.
+# This stops a build error of you don't specify builld type debug cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+set(CMAKE_BUILD_TYPE Debug)
 
 ############################################################
 
