@@ -1,26 +1,11 @@
-# romi-rover-build-and-test
-master &nbsp; &nbsp; &nbsp; &nbsp;ci_dev   
-[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)
-[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)
-## libr 
-master &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ci_dev  
-[![Build Status](https://travis-ci.org/romi/libr.svg?branch=master)](https://travis-ci.org/romi/libr)
-[![codecov](https://codecov.io/gh/romi/libr/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libr)
-[![Build Status](https://travis-ci.org/romi/libr.svg?branch=ci_dev)](https://travis-ci.org/romi/libr)
-[![codecov](https://codecov.io/gh/romi/libr/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libr) 
-## rcom
-master &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ci_dev  
-[![Build Status](https://travis-ci.org/romi/rcom.svg?branch=master)](https://travis-ci.org/romi/rcom)
-[![codecov](https://codecov.io/gh/romi/rcom/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/rcom) 
-[![Build Status](https://travis-ci.org/romi/rcom.svg?branch=ci_dev)](https://travis-ci.org/romi/rcom)
-[![codecov](https://codecov.io/gh/romi/rcom/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/rcom)  
-
-## libromi
-master &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ci_dev   
-[![Build Status](https://travis-ci.org/romi/libromi.svg?branch=master)](https://travis-ci.org/romi/libromi)
-[![codecov](https://codecov.io/gh/romi/libromi/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libromi) 
-[![Build Status](https://travis-ci.org/romi/libromi.svg?branch=ci_dev)](https://travis-ci.org/romi/libromi)
-[![codecov](https://codecov.io/gh/romi/libromi/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libromi) 
+##romi-rover-build-and-test
+||||||
+|:---|:---|:---|:---|:---|
+| |master| |ci_dev||
+|**build & test**|[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)| |[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)| | 
+|**libr**|[![Build Status](https://travis-ci.org/romi/libr.svg?branch=master)](https://travis-ci.org/romi/libr)|[![codecov](https://codecov.io/gh/romi/libr/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libr)|[![Build Status](https://travis-ci.org/romi/libr.svg?branch=ci_dev)](https://travis-ci.org/romi/libr)|[![codecov](https://codecov.io/gh/romi/libr/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libr) 
+|**rcom**|[![Build Status](https://travis-ci.org/romi/rcom.svg?branch=master)](https://travis-ci.org/romi/rcom)|[![codecov](https://codecov.io/gh/romi/rcom/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/rcom) |[![Build Status](https://travis-ci.org/romi/rcom.svg?branch=ci_dev)](https://travis-ci.org/romi/rcom)|[![codecov](https://codecov.io/gh/romi/rcom/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/rcom)  
+|**libromi**|[![Build Status](https://travis-ci.org/romi/libromi.svg?branch=master)](https://travis-ci.org/romi/libromi)|[![codecov](https://codecov.io/gh/romi/libromi/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libromi)|[![Build Status](https://travis-ci.org/romi/libromi.svg?branch=ci_dev)](https://travis-ci.org/romi/libromi)|[![codecov](https://codecov.io/gh/romi/libromi/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libromi) 
 
 The purpose of this repo is to provide a single point of interaction to download, build, test, and optionally generate a code coverage test report for the romi-rover and all its dependencies.
 Since the romi-rover uses CMake as it's build system, CMake is also used to download the project and dependencies in addition to building the rover.
