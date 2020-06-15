@@ -1,7 +1,6 @@
 ## romi-rover-build-and-test
-||||||
+| |master| |ci_dev| |
 |:---|:---|:---|:---|:---|
-| |master| |ci_dev||
 |**build & test**|[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)| |[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)| | 
 |**libr**|[![Build Status](https://travis-ci.org/romi/libr.svg?branch=master)](https://travis-ci.org/romi/libr)|[![codecov](https://codecov.io/gh/romi/libr/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libr)|[![Build Status](https://travis-ci.org/romi/libr.svg?branch=ci_dev)](https://travis-ci.org/romi/libr)|[![codecov](https://codecov.io/gh/romi/libr/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libr) 
 |**rcom**|[![Build Status](https://travis-ci.org/romi/rcom.svg?branch=master)](https://travis-ci.org/romi/rcom)|[![codecov](https://codecov.io/gh/romi/rcom/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/rcom) |[![Build Status](https://travis-ci.org/romi/rcom.svg?branch=ci_dev)](https://travis-ci.org/romi/rcom)|[![codecov](https://codecov.io/gh/romi/rcom/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/rcom)  
