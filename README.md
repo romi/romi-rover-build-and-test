@@ -1,29 +1,24 @@
 # romi-rover-build-and-test
-master   
-[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)  
-ci_dev   
+master &nbsp; &nbsp; &nbsp; &nbsp;ci_dev   
+[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)
 [![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)
 ## libr 
-master  
+master &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ci_dev  
 [![Build Status](https://travis-ci.org/romi/libr.svg?branch=master)](https://travis-ci.org/romi/libr)
-[![codecov](https://codecov.io/gh/romi/libr/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libr)  
-ci_dev  
+[![codecov](https://codecov.io/gh/romi/libr/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libr)
 [![Build Status](https://travis-ci.org/romi/libr.svg?branch=ci_dev)](https://travis-ci.org/romi/libr)
-[![codecov](https://codecov.io/gh/romi/libr/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libr)  
-
+[![codecov](https://codecov.io/gh/romi/libr/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libr) 
 ## rcom
-master  
+master &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ci_dev  
 [![Build Status](https://travis-ci.org/romi/rcom.svg?branch=master)](https://travis-ci.org/romi/rcom)
-[![codecov](https://codecov.io/gh/romi/rcom/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/rcom)    
-ci_dev  
+[![codecov](https://codecov.io/gh/romi/rcom/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/rcom) 
 [![Build Status](https://travis-ci.org/romi/rcom.svg?branch=ci_dev)](https://travis-ci.org/romi/rcom)
 [![codecov](https://codecov.io/gh/romi/rcom/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/rcom)  
 
 ## libromi
-master  
+master &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ci_dev   
 [![Build Status](https://travis-ci.org/romi/libromi.svg?branch=master)](https://travis-ci.org/romi/libromi)
-[![codecov](https://codecov.io/gh/romi/libromi/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libromi)    
-ci_dev  
+[![codecov](https://codecov.io/gh/romi/libromi/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libromi) 
 [![Build Status](https://travis-ci.org/romi/libromi.svg?branch=ci_dev)](https://travis-ci.org/romi/libromi)
 [![codecov](https://codecov.io/gh/romi/libromi/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libromi) 
 
