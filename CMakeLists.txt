@@ -109,6 +109,7 @@ endif()
 
 add_subdirectory(libr)
 add_subdirectory(rcom)
+add_subdirectory(libromi)
 
 ######################################
 

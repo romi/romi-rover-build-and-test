@@ -4,3 +4,6 @@
 [submodule "rcom"]
 	path = rcom
 	url = https://github.com/romi/rcom.git
+[submodule "libromi"]
+	path = libromi
+	url = https://github.com/romi/libromi.git
