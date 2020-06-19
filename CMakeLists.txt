@@ -103,6 +103,8 @@ if (BUILD_COVERAGE AND BUILD_TESTS)
             "/usr/*"
             "${CMAKE_SOURCE_DIR}/thirdparty/*"
             "*test/*")
+else()
+    MESSAGE("No coverage")
 endif()
 
 ######################################
@@ -110,6 +112,7 @@ endif()
 add_subdirectory(libr)
 add_subdirectory(rcom)
 add_subdirectory(libromi)
+#add_subdirectory(romi-rover)
 
 ######################################
 
