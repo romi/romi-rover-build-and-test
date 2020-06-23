@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 {
         Controller *controller;
         
-        r_init(0);
+        r_init(0, NULL);
 
         double xmax[3] = { 0.6, 0.6, -0.3 };
         double steps[3] = { 200.0, 200.0, 200.0 };

@@ -113,8 +113,7 @@ int video4linux_init(int argc, char **argv)
                 return -1;
         
         jpegbuf = new_membuf();
-        if (jpegbuf == NULL || membuf_assure(jpegbuf, 3 * width * height) != 0)
-                return -1;
+        membuf_assure(jpegbuf, 3 * width * height);
         
         camera = new_camera(device, IO_METHOD_MMAP, width, height);
         if (camera == NULL) {

@@ -1,3 +1,4 @@
 .idea
 thirdparty
 *build*
+*_main.c*
