@@ -1,0 +1,77 @@
+{
+    "rover": {
+        "wheel_diameter": 0.322,
+        "wheel_base": 1.00,
+        "width": 1.0,
+        "length": 1.0,
+        "encoder_steps": 13250
+    },
+    
+    "brush_motors": {
+        "device": "/dev/ttyACM1",
+        "max_speed": 0.5,
+        "max_signal": 30,
+        "pid": true,
+        "rc": false,
+        "homing": false,
+        "k": [0.08, 1.20, 0.0 ]
+    },
+    
+    "grbl": {
+        "device": "/dev/ttyACM0"
+    },
+    
+    "weeder": {
+        "workspace-old": [0.02793, 580, 195, 720, 720, 0.600, 0.600],
+        "workspace": [0.02793, 600, 175, 655, 720, 0.560, 0.600],
+        "z0xxx": -0.065,
+        "z0-mixer": -0.160,
+        "z0": -0.110,
+        "invert_axes": false,
+        "datadir": "data/weeder",
+        "quincunx_threshold": 0.5
+    },
+    
+    "interface": {
+        "html": "/home/romi/romi-rover/interface/html",
+        "scripts": "/home/romi/romi-rover/scripts/rover-chatelain.json"
+    },
+    
+    "launch": {
+        "general": {
+            "sessions-dir": "/home/romi/data",
+            "user": "romi"
+        },
+        "registry": {
+            "path": "/usr/local/bin/rcregistry"
+        },
+        "nodes": [{
+            "path": "/home/romi/romi-rover/build/configuration/configuration"
+        }, {
+            "path": "/home/romi/romi-rover/build/fsdb/fsdb"
+        }, {
+            "path": "/home/romi/romi-rover/build/brush_motors/brush_motors"
+        }, {
+            "path": "/home/romi/romi-rover/build/video4linux/video4linux"
+        }, {
+            "path": "/home/romi/romi-rover/build/grbl/grbl"
+        }, {
+            "path": "/home/romi/romi-rover/build/wheel_odometry/wheel_odometry"
+        }, {
+            "path": "/home/romi/romi-rover/build/camera_recorder/camera_recorder"
+        }, {
+            "path": "/home/romi/romi-rover/build/weeder/weeder"
+        }, {
+            "path": "/home/romi/romi-rover/build/navigation/navigation"
+        }, {
+            "path": "/home/romi/romi-rover/build/interface/interface"
+        }, {
+            "path": "/home/romi/romi-rover/build/watchdog/watchdog",
+            "user": "root"
+        }, {
+            "path": "/home/romi/romi-rover/build/webproxy/webproxy",
+            "user": "root"
+        }]
+    }
+}
+

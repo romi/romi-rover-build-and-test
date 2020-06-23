@@ -1,0 +1,41 @@
+
+cmake_minimum_required(VERSION 2.6)
+project(romi_rover)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_BUILD_TYPE DEBUG)
+
+option(WITH_REALSENSE "Compile the realsense app" OFF)
+option(WITH_PICAMERA "Compile the picamera app" OFF)
+
+add_subdirectory(brush_motors)
+add_subdirectory(camera_recorder)
+add_subdirectory(configuration)
+add_subdirectory(fake_camera)
+add_subdirectory(fake_cnc)
+add_subdirectory(fake_motors)
+add_subdirectory(grbl)
+add_subdirectory(interface)
+add_subdirectory(script_engine)
+add_subdirectory(navigation)
+add_subdirectory(video4linux)
+add_subdirectory(weeder)
+add_subdirectory(wheel_odometry)
+add_subdirectory(fsdb)
+add_subdirectory(watchdog)
+add_subdirectory(webproxy)
+add_subdirectory(logger)
+add_subdirectory(control_panel)
+add_subdirectory(gimbal_servo)
+add_subdirectory(oquam)
+
+if(WITH_REALSENSE)
+  add_subdirectory(realsense)
+endif(WITH_REALSENSE)
+
+if(WITH_PICAMERA)
+  add_subdirectory(picamera)
+endif(WITH_PICAMERA)
+
+install(DIRECTORY scripts DESTINATION share/romi FILES_MATCHING PATTERN "*.json")
+install(DIRECTORY config DESTINATION share/romi FILES_MATCHING PATTERN "*.json")

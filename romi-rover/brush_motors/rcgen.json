@@ -1,0 +1,32 @@
+{
+    "name": "brush_motors",
+    "idle": "broadcast_status",
+    "com": [
+        {
+            "type": "messagehub",
+            "topic": "motorstatus"
+        },
+        {
+            "type": "datahub",
+            "topic": "encoders",
+            "onbroadcast": "broadcast_encoders"
+        },
+        {
+            "type": "controller",
+            "topic": "motorcontroller",
+            "commands": [{"name": "moveat", "oncommand": "motorcontroller_onmoveat"},
+                         {"name": "enable", "oncommand": "motorcontroller_onenable"},
+                         {"name": "reset", "oncommand": "motorcontroller_onreset"},
+                         {"name": "homing", "oncommand": "motorcontroller_onhoming"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "watchdog",
+            "onmessage": "watchdog_onmessage"
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}

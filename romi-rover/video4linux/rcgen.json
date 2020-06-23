@@ -1,0 +1,22 @@
+{
+    "name": "video4linux",
+    "idle": "video4linux_broadcast",
+    "com": [
+        {
+            "type": "streamer",
+            "topic": "camera",
+            "mimetype": "multipart/x-mixed-replace; boundary=nextimage"
+        },
+        {
+            "type": "service",
+            "topic": "camera",
+            "resources": [{"name": "camera.jpg",
+                           "mimetype_out": "image/jpeg",
+                           "onrequest": "video4linux_still"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}

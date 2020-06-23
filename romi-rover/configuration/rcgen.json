@@ -1,0 +1,19 @@
+{
+    "name": "configuration",
+    "com": [
+        {
+            "type": "service",
+            "topic": "configuration",
+            "resources": [{"name": "*",
+                           "mimetype_out": "application/json",
+                           "onrequest": "configuration_get"},
+                         {"name": "/",
+                          "mimetype_out": "application/json",
+                          "onrequest": "configuration_get"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}

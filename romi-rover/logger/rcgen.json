@@ -1,0 +1,17 @@
+{
+    "name": "logger",
+    "header": "logger.h",
+    "init": "logger_init",
+    "cleanup": "logger_cleanup",
+    "com": [
+        {
+            "type": "messagehub",
+            "topic": "logger",
+            "onmessage": "logger_onmessage"
+        },
+        {
+            "type": "messagehub",
+            "topic": "log"
+        }
+    ]
+}

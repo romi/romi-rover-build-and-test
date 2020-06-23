@@ -1,0 +1,17 @@
+{
+    "name": "fake_cnc",
+    "com": [
+        {
+            "type": "controller",
+            "topic": "cnc",
+            "commands": [{"name": "moveto", "oncommand": "cnc_onmoveto"},
+                         {"name": "spindle", "oncommand": "cnc_onspindle"},
+                         {"name": "travel", "oncommand": "cnc_ontravel"},
+                         {"name": "homing", "oncommand": "cnc_onhoming"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}

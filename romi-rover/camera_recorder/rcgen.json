@@ -1,0 +1,30 @@
+{
+    "name": "camera_recorder",
+    "com": [
+        {
+            "type": "streamerlink",
+            "topic": "camera",
+            "autoconnect": false,
+            "ondata": "camera_recorder_ondata"
+        },
+        {
+            "type": "datalink",
+            "topic": "pose",
+            "ondata": "camera_recorder_onpose"
+        },
+        {
+            "type": "controller",
+            "topic": "camera_recorder",
+            "commands": [{"name": "start", "oncommand": "camera_recorder_onstart"},
+                         {"name": "stop", "oncommand": "camera_recorder_onstop"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "db"
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}

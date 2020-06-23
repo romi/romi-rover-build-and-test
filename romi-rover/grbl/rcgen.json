@@ -1,0 +1,29 @@
+{
+    "name": "grbl",
+    "com": [
+        {
+            "type": "controller",
+            "topic": "cnc",
+            "commands": [{ "name": "moveto",
+                           "oncommand": "cnc_onmoveto",
+                           "args": [{"x": "number", "optional": true},
+                                    {"y": "number", "optional": true},
+                                    {"z": "number", "optional": true}]
+                         },
+                         { "name": "spindle",
+                           "oncommand": "cnc_onspindle",
+                           "args": [{"speed": "number", "range": [0, 1]}]
+                         },
+                         { "name": "travel",
+                           "oncommand": "cnc_ontravel",
+                           "args": [{"path": "array"}]
+                         },
+                         { "name": "homing",
+                           "oncommand": "cnc_onhoming"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}

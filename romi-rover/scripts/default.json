@@ -1,0 +1,31 @@
+[
+    {
+        "name": "move-forward",
+        "display_name": "Forward",
+        "script": [
+            {"action": "move", "distance": 0.60}
+        ]
+    },
+    {
+        "name": "move-backward",
+        "display_name": "Backward",
+        "script": [
+            {"action": "move", "distance": -0.60}
+        ]
+    },
+    {
+        "name": "weeding",
+        "display_name": "Weeding",
+        "script": [
+            {"action": "hoe", "method": "quincunx",
+             "distance-plants": 0.30, "distance-rows": 0.2}
+        ]
+    },
+    {
+        "name": "shutdown",
+        "display_name": "Shutdown",
+        "script": [
+            {"action": "shutdown"}
+        ]
+    }
+]

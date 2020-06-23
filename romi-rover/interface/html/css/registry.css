@@ -1,0 +1,133 @@
+body {
+  font-family: sans-serif;
+}
+
+/*div.registry {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
+}*/
+
+div.topic {
+    border: 0px solid black;
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 12px;
+    background-color: #00aa5b;
+    width: 240px
+}
+
+span.topic-name {
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 16px;
+    padding: 0px;
+    margin: 0px;
+}
+
+span.topic-type {
+    color: white;
+    font-size: 12px;
+    font-weight: normal;
+    padding: 0px;
+    margin: 0px;
+}
+
+div.node {
+    border: 0px solid black;
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 12px;
+    background-color: #00aa5b;
+    width: 240px
+}
+
+span.node-name {
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 16px;
+    padding: 0px;
+    margin: 0px;
+}
+
+div.entry {
+    color: #303030;
+    border: solid 0px black;
+    border-radius: 3px;
+    padding: 3px;
+    margin-top: 4px;
+    background-color: white;
+}
+
+div.streamer {
+  color: white;
+  background-color: #303030;
+}
+
+div.service {
+  color: white;
+  background-color: #303030;
+}
+
+div.datahub {
+    color: white;
+    background-color: #303030;
+}
+
+div.datalink {
+    color: #30303;
+    background-color: white;
+}
+
+div.messagehub {
+    color: white;
+    background-color: #303030;
+}
+
+div.messagelink {
+    color: #30303;
+    background-color: white;
+}
+
+span.entry-name {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0px;
+    margin: 0px;
+}
+
+span.entry-topic {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0px;
+    margin: 0px;
+}
+
+p.entry-addr {
+    font-size: 12px;
+    padding: 0px;
+    margin: 0px;
+}
+
+.green>li>a,
+.green>li>a,
+.green>li>a {
+    background-color: white!important;
+    color: black!important;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.green>li>a.active,
+.green>li>a:hover,
+.green>li>a:focus {
+    background-color: #00aa5b!important;
+    color: white!important;
+    font-size: 18px;
+    font-weight: bold;
+}
