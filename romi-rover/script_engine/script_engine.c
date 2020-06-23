@@ -94,7 +94,6 @@ static int homing(membuf_t *message)
 {
         messagelink_t *motors = get_messagelink_motorcontroller();
         json_object_t reply;
-        int err;
         
         r_debug("Sending homing");
 
@@ -185,7 +184,7 @@ static int start_recording(membuf_t *message)
         reply = messagelink_send_command_f(recorder, "{'command':'start'}");
 
         int err = status_error(reply, message);
-        if (err = 0) recording = 1;
+        if (err == 0) recording = 1;
         
         return err;
 }
@@ -204,7 +203,7 @@ static int stop_recording(membuf_t *message)
         
         reply = messagelink_send_command_f(recorder, "{'command':'stop'}");
         int err = status_error(reply, message);
-        if (err = 0)
+        if (err == 0)
                 recording = 0;
         
         return err;

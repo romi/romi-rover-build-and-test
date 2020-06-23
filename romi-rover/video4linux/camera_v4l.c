@@ -412,7 +412,7 @@ static int camera_read(camera_t *camera)
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 buf.memory = V4L2_MEMORY_MMAP;
 
-                if (-1 == xioctl(camera->fd, VIDIOC_DQBUF, &buf)) {
+                if (-1 == xioctl(camera->fd, (int)VIDIOC_DQBUF, &buf)) {
                         switch (errno) {
                         case EAGAIN:
                                 return 1;
@@ -431,7 +431,7 @@ static int camera_read(camera_t *camera)
 
                 camera_convert(camera, camera->buffers[buf.index].start);
 
-                if (-1 == xioctl(camera->fd, VIDIOC_QBUF, &buf)) {
+                if (-1 == xioctl(camera->fd, (int)VIDIOC_QBUF, &buf)) {
                         r_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
                         return -1;
                 }
@@ -446,7 +446,7 @@ static int camera_read(camera_t *camera)
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 buf.memory = V4L2_MEMORY_USERPTR;
 
-                if (-1 == xioctl(camera->fd, VIDIOC_DQBUF, &buf)) {
+                if (-1 == xioctl(camera->fd, (int)VIDIOC_DQBUF, &buf)) {
                         switch (errno) {
                         case EAGAIN:
                                 return 1;
@@ -470,7 +470,7 @@ static int camera_read(camera_t *camera)
 
                 camera_convert(camera, (void *) buf.m.userptr);
 
-                if (-1 == xioctl(camera->fd, VIDIOC_QBUF, &buf)) {
+                if (-1 == xioctl(camera->fd, (int)VIDIOC_QBUF, &buf)) {
                         r_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
                         return -1;
                 }
@@ -544,7 +544,7 @@ static int camera_capturestart(camera_t *camera)
                         buf.memory = V4L2_MEMORY_MMAP;
                         buf.index = i;
 
-                        if (-1 == xioctl(camera->fd, VIDIOC_QBUF, &buf)) {
+                        if (-1 == xioctl(camera->fd, (int)VIDIOC_QBUF, &buf)) {
                                 r_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
                                 return -1;
                         }
@@ -552,7 +552,7 @@ static int camera_capturestart(camera_t *camera)
                 
                 type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-                if (-1 == xioctl(camera->fd, VIDIOC_STREAMON, &type)) {
+                if (-1 == xioctl(camera->fd, (int)VIDIOC_STREAMON, &type)) {
                         r_err("Camera: VIDIOC_STREAMON error %d, %s", errno, strerror(errno));
                         return -1;
                 }
@@ -573,7 +573,7 @@ static int camera_capturestart(camera_t *camera)
                         buf.m.userptr = (unsigned long) camera->buffers[i].start;
                         buf.length = camera->buffers[i].length;
 
-                        if (-1 == xioctl(camera->fd, VIDIOC_QBUF, &buf)) {
+                        if (-1 == xioctl(camera->fd, (int)VIDIOC_QBUF, &buf)) {
                                 r_err("Camera: VIDIOC_QBUF error %d, %s", errno, strerror(errno));
                                 return -1;
                         }
@@ -581,7 +581,7 @@ static int camera_capturestart(camera_t *camera)
 
                 type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-                if (-1 == xioctl(camera->fd, VIDIOC_STREAMON, &type)) {
+                if (-1 == xioctl(camera->fd, (int)VIDIOC_STREAMON, &type)) {
                         r_err("Camera: VIDIOC_STREAMON error %d, %s", errno, strerror(errno));
                         return -1;
                 }
@@ -673,7 +673,7 @@ static int camera_mmapinit(camera_t *camera)
         req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         req.memory = V4L2_MEMORY_MMAP;
 
-        if (-1 == xioctl(camera->fd, VIDIOC_REQBUFS, &req)) {
+        if (-1 == xioctl(camera->fd, (int)VIDIOC_REQBUFS, &req)) {
                 if (EINVAL == errno) {
                         r_err("Camera: %s does not support memory mapping", camera->device_name);
                         return -1;
@@ -703,7 +703,7 @@ static int camera_mmapinit(camera_t *camera)
                 buf.memory = V4L2_MEMORY_MMAP;
                 buf.index = camera->n_buffers;
 
-                if (-1 == xioctl(camera->fd, VIDIOC_QUERYBUF, &buf)) {
+                if (-1 == xioctl(camera->fd, (int)VIDIOC_QUERYBUF, &buf)) {
                         r_err("Camera: VIDIOC_QUERYBUF error %d, %s", errno, strerror(errno));
                         return -1;
                 }
@@ -739,7 +739,7 @@ static int camera_userptrinit(camera_t *camera, unsigned int buffer_size)
         req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         req.memory = V4L2_MEMORY_USERPTR;
 
-        if (-1 == xioctl(camera->fd, VIDIOC_REQBUFS, &req)) {
+        if (-1 == xioctl(camera->fd, (int)VIDIOC_REQBUFS, &req)) {
                 if (EINVAL == errno) {
                         r_err("Camera: %s does not support user pointer i/o", camera->device_name);
                         return -1;
@@ -877,7 +877,7 @@ static int camera_init(camera_t *camera)
                 return -1;
         }
 
-        if (-1 == xioctl(camera->fd, VIDIOC_QUERYCAP, &cap)) {
+        if (-1 == xioctl(camera->fd, (int)VIDIOC_QUERYCAP, &cap)) {
                 if (EINVAL == errno) {
                         r_err("Camera: %s is no V4L2 device", camera->device_name);
                         return -1;
@@ -923,7 +923,7 @@ static int camera_init(camera_t *camera)
 
         cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-        if (0 == xioctl(camera->fd, VIDIOC_CROPCAP, &cropcap)) {
+        if (0 == xioctl(camera->fd, (int)VIDIOC_CROPCAP, &cropcap)) {
                 crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 crop.c = cropcap.defrect; /* reset to default */
 
@@ -952,7 +952,7 @@ static int camera_init(camera_t *camera)
         fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
         fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
 
-        if (-1 == xioctl(camera->fd, VIDIOC_S_FMT, &fmt)) {
+        if (-1 == xioctl(camera->fd, (int)VIDIOC_S_FMT, &fmt)) {
                 r_err("Camera: VIDIOC_S_FMT error %d, %s", errno, strerror(errno));
                 return -1;
         }

@@ -26,7 +26,7 @@
 
 static mutex_t *position_mutex;
 static vector_t position = {0};
-static int moving = 0;
+//static int moving = 0;
 
 messagelink_t *get_messagelink_motorcontroller();
 

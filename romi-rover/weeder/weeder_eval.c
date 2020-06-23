@@ -25,7 +25,7 @@
 #include <romi.h>
 #include "weeding.h"
 
-static workspace_t workspace;
+//static workspace_t workspace;
 
 file_t *get_file(fileset_t *fileset, const char *name)
 {

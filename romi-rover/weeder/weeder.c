@@ -423,7 +423,7 @@ static image_t *grab_camera(membuf_t *message)
         }
 
         membuf_t *body = response_body(response);
-        image_t *image = image_load_from_mem(membuf_data(body), membuf_len(body));
+        image_t *image = image_load_from_mem((const unsigned char *)membuf_data(body), membuf_len(body));
         if (image == NULL) {
                 r_err("Failed to decompress the image");
                 membuf_printf(message, "Failed to decompress the image");

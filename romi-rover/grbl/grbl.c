@@ -28,7 +28,7 @@ static int initialized = 0;
 static char *device = NULL;
 static mutex_t *mutex = NULL;
 static serial_t *serial = NULL;
-static int serial_errors = 0;
+//static int serial_errors = 0;
 static membuf_t *reply = NULL;
 
 static void broadcast_log(void *userdata, const char* s)
@@ -72,13 +72,13 @@ static int send_command_unlocked(const char *cmd, membuf_t *message)
         r = serial_command_send(serial, message, cmd);
         r_debug("%s -> %s", cmd, membuf_data(message));
 
-        // FIXME
-        /* if (r == NULL) { */
-        /*         err = -1; */
-        /*         rprintf(message, len, "%s", "Unknown error"); */
-        /* } else if (strncmp(r, "ERR", 3) == 0) { */
-        /*         err = -1; */
-        /* }  */
+        // ToDo: This code is used in multiple places. Refactor.
+        if (r == NULL) {
+            membuf_printf(message, "Unknown error");
+            return -1;
+        } else if (strncmp(r, "ERR", 3) == 0) {
+            return -1;
+        }
         
         return err;
 }
@@ -275,13 +275,11 @@ int cnc_onmoveto(void *userdata,
                 membuf_printf(message, "CNC not initialized");
                 return 0;
         }
-        
-        const char *r;
+
         int hasx = json_object_has(command, "x");
         int hasy = json_object_has(command, "y");
         int hasz = json_object_has(command, "z");
         double x = 0.0, y = 0.0, z = 0.0;
-        char reply[64];
         
         if (!hasx && !hasy && !hasz) {
                 membuf_printf(message, "No coordinates given");

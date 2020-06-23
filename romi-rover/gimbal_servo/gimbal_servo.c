@@ -237,6 +237,7 @@ int gimbal_onmoveat(void *userdata,
                     json_object_t command,
                     membuf_t *message)
 {
+    return 0;
 }
 
 int gimbal_onmoveto(void *userdata,
@@ -244,6 +245,7 @@ int gimbal_onmoveto(void *userdata,
                     json_object_t command,
                     membuf_t *message)
 {
+    return 0;
 }
 
 int gimbal_onhoming(void *userdata,

@@ -124,7 +124,7 @@ int main(int argc, char **argv)
         if (0) {
                 script_t *script = new_script();
                 double xc = xmax[0] / 2.0;
-                double yc = xmax[1] / 2.0;
+//                double yc = xmax[1] / 2.0;
                 double r = xc * 0.6;
                 int segments = 36;
                 //printf("xc=%f, yc=%f, r=%f\n", xc, yc, r);
