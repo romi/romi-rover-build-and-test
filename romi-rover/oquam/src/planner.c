@@ -692,9 +692,9 @@ static void segment_compute_accelerations(atdc_t *t0, double *v, double *amax, d
 
                 r_debug("** constant acceleration from start to end **");
 
-                if (t0->id == 36) {
-                        double dummy = fabs(0.0); 
-                }
+//                if (t0->id == 36) {
+//                        double dummy = fabs(0.0);
+//                }
                 
                 vsub(dv, t0->curve.v0, t0->accelerate.v0);
                 vdiv(dt, dv, amax);
@@ -992,7 +992,7 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                              segment->section.p0); 
                         
                         // v0 and v1
-                        double len = norm(segment->section.d);
+//                        double len = norm(segment->section.d);
                         normalize(segment->section.v0, segment->section.d);
                         smul(segment->section.v0, segment->section.v0, action->data.move.v);
                         vcopy(segment->section.v1, segment->section.v0);
@@ -1035,7 +1035,7 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
 int planner_convert_script(script_t *script, double *position,
                            double *vmax, double *amax, double deviation)
 {
-        int err = 0;
+//        int err = 0;
         double pos[3];
         
         /* if (controller_position(controller, pos) != 0) */

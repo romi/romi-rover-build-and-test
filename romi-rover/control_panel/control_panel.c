@@ -217,6 +217,7 @@ static app_state_t *new_app_state(const char *name)
         return s;
 }
 
+__attribute_used__
 static void delete_app_state(app_state_t *s)
 {
         if (s) {

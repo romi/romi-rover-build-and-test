@@ -269,7 +269,8 @@ int main(int argc, char **argv)
         }
 
         float confidence;
-        list_t *path = compute_path(session, fileset_id, camera, &workspace,
+        // list_t *path =
+        compute_path(session, fileset_id, camera, &workspace,
                                     distance_plants, distance_rows,
                                     radius_zones, diameter_tool,
                                     &confidence);

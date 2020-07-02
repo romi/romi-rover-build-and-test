@@ -55,7 +55,7 @@ int cnc_onmoveto(void *userdata,
 {
 	r_debug("cnc_onmoveto");
 
-        const char *r;
+//        const char *r;
         int hasx = json_object_has(command, "x");
         int hasy = json_object_has(command, "y");
         int hasz = json_object_has(command, "z");

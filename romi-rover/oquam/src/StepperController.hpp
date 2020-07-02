@@ -40,7 +40,7 @@ public:
                 return _scale;
         }
 
-        virtual const double interval() {
+        virtual double interval() {
                 return _interval;
         }
 

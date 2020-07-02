@@ -65,7 +65,7 @@ void webproxy_get_service(request_t *request,
 }
 
 /***************************************************************************/
-
+__attribute_used__
 static int *webproxy_onpart(void *userdata,
                             const unsigned char *data, int len,
                             const char *mimetype,
@@ -153,9 +153,9 @@ void webproxy_onrequest(void *data,
         }
 
         char resource[1024];
-        int err = path_glue(l_resource, 1, resource, sizeof(resource));
+        //int err =
+        path_glue(l_resource, 1, resource, sizeof(resource));
 
-        int r = 0;
         if (rstreq(type, "service")) {
                 webproxy_get_service(request, topic, resource, response);
 

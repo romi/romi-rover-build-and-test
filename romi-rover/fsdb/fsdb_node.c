@@ -475,7 +475,7 @@ void fsdb_get(void *data, request_t *request, response_t *response)
                 response_set_status(response, HTTP_Status_Internal_Server_Error);
                 return;
         }
-        
+
         char *s = list_get(query, char);
         if (rstreq(s, "metadata"))
                 err = fsdb_get_metadata(response, list_next(query));
@@ -483,7 +483,11 @@ void fsdb_get(void *data, request_t *request, response_t *response)
                 err = fsdb_get_data(request, response, list_next(query));
         else
                 err = -1;
-        
+
+        if (err == -1){
+            r_err("fsdb_get: failed to process %s request.", s);
+        }
+
         for (list_t *l = query; l != NULL; l = list_next(l))
                 r_free(list_get(l, char));
         delete_list(query);
@@ -573,4 +577,5 @@ int fsdb_onmessage(void *userdata, messagelink_t *link, json_object_t message)
         fsdb_handle_message(db, message);
         messagehub_t *hub = get_messagehub_db();
         messagehub_broadcast_obj(hub, link, message);
+        return 0;
 }

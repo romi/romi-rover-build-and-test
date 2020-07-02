@@ -279,7 +279,6 @@ int StepperController::push_actions(section_t *section)
 
 int StepperController::compile()
 {
-        int err = -1;
         int32_t pos_steps[3];
         section_t *section = list_get(_script->slices, section_t);
 
