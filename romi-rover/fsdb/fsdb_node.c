@@ -257,7 +257,7 @@ static int fsdb_get_metadata(response_t *response, list_t *query)
         
         if (list_next(query) != NULL) {
                 r_warn("URI too long");
-                response_set_status(response, 400);
+                response_set_status(response, HTTP_Status_Bad_Request);
                 return -1;
         }
         if (!rstreq(db_id, "db")) {
@@ -468,7 +468,6 @@ static int fsdb_get_data(request_t *request, response_t *response, list_t *query
 
 void fsdb_get(void *data, request_t *request, response_t *response)
 {
-        int err;
         const char *uri = request_uri(request);
         list_t *query = parse_uri(uri);
         if (query == NULL) {
@@ -477,15 +476,12 @@ void fsdb_get(void *data, request_t *request, response_t *response)
         }
 
         char *s = list_get(query, char);
-        if (rstreq(s, "metadata"))
-                err = fsdb_get_metadata(response, list_next(query));
-        else if (rstreq(s, "data"))
-                err = fsdb_get_data(request, response, list_next(query));
-        else
-                err = -1;
-
-        if (err == -1){
-            r_err("fsdb_get: failed to process %s request.", s);
+        if (rstreq(s, "metadata")) {
+            fsdb_get_metadata(response, list_next(query));
+        } else if (rstreq(s, "data")) {
+            fsdb_get_data(request, response, list_next(query));
+        } else {
+            response_set_status(response, HTTP_Status_Bad_Request);
         }
 
         for (list_t *l = query; l != NULL; l = list_next(l))
