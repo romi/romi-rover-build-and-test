@@ -27,7 +27,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter ${PROJECT_SANITISE_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "-O0")
 
-set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} ${PROJECT_SANITISE_FLAGS}")
+set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_SANITISE_FLAGS}")
 
 ############################################################
 
