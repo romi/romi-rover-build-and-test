@@ -29,7 +29,7 @@
 #include <romi.h>
 #include "camera_recorder.h"
 
-static int initialized = 0;
+//static int initialized = 0;
 static mutex_t *recording_mutex;
 static mutex_t *position_mutex;
 static char *directory = NULL;
@@ -41,8 +41,8 @@ static fileset_t *fileset = NULL;
 static int recording_count = 0;
 static int recording = 0;
 static multipart_parser_t *parser = NULL;
-static vector_t position = { 0.0 };
-static vector_t last_position = { 0.0 };
+static vector_t position = { 0.0, 0.0, 0.0 };
+static vector_t last_position = { 0.0, 0.0, 0.0  };
 static double minimum_displacement = -1.0f;
 
 streamerlink_t *get_streamerlink_camera();
@@ -171,7 +171,7 @@ static int *camera_recorder_onimage(void *userdata,
                 double lag = clock_time() - timestamp;
                 //r_debug("lag %f, timestamp %f", lag, timestamp);
                 if (lag < 1.0f) {
-                        vector_t p;
+ //                       vector_t p;
                         mutex_lock(position_mutex);
                         p = position;
                         mutex_unlock(position_mutex);
@@ -180,7 +180,7 @@ static int *camera_recorder_onimage(void *userdata,
                         if (file) {
                                 file_set_timestamp(file, timestamp);
                                 file_set_position(file, p);
-                                file_import_jpeg(file, image, len);
+                                file_import_jpeg(file, (const char*)image, len);
                         } else {
                                 r_warn("camera_recorder_onimage: "
                                        "Failed to create the file");
@@ -193,6 +193,7 @@ static int *camera_recorder_onimage(void *userdata,
 
 unlock:
         mutex_unlock(recording_mutex);
+        return 0;
 }
 
 int camera_recorder_ondata(void *userdata, response_t *response, const char *buf, int len)

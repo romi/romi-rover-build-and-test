@@ -257,7 +257,7 @@ static int fsdb_get_metadata(response_t *response, list_t *query)
         
         if (list_next(query) != NULL) {
                 r_warn("URI too long");
-                response_set_status(response, 400);
+                response_set_status(response, HTTP_Status_Bad_Request);
                 return -1;
         }
         if (!rstreq(db_id, "db")) {
@@ -468,22 +468,22 @@ static int fsdb_get_data(request_t *request, response_t *response, list_t *query
 
 void fsdb_get(void *data, request_t *request, response_t *response)
 {
-        int err;
         const char *uri = request_uri(request);
         list_t *query = parse_uri(uri);
         if (query == NULL) {
                 response_set_status(response, HTTP_Status_Internal_Server_Error);
                 return;
         }
-        
+
         char *s = list_get(query, char);
-        if (rstreq(s, "metadata"))
-                err = fsdb_get_metadata(response, list_next(query));
-        else if (rstreq(s, "data"))
-                err = fsdb_get_data(request, response, list_next(query));
-        else
-                err = -1;
-        
+        if (rstreq(s, "metadata")) {
+            fsdb_get_metadata(response, list_next(query));
+        } else if (rstreq(s, "data")) {
+            fsdb_get_data(request, response, list_next(query));
+        } else {
+            response_set_status(response, HTTP_Status_Bad_Request);
+        }
+
         for (list_t *l = query; l != NULL; l = list_next(l))
                 r_free(list_get(l, char));
         delete_list(query);
@@ -573,4 +573,5 @@ int fsdb_onmessage(void *userdata, messagelink_t *link, json_object_t message)
         fsdb_handle_message(db, message);
         messagehub_t *hub = get_messagehub_db();
         messagehub_broadcast_obj(hub, link, message);
+        return 0;
 }

@@ -102,14 +102,12 @@ int oquam_onmoveto(void *userdata,
                 membuf_printf(message, "CNC not initialized");
                 return 0;
         }
-        
-        const char *r;
+
         int hasx = json_object_has(command, "x");
         int hasy = json_object_has(command, "y");
         int hasz = json_object_has(command, "z");
         int hasv = json_object_has(command, "v");
         double x = -1.0, y = -1.0, z = -1.0, v = 0.1;
-        char reply[64];
         
         if (!hasx && !hasy && !hasz) {
                 membuf_printf(message, "Missing coordinates");

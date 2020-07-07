@@ -202,7 +202,7 @@ list_t *pipeline_run(pipeline_t *pipeline,
                 goto cleanup_and_exit;
 
         // 3. compute the path
-        double meters_to_pixels = mask->width / pipeline->workspace->width_meter;
+//        double meters_to_pixels = mask->width / pipeline->workspace->width_meter;
         path = path_module_compute(pipeline->path_module, mask, fileset, message);
         if (path == NULL)
                 goto cleanup_and_exit;
