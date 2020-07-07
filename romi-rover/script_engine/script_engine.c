@@ -409,7 +409,7 @@ static int run_script(script_t *script)
         mutex_lock(mutex);
         if (thread == NULL) {
                 r_debug("run_script: creating new thread");
-                thread = new_thread((thread_run_t) _run_script, script, 0, 0);
+                thread = new_thread((thread_run_t) _run_script, script); // FIXME
                 if (thread == NULL) 
                         err = -1;
         } else {
