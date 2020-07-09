@@ -131,10 +131,10 @@ void camera_recorder_onpose(void *userdata,
         json_unref(data);
 }
 
-static int *camera_recorder_onimage(void *userdata,
-                                    const unsigned char *image, int len,
-                                    const char *mimetype,
-                                    double timestamp)
+static int camera_recorder_onimage(void *userdata,
+				   const unsigned char *image, int len,
+				   const char *mimetype,
+				   double timestamp)
 {
         double displacement;
         vector_t p;

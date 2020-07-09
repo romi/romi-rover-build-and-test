@@ -568,10 +568,9 @@ void fsdb_handle_message(database_t *database, json_object_t message)
         }
 }
 
-int fsdb_onmessage(void *userdata, messagelink_t *link, json_object_t message)
+void fsdb_onmessage(void *userdata, messagelink_t *link, json_object_t message)
 {
         fsdb_handle_message(db, message);
         messagehub_t *hub = get_messagehub_db();
         messagehub_broadcast_obj(hub, link, message);
-        return 0;
 }

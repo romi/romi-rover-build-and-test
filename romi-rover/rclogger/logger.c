@@ -34,9 +34,8 @@ void logger_cleanup()
 {
 }
 
-int logger_onmessage(void *userdata, messagelink_t *link, json_object_t message)
+void logger_onmessage(void *userdata, messagelink_t *link, json_object_t message)
 {
         messagehub_t *hub = get_messagehub_log();
         messagehub_broadcast_obj(hub, NULL, message);
-        return 0;
 }

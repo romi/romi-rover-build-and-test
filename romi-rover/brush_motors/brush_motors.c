@@ -434,19 +434,19 @@ int motorcontroller_onhoming(void *userdata,
         return send_command("H", message);
 }
 
-void broadcast_encoders()
+int broadcast_encoders(void *userdata, datahub_t* hub)
 {
         static double offset = 0.0;
         
         if (motorcontroller_init() != 0) {
                 clock_sleep(0.2);
-                return;
+                return -1;
         }
         
         if (send_command("e", encoders) != 0) {
                 r_err("brush_motors: 'e' command returned: %s",
                         membuf_data(encoders));
-                return;
+                return -1;
         }
                 
         int encL, encR;
@@ -464,6 +464,8 @@ void broadcast_encoders()
                             "{\"encoders\":[%d,%d], \"timestamp\": %f}",
                             encL, encR, offset + boottime);
         clock_sleep(0.100);
+
+	return 0;
 }
 
 void broadcast_status()

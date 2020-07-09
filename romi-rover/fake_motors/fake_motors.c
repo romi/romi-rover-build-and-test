@@ -197,7 +197,7 @@ int motorcontroller_onhoming(void *userdata,
         return 0;
 }
 
-void broadcast_encoders(void *userdata, datahub_t *hub)
+int broadcast_encoders(void *userdata, datahub_t *hub)
 {
         static double last_time = 0.0;
         
@@ -205,7 +205,7 @@ void broadcast_encoders(void *userdata, datahub_t *hub)
 
         if (state == APP_STATE_INITIALIZING
             && init_rover() != 0) 
-                return;
+                return -1;
         
         mutex_lock(mutex);
 
@@ -224,6 +224,7 @@ void broadcast_encoders(void *userdata, datahub_t *hub)
 
         mutex_unlock(mutex);
         clock_sleep(0.050);
+	return 0;
 }
 
 void broadcast_status()
