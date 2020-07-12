@@ -21,7 +21,7 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "logger.h"
+#include "rclogger.h"
 
 messagehub_t *get_messagehub_log();
 
