@@ -94,7 +94,6 @@ static int homing(membuf_t *message)
 {
         messagelink_t *motors = get_messagelink_motorcontroller();
         json_object_t reply;
-        int err;
         
         r_debug("Sending homing");
 
