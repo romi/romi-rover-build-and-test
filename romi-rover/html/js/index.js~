@@ -37,5 +37,5 @@ function insertButtons(data)
 
 function addButtons()
 {
-    $.getJSON("scripts.json", insertButtons);
+    $.getJSON("/proxy/script_engine/scripts.json", insertButtons);
 }

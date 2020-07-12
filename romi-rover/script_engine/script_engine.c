@@ -68,21 +68,21 @@ static void broadcast_log(void *userdata, const char* s)
 
 ////////////////////////////////////////////////////////
 
-static int status_error(json_object_t reply, membuf_t *message)
+static int status_error(const char *topic, json_object_t reply, membuf_t *message)
 {
         int ret = -1;
         const char *status = json_object_getstr(reply, "status");
         if (status == NULL) {
-                r_err("invalid status");
-                membuf_printf(message, "invalid status");
+                r_err("Command failed, no link to %s", topic);
+                membuf_printf(message, "command failed, no link to %s", topic);
                 
         } else if (rstreq(status, "ok")) {
                 ret = 0;
                 
         } else if (rstreq(status, "error")) {
                 const char *s = json_object_getstr(reply, "message");
-                r_err("message error: %s", s);
-                membuf_printf(message, "%s", s);
+                r_err("%s: message error: %s", topic, s);
+                membuf_printf(message, "%s: %s", topic, s);
         }
         json_unref(reply);
         return ret;
@@ -94,6 +94,7 @@ static int homing(membuf_t *message)
 {
         messagelink_t *motors = get_messagelink_motorcontroller();
         json_object_t reply;
+        int err;
         
         r_debug("Sending homing");
 
@@ -103,7 +104,7 @@ static int homing(membuf_t *message)
         }
         
         reply = messagelink_send_command_f(motors, "{'command':'homing'}");
-        return status_error(reply, message);
+        return status_error("motors", reply, message);
 }
 
 static int moveat(membuf_t *message, int speed)
@@ -120,7 +121,7 @@ static int moveat(membuf_t *message, int speed)
         
         reply = messagelink_send_command_f(motors, "{'command':'moveat','speed':%d}",
                                            speed);
-        return status_error(reply, message);
+        return status_error("motors", reply, message);
 }
 
 static int move(membuf_t *message, double distance, double speed)
@@ -140,7 +141,7 @@ static int move(membuf_t *message, double distance, double speed)
                                   "'distance':%f,"
                                   "'speed':%f}",
                                   distance, speed);
-        return status_error(reply, message);
+        return status_error("navigation", reply, message);
 }
 
 int32 _iterator(const char* key, json_object_t value, json_object_t request)
@@ -166,7 +167,7 @@ static int hoe(membuf_t *message, const char *method, json_object_t action)
         reply = messagelink_send_command(weeder, request);
         json_unref(request);
         
-        return status_error(reply, message);
+        return status_error("weeder", reply, message);
 }
 
 static int start_recording(membuf_t *message)
@@ -183,8 +184,9 @@ static int start_recording(membuf_t *message)
         
         reply = messagelink_send_command_f(recorder, "{'command':'start'}");
 
-        int err = status_error(reply, message);
-        if (err == 0) recording = 1;
+        int err = status_error("recorder",  reply, message);
+        if (err == 0)
+                recording = 1;
         
         return err;
 }
@@ -202,7 +204,7 @@ static int stop_recording(membuf_t *message)
         }
         
         reply = messagelink_send_command_f(recorder, "{'command':'stop'}");
-        int err = status_error(reply, message);
+        int err = status_error("recorder", reply, message);
         if (err == 0)
                 recording = 0;
         
@@ -222,7 +224,7 @@ static int shutdown_rover(membuf_t *message)
         }
         
         reply = messagelink_send_command_f(watchdog, "{'command':'shutdown'}");
-        return status_error(reply, message);
+        return status_error("watchdog", reply, message);
 }
 
 ////////////////////////////////////////////////////////
@@ -243,10 +245,6 @@ static script_t *new_script(const char *name,
         script->actions = json_null();
         script->name = r_strdup(name);
         script->display_name = r_strdup(display_name);
-        if (script->name == NULL || script->display_name == NULL) {
-                delete_script(script);
-                return NULL;
-        }
         script->actions = actions;
         json_ref(actions);
         return script;
@@ -255,8 +253,8 @@ static script_t *new_script(const char *name,
 static void delete_script(script_t *script)
 {
         if (script) {
-                if (script->name) r_free(script->name);
-                if (script->display_name) r_free(script->display_name);
+                r_free(script->name);
+                r_free(script->display_name);
                 json_unref(script->actions);
                 r_delete(script);
         }
@@ -393,29 +391,33 @@ static void _run_script(script_t *script)
         delete_membuf(message);
                 
         mutex_lock(mutex);
+        // FIXME
+        delete_thread(thread);
+        thread = NULL;
+        // end of FIXME        
         progress = 100;
         idle = 1;
         status = "idle";
         current_script = NULL;
-        delete_thread(thread);
-        thread = NULL;
         mutex_unlock(mutex);
 }
 
 static int run_script(script_t *script)
 {
         int err = 0;
-        r_debug("run_script %s", script->name);
+
         mutex_lock(mutex);
         if (thread == NULL) {
-                r_debug("run_script: creating new thread");
                 thread = new_thread((thread_run_t) _run_script, script); // FIXME
-                if (thread == NULL) 
+                if (thread == NULL) {
+                        r_err("run_script: Failed to create a thread");
                         err = -1;
+                }
         } else {
                 err = -2;
         }
         mutex_unlock(mutex);
+        
         return err;
 }
 
@@ -490,8 +492,6 @@ static int set_script_path(const char *path)
                 script_path = NULL;
         }
         script_path = r_strdup(path);
-        if (script_path == NULL)
-                return -1;
 
         r_info("Script file: %s", path);
         return 0;
@@ -562,17 +562,15 @@ int script_engine_init(int argc, char **argv)
 
 void script_engine_cleanup()
 {
-        if (script_path)
-                r_free(script_path);
-        if (scripts) {
-                for (list_t *l = scripts; l != NULL; l = list_next(l)) {
-                        script_t *script = list_get(l, script_t);
-                        delete_script(script);
-                }
-                delete_list(scripts);
+        r_free(script_path);
+        
+        for (list_t *l = scripts; l != NULL; l = list_next(l)) {
+                script_t *script = list_get(l, script_t);
+                delete_script(script);
         }
-        if (mutex != NULL)
-                delete_mutex(mutex);
+        delete_list(scripts);
+        
+        delete_mutex(mutex);
 }
 
 /////////////////////////////////////////////////////
@@ -619,7 +617,53 @@ void script_engine_status(void *data, request_t *request, response_t *response)
         }
 }
 
-void script_engine_execute(void *data, request_t *request, response_t *response)
+static void script_engine_execute_script_ok(request_t *request,
+                                            response_t *response,
+                                            script_t *script)
+{
+        int r = run_script(script);
+        if (r != 0) {
+                // Creation of thread failed
+                mutex_lock(mutex);
+                idle = 1;
+                mutex_unlock(mutex);
+                response_set_status(response, HTTP_Status_Internal_Server_Error);
+        } else {
+                response_set_status(response, HTTP_Status_OK);
+        }
+}
+
+static int script_engine_rsvp()
+{
+        int rsvp = 0;
+        
+        mutex_lock(mutex);
+        if (idle == 1) {
+                idle = 0;
+                rsvp = 1;
+        } else {
+                rsvp = 0;
+        }
+        mutex_unlock(mutex);
+
+        return rsvp;
+}
+
+static void script_engine_execute_script(request_t *request,
+                                         response_t *response,
+                                         script_t *script)
+{
+        if (script_engine_rsvp()) {
+                script_engine_execute_script_ok(request, response, script);
+        } else {
+                r_info("Script engine busy, can't run script '%s'", script->name);
+                response_set_status(response, HTTP_Status_Too_Many_Requests);
+        }
+}
+
+void script_engine_execute(void *data __attribute__((unused)),
+                           request_t *request,
+                           response_t *response)
 {
         if (init() != 0) {
                 response_set_status(response, HTTP_Status_Internal_Server_Error);
@@ -636,28 +680,9 @@ void script_engine_execute(void *data, request_t *request, response_t *response)
 
         script_t *script = find_script(scripts, arg);
         if (script == NULL) {
+                r_info("Can't find script '%s'", arg);
                 response_set_status(response, HTTP_Status_Not_Found);
-                return;
+        } else {
+                script_engine_execute_script(request, response, script);
         }
-
-        mutex_lock(mutex);
-        if (idle == 0) {
-                mutex_unlock(mutex);                
-                response_set_status(response, HTTP_Status_Too_Many_Requests);
-                return;
-        }
-        idle = 0;
-        mutex_unlock(mutex);
-
-        int r = run_script(script);
-        if (r == -1) {
-                // Creation of thread failed
-                mutex_lock(mutex);
-                idle = 1;
-                mutex_unlock(mutex);
-                response_set_status(response, HTTP_Status_Internal_Server_Error);
-                return;
-        }
-
-        response_set_status(response, HTTP_Status_OK);
 }

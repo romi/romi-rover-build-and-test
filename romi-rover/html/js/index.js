@@ -21,17 +21,21 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include <rcom.h>
 
-int interface_init(int argc, char **argv);  
-void interface_cleanup();  
+function insertButtons(data)
+{
+    var buttonDiv = document.getElementById("buttons");
+    for (let i = 0; i < data.length; i++) {
+        var btn = document.createElement("a");
+        btn.setAttribute("href", "/service/script_engine/execute?" + data[i].name);
+        btn.setAttribute("class", "btn btn-primary btn-block");
+        btn.innerHTML = data[i].display_name;
+        btn.style.fontWeight = 'bold';
+        buttonDiv.appendChild(btn);
+    }
+}
 
-void interface_index(void *data, request_t *request, response_t *response);  
-void interface_scripts(void *data, request_t *request, response_t *response);  
-void interface_status(void *data, request_t *request, response_t *response);  
-void interface_execute(void *data, request_t *request, response_t *response);  
-void interface_registry(void *data, request_t *request, response_t *response);  
-void interface_db(void *data, request_t *request, response_t *response);
-void interface_local_file(void *data, request_t *request, response_t *response);  
-
-
+function addButtons()
+{
+    $.getJSON("/service/script_engine/scripts.json", insertButtons);
+}
