@@ -1,13 +1,13 @@
 {
     "name": "logger",
-    "header": "logger.h",
-    "init": "logger_init",
-    "cleanup": "logger_cleanup",
+    "header": "rclogger.h",
+    "init": "rclogger_init",
+    "cleanup": "rclogger_cleanup",
     "com": [
         {
             "type": "messagehub",
             "topic": "logger",
-            "onmessage": "logger_onmessage"
+            "onmessage": "rclogger_onmessage"
         },
         {
             "type": "messagehub",

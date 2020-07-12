@@ -21,8 +21,21 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include <rcom.h>
+#include "logger.h"
 
-int logger_init(int argc, char **argv);
-void logger_cleanup();
-void logger_onmessage(void *userdata, messagelink_t *link, json_object_t message);  
+messagehub_t *get_messagehub_log();
+
+int rclogger_init(int argc, char **argv)
+{
+        return 0;
+}
+
+void rclogger_cleanup()
+{
+}
+
+void rclogger_onmessage(void *userdata, messagelink_t *link, json_object_t message)
+{
+        messagehub_t *hub = get_messagehub_log();
+        messagehub_broadcast_obj(hub, NULL, message);
+}
