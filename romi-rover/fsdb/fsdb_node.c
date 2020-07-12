@@ -52,7 +52,7 @@ int fsdb_node_init(int argc, char **argv)
                 rprintf(buffer, sizeof(buffer), "%s/db", app_get_session());
                 dir = buffer;
         } else {
-                path = client_get("configuration", "fsdb.directory");
+                path = client_get("configuration", "fsdb/directory");
                 if (!json_isstring(path)) {
                         r_err("The value of fsdb.directory is not a string");
                         json_unref(path);

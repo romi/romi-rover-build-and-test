@@ -72,17 +72,38 @@ void configuration_cleanup()
                 json_unref(config);
 }
 
+static json_object_t _eval_recursive(json_object_t obj, list_t *expr)
+{
+        if (expr == NULL)
+                return obj;
+        else if (!json_isobject(obj))
+                return json_undefined();
+        else {
+                const char *key = list_get(expr, const char);
+                list_t *next = list_next(expr);
+                return _eval_recursive(json_object_get(obj, key), next);
+        }
+}
+
+static json_object_t _eval(const char *path)
+{
+        list_t *expr = path_break(path);
+        json_object_t r = _eval_recursive(config, expr);
+        path_delete(expr);
+        return r;
+}
+
 void configuration_get(void *data, request_t *request, response_t *response)
 {
         const char *uri = request_uri(request);
-        
+        r_debug("Request: %s", uri);
         if (rstreq(uri, "/")) {
                 response_json(response, config);
                 return;
         } else {
                 if (uri[0] == '/')
                         uri++;
-                response_json(response, json_object_get(config, uri));
+                response_json(response, _eval(uri));
         }
 }
 

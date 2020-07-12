@@ -504,7 +504,7 @@ static int get_configuration()
         
         r_debug("trying to configure the script_engine");
 
-        json_object_t path = client_get("configuration", "script_engine.scripts");
+        json_object_t path = client_get("configuration", "script_engine/scripts");
         if (!json_isstring(path)) {
                 r_err("The value of script_engine.scripts is not a string");
                 json_unref(path);

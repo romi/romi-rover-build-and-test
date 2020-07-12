@@ -154,7 +154,7 @@ static int get_configuration()
         if (device != NULL)
                 return 0;
         
-        json_object_t dev = client_get("configuration", "grbl.device");
+        json_object_t dev = client_get("configuration", "grbl/device");
         if (!json_isstring(dev)) {
                 r_err("the value of 'grbl.device' is not a string");
                 json_unref(dev);
