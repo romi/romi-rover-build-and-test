@@ -304,16 +304,8 @@ int brush_motors_init(int argc, char **argv)
         r_log_set_writer(broadcast_log, NULL);
         
         mutex = new_mutex();
-        if (mutex == NULL)
-                return -1;
-
         encoders = new_membuf();
-        if (encoders == NULL)
-                return -1;
-        
         status = new_membuf();
-        if (status == NULL)
-                return -1;
 
         if (argc > 1) {
                 r_debug("using serial device '%s'", argv[1]);
@@ -335,14 +327,10 @@ int brush_motors_init(int argc, char **argv)
 void brush_motors_cleanup()
 {
         close_serial();
-        if (mutex)
-                delete_mutex(mutex);
-        if (status)
-                delete_membuf(status);
-        if (encoders)
-                delete_membuf(encoders);
-        if (device)
-                r_free(device);
+        delete_mutex(mutex);
+        delete_membuf(status);
+        delete_membuf(encoders);
+        r_free(device);
 }
 
 int motorcontroller_onmoveat(void *userdata,
