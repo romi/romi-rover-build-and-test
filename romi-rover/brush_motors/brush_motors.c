@@ -149,25 +149,20 @@ static int reset_controller(serial_t *serial)
                 return -1;
         }
 
-        double steps_per_meter = encoder_steps / (M_PI * wheel_diameter);
-        rprintf(cmd, sizeof(cmd), "I[%d,%d,%d,%d,%d,%d]",
-                (int) steps_per_meter,
-                (int) (max_speed * 100.0),
+        double max_rpm = max_speed / (M_PI * wheel_diameter);
+        double steps_per_revolution = encoder_steps;
+        rprintf(cmd, sizeof(cmd), "I[%d,%d,%d,%d,%d,%d,%d,%d,%d]",
+                (int) steps_per_revolution,
+                (int) (max_rpm * 100.0),
                 (int) max_signal,
                 with_pid? 1 : 0,
+                with_pid? (int) (k[0] * 1000.0) : 0,
+                with_pid? (int) (k[1] * 1000.0) : 0,
+                with_pid? (int) (k[2] * 1000.0) : 0,
                 with_rc? 1 : 0,
                 with_homing? 1 : 0);
         if (send_command(cmd, reply) != 0) {
                 r_err("Initialization failed: %s", membuf_data(reply));
-                return -1;
-        }
-        
-        rprintf(cmd, sizeof(cmd), "K[%d,%d,%d]",
-                (int) (k[0] * 1000.0),
-                (int) (k[1] * 1000.0),
-                (int) (k[2] * 1000.0));
-        if (send_command(cmd, reply) != 0) {
-                r_err("Initialization of PID failed: %s", membuf_data(reply));
                 return -1;
         }
         
