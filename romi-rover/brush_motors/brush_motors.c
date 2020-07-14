@@ -247,8 +247,10 @@ int get_controller_configuration()
         }
         
         if (device == NULL) {
-                if (set_device(dev) != 0)
+                if (set_device(dev) != 0) {
+                        json_unref(controller);
                         return -1;
+                }
         }
         
         max_speed = v;
@@ -267,6 +269,7 @@ int get_controller_configuration()
         r_info("with_homing    %s", with_homing? "yes" : "no");
         r_info("PID            [%.4f,%.4f,%.4f]", k[0], k[1], k[2]);
 
+        json_unref(controller);
         return 0;
 }
 
@@ -420,7 +423,7 @@ int motorcontroller_onhoming(void *userdata,
 int broadcast_encoders(void *userdata, datahub_t* hub)
 {
         static double offset = 0.0;
-        
+                              
         if (motorcontroller_init() != 0) {
                 clock_sleep(0.2);
                 return -1;
@@ -442,6 +445,8 @@ int broadcast_encoders(void *userdata, datahub_t* hub)
                 double now = clock_time();
                 offset = now - boottime;
         }
+
+        //r_debug("broadcast_encoders: %d, %d", encL, encR);
         
         datahub_broadcast_f(get_datahub_encoders(), NULL, 
                             "{\"encoders\":[%d,%d], \"timestamp\": %f}",
