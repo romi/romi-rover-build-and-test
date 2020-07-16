@@ -181,10 +181,12 @@ static int get_range(json_object_t config)
                 err = -1;
         } else {
                 err = cnc_range_parse(&_range, r);
-                r_info("range set to: x[%.3f,%.3f], y[%.3f,%.3f], z[%.3f,%.3f]",
-                       _range.x[0], _range.x[1],
-                       _range.y[0], _range.y[1],
-                       _range.z[0], _range.z[1]);
+                if (err == 0) {
+                        r_info("range set to: x[%.3f,%.3f], y[%.3f,%.3f], z[%.3f,%.3f]",
+                               _range.x[0], _range.x[1],
+                               _range.y[0], _range.y[1],
+                               _range.z[0], _range.z[1]);
+                } // else: error message alreay printed by cnc_range_parse()
         }
         return err;
 }
