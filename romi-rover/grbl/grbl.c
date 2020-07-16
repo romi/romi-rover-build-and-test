@@ -22,13 +22,8 @@
 
  */
 #include <r.h>
+#include <romi.h>
 #include "grbl.h"
-
-#define XAXIS 0
-#define YAXIS 1
-#define ZAXIS 2
-#define MIN 0
-#define MAX 1
 
 static int _initialized = 0;
 static char *_device = NULL;
@@ -36,7 +31,9 @@ static mutex_t *_mutex = NULL;
 static serial_t *_serial = NULL;
 //static int serial_errors = 0;
 static membuf_t *_reply = NULL;
-static double _range[3][2] = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
+
+static cnc_range_t _range = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
+
 
 static void broadcast_log(void *userdata, const char* s)
 {
@@ -175,48 +172,6 @@ static int get_device(json_object_t config)
         return err;
 }
 
-static int get_range_ij(json_object_t a, int i, int j)
-{
-        int err = 0;
-        double v = json_array_getnum(a, j);
-        if (isnan(v)) {
-                r_err("Value [%i,%j] in range is invalid", i, j);
-                err = -1;
-        } else {
-                _range[i][j] = v;
-        }
-        return err;
-}
-
-static int get_range_i_loop(json_object_t a, int i)
-{
-        for (int j = 0; j < 2; j++)
-                if (get_range_ij(a, i, j) != 0)
-                        return -1;
-        return 0;
-}
-
-static int get_range_i(json_object_t r, int i)
-{
-        int err;
-        json_object_t a = json_array_get(r, i);
-        if (!json_isarray(a)) {
-                r_err("Range of dimension %d is not an array", i);
-                err = -1;
-        } else {
-                err = get_range_i_loop(a, i);
-        }
-        return err;
-}
-
-static int get_range_loop(json_object_t r)
-{
-        for (int i = 0; i < 3; i++)
-                if (get_range_i(r, i) != 0)
-                        return -1;
-        return 0;
-}
-
 static int get_range(json_object_t config)
 {
         int err;
@@ -225,11 +180,11 @@ static int get_range(json_object_t config)
                 r_err("Invalid range in configuration");
                 err = -1;
         } else {
-                err = get_range_loop(r);
+                err = cnc_range_parse(&_range, r);
                 r_info("range set to: x[%.3f,%.3f], y[%.3f,%.3f], z[%.3f,%.3f]",
-                       _range[XAXIS][MIN], _range[XAXIS][MAX],
-                       _range[YAXIS][MIN], _range[YAXIS][MAX],
-                       _range[ZAXIS][MIN], _range[ZAXIS][MAX]);
+                       _range.x[0], _range.x[1],
+                       _range.y[0], _range.y[1],
+                       _range.z[0], _range.z[1]);
         }
         return err;
 }
@@ -372,19 +327,19 @@ int cnc_onmoveto(void *userdata,
                 membuf_printf(message, "Invalid coordinates");
                 return -1;
         }
-        if (hasx && (x < _range[XAXIS][MIN] || x > _range[XAXIS][MAX])) {
+        if (hasx && (x < _range.x[0] || x > _range.x[1])) {
                 membuf_printf(message, "X value out of range [%.3f,%.3f]: %f",
-                              _range[XAXIS][MIN], _range[XAXIS][MAX], x);
+                              _range.x[0], _range.x[1], x);
                 return -1;
         }
-        if (hasy && (y < _range[YAXIS][MIN] || y > _range[YAXIS][MAX])) {
+        if (hasy && (y < _range.y[0] || y > _range.y[1])) {
                 membuf_printf(message, "Y value out of range [%.3f,%.3f]: %f",
-                              _range[YAXIS][MIN], _range[YAXIS][MAX], y);
+                              _range.y[0], _range.y[1], y);
                 return -1;
         }
-        if (hasz && (z < _range[ZAXIS][MIN] || z > _range[ZAXIS][MAX])) {
+        if (hasz && (z < _range.z[0] || z > _range.z[1])) {
                 membuf_printf(message, "Z value out of range [%.3f,%.3f]: %f",
-                              _range[ZAXIS][MIN], _range[ZAXIS][MAX], z);
+                              _range.z[0], _range.z[1], z);
                 return -1;
         }
 
@@ -416,21 +371,16 @@ static int path_is_valid_point(json_object_t path, int i, membuf_t *message)
                 return 0;
         }
 
+        double v[3];
         for (int j = 0; j < 3; j++) {
                 json_object_t n = json_array_get(p, j);
                 if (!json_isnumber(n)) {
                         membuf_printf(message, "Coordinate (%d,%d) is not valid", i, j);
                         return 0;
                 }
-                double v = json_number_value(n);
-                if (v < _range[j][MIN] || v > _range[j][MAX]) {
-                        membuf_printf(message,
-                                      "Coordinate (%d,%d) is out of range [%.3f, %.3f]: %.3f",
-                                      i, j, _range[j][MIN], _range[j][MAX], v);
-                        return 0;
-                }
+                v[j] = json_number_value(n);
         }
-        return 1;
+        return cnc_range_is_valid(&_range, v[0], v[1], v[2]);
 }
 
 static int path_is_valid(json_object_t path, membuf_t *message)
@@ -452,8 +402,10 @@ static int path_is_valid(json_object_t path, membuf_t *message)
         }
 
         for (int i = 0; i < json_array_length(path); i++) {
-                if (!path_is_valid_point(path, i, message))
+                if (!path_is_valid_point(path, i, message)) {
+                        membuf_printf(message, "Point %d is out of range", i);
                         return 0;
+                }
         }
 
         return 1;
