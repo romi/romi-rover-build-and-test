@@ -56,7 +56,7 @@ static int open_serial(const char *dev)
         else
                 r_info("Serial connection opened.");
 
-        return (_serial == NULL);
+        return (_serial == NULL)? -1 : 0;
 }
 
 static void close_serial()
