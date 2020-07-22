@@ -23,61 +23,28 @@
  */
 
 #include <LiquidCrystal.h>
-#include "StateMachineControlPanel.h"
+#include "ControlPanelTransitions.h"
+#include "StateMachineTimer.h"
 #include "Parser.h"
-
-#define PIN_RS 8 
-#define PIN_EN 9 
-#define PIN_D4 4 
-#define PIN_D5 5 
-#define PIN_D6 6 
-#define PIN_D7 7 
-#define PIN_RELAY1 A1
-#define PIN_RELAY2 A2
+#include "ArduinoImpl.h"
+#include "pins.h"
 
 LiquidCrystal lcd(PIN_RS,  PIN_EN,  PIN_D4,  PIN_D5,  PIN_D6,  PIN_D7);
 
-/**************************************************************************/
+ArduinoImpl arduino;
+StateMachine stateMachine;
+StateMachineTimer poweroffTimer(&stateMachine, &arduino);
 
-StateMachineControlPanel stateMachine;
+Ready ready;
+StartUp startUp(&arduino);
+PowerUp powerUp(&arduino);
+Shutdown shutdown(&arduino, &poweroffTimer);
+SoftPowerDown softPowerDown(&arduino);
+HardPowerDown hardPowerDownWhenOn(&arduino, STATE_ON);
+HardPowerDown hardPowerDownWhenStarting(&arduino, STATE_STARTING_UP);
+HardPowerDown hardPowerDownWhenShuttingDown(&arduino, STATE_SHUTTING_DOWN);
 
 const char* getStateString();
-
-/**************************************************************************/
-
-class Timer
-{
-protected:
-        int _enabled;
-        int _event;
-        unsigned long _timeout;
-public:
-        Timer() : _enabled(0), _event(0), _timeout(0) {}
-
-        void setTimeout(int milliseconds, int event) {
-                _enabled = 1;
-                _timeout = millis() + milliseconds;
-                _event = event;
-        }
-
-        void update(unsigned long t) {
-                if (_enabled && t > _timeout) {
-                        stateMachine.handleEvent(_event);
-                        // int r = stateMachine.handleEvent(_event);
-                        // if (r == StateMachine::OK)
-                        //         Serial.println("OK");
-                        // else if (r == StateMachine::Ignored)
-                        //         Serial.println("bad state");
-                        // else 
-                        //         Serial.println("failed");
-                        _enabled = 0;
-                }
-        }
-};
-
-Timer poweroffTimer;
-
-/**************************************************************************/
 
 enum {
         BUTTON_RELEASED,
@@ -93,6 +60,18 @@ enum {
         BUTTON_SELECT,
         BUTTON_LAST
 };
+
+void init_state_machine()
+{
+        stateMachine.add(&ready);
+        stateMachine.add(&startUp);
+        stateMachine.add(&powerUp);
+        stateMachine.add(&shutdown);
+        stateMachine.add(&softPowerDown);
+        stateMachine.add(&hardPowerDownWhenOn);
+        stateMachine.add(&hardPowerDownWhenStarting);
+        stateMachine.add(&hardPowerDownWhenShuttingDown);
+}
 
 int button_state[BUTTON_LAST];
 unsigned long button_timestamp[BUTTON_LAST];
@@ -168,42 +147,6 @@ void updateButtons(unsigned long t)
 #endif
 }
 
-int StartUp::doTransition()
-{
-        digitalWrite(PIN_RELAY1, HIGH);
-        digitalWrite(PIN_RELAY2, LOW);
-        return 0;
-}
-
-int PowerUp::doTransition()
-{
-        digitalWrite(PIN_RELAY1, HIGH);
-        digitalWrite(PIN_RELAY2, HIGH);
-        return 0;
-}
-
-int Shutdown::doTransition()
-{
-        digitalWrite(PIN_RELAY1, HIGH);
-        digitalWrite(PIN_RELAY2, LOW);
-        poweroffTimer.setTimeout(5000, EVENT_POWERDOWN);
-        return 0;
-}
-
-int SoftPowerDown::doTransition()
-{
-        digitalWrite(PIN_RELAY1, LOW);
-        digitalWrite(PIN_RELAY2, LOW);
-        return 0;
-}
-
-int HardPowerDown::doTransition()
-{
-        digitalWrite(PIN_RELAY1, LOW);
-        digitalWrite(PIN_RELAY2, LOW);
-        return 0;
-}
-
 const char* getStateString()
 {
         switch (stateMachine.getState()) {
@@ -216,7 +159,7 @@ const char* getStateString()
         }
 }
 
-void displayState()
+void display_state()
 {
         lcd.setCursor(0, 0);
         lcd.print("                ");
@@ -228,7 +171,7 @@ void updateDisplay(unsigned long t)
 {
         static unsigned long _lastState = -1;
         if (stateMachine.getState() != _lastState) {
-                displayState();
+                display_state();
                 _lastState = stateMachine.getState();
         }
 }
@@ -289,7 +232,7 @@ void setup()
 {
         lcd.begin(16, 2);
         lcd.setCursor(0,0);
-        displayState();
+        display_state();
         
         Serial.begin(115200);
         while (!Serial)
@@ -305,6 +248,7 @@ void setup()
                 button_timestamp[i] = 0;
         }
         
+        init_state_machine();
         stateMachine.handleEvent(EVENT_READY);        
 }
 

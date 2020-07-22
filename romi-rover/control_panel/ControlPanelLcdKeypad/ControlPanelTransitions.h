@@ -21,7 +21,10 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#include "StateTransition.h"
 #include "StateMachine.h"
+#include "IStateMachineTimer.h"
+#include "IArduino.h"
 
 #ifndef __STATE_MACHINE_CONTROL_PANEL_H
 #define __STATE_MACHINE_CONTROL_PANEL_H
@@ -48,16 +51,10 @@ enum {
         EVENT_POWERDOWN
 };
 
-class StateMachineControlPanel : public StateMachine
-{
-public:
-        StateMachineControlPanel();
-};
-
 class Ready : public StateTransition
 {
 public:
-        Ready() : StateTransition(StateMachine::StartState,
+        Ready() : StateTransition(IStateMachine::StartState,
                                   EVENT_READY,
                                   STATE_OFF) {}
         
@@ -66,62 +63,85 @@ public:
 
 class StartUp : public StateTransition
 {
+protected:
+        IArduino *_arduino;
+        
 public:
-        StartUp() : StateTransition(STATE_OFF,
-                                    EVENT_SELECT_HELD,
-                                    STATE_STARTING_UP) {}
+        StartUp(IArduino *arduino) : StateTransition(STATE_OFF,
+                                                     EVENT_SELECT_HELD,
+                                                     STATE_STARTING_UP),
+                                     _arduino(arduino) {}
         
         virtual int doTransition();
 };
 
 class PowerUp : public StateTransition
 {
+protected:
+        IArduino *_arduino;
+        
 public:
         // The power down event is sent by the control software when
         // the controllers are initialized and ready to go.
-        PowerUp() : StateTransition(STATE_STARTING_UP,
-                                      EVENT_POWERUP,
-                                      STATE_ON) {}
+        PowerUp(IArduino *arduino) : StateTransition(STATE_STARTING_UP,
+                                                     EVENT_POWERUP,
+                                                     STATE_ON),
+                                     _arduino(arduino) {}
         
         virtual int doTransition();
 };
 
 class Shutdown : public StateTransition
 {
+protected:
+        IArduino *_arduino;
+        IStateMachineTimer *_timer;
+        
 public:
         // The shutdown event is sent by the control software when the
         // user requested to turn of the robot trough the user
         // interface. It powers off the motors and waits 5s before
         // shutting down the controllers. This gives the controller
         // the time to shut down cleanly.
-        Shutdown() : StateTransition(STATE_ON,
-                                     EVENT_SHUTDOWN,
-                                     STATE_SHUTTING_DOWN) {}
+        Shutdown(IArduino *arduino, IStateMachineTimer *timer)
+                : StateTransition(STATE_ON,
+                                  EVENT_SHUTDOWN,
+                                  STATE_SHUTTING_DOWN),
+                  _arduino(arduino),
+                  _timer(timer) {}
         
         virtual int doTransition();
 };
 
 class SoftPowerDown : public StateTransition
 {
+protected:
+        IArduino *_arduino;
+        
 public:
         // The soft power down event is sent 5s after the shutdown
         // event.
-        SoftPowerDown() : StateTransition(STATE_SHUTTING_DOWN,
-                                          EVENT_POWERDOWN,
-                                          STATE_OFF) {}
+        SoftPowerDown(IArduino *arduino) : StateTransition(STATE_SHUTTING_DOWN,
+                                                           EVENT_POWERDOWN,
+                                                           STATE_OFF),
+                                           _arduino(arduino) {}
         
         virtual int doTransition();
 };
 
 class HardPowerDown : public StateTransition
 {
+protected:
+        IArduino *_arduino;
+        
 public:
         // The hard power down event is sent when the user presses and
         // holds the select button. It powers off the motors and the
         // controllers.
-        HardPowerDown(int from) : StateTransition(from,
-                                                  EVENT_SELECT_HELD,
-                                                  STATE_OFF) {}
+        HardPowerDown(IArduino *arduino, int from) : StateTransition(from,
+                                                                     EVENT_SELECT_HELD,
+                                                                     STATE_OFF),
+                                                     _arduino(arduino) {}
         
         virtual int doTransition();
 };

@@ -21,32 +21,30 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __STATE_MACHINE_H
-#define __STATE_MACHINE_H
+#ifndef __STATE_MACHINE_TIMER_H
+#define __STATE_MACHINE_TIMER_H
 
-#include "IStateMachine.h"
+#include "IStateMachineTimer.h"
+#include "IArduino.h"
 
-#define MAX_TRANSITIONS 64
-
-class StateMachine : public IStateMachine
+class StateMachineTimer : public IStateMachineTimer
 {
 protected:
-        int _currentState;
-        int _error;
-        IStateTransition *_transitions[MAX_TRANSITIONS];
-        int _length;
-        
-public:
-        
-        StateMachine() : _currentState(0), _error(0), _length(0) {}
-        virtual ~StateMachine() {}
+        IStateMachine *_stateMachine;
+        IArduino *_arduino;
+        int _enabled;
+        int _event;
+        unsigned long _timeout;
 
-        int getState() override;
-        void setError(int error) override;
-        int getError() override;
-        int countTransitions() override;
-        void add(IStateTransition *transition) override;
-        int handleEvent(int event) override;
+public:
+        StateMachineTimer(IStateMachine *stateMachine,
+                          IArduino *arduino)
+                : _stateMachine(stateMachine),
+                  _arduino(arduino),
+                  _enabled(0), _event(0), _timeout(0) {}
+
+        void setTimeout(int milliseconds, int event) override;
+        void update(unsigned long t) override;
 };
 
-#endif // __STATE_MACHINE_H
+#endif // __STATE_MACHINE_TIMER_H

@@ -21,32 +21,18 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __STATE_MACHINE_H
-#define __STATE_MACHINE_H
+#ifndef __PINS_H
+#define __PINS_H
 
-#include "IStateMachine.h"
+#include "ArduinoConstants.h"
 
-#define MAX_TRANSITIONS 64
+#define PIN_RS 8 
+#define PIN_EN 9 
+#define PIN_D4 4 
+#define PIN_D5 5 
+#define PIN_D6 6 
+#define PIN_D7 7 
+#define PIN_RELAY1 A1
+#define PIN_RELAY2 A2
 
-class StateMachine : public IStateMachine
-{
-protected:
-        int _currentState;
-        int _error;
-        IStateTransition *_transitions[MAX_TRANSITIONS];
-        int _length;
-        
-public:
-        
-        StateMachine() : _currentState(0), _error(0), _length(0) {}
-        virtual ~StateMachine() {}
-
-        int getState() override;
-        void setError(int error) override;
-        int getError() override;
-        int countTransitions() override;
-        void add(IStateTransition *transition) override;
-        int handleEvent(int event) override;
-};
-
-#endif // __STATE_MACHINE_H
+#endif // __PINS_H

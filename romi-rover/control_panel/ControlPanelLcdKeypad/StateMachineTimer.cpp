@@ -21,32 +21,26 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __STATE_MACHINE_H
-#define __STATE_MACHINE_H
+#include "StateMachineTimer.h"
 
-#include "IStateMachine.h"
-
-#define MAX_TRANSITIONS 64
-
-class StateMachine : public IStateMachine
+void StateMachineTimer::setTimeout(int milliseconds, int event)
 {
-protected:
-        int _currentState;
-        int _error;
-        IStateTransition *_transitions[MAX_TRANSITIONS];
-        int _length;
-        
-public:
-        
-        StateMachine() : _currentState(0), _error(0), _length(0) {}
-        virtual ~StateMachine() {}
+        _enabled = 1;
+        _timeout = _arduino->millis() + milliseconds;
+        _event = event;
+}
 
-        int getState() override;
-        void setError(int error) override;
-        int getError() override;
-        int countTransitions() override;
-        void add(IStateTransition *transition) override;
-        int handleEvent(int event) override;
-};
-
-#endif // __STATE_MACHINE_H
+void StateMachineTimer::update(unsigned long t)
+{
+        if (_enabled && t > _timeout) {
+                _stateMachine->handleEvent(_event);
+                // int r = stateMachine.handleEvent(_event);
+                // if (r == StateMachine::OK)
+                //         Serial.println("OK");
+                // else if (r == StateMachine::Ignored)
+                //         Serial.println("bad state");
+                // else 
+                //         Serial.println("failed");
+                _enabled = 0;
+        }
+}

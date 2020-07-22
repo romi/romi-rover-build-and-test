@@ -21,32 +21,24 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __STATE_MACHINE_H
-#define __STATE_MACHINE_H
 
-#include "IStateMachine.h"
+#include <Arduino.h>
+#include "ArduinoImpl.h"
 
-#define MAX_TRANSITIONS 64
-
-class StateMachine : public IStateMachine
+ArduinoImpl::ArduinoImpl()
 {
-protected:
-        int _currentState;
-        int _error;
-        IStateTransition *_transitions[MAX_TRANSITIONS];
-        int _length;
-        
-public:
-        
-        StateMachine() : _currentState(0), _error(0), _length(0) {}
-        virtual ~StateMachine() {}
+}
 
-        int getState() override;
-        void setError(int error) override;
-        int getError() override;
-        int countTransitions() override;
-        void add(IStateTransition *transition) override;
-        int handleEvent(int event) override;
-};
+ArduinoImpl::~ArduinoImpl()
+{
+}
 
-#endif // __STATE_MACHINE_H
+unsigned long ArduinoImpl::millis()
+{
+        return ::millis();
+}
+
+void ArduinoImpl::digitalWrite(int pin, int high_low)
+{
+        ::digitalWrite(pin, high_low);
+}

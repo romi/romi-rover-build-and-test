@@ -21,32 +21,25 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __STATE_MACHINE_H
-#define __STATE_MACHINE_H
+#ifndef __I_STATE_MACHINE_H
+#define __I_STATE_MACHINE_H
 
-#include "IStateMachine.h"
+#include "IStateTransition.h"
 
-#define MAX_TRANSITIONS 64
-
-class StateMachine : public IStateMachine
+class IStateMachine
 {
-protected:
-        int _currentState;
-        int _error;
-        IStateTransition *_transitions[MAX_TRANSITIONS];
-        int _length;
-        
 public:
+        enum { ErrorState = -1, StartState = 0 };
+        enum { OK = 0, Ignored = 1, Error = 2 };
         
-        StateMachine() : _currentState(0), _error(0), _length(0) {}
-        virtual ~StateMachine() {}
+        virtual ~IStateMachine() {}
 
-        int getState() override;
-        void setError(int error) override;
-        int getError() override;
-        int countTransitions() override;
-        void add(IStateTransition *transition) override;
-        int handleEvent(int event) override;
+        virtual int getState() = 0;
+        virtual void setError(int error) = 0;
+        virtual int getError() = 0;
+        virtual int countTransitions() = 0;
+        virtual void add(IStateTransition *transition) = 0;
+        virtual int handleEvent(int event) = 0;
 };
 
-#endif // __STATE_MACHINE_H
+#endif // __I_STATE_MACHINE_H
