@@ -39,6 +39,7 @@ StateMachineControlPanel::StateMachineControlPanel()
         add(&startUp);
         add(&powerUp);
         add(&shutdown);
+        add(&softPowerDown);
         add(&hardPowerDownWhenOn);
         add(&hardPowerDownWhenStarting);
         add(&hardPowerDownWhenShuttingDown);

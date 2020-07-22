@@ -41,6 +41,8 @@ LiquidCrystal lcd(PIN_RS,  PIN_EN,  PIN_D4,  PIN_D5,  PIN_D6,  PIN_D7);
 
 StateMachineControlPanel stateMachine;
 
+const char* getStateString();
+
 /**************************************************************************/
 
 class Timer
@@ -61,6 +63,13 @@ public:
         void update(unsigned long t) {
                 if (_enabled && t > _timeout) {
                         stateMachine.handleEvent(_event);
+                        // int r = stateMachine.handleEvent(_event);
+                        // if (r == StateMachine::OK)
+                        //         Serial.println("OK");
+                        // else if (r == StateMachine::Ignored)
+                        //         Serial.println("bad state");
+                        // else 
+                        //         Serial.println("failed");
                         _enabled = 0;
                 }
         }
@@ -90,21 +99,21 @@ unsigned long button_timestamp[BUTTON_LAST];
 
 void button_pressed(int i)
 {
-        Serial.print("Pressed["); Serial.print(i); Serial.println("]");
+        //Serial.print("Pressed["); Serial.print(i); Serial.println("]");
         // ignore
 }
 
 void button_released(int i)
 {
-        Serial.print("Released["); Serial.print(i); Serial.println("]");
+        //Serial.print("Released["); Serial.print(i); Serial.println("]");
         // ignore
 }
 
 void button_held(int i)
 {
-        Serial.print("Held["); Serial.print(i); Serial.println("]");
+        //Serial.print("Held["); Serial.print(i); Serial.println("]");
         if (i == BUTTON_SELECT) {
-                Serial.println("handleEvent(EVENT_SELECT_HELD)");
+                //Serial.println("handleEvent(EVENT_SELECT_HELD)");
                 stateMachine.handleEvent(EVENT_SELECT_HELD);
         }
 }
@@ -183,7 +192,6 @@ int Shutdown::doTransition()
 
 int SoftPowerDown::doTransition()
 {
-        Serial.println("SoftPowerDown");
         digitalWrite(PIN_RELAY1, LOW);
         digitalWrite(PIN_RELAY2, LOW);
         return 0;
@@ -270,7 +278,7 @@ void handleSerialInput()
                         //         Serial.println("OK display");
                         //         break;
                         case '?':
-                                Serial.print("?[\"RomiControlPanel\",\"0.1\"]"); 
+                                Serial.println("?[\"RomiControlPanel\",\"0.1\"]"); 
                                 break;
                         }
                 }
