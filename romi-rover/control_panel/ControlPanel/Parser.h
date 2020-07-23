@@ -1,42 +1,29 @@
-/*
-  romi-rover
-
-  Copyright (C) 2019 Sony Computer Science Laboratories
-  Author(s) Peter Hanappe
-
-  romi-rover is collection of applications for the Romi Rover.
-
-  romi-rover is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see
-  <http://www.gnu.org/licenses/>.
-
- */
 #ifndef __PARSER_H
 #define __PARSER_H
+
+#include <stdint.h>
+
+enum parser_error_t {
+        parser_error_none = 0,
+        parser_unexpected_char = 1,
+        parser_vector_too_long = 2,
+        parser_value_out_of_range = 3
+};
 
 class Parser
 {
 protected:
         char _state;
+        char _error;
         char _opcode;
-        int _value[32];
-        char _length;
-        char _text[128];
-        unsigned char _textlen;
-        int _tmpval;
-        int _sign;
+        int16_t _value[32];
+        int _length;
+        int32_t _tmpval;
+        int16_t _sign;
         const char* _opcodesWithValue;
         const char* _opcodesWithoutValue;
+
+        void set_error(char what);
 
 public:
         
@@ -45,16 +32,10 @@ public:
                 _opcodesWithValue = opcodesWithValue;
                 _opcodesWithoutValue = opcodesWithoutValue;
                 _state = 0;
-                _text[0] = 0;
-                _text[127] = 0;
         }
 
-        int value(int index = 0) {
-                return _value[index];
-        }
-
-        char *text() {
-                return _text;
+        int16_t value(int index = 0) {
+                return (index < _length)? _value[index] : 0;
         }
 
         int length() {
@@ -63,6 +44,10 @@ public:
 
         char opcode() {
                 return _opcode;
+        }
+        
+        char error() {
+                return _error;
         }
         
         bool process(char c);

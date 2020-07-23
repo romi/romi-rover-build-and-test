@@ -22,6 +22,11 @@
         "range": [[0, 0.7], [0, 0.7], [-0.4, 0]]
     },
     
+    "watchdog": {
+        "wait_powerup": ["cnc", "motorcontroller" ],
+        "heartbeat": ["cnc", "motorcontroller" ]
+    },
+    
     "weeder": {
         "workspace-old": [0.02793, 580, 195, 720, 720, 0.600, 0.600],
         "workspace": [0.02793, 600, 175, 655, 720, 0.560, 0.600],
