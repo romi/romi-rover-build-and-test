@@ -5,11 +5,19 @@ language: cpp
 compiler:
   - gcc
 
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install python3
+  - sudo apt-get install python3-pip
+
+install:
+  - pip3 install websocket-client
+
 before_script:
   # out-of-source build
   - mkdir build_tests
   - cd build_tests
-  - cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+  - cmake ..
 
 script:
   - make
