@@ -17,7 +17,7 @@ before_script:
   # out-of-source build
   - mkdir build_tests
   - cd build_tests
-  - cmake..
+  - cmake ..
 
 script:
   - make
