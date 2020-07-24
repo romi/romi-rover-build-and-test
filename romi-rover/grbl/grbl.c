@@ -90,7 +90,7 @@ static int send_command_unlocked(const char *cmd, membuf_t *message)
 static int send_command(const char *cmd, membuf_t *message)
 {
         int err;
-        mutex_lock(_mutex);        
+        mutex_lock(_mutex);
         err = send_command_unlocked(cmd, message);
         mutex_unlock(_mutex);
         return err;
@@ -264,7 +264,7 @@ static int grbl_idle()
         serial_put(_serial, '?');
         r = serial_readline(_serial, _reply);
         serial_unlock(_serial);
-        
+
         if (r) r_debug("CNC status: '%s'", r);
         else r_debug("CNC status: NULL!");
 
