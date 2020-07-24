@@ -11,7 +11,7 @@ add_executable(r_unit_tests_parser ${SRCS_PARSER})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../BrushMotorController" )
 
-target_link_libraries(r_unit_tests_parser gtest)
+target_link_libraries(r_unit_tests_parser gtest gmock)
 
 add_test(
     NAME r_unit_tests_parser
