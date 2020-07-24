@@ -57,6 +57,30 @@ static void broadcast_log(void *userdata, const char* s)
                 messagelink_send_str(log, s);
 }
 
+/* static int send_command(const char *cmd, membuf_t *message) */
+/* { */
+/*         int err = 0; */
+/*         const char *r; */
+
+/*         mutex_lock(mutex);         */
+
+/*         membuf_clear(message); */
+        
+/*         r = fake_serial_command_send(serial, message, cmd); */
+/*         if (r == NULL) { */
+/*                 err = -1; */
+/*                 membuf_printf(message, "Unknown error"); */
+/*         } else if (strncmp(r, "ERR", 3) == 0) { */
+/*                 err = -1; */
+/*         }  */
+        
+/* unlock: */
+/*         mutex_unlock(mutex); */
+        
+/*         return err; */
+/* } */
+
+
 int init_rover()
 {
         static double last_attempt = 0.0;

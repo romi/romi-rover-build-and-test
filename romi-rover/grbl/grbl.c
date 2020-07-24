@@ -34,7 +34,6 @@ static membuf_t *_reply = NULL;
 
 static cnc_range_t _range = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
 
-
 static void broadcast_log(void *userdata, const char* s)
 {
         messagelink_t *get_messagelink_logger();
@@ -46,11 +45,11 @@ static void broadcast_log(void *userdata, const char* s)
 static int open_serial(const char *dev)
 {
         r_info("Trying to open the serial connection on %s.", dev);
-
-        mutex_lock(_mutex);
+	
+        mutex_lock(_mutex);        
         _serial = new_serial(dev, 115200, 1);
-        mutex_unlock(_mutex);
-
+        mutex_unlock(_mutex);        
+	
         if (_serial == NULL)
                 r_info("Open failed.");
         else
@@ -62,7 +61,8 @@ static int open_serial(const char *dev)
 static void close_serial()
 {
         mutex_lock(_mutex);
-        if (_serial) delete_serial(_serial);
+        if (_serial)
+                delete_serial(_serial);
         _serial = NULL;
         _initialized = 0;
         mutex_unlock(_mutex);
@@ -146,10 +146,6 @@ static int set_device(const char *dev)
                 _device = NULL;
         }
         _device = r_strdup(dev);
-        if (_device == NULL) {
-                r_err("Out of memory");
-                return -1;
-        }
         return 0;
 }
 
@@ -213,12 +209,14 @@ static int cnc_init()
 
         if (get_configuration() != 0)
                 return -1;
-
+        
         if (open_serial(_device) != 0)
                 return -1;
 
-        if (reset_cnc() != 0)
+        if (reset_cnc() != 0) {
+                close_serial();
                 return -1;
+        }
 
         _initialized = 1;
         return 0;
@@ -227,11 +225,9 @@ static int cnc_init()
 int grbl_init(int argc, char **argv)
 {
         r_log_set_writer(broadcast_log, NULL);
-
+        
         _mutex = new_mutex();
         _reply = new_membuf();
-        if (_mutex == NULL || _reply == NULL)
-                return -1;
 
         if (argc >= 2) {
                 r_debug("using serial device given on command line: '%s'", argv[1]);
@@ -431,9 +427,9 @@ int cnc_ontravel(void *userdata,
 
         int err = 0;
         membuf_t *buf = new_membuf();
-
-        mutex_lock(_mutex);
-
+        
+        mutex_lock(_mutex);        
+        
         for (int i = 0; i < json_array_length(path); i++) {
                 json_object_t p = json_array_get(path, i);
                 double x = json_array_getnum(p, 0);
@@ -450,8 +446,8 @@ int cnc_ontravel(void *userdata,
 
         if (err == 0)
                 wait_cnc();
-
-        mutex_unlock(_mutex);
+        
+        mutex_unlock(_mutex);        
         delete_membuf(buf);
 
         return err;

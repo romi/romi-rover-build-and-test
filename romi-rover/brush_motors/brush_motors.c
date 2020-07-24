@@ -149,25 +149,20 @@ static int reset_controller(serial_t *serial)
                 return -1;
         }
 
-        double steps_per_meter = encoder_steps / (M_PI * wheel_diameter);
-        rprintf(cmd, sizeof(cmd), "I[%d,%d,%d,%d,%d,%d]",
-                (int) steps_per_meter,
-                (int) (max_speed * 100.0),
+        double max_rpm = max_speed / (M_PI * wheel_diameter);
+        double steps_per_revolution = encoder_steps;
+        rprintf(cmd, sizeof(cmd), "I[%d,%d,%d,%d,%d,%d,%d,%d,%d]",
+                (int) steps_per_revolution,
+                (int) (max_rpm * 100.0),
                 (int) max_signal,
                 with_pid? 1 : 0,
+                with_pid? (int) (k[0] * 1000.0) : 0,
+                with_pid? (int) (k[1] * 1000.0) : 0,
+                with_pid? (int) (k[2] * 1000.0) : 0,
                 with_rc? 1 : 0,
                 with_homing? 1 : 0);
         if (send_command(cmd, reply) != 0) {
                 r_err("Initialization failed: %s", membuf_data(reply));
-                return -1;
-        }
-        
-        rprintf(cmd, sizeof(cmd), "K[%d,%d,%d]",
-                (int) (k[0] * 1000.0),
-                (int) (k[1] * 1000.0),
-                (int) (k[2] * 1000.0));
-        if (send_command(cmd, reply) != 0) {
-                r_err("Initialization of PID failed: %s", membuf_data(reply));
                 return -1;
         }
         
@@ -252,8 +247,10 @@ int get_controller_configuration()
         }
         
         if (device == NULL) {
-                if (set_device(dev) != 0)
+                if (set_device(dev) != 0) {
+                        json_unref(controller);
                         return -1;
+                }
         }
         
         max_speed = v;
@@ -272,6 +269,7 @@ int get_controller_configuration()
         r_info("with_homing    %s", with_homing? "yes" : "no");
         r_info("PID            [%.4f,%.4f,%.4f]", k[0], k[1], k[2]);
 
+        json_unref(controller);
         return 0;
 }
 
@@ -309,16 +307,8 @@ int brush_motors_init(int argc, char **argv)
         r_log_set_writer(broadcast_log, NULL);
         
         mutex = new_mutex();
-        if (mutex == NULL)
-                return -1;
-
         encoders = new_membuf();
-        if (encoders == NULL)
-                return -1;
-        
         status = new_membuf();
-        if (status == NULL)
-                return -1;
 
         if (argc > 1) {
                 r_debug("using serial device '%s'", argv[1]);
@@ -340,14 +330,10 @@ int brush_motors_init(int argc, char **argv)
 void brush_motors_cleanup()
 {
         close_serial();
-        if (mutex)
-                delete_mutex(mutex);
-        if (status)
-                delete_membuf(status);
-        if (encoders)
-                delete_membuf(encoders);
-        if (device)
-                r_free(device);
+        delete_mutex(mutex);
+        delete_membuf(status);
+        delete_membuf(encoders);
+        r_free(device);
 }
 
 int motorcontroller_onmoveat(void *userdata,
@@ -437,7 +423,7 @@ int motorcontroller_onhoming(void *userdata,
 int broadcast_encoders(void *userdata, datahub_t* hub)
 {
         static double offset = 0.0;
-        
+                              
         if (motorcontroller_init() != 0) {
                 clock_sleep(0.2);
                 return -1;
@@ -459,6 +445,8 @@ int broadcast_encoders(void *userdata, datahub_t* hub)
                 double now = clock_time();
                 offset = now - boottime;
         }
+
+        //r_debug("broadcast_encoders: %d, %d", encL, encR);
         
         datahub_broadcast_f(get_datahub_encoders(), NULL, 
                             "{\"encoders\":[%d,%d], \"timestamp\": %f}",
