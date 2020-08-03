@@ -14,7 +14,6 @@ before_install:
   - sudo apt-get update
   - sudo apt-get install python3
   - sudo apt-get install python3-pip
-  - nohup sudo socat -d -d pty,raw,echo=0,link=/dev/ttyS20 pty,raw,echo=0,link=/dev/ttyS21 &
 
 install:
   - pip3 install websocket-client
