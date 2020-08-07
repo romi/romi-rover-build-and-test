@@ -310,6 +310,11 @@ int brush_motors_init(int argc, char **argv)
         encoders = new_membuf();
         status = new_membuf();
 
+        if (argc <= 1 ) {
+            r_debug("no arguements");
+                return -1;
+        }
+
         if (argc > 1) {
                 r_debug("using serial device '%s'", argv[1]);
                 if (set_device(argv[1]) != 0)

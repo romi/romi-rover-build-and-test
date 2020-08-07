@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.6)
 project(picamera)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(picamera picamera.cc picamera_main.c)
 target_link_libraries(picamera rcom romi r raspicam)

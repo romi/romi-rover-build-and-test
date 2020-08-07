@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.6)
 project(fake_motors)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(fake_motors fake_motors.c fake_motors_main.c)
 target_link_libraries(fake_motors rcom r m)
