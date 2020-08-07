@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.6)
 project(control_panel)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(control_panel control_panel.c control_panel_main.c)
 target_link_libraries(control_panel rcom r m)

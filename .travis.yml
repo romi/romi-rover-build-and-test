@@ -1,5 +1,10 @@
 dist: bionic
 
+addons:
+  apt:
+    packages:
+      - socat
+
 language: cpp
 
 compiler:
@@ -20,10 +25,8 @@ before_script:
   - cmake ..
 
 script:
-  - make
-  # if the project uses ctest run the tests.
+  - make -j4
   - ctest -V
 
 after_success:
-  - make r_unit_tests_coverage
-  - make rcom_unit_tests_coverage
+  - bash <(curl -s https://codecov.io/bash)

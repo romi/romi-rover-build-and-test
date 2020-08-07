@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 2.6)
 project(brush_motors)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(brush_motors brush_motors.c brush_motors_main.c)
 target_link_libraries(brush_motors romi rcom r m)
-install(TARGETS brush_motors DESTINATION bin/romi)
+#install(TARGETS brush_motors DESTINATION bin/romi)
 
 if(BUILD_TESTS)
     add_subdirectory(test)

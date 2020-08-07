@@ -4,8 +4,8 @@ project(oquam)
 set(oquam_VERSION_MAJOR 0)
 set(oquam_VERSION_MINOR 1)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(SOURCES
   src/script.c
