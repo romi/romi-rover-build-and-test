@@ -8,7 +8,6 @@
     },
     
     "brush_motors": {
-        "device": "/dev/ttyACM1",
         "max_speed": 0.5,
         "max_signal": 30,
         "pid": true,
@@ -18,7 +17,6 @@
     },
     
     "grbl": {
-        "device": "/dev/ttyACM0",
         "range": [[0, 0.7], [0, 0.7], [-0.4, 0]]
     },
     
@@ -52,27 +50,27 @@
             "path": "/usr/local/bin/rcregistry"
         },
         "nodes": [{
-            "path": "/home/romi/romi-rover/build/configuration/configuration"
+            "path": "/home/romi/romi-rover/configuration"
         }, {
-            "path": "/home/romi/romi-rover/build/fsdb/fsdb"
+            "path": "/home/romi/romi-rover/fsdb"
         }, {
-            "path": "/home/romi/romi-rover/build/brush_motors/brush_motors"
+            "path": "/home/romi/romi-rover/brush_motors"
         }, {
-            "path": "/home/romi/romi-rover/build/video4linux/video4linux"
+            "path": "/home/romi/romi-rover/video4linux"
         }, {
-            "path": "/home/romi/romi-rover/build/grbl/grbl"
+            "path": "/home/romi/romi-rover/grbl"
         }, {
-            "path": "/home/romi/romi-rover/build/wheel_odometry/wheel_odometry"
+            "path": "/home/romi/romi-rover/wheel_odometry"
         }, {
-            "path": "/home/romi/romi-rover/build/camera_recorder/camera_recorder"
+            "path": "/home/romi/romi-rover/camera_recorder"
         }, {
-            "path": "/home/romi/romi-rover/build/weeder/weeder"
+            "path": "/home/romi/romi-rover/weeder"
         }, {
-            "path": "/home/romi/romi-rover/build/navigation/navigation"
+            "path": "/home/romi/romi-rover/navigation"
         }, {
-            "path": "/home/romi/romi-rover/build/interface/interface"
+            "path": "/home/romi/romi-rover/interface"
         }, {
-            "path": "/home/romi/romi-rover/build/watchdog/watchdog",
+            "path": "/home/romi/romi-rover/watchdog",
             "user": "root"
         }, {
             "path": "/home/romi/romi-rover/build/webproxy/webproxy",
