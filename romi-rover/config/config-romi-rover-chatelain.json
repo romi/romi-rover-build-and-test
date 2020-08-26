@@ -73,7 +73,7 @@
             "path": "/home/romi/romi-rover/watchdog",
             "user": "root"
         }, {
-            "path": "/home/romi/romi-rover/build/webproxy/webproxy",
+            "path": "/home/romi/romi-rover/webproxy",
             "user": "root"
         }]
     }
