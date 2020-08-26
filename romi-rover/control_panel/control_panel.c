@@ -444,27 +444,25 @@ static int get_apps()
 
 static int get_device()
 {
-        json_object_t config = client_get("configuration", "control_panel");
-        if (!json_isobject(config)) {
-                r_err("unexpected value for 'brush_motors'");
-                json_unref(config);
-                return -1;
+    if (device == NULL) {
+        const char *dev = NULL;
+        json_object_t port = client_get("configuration", "ports/control_panel/port");
+        if (!json_isstring(port)) {
+            r_err("missing value for 'ports' in the configuration");
+            json_unref(port);
+            return -1;
+        } else {
+            dev = json_string_value(port);
         }
 
-        const char *dev = json_object_getstr(config, "device");
-        if (dev == NULL) {
-                r_err("invalid control panel settings");
-                json_unref(config);
-                return -1;
-        }
-        
         if (set_device(dev) != 0) {
-                json_unref(config);
-                return -1;
+            json_unref(port);
+            return -1;
         }
-        
-        json_unref(config);
-        return 0;
+        json_unref(port);
+    }
+
+    return 0;
 }
 
 static int get_configuration()

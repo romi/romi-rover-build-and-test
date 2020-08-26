@@ -219,7 +219,6 @@ int get_controller_configuration()
                 return -1;
         }
 
-        const char *dev = json_object_getstr(controller, "device");
         double v = json_object_getnum(controller, "max_speed");
         double sig = json_object_getnum(controller, "max_signal");
         int pid = json_object_getbool(controller, "pid");
@@ -227,7 +226,7 @@ int get_controller_configuration()
         int h = json_object_getbool(controller, "homing");
         json_object_t ka = json_object_get(controller, "k");
 
-        if (dev == NULL || isnan(v) || isnan(sig) || pid == -1
+        if (isnan(v) || isnan(sig) || pid == -1
             || rc == -1 || h == -1 || !json_isarray(ka)) {
                 r_err("invalid controller settings");
                 json_unref(controller);
@@ -245,14 +244,27 @@ int get_controller_configuration()
                 json_unref(controller);
                 return -1;
         }
-        
+        json_unref(controller);
+
         if (device == NULL) {
+                const char *dev = NULL;
+                json_object_t port = client_get("configuration", "ports/brush_motors/port");
+                if (!json_isstring(port)) {
+                    r_err("missing value for 'ports' in the configuration");
+                    json_unref(port);
+                    return -1;
+                } else {
+                    dev = json_string_value(port);
+                }
+
                 if (set_device(dev) != 0) {
-                        json_unref(controller);
+                        json_unref(port);
                         return -1;
                 }
+            json_unref(port);
         }
-        
+
+
         max_speed = v;
         max_signal = sig;
         with_pid = pid;
@@ -269,7 +281,6 @@ int get_controller_configuration()
         r_info("with_homing    %s", with_homing? "yes" : "no");
         r_info("PID            [%.4f,%.4f,%.4f]", k[0], k[1], k[2]);
 
-        json_unref(controller);
         return 0;
 }
 
@@ -361,6 +372,9 @@ int motorcontroller_onmoveat(void *userdata,
         } else if (json_isnumber(speed)) {
                 left = json_number_value(speed);
                 right = left;
+        } else {
+            membuf_printf(message, "Missing or invalid speed value");
+            return -1;
         }
         
         if (isnan(left) || isnan(right)) {
