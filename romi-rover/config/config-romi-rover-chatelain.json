@@ -1,4 +1,10 @@
 {
+    "fsdb": {
+        "directory": "/home/romi/data"
+    }, 
+    "proxy": {
+        "html": "/home/romi/romi-rover/html"
+    }, 
     "brush_motors": {
         "rc": false, 
         "homing": false, 
@@ -26,15 +32,6 @@
         "wheel_base": 1, 
         "encoder_steps": 13250, 
         "wheel_diameter": 0.322000
-    }, 
-    "fsdb": {
-        "directory": "/home/romi/data"
-    }, 
-    "proxy": {
-        "html": "/home/romi/romi-rover/html"
-    }, 
-    "script_engine": {
-        "scripts": "/home/romi/romi-rover/scripts-rover-chatelain.json"
     }, 
     "launch": {
         "nodes": [{
@@ -71,17 +68,20 @@
             "user": "romi"
         }
     }, 
+    "script_engine": {
+        "scripts": "/home/romi/romi-rover/scripts-rover-chatelain.json"
+    }, 
     "watchdog": {
         "wait_powerup": ["cnc", "motorcontroller"], 
         "heartbeat": ["cnc", "motorcontroller"]
     }, 
     "ports": {
-        "brush_motors": {
-            "port": "/dev/ttyACM0", 
-            "type": "serial"
-        }, 
         "grbl": {
             "port": "/dev/ttyACM2", 
+            "type": "serial"
+        }, 
+        "brush_motors": {
+            "port": "/dev/ttyACM0", 
             "type": "serial"
         }, 
         "control_panel": {
