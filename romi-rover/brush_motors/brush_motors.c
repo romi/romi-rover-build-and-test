@@ -143,6 +143,17 @@ static int reset_controller(serial_t *serial)
         membuf_t *reply = new_membuf();
         if (reply == NULL)
                 return -1;
+
+        
+        // TODO
+        serial_lock(serial);        
+        serial_println(serial, "X");
+        serial_println(serial, "X");
+        serial_println(serial, "X");
+        serial_println(serial, "X");
+        serial_unlock(serial);        
+
+
         
         if (send_command("X", reply) != 0) {
                 r_err("Reset failed: %s", membuf_data(reply));
@@ -461,11 +472,12 @@ int broadcast_encoders(void *userdata, datahub_t* hub)
                 offset = now - boottime;
         }
 
-        //r_debug("broadcast_encoders: %d, %d", encL, encR);
-        
-        datahub_broadcast_f(get_datahub_encoders(), NULL, 
-                            "{\"encoders\":[%d,%d], \"timestamp\": %f}",
-                            encL, encR, offset + boottime);
+        r_debug("broadcast_encoders: %d, %d", encL, encR);
+
+        if (get_datahub_encoders() != NULL)
+                datahub_broadcast_f(get_datahub_encoders(), NULL, 
+                                    "{\"encoders\":[%d,%d], \"timestamp\": %f}",
+                                    encL, encR, offset + boottime);
         clock_sleep(0.100);
 
 	return 0;
