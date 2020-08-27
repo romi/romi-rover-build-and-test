@@ -47,7 +47,7 @@
             "user": "romi"
         },
         "registry": {
-            "path": "/usr/local/bin/rcregistry"
+            "path": "/home/romi/romi-rover/rcregistry"
         },
         "nodes": [{
             "path": "/home/romi/romi-rover/configuration"
