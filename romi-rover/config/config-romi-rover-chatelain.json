@@ -68,8 +68,6 @@
         }, {
             "path": "/home/romi/romi-rover/navigation"
         }, {
-            "path": "/home/romi/romi-rover/interface"
-        }, {
             "path": "/home/romi/romi-rover/watchdog",
             "user": "root"
         }, {
