@@ -1,0 +1,15 @@
+{
+    "name": "brush_motors",
+    "com": [
+        {
+            "type": "controller",
+            "topic": "toolcarrier",
+            "commands": [{"name": "down", "oncommand": "toolcarrier_down"},
+                         {"name": "up", "oncommand": "toolcarrier_up"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}
