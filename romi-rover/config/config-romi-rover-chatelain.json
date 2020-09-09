@@ -1,83 +1,92 @@
 {
-    "rover": {
-        "wheel_diameter": 0.322,
-        "wheel_base": 1.00,
-        "width": 1.0,
-        "length": 1.0,
-        "encoder_steps": 13250
-    },
-    
+    "fsdb": {
+        "directory": "/home/romi/data"
+    }, 
+    "proxy": {
+        "html": "/home/romi/romi-rover/html"
+    }, 
     "brush_motors": {
-        "device": "/dev/ttyACM1",
-        "max_speed": 0.5,
-        "max_signal": 30,
-        "pid": true,
-        "rc": false,
-        "homing": false,
-        "k": [0.08, 1.20, 0.0 ]
-    },
-    
+        "rc": false, 
+        "homing": false, 
+        "max_speed": 0.500000, 
+        "max_signal": 30, 
+        "pid": true, 
+        "k": [0.080000, 1.200000, 0]
+    }, 
     "grbl": {
-        "device": "/dev/ttyACM0",
-        "range": [[0, 0.7], [0, 0.7], [-0.4, 0]]
-    },
-    
-    "watchdog": {
-        "wait_powerup": ["cnc", "motorcontroller" ],
-        "heartbeat": ["cnc", "motorcontroller" ]
-    },
-    
+        "range": [[0, 0.700000], [0, 0.700000], [-0.400000, 0]]
+    }, 
     "weeder": {
-        "workspace-old": [0.02793, 580, 195, 720, 720, 0.600, 0.600],
-        "workspace": [0.02793, 600, 175, 655, 720, 0.560, 0.600],
-        "z0xxx": -0.065,
-        "z0-mixer": -0.160,
-        "z0": -0.110,
-        "invert_axes": false,
-        "datadir": "data/weeder",
-        "quincunx_threshold": 0.5
-    },
-    
-    "interface": {
-        "html": "/home/romi/romi-rover/interface/html",
-        "scripts": "/home/romi/romi-rover/scripts/rover-chatelain.json"
-    },
-    
+        "workspace": [0.027930, 600, 175, 655, 720, 0.560000, 0.600000], 
+        "z0": -0.110000, 
+        "invert_axes": false, 
+        "z0-mixer": -0.160000, 
+        "workspace-old": [0.027930, 580, 195, 720, 720, 0.600000, 0.600000], 
+        "z0xxx": -0.065000, 
+        "datadir": "data/weeder", 
+        "quincunx_threshold": 0.500000
+    }, 
+    "rover": {
+        "width": 1, 
+        "length": 1, 
+        "wheel_base": 1, 
+        "encoder_steps": 13250, 
+        "wheel_diameter": 0.322000
+    }, 
     "launch": {
-        "general": {
-            "sessions-dir": "/home/romi/data",
-            "user": "romi"
-        },
-        "registry": {
-            "path": "/usr/local/bin/rcregistry"
-        },
         "nodes": [{
-            "path": "/home/romi/romi-rover/build/configuration/configuration"
+            "path": "/home/romi/romi-rover/configuration"
         }, {
-            "path": "/home/romi/romi-rover/build/fsdb/fsdb"
+            "path": "/home/romi/romi-rover/control_panel"
         }, {
-            "path": "/home/romi/romi-rover/build/brush_motors/brush_motors"
+            "path": "/home/romi/romi-rover/fsdb"
         }, {
-            "path": "/home/romi/romi-rover/build/video4linux/video4linux"
+            "path": "/home/romi/romi-rover/brush_motors"
         }, {
-            "path": "/home/romi/romi-rover/build/grbl/grbl"
+            "path": "/home/romi/romi-rover/video4linux"
         }, {
-            "path": "/home/romi/romi-rover/build/wheel_odometry/wheel_odometry"
+            "path": "/home/romi/romi-rover/grbl"
         }, {
-            "path": "/home/romi/romi-rover/build/camera_recorder/camera_recorder"
+            "path": "/home/romi/romi-rover/wheel_odometry"
         }, {
-            "path": "/home/romi/romi-rover/build/weeder/weeder"
+            "path": "/home/romi/romi-rover/camera_recorder"
         }, {
-            "path": "/home/romi/romi-rover/build/navigation/navigation"
+            "path": "/home/romi/romi-rover/weeder"
         }, {
-            "path": "/home/romi/romi-rover/build/interface/interface"
+            "path": "/home/romi/romi-rover/navigation"
         }, {
-            "path": "/home/romi/romi-rover/build/watchdog/watchdog",
-            "user": "root"
+            "path": "/home/romi/romi-rover/script_engine"
         }, {
-            "path": "/home/romi/romi-rover/build/webproxy/webproxy",
-            "user": "root"
-        }]
+            "path": "/home/romi/romi-rover/webproxy", 
+            "user-TODO": "root"
+        }], 
+        "registry": {
+            "path": "/home/romi/romi-rover/rcregistry"
+        }, 
+        "general": {
+            "sessions-dir": "/home/romi/data", 
+            "user": "romi"
+        }
+    }, 
+    "script_engine": {
+        "scripts": "/home/romi/romi-rover/scripts-rover-chatelain.json"
+    }, 
+    "watchdog": {
+        "wait_powerup": ["cnc", "motorcontroller"], 
+        "heartbeat": ["cnc", "motorcontroller"]
+    }, 
+    "ports": {
+        "grbl": {
+            "port": "/dev/ttyACM2", 
+            "type": "serial"
+        }, 
+        "brush_motors": {
+            "port": "/dev/ttyACM0", 
+            "type": "serial"
+        }, 
+        "control_panel": {
+            "port": "/dev/ttyACM1", 
+            "type": "serial"
+        }
     }
 }
-

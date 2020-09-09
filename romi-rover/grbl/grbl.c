@@ -151,21 +151,41 @@ static int set_device(const char *dev)
 
 static int get_device(json_object_t config)
 {
-        int err;
-        if (_device == NULL) {
-                // If device != NULL, it was given on the command
-                // line. The command line has priority over the
-                // configuration file.
+ //       int err = 0;
+//        if (_device == NULL) {
+//
+//                // If device != NULL, it was given on the command
+//                // line. The command line has priority over the
+//                // configuration file.
+//
+//                const char *device = json_object_getstr(config, "device");
+//                if (device == NULL) {
+//                        r_err("Missing value 'grbl.device' in configuration");
+//                        err = -1;
+//                } else {
+//                        err = set_device(device);
+//                }
+//        }
 
-                const char *device = json_object_getstr(config, "device");
-                if (device == NULL) {
-                        r_err("Missing value 'grbl.device' in configuration");
-                        err = -1;
-                } else {
-                        err = set_device(device);
-                }
+        if (_device == NULL) {
+            const char *dev = NULL;
+            json_object_t port = client_get("configuration", "ports/grbl/port");
+            if (!json_isstring(port)) {
+                r_err("missing value for 'ports' in the configuration");
+                json_unref(port);
+                return -1;
+            } else {
+                dev = json_string_value(port);
+            }
+
+            if (set_device(dev) != 0) {
+                json_unref(port);
+                return -1;
+            }
+            json_unref(port);
         }
-        return err;
+
+        return 0;
 }
 
 static int get_range(json_object_t config)

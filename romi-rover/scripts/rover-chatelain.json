@@ -31,8 +31,13 @@
         "name": "weeding",
         "display_name": "Hoe salads",
         "script": [
-            {"action": "hoe", "method": "quincunx", "rows": 3, 
-             "distance-plants": 0.30, "distance-rows": 0.20},
+            {
+                "action": "hoe",
+                "method": "quincunx",
+                "rows": 3, 
+                "distance-plants": 0.30,
+                "distance-rows": 0.20
+            }
         ]
     },
     {
