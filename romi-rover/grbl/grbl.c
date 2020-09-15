@@ -149,7 +149,7 @@ static int set_device(const char *dev)
         return 0;
 }
 
-static int get_device(json_object_t config)
+static int get_device()
 {
  //       int err = 0;
 //        if (_device == NULL) {
@@ -188,36 +188,43 @@ static int get_device(json_object_t config)
         return 0;
 }
 
-static int get_range(json_object_t config)
+static int get_range()
 {
-        int err;
-        json_object_t r = json_object_get(config, "range");
-        if (!json_isarray(r)) {
-                r_err("Invalid range in configuration");
-                err = -1;
+        int err = 0;
+        
+        json_object_t config = client_get("configuration", "cnc");
+        if (json_isobject(config)) {
+                
+                json_object_t r = json_object_get(config, "range");
+                if (!json_isarray(r)) {
+                        r_err("Invalid range in configuration");
+                        err = -1;
+                } else {
+                        err = cnc_range_parse(&_range, r);
+                        if (err == 0) {
+                                r_info("range set to: x[%.3f,%.3f], y[%.3f,%.3f], z[%.3f,%.3f]",
+                                       _range.x[0], _range.x[1],
+                                       _range.y[0], _range.y[1],
+                                       _range.z[0], _range.z[1]);
+                        } // else: error message alreay printed by cnc_range_parse()
+                }
         } else {
-                err = cnc_range_parse(&_range, r);
-                if (err == 0) {
-                        r_info("range set to: x[%.3f,%.3f], y[%.3f,%.3f], z[%.3f,%.3f]",
-                               _range.x[0], _range.x[1],
-                               _range.y[0], _range.y[1],
-                               _range.z[0], _range.z[1]);
-                } // else: error message alreay printed by cnc_range_parse()
+                r_err("Couldn't find CNC configuration");
+                err = -1;
         }
+        json_unref(config);
         return err;
 }
 
 static int get_configuration()
 {
         int err;
-        json_object_t config = client_get("configuration", "grbl");
 
-        err = get_device(config);
+        err = get_device();
 
         if (err == 0)
-                err = get_range(config);
+                err = get_range();
 
-        json_unref(config);
 
         return err;
 }
