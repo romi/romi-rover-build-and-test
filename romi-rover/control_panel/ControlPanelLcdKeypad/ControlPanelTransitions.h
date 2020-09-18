@@ -25,52 +25,48 @@
 #include "StateMachine.h"
 #include "IStateMachineTimer.h"
 #include "IArduino.h"
+#include "IDisplay.h"
+#include "IRelay.h"
+#include "IMenu.h"
+#include "States.h"
+#include "Events.h"
 
 #ifndef __STATE_MACHINE_CONTROL_PANEL_H
 #define __STATE_MACHINE_CONTROL_PANEL_H
 
-enum {
-        // Both relays off.
-        STATE_OFF = 1,
-        // Power relay off and controller relay on. Waiting for
-        // controller circuit to send powerup event.
-        STATE_STARTING_UP,
-        // Power relay off and controller relay remains on for
-        // 5s. This gives the controller the time to shut down
-        // cleanly.
-        STATE_SHUTTING_DOWN,
-        // Both relays on
-        STATE_ON             
-};
-
-enum {
-        EVENT_READY,
-        EVENT_SELECT_HELD,
-        EVENT_POWERUP,
-        EVENT_SHUTDOWN,
-        EVENT_POWERDOWN
-};
+const char* getStateString(int state);
 
 class Ready : public StateTransition
 {
-public:
-        Ready() : StateTransition(IStateMachine::StartState,
-                                  EVENT_READY,
-                                  STATE_OFF) {}
+protected:
+        IDisplay *_display;
         
-        virtual int doTransition() { return 0; }
+public:
+        Ready(IDisplay *display) : StateTransition(STATE_START,
+                                                    EVENT_READY,
+                                                    STATE_OFF),
+                                    _display(display) {}
+        
+        virtual int doTransition();
 };
 
 class StartUp : public StateTransition
 {
 protected:
-        IArduino *_arduino;
+        IDisplay *_display;
+        IRelay *_relayControlCircuit;
+        IRelay *_relayPowerCircuit;
         
 public:
-        StartUp(IArduino *arduino) : StateTransition(STATE_OFF,
-                                                     EVENT_SELECT_HELD,
-                                                     STATE_STARTING_UP),
-                                     _arduino(arduino) {}
+        StartUp(IDisplay *display,
+                IRelay *relayControlCircuit,
+                IRelay *relayPowerCircuit)
+                : StateTransition(STATE_OFF,
+                                  EVENT_ONOFF_HELD,
+                                  STATE_STARTING_UP),
+                  _display(display),
+                  _relayControlCircuit(relayControlCircuit),
+                  _relayPowerCircuit(relayPowerCircuit) {}
         
         virtual int doTransition();
 };
@@ -78,23 +74,45 @@ public:
 class PowerUp : public StateTransition
 {
 protected:
-        IArduino *_arduino;
+        IDisplay *_display;
+        IRelay *_relayControlCircuit;
+        IRelay *_relayPowerCircuit;
         
 public:
-        // The power down event is sent by the control software when
+        // The power up event is sent by the control software when
         // the controllers are initialized and ready to go.
-        PowerUp(IArduino *arduino) : StateTransition(STATE_STARTING_UP,
-                                                     EVENT_POWERUP,
-                                                     STATE_ON),
-                                     _arduino(arduino) {}
-        
+        PowerUp(IDisplay *display,
+                IRelay *relayControlCircuit,
+                IRelay *relayPowerCircuit)
+                : StateTransition(STATE_STARTING_UP,
+                                  EVENT_POWERUP,
+                                  STATE_ON),
+                  _display(display),
+                  _relayControlCircuit(relayControlCircuit),
+                  _relayPowerCircuit(relayPowerCircuit) {}
+                
         virtual int doTransition();
+};
+
+class IgnorePowerUpWhenOn : public StateTransition
+{
+public:
+        // Ignore the power down event if the state is already
+        // on. This may happen when the control panel node reboots
+        // when the rover is running.
+        IgnorePowerUpWhenOn() : StateTransition(STATE_ON,
+                                                EVENT_POWERUP,
+                                                STATE_ON) {}
+        
+        virtual int doTransition() { return 0; }
 };
 
 class Shutdown : public StateTransition
 {
 protected:
-        IArduino *_arduino;
+        IDisplay *_display;
+        IRelay *_relayControlCircuit;
+        IRelay *_relayPowerCircuit;
         IStateMachineTimer *_timer;
         
 public:
@@ -103,11 +121,16 @@ public:
         // interface. It powers off the motors and waits 5s before
         // shutting down the controllers. This gives the controller
         // the time to shut down cleanly.
-        Shutdown(IArduino *arduino, IStateMachineTimer *timer)
+        Shutdown(IDisplay *display,
+                 IRelay *relayControlCircuit,
+                 IRelay *relayPowerCircuit,
+                 IStateMachineTimer *timer)
                 : StateTransition(STATE_ON,
                                   EVENT_SHUTDOWN,
                                   STATE_SHUTTING_DOWN),
-                  _arduino(arduino),
+                  _display(display),
+                  _relayControlCircuit(relayControlCircuit),
+                  _relayPowerCircuit(relayPowerCircuit),
                   _timer(timer) {}
         
         virtual int doTransition();
@@ -116,15 +139,22 @@ public:
 class SoftPowerDown : public StateTransition
 {
 protected:
-        IArduino *_arduino;
+        IDisplay *_display;
+        IRelay *_relayControlCircuit;
+        IRelay *_relayPowerCircuit;
         
 public:
         // The soft power down event is sent 5s after the shutdown
         // event.
-        SoftPowerDown(IArduino *arduino) : StateTransition(STATE_SHUTTING_DOWN,
-                                                           EVENT_POWERDOWN,
-                                                           STATE_OFF),
-                                           _arduino(arduino) {}
+        SoftPowerDown(IDisplay *display,
+                      IRelay *relayControlCircuit,
+                      IRelay *relayPowerCircuit)
+                : StateTransition(STATE_SHUTTING_DOWN,
+                                  EVENT_POWERDOWN,
+                                  STATE_OFF),
+                  _display(display),
+                  _relayControlCircuit(relayControlCircuit),
+                  _relayPowerCircuit(relayPowerCircuit) {}
         
         virtual int doTransition();
 };
@@ -132,16 +162,165 @@ public:
 class HardPowerDown : public StateTransition
 {
 protected:
-        IArduino *_arduino;
+        IDisplay *_display;
+        IRelay *_relayControlCircuit;
+        IRelay *_relayPowerCircuit;
         
 public:
         // The hard power down event is sent when the user presses and
         // holds the select button. It powers off the motors and the
         // controllers.
-        HardPowerDown(IArduino *arduino, int from) : StateTransition(from,
-                                                                     EVENT_SELECT_HELD,
-                                                                     STATE_OFF),
-                                                     _arduino(arduino) {}
+        HardPowerDown(IDisplay *display,
+                      IRelay *relayControlCircuit,
+                      IRelay *relayPowerCircuit,
+                      int from)
+                : StateTransition(from,
+                                  EVENT_ONOFF_HELD,
+                                  STATE_OFF),
+                  _display(display),
+                  _relayControlCircuit(relayControlCircuit),
+                  _relayPowerCircuit(relayPowerCircuit) {}
+        
+        virtual int doTransition();
+};
+
+class ShowMenu : public StateTransition
+{
+protected:
+        IDisplay *_display;
+        IMenu* _menu;
+        
+public:
+        ShowMenu(IDisplay *display, IMenu* menu)
+                : StateTransition(STATE_ON,
+                                  EVENT_MENU_HELD,
+                                  STATE_MENU),
+                  _display(display),_menu(menu) {}
+        
+        virtual int doTransition();
+};
+
+class HideMenu : public StateTransition
+{
+protected:
+        IDisplay *_display;
+        
+public:
+        HideMenu(IDisplay *display)
+                : StateTransition(STATE_MENU,
+                                  EVENT_MENU_PRESSED,
+                                  STATE_ON),
+                  _display(display) {}
+        
+        virtual int doTransition();
+};
+
+class NextMenuItem : public StateTransition
+{
+protected:
+        IDisplay *_display;
+        IMenu *_menu;
+        
+public:
+        NextMenuItem(IDisplay *display, IMenu* menu)
+                : StateTransition(STATE_MENU,
+                                  EVENT_DOWN_PRESSED,
+                                  STATE_MENU),
+                  _display(display), _menu(menu) {}
+        
+        virtual int doTransition();
+};
+
+class PreviousMenuItem : public StateTransition
+{
+protected:
+        IDisplay *_display;
+        IMenu *_menu;
+        
+public:
+        PreviousMenuItem(IDisplay *display, IMenu* menu)
+                : StateTransition(STATE_MENU,
+                                  EVENT_UP_PRESSED,
+                                  STATE_MENU),
+                  _display(display), _menu(menu) {}
+        
+        virtual int doTransition();
+};
+
+class SelectMenuItem : public StateTransition
+{
+protected:
+        IDisplay *_display;
+        IMenu *_menu;
+        
+public:
+        SelectMenuItem(IDisplay *display, IMenu* menu)
+                : StateTransition(STATE_MENU,
+                                  EVENT_SELECT_PRESSED,
+                                  STATE_CONFIRM),
+                  _display(display), _menu(menu) {}
+        
+        virtual int doTransition();
+};
+
+class SendingMenuItem : public StateTransition
+{
+protected:
+        IDisplay *_display;
+        IStateMachineTimer *_timer;
+        
+public:
+        SendingMenuItem(IDisplay *display, IStateMachineTimer *timer)
+                : StateTransition(STATE_CONFIRM,
+                                  EVENT_SELECT_PRESSED,
+                                  STATE_SENDING),
+                  _display(display), _timer(timer) {}
+        
+        virtual int doTransition();
+};
+
+class CancelMenuItem : public StateTransition
+{
+protected:
+        IDisplay *_display;
+        IMenu *_menu;
+        
+public:
+        CancelMenuItem(IDisplay *display, IMenu* menu)
+                : StateTransition(STATE_CONFIRM,
+                                  EVENT_MENU_PRESSED,
+                                  STATE_MENU),
+                  _display(display), _menu(menu) {}
+        
+        virtual int doTransition();
+};
+
+class SentMenuItem : public StateTransition
+{
+protected:
+        IDisplay *_display;
+        
+public:
+        SentMenuItem(IDisplay *display)
+                : StateTransition(STATE_SENDING,
+                                  EVENT_ACTION_SENT,
+                                  STATE_ON),
+                  _display(display) {}
+        
+        virtual int doTransition();
+};
+
+class TimeoutMenuItem : public StateTransition
+{
+protected:
+        IDisplay *_display;
+        
+public:
+        TimeoutMenuItem(IDisplay *display)
+                : StateTransition(STATE_SENDING,
+                                  EVENT_ACTION_TIMEOUT,
+                                  STATE_ON),
+                  _display(display) {}
         
         virtual int doTransition();
 };

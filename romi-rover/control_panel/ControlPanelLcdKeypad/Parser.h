@@ -24,48 +24,76 @@
 #ifndef __PARSER_H
 #define __PARSER_H
 
-class Parser
+#include "IParser.h"
+
+enum parser_error_t {
+        parser_error_none = 0,
+        parser_unexpected_char = 1,
+        parser_vector_too_long = 2,
+        parser_value_out_of_range = 3,
+        parser_string_too_long = 4,
+        parser_invalid_string = 5
+};
+
+class Parser : public IParser
 {
 protected:
         char _state;
+        char _error;
         char _opcode;
-        int _value[32];
-        char _length;
-        char _text[128];
-        unsigned char _textlen;
-        int _tmpval;
-        int _sign;
+        int16_t _value[32];
+        int _length;
+        char _has_string;
+        char _string[32];
+        unsigned char _string_length;
+        int32_t _tmpval;
+        int16_t _sign;
         const char* _opcodesWithValue;
         const char* _opcodesWithoutValue;
+
+        void set_error(char what);
+        void reset();
+        void reset_string();
+        void reset_values();
+        int append_char(char c);
+        int append_value(int32_t v);
+        void init_value(char c, int16_t sign);
+        int append_digit(char c);
 
 public:
         
         Parser(const char* opcodesWithValue,
-               const char* opcodesWithoutValue) {
-                _opcodesWithValue = opcodesWithValue;
-                _opcodesWithoutValue = opcodesWithoutValue;
-                _state = 0;
-                _text[0] = 0;
-                _text[127] = 0;
+               const char* opcodesWithoutValue)
+                : _opcodesWithValue(opcodesWithValue), 
+                  _opcodesWithoutValue(opcodesWithoutValue) {
+                reset();
+        }
+        
+        virtual int16_t value(int index = 0) {
+                return (index < _length)? _value[index] : 0;
         }
 
-        int value(int index = 0) {
-                return _value[index];
-        }
-
-        char *text() {
-                return _text;
-        }
-
-        int length() {
+        virtual int length() {
                 return _length;
         }
+        
+        virtual char has_string() {
+                return _has_string;
+        }
 
-        char opcode() {
+        virtual char *string() {
+                return _string;
+        }
+
+        virtual char opcode() {
                 return _opcode;
         }
         
-        bool process(char c);
+        virtual char error() {
+                return _error;
+        }
+        
+        virtual bool process(char c);
 };
 
 #endif

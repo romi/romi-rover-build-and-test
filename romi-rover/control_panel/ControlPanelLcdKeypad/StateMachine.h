@@ -26,7 +26,7 @@
 
 #include "IStateMachine.h"
 
-#define MAX_TRANSITIONS 64
+#define MAX_TRANSITIONS 32
 
 class StateMachine : public IStateMachine
 {
@@ -42,9 +42,7 @@ public:
         virtual ~StateMachine() {}
 
         int getState() override;
-        void setError(int error) override;
         int getError() override;
-        int countTransitions() override;
         void add(IStateTransition *transition) override;
         int handleEvent(int event) override;
 };

@@ -22,20 +22,40 @@
 
  */
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#include <Arduino.h>
+#include "ISerial.h"
 
-#include <stdint.h>
+#ifndef __ARDUINO_SERIAL_H
+#define __ARDUINO_SERIAL_H
 
-class IArduino
+class ArduinoSerial : public ISerial
 {
 public:
-        virtual ~IArduino() = default;
+        ArduinoSerial() {}
+        
+        virtual ~ArduinoSerial() {}
 
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        virtual void init(long baudrate) override {
+                Serial.begin(baudrate);
+                while (!Serial)
+                        ;
+        }
+        
+        virtual int available() override {
+                return Serial.available();
+        }
+        
+        virtual int read() override {
+                return Serial.read();
+        }
+        
+        virtual void print(const char *s) override {
+                return Serial.print(s);
+        }
+        
+        virtual void println(const char *s) override {
+                return Serial.println(s);
+        }
 };
 
-#endif // __IARDUINO_H
+#endif // __ARDUINO_SERIAL_H

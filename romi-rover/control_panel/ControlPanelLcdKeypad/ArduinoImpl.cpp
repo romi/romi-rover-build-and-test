@@ -38,7 +38,17 @@ unsigned long ArduinoImpl::millis()
         return ::millis();
 }
 
+int ArduinoImpl::analogRead(int pin)
+{
+        return ::analogRead(pin);
+}
+
 void ArduinoImpl::digitalWrite(int pin, int high_low)
 {
         ::digitalWrite(pin, high_low);
+}
+
+void ArduinoImpl::pinMode(uint8_t pin, uint8_t mode)
+{
+        ::pinMode(pin, mode);
 }

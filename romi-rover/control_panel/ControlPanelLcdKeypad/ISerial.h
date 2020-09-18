@@ -22,20 +22,18 @@
 
  */
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#ifndef __ISERIAL_H
+#define __ISERIAL_H
 
-#include <stdint.h>
-
-class IArduino
+class ISerial
 {
 public:
-        virtual ~IArduino() = default;
-
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        virtual ~ISerial() {}        
+        virtual void init(long baudrate) = 0;
+        virtual int available() = 0;
+        virtual int read() = 0;
+        virtual void print(const char *s) = 0;
+        virtual void println(const char *s) = 0;
 };
 
-#endif // __IARDUINO_H
+#endif // __ISERIAL_H

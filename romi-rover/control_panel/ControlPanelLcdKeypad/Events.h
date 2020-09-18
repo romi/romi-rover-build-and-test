@@ -22,20 +22,30 @@
 
  */
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#ifndef __EVENTS_H
+#define __EVENTS_H
 
-#include <stdint.h>
+#include "Buttons.h"
+#include "IButtonPanel.h"
 
-class IArduino
-{
-public:
-        virtual ~IArduino() = default;
-
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+enum {
+        EVENT_READY = 0,
+        EVENT_POWERUP,
+        EVENT_SHUTDOWN,
+        EVENT_POWERDOWN,
+        EVENT_ACTION_SENT,
+        EVENT_ACTION_TIMEOUT
 };
 
-#endif // __IARDUINO_H
+#define EVENT_BUTTON 0x1000
+
+#define ButtonEvent(_button, _state) (EVENT_BUTTON | (_button << 4) | _state)
+
+#define EVENT_ONOFF_HELD ButtonEvent(BUTTON_ONOFF, BUTTON_HELD)
+#define EVENT_MENU_PRESSED ButtonEvent(BUTTON_MENU, BUTTON_PRESSED)
+#define EVENT_MENU_HELD ButtonEvent(BUTTON_MENU, BUTTON_HELD)
+#define EVENT_UP_PRESSED ButtonEvent(BUTTON_UP, BUTTON_PRESSED)
+#define EVENT_DOWN_PRESSED ButtonEvent(BUTTON_DOWN, BUTTON_PRESSED)
+#define EVENT_SELECT_PRESSED ButtonEvent(BUTTON_SELECT, BUTTON_PRESSED)
+
+#endif // __EVENTS_H

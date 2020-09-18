@@ -22,20 +22,17 @@
 
  */
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#ifndef __IDISPLAY_H
+#define __IDISPLAY_H
 
-#include <stdint.h>
-
-class IArduino
+class IDisplay
 {
 public:
-        virtual ~IArduino() = default;
-
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        virtual ~IDisplay() {}
+        
+        virtual void clear() = 0;
+        virtual void setCursor(int col, int row) = 0;
+        virtual void print(const char* s) = 0;
 };
 
-#endif // __IARDUINO_H
+#endif // __IDISPLAY_H

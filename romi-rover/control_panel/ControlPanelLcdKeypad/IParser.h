@@ -1,7 +1,7 @@
 /*
   romi-rover
 
-  Copyright (C) 2019-2020 Sony Computer Science Laboratories
+  Copyright (C) 2019 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
   romi-rover is collection of applications for the Romi Rover.
@@ -21,21 +21,23 @@
   <http://www.gnu.org/licenses/>.
 
  */
-
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#ifndef __IPARSER_H
+#define __IPARSER_H
 
 #include <stdint.h>
 
-class IArduino
+class IParser
 {
 public:
-        virtual ~IArduino() = default;
+        virtual ~IParser() {}
 
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        virtual int16_t value(int index = 0) = 0;
+        virtual int length() = 0;
+        virtual char has_string() = 0;
+        virtual char *string() = 0;
+        virtual char opcode() = 0;
+        virtual char error() = 0;        
+        virtual bool process(char c) = 0;
 };
 
-#endif // __IARDUINO_H
+#endif

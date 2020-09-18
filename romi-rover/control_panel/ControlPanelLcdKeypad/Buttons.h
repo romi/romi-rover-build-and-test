@@ -22,20 +22,16 @@
 
  */
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#ifndef __BUTTONS_H
+#define __BUTTONS_H
 
-#include <stdint.h>
-
-class IArduino
-{
-public:
-        virtual ~IArduino() = default;
-
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+enum {
+        BUTTON_ONOFF = 0,
+        BUTTON_MENU,
+        BUTTON_UP,
+        BUTTON_DOWN,
+        BUTTON_SELECT,
+        BUTTON_LAST
 };
 
-#endif // __IARDUINO_H
+#endif // __BUTTONS_H

@@ -21,21 +21,16 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#ifndef __IBUTTON_H
+#define __IBUTTON_H
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
-
-#include <stdint.h>
-
-class IArduino
+class IButton
 {
 public:
-        virtual ~IArduino() = default;
-
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        enum { Released, Down, Pressed, Held };
+        virtual ~IButton() {}
+        virtual uint8_t id() = 0;
+        virtual uint8_t update(unsigned long t) = 0;
 };
 
-#endif // __IARDUINO_H
+#endif // __IBUTTON_H

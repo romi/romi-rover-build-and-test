@@ -22,20 +22,32 @@
 
  */
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#ifndef __STATES_H
+#define __STATES_H
 
-#include <stdint.h>
+enum {
+        // STATE_ERROR(-1) and STATE_START(0) are defined by default
+        // in IStateMachine.h
 
-class IArduino
-{
-public:
-        virtual ~IArduino() = default;
-
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        // Both relays off.
+        STATE_OFF = 1,
+        // Power relay off and controller relay on. Waiting for
+        // controller circuit to send powerup event.
+        STATE_STARTING_UP,
+        // Power relay off and controller relay remains on for
+        // 5s. This gives the controller the time to shut down
+        // cleanly.
+        STATE_SHUTTING_DOWN,
+        // Both relays on
+        STATE_ON,
+        // Showing menu
+        STATE_MENU,
+        // Confirm menu selection
+        STATE_CONFIRM,
+        // Sending selection to rover
+        STATE_SENDING 
 };
 
-#endif // __IARDUINO_H
+const char* getStateString(int state);
+
+#endif // __STATES_H

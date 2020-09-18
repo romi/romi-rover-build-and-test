@@ -24,38 +24,163 @@
 #include "ControlPanelTransitions.h"
 #include "pins.h"
 
+int Ready::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_OFF));
+        return 0;
+}
+
 int StartUp::doTransition()
 {
-        _arduino->digitalWrite(PIN_RELAY1, HIGH);
-        _arduino->digitalWrite(PIN_RELAY2, LOW);
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_STARTING_UP));
+        
+        _relayControlCircuit->close();
+        _relayPowerCircuit->open();
+        
         return 0;
 }
 
 int PowerUp::doTransition()
 {
-        _arduino->digitalWrite(PIN_RELAY1, HIGH);
-        _arduino->digitalWrite(PIN_RELAY2, HIGH);
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_ON));
+        
+        _relayControlCircuit->close();
+        _relayPowerCircuit->close();
+        
         return 0;
 }
 
 int Shutdown::doTransition()
 {
-        _arduino->digitalWrite(PIN_RELAY1, HIGH);
-        _arduino->digitalWrite(PIN_RELAY2, LOW);
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_SHUTTING_DOWN));
+        
+        _relayControlCircuit->close();
+        _relayPowerCircuit->open();
+        
         _timer->setTimeout(5000, EVENT_POWERDOWN);
         return 0;
 }
 
 int SoftPowerDown::doTransition()
 {
-        _arduino->digitalWrite(PIN_RELAY1, LOW);
-        _arduino->digitalWrite(PIN_RELAY2, LOW);
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_OFF));
+        
+        _relayControlCircuit->open();
+        _relayPowerCircuit->open();
+        
         return 0;
 }
 
 int HardPowerDown::doTransition()
 {
-        _arduino->digitalWrite(PIN_RELAY1, LOW);
-        _arduino->digitalWrite(PIN_RELAY2, LOW);
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_OFF));
+        
+        _relayControlCircuit->open();
+        _relayPowerCircuit->open();
+        
         return 0;
 }
+
+int ShowMenu::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_MENU));
+        
+        _menu->firstMenuItem();
+        _display->setCursor(0, 1);
+        _display->print(_menu->currentMenuItemName());
+        return 0;
+}
+
+int HideMenu::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_ON));
+        return 0;
+}
+
+int NextMenuItem::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_MENU));
+        
+        _menu->nextMenuItem();
+        _display->setCursor(0, 1);
+        _display->print(_menu->currentMenuItemName());
+        return 0;
+}
+
+int PreviousMenuItem::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_MENU));
+        
+        _menu->nextMenuItem();
+        _display->setCursor(0, 1);
+        _display->print(_menu->currentMenuItemName());
+        return 0;
+}
+
+int SelectMenuItem::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print("Confirm?");
+        return 0;
+}
+
+int SendingMenuItem::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print("Sending");
+        _timer->setTimeout(5000, EVENT_ACTION_TIMEOUT);
+        return 0;
+}
+
+int CancelMenuItem::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_MENU));
+        
+        _display->setCursor(0, 1);
+        _display->print(_menu->currentMenuItemName());
+        return 0;
+}
+
+int SentMenuItem::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_ON));
+        return 0;
+}
+
+int TimeoutMenuItem::doTransition()
+{
+        _display->clear();
+        _display->setCursor(0, 0);
+        _display->print(getStateString(STATE_ON));
+        _display->setCursor(0, 1);
+        _display->print("Sending timeout");
+        return 0;
+}
+
+

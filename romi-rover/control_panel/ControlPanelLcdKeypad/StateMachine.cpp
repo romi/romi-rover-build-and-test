@@ -28,26 +28,17 @@ int StateMachine::getState()
         return _currentState;
 }
 
-void StateMachine::setError(int error)
-{
-        _error = error;
-}
-
 int StateMachine::getError()
 {
         return _error;
 }
 
-int StateMachine::countTransitions()
-{
-        return _length;
-}
-
 void StateMachine::add(IStateTransition *transition)
 {
+        // FIXME: what happens if _length >= MAX_TRANSITIONS ?!
         if (transition != 0 && _length < MAX_TRANSITIONS) {
                 _transitions[_length++] = transition;
-        }
+        } 
 }
 
 int StateMachine::handleEvent(int event)
@@ -62,7 +53,7 @@ int StateMachine::handleEvent(int event)
                                 _currentState = t->nextState();
                                 r = OK;
                         } else {
-                                _currentState = ErrorState;
+                                _currentState = STATE_ERROR;
                                 _error = err;
                                 r = Error;
                         }
