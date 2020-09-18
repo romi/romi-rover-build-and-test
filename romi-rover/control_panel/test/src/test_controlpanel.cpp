@@ -223,6 +223,7 @@ TEST_F(controlpanel_tests, controlpanel_test_on_state)
         ASSERT_EQ(stateMachine.getState(), STATE_ON);
 }
 
+#if 0
 TEST_F(controlpanel_tests, controlpanel_test_shuttingdown_state)
 {
         // Arrange
@@ -258,3 +259,4 @@ TEST_F(controlpanel_tests, controlpanel_test_shuttingdown_state)
         //Assert
         ASSERT_EQ(stateMachine.getState(), STATE_SHUTTING_DOWN);
 }
+#endif

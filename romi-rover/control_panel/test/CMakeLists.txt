@@ -1,6 +1,13 @@
 
 cmake_minimum_required(VERSION 3.10)
 
+set(SRCS_PARSER
+  src/tests_main.cpp
+  src/test_parser.cpp
+  ../ControlPanelLcdKeypad/IParser.h
+  ../ControlPanelLcdKeypad/Parser.cpp
+  ../ControlPanelLcdKeypad/Parser.h)
+
 set(SRCS_BUTTONPANEL
   src/tests_main.cpp
   src/test_buttonpanel.cpp
@@ -40,29 +47,36 @@ set(SRCS_CONTROLPANEL
   ../ControlPanelLcdKeypad/ControlPanelTransitions.cpp
   )
 
-add_executable(r_unit_tests_buttonpanel ${SRCS_BUTTONPANEL})
-add_executable(r_unit_tests_statemachine ${SRCS_STATE_MACHINE})
-add_executable(r_unit_tests_controlpanel ${SRCS_CONTROLPANEL})
+add_executable(r_unit_tests_controlpanel_parser ${SRCS_PARSER})
+add_executable(r_unit_tests_controlpanel_buttonpanel ${SRCS_BUTTONPANEL})
+add_executable(r_unit_tests_controlpanel_statemachine ${SRCS_STATE_MACHINE})
+add_executable(r_unit_tests_controlpanel_controlpanel ${SRCS_CONTROLPANEL})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../ControlPanelLcdKeypad" )
 
-target_link_libraries(r_unit_tests_buttonpanel gtest gmock)
-target_link_libraries(r_unit_tests_statemachine gtest gmock)
-target_link_libraries(r_unit_tests_controlpanel gtest gmock)
+target_link_libraries(r_unit_tests_controlpanel_parser gtest gmock)
+target_link_libraries(r_unit_tests_controlpanel_buttonpanel gtest gmock)
+target_link_libraries(r_unit_tests_controlpanel_statemachine gtest gmock)
+target_link_libraries(r_unit_tests_controlpanel_controlpanel gtest gmock)
 
 add_test(
-    NAME r_unit_tests_buttonpanel
-    COMMAND r_unit_tests_buttonpanel
+    NAME r_unit_tests_controlpanel_parser
+    COMMAND r_unit_tests_controlpanel_parser
 )
 
 add_test(
-    NAME r_unit_tests_statemachine
-    COMMAND r_unit_tests_statemachine
+    NAME r_unit_tests_controlpanel_buttonpanel
+    COMMAND r_unit_tests_controlpanel_buttonpanel
 )
 
 add_test(
-    NAME r_unit_tests_controlpanel
-    COMMAND r_unit_tests_controlpanel
+    NAME r_unit_tests_controlpanel_statemachine
+    COMMAND r_unit_tests_controlpanel_statemachine
+)
+
+add_test(
+    NAME r_unit_tests_controlpanel_controlpanel
+    COMMAND r_unit_tests_controlpanel_controlpanel
 )
 
 if(BUILD_COVERAGE)
