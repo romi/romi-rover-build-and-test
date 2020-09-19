@@ -55,13 +55,13 @@ void ControlPanel::sendState()
                  "S[\"%s\",%d]",
                  getStateString(_stateMachine.getState()),
                  _menu.currentMenuItemID());
-        _serial->println(buffer);
+        _out->println(buffer);
 }
 
 void ControlPanel::handleSerialInput(unsigned long t)
 {
-        while (_serial->available()) {
-                int c = _serial->read();
+        while (_in->available()) {
+                int c = _in->read();
                 if (_parser.process(c)) {                        
                         switch (_parser.opcode()) {
                         default: break;
@@ -69,26 +69,26 @@ void ControlPanel::handleSerialInput(unsigned long t)
                                 if (_parser.length() == 0) {
                                         int r = _stateMachine.handleEvent(EVENT_SHUTDOWN, t);
                                         if (r == IStateMachine::OK)
-                                                _serial->println(ok);
+                                                _out->println(ok);
                                         else if (r == IStateMachine::Ignored)
-                                                _serial->println(errorBadState);
+                                                _out->println(errorBadState);
                                         else 
-                                                _serial->println(errorFail);
+                                                _out->println(errorFail);
                                 } else {
-                                        _serial->println(errorBadArgs);
+                                        _out->println(errorBadArgs);
                                 }
                                 break;
                         case '1':
                                 if (_parser.length() == 0) {
                                         int r = _stateMachine.handleEvent(EVENT_POWERUP, t);
                                         if (r == IStateMachine::OK)
-                                                _serial->println(ok);
+                                                _out->println(ok);
                                         else if (r == IStateMachine::Ignored)
-                                                _serial->println(errorBadState);
+                                                _out->println(errorBadState);
                                         else 
-                                                _serial->println(errorFail);
+                                                _out->println(errorFail);
                                 } else {
-                                        _serial->println(errorBadArgs);
+                                        _out->println(errorBadArgs);
                                 }
                                 break;
                         case 'S':
@@ -100,13 +100,13 @@ void ControlPanel::handleSerialInput(unsigned long t)
                         case 'M':
                                 if (_parser.has_string() && _parser.length() == 1) {
                                         _menu.setMenuItem(_parser.string(), _parser.value());
-                                        _serial->println(ok);
+                                        _out->println(ok);
                                 } else {
-                                        _serial->println(errorBadArgs);
+                                        _out->println(errorBadArgs);
                                 }
                                 break;
                         case '?':
-                                _serial->println("?[\"RomiControlPanel\",\"0.2\"]"); 
+                                _out->println("?[\"RomiControlPanel\",\"0.2\"]"); 
                                 break;
                         }
                 }

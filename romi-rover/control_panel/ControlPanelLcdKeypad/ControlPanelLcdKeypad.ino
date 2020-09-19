@@ -47,7 +47,7 @@ Relay relayControlCircuit(&arduino, PIN_RELAY1);
 Relay relayPowerCircuit(&arduino, PIN_RELAY2);
 
 // One control panel to unity them all
-ControlPanel controlPanel(&serial, &buttonPanel, &eventTimer, &display,
+ControlPanel controlPanel(&serial, &buttonPanel, &eventTimer, &serial, &display,
                           &relayControlCircuit, &relayPowerCircuit);
 
 void initButtonPanel()

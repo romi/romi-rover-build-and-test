@@ -22,18 +22,15 @@
 
  */
 
-#ifndef __ISERIAL_H
-#define __ISERIAL_H
+#ifndef __IINPUTSTREAM_H
+#define __IINPUTSTREAM_H
 
-class ISerial
+class IInputStream
 {
 public:
-        virtual ~ISerial() {}        
-        virtual void init(long baudrate) = 0;
+        virtual ~IInputStream() {}        
         virtual int available() = 0;
         virtual int read() = 0;
-        virtual void print(const char *s) = 0;
-        virtual void println(const char *s) = 0;
 };
 
-#endif // __ISERIAL_H
+#endif // __INPUTSTREAM_H

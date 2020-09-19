@@ -23,19 +23,20 @@
  */
 
 #include <Arduino.h>
-#include "ISerial.h"
+#include "IInputStream.h"
+#include "IOutputStream.h"
 
 #ifndef __ARDUINO_SERIAL_H
 #define __ARDUINO_SERIAL_H
 
-class ArduinoSerial : public ISerial
+class ArduinoSerial : public IInputStream, public IOutputStream
 {
 public:
         ArduinoSerial() {}
         
         virtual ~ArduinoSerial() {}
 
-        virtual void init(long baudrate) override {
+        void init(long baudrate) {
                 Serial.begin(baudrate);
                 while (!Serial)
                         ;

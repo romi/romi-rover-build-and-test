@@ -26,7 +26,8 @@
 #define __CONTROL_PANEL_H
 
 #include "IArduino.h"
-#include "ISerial.h"
+#include "IInputStream.h"
+#include "IOutputStream.h"
 #include "IButtonPanel.h"
 #include "IDisplay.h"
 #include "IRelay.h"
@@ -41,11 +42,12 @@ class ControlPanel
 {
 protected:
         // Inputs
-        ISerial *_serial;
+        IInputStream *_in;
         IButtonPanel *_buttonPanel;
         IEventTimer *_eventTimer;
         
         // Outputs
+        IOutputStream *_out;
         IDisplay *_display;
         IRelay *_relayControlCircuit;
         IRelay *_relayPowerCircuit;
@@ -101,15 +103,17 @@ protected:
         void sendState();
         
 public:
-        ControlPanel(ISerial *serial,
+        ControlPanel(IInputStream *in,
                      IButtonPanel *buttonPanel,
                      IEventTimer *eventTimer,
+                     IOutputStream *out,
                      IDisplay *display,
                      IRelay *relayControlCircuit,
                      IRelay *relayPowerCircuit)
-                : _serial(serial),
+                : _in(in),
                 _buttonPanel(buttonPanel),
                 _eventTimer(eventTimer),
+                _out(out),
                 _display(display),
                 _relayControlCircuit(relayControlCircuit),
                 _relayPowerCircuit(relayPowerCircuit),
