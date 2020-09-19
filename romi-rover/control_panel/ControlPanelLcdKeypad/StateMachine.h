@@ -32,19 +32,17 @@ class StateMachine : public IStateMachine
 {
 protected:
         int _currentState;
-        int _error;
         IStateTransition *_transitions[MAX_TRANSITIONS];
-        int _length;
+        int8_t _length;
         
 public:
         
-        StateMachine() : _currentState(0), _error(0), _length(0) {}
+        StateMachine() : _currentState(STATE_START), _length(0) {}
         virtual ~StateMachine() {}
 
         int getState() override;
-        int getError() override;
         void add(IStateTransition *transition) override;
-        int handleEvent(int event) override;
+        int handleEvent(int16_t event, unsigned long t) override;
 };
 
 #endif // __STATE_MACHINE_H

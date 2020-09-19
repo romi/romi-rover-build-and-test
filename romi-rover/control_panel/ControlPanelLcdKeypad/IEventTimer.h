@@ -21,30 +21,17 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __STATE_MACHINE_TIMER_H
-#define __STATE_MACHINE_TIMER_H
+#ifndef __I_EVENT_TIMER_H
+#define __I_EVENT_TIMER_H
 
-#include "IStateMachineTimer.h"
-#include "IArduino.h"
-
-class StateMachineTimer : public IStateMachineTimer
+class IEventTimer
 {
-protected:
-        IStateMachine *_stateMachine;
-        IArduino *_arduino;
-        int _enabled;
-        int _event;
-        unsigned long _timeout;
-
 public:
-        StateMachineTimer(IStateMachine *stateMachine,
-                          IArduino *arduino)
-                : _stateMachine(stateMachine),
-                  _arduino(arduino),
-                  _enabled(0), _event(0), _timeout(0) {}
+        virtual void setTimeout(unsigned long milliseconds, int event) = 0;
 
-        void setTimeout(int milliseconds, int event) override;
-        void update(unsigned long t) override;
+        // Returns the event number (>=0) if the timer timed out, or
+        // -1 otherwise
+        virtual int16_t update(unsigned long t) = 0;
 };
 
-#endif // __STATE_MACHINE_TIMER_H
+#endif // __I_EVENT_TIMER_H

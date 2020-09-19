@@ -25,37 +25,22 @@
 #include "IStateMachine.h"
 #include "States.h"
 
+static const char *_stateStrings[] = {
+        STATE_ERROR_STR,
+        STATE_START_STR,
+        STATE_OFF_STR,
+        STATE_STARTING_UP_STR,
+        STATE_SHUTTING_DOWN_STR,
+        STATE_ON_STR,
+        STATE_MENU_STR,
+        STATE_CONFIRM_STR,
+        STATE_SENDING_STR
+};
+
 const char* getStateString(int state)
 {
-        const char* r = "?";
-        switch (state) {
-        case STATE_ERROR:
-                r = "Error";
-                break;
-        case STATE_START:
-                r = "Start";
-                break;
-        case STATE_OFF:
-                r = "Off";
-                break;
-        case STATE_STARTING_UP:
-                r = "Starting up";
-                break;
-        case STATE_SHUTTING_DOWN:
-                r = "Shutting down";
-                break;
-        case STATE_ON:
-                r = "On";
-                break;
-        case STATE_MENU:
-                r = "Menu";
-                break;
-        case STATE_CONFIRM:
-                r = "Confirm";
-                break;
-        case STATE_SENDING:
-                r = "Action";
-                break;
-        }
-        return r;
+        if (state >= 0 && state < STATE_LAST) 
+                return _stateStrings[state];
+        else
+                return "?";
 }

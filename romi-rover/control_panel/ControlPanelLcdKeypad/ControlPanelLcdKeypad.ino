@@ -22,12 +22,9 @@
 
  */
 
-#include "ControlPanelTransitions.h"
-#include "StateMachineTimer.h"
-#include "Parser.h"
+#include "EventTimer.h"
 #include "ArduinoImpl.h"
 #include "ArduinoSerial.h"
-#include "Menu.h"
 #include "CrystalDisplay.h"
 #include "ControlPanel.h"
 #include "ButtonPanel.h"
@@ -36,77 +33,24 @@
 #include "pins.h"
 #include "Buttons.h"
 
-// The main components
 ArduinoImpl arduino;
 ArduinoSerial serial;
-CrystalDisplay display(PIN_RS,  PIN_EN,  PIN_D4,  PIN_D5,  PIN_D6,  PIN_D7);
-ButtonPanel buttonPanel(&arduino);
-Parser parser("M", "01S?");
-Menu menu;
-StateMachine stateMachine;
-StateMachineTimer stateMachineTimer(&stateMachine, &arduino);
-
-// One control panel to unity them all
-ControlPanel controlPanel(&arduino, &serial, &display, &buttonPanel, &parser,
-                          &menu, &stateMachine, &stateMachineTimer);
-
-// The relays
-Relay relayControlCircuit(&arduino, PIN_RELAY1);
-Relay relayPowerCircuit(&arduino, PIN_RELAY2);
-
-// The state transitions
-Ready ready(&display);
-StartUp startUp(&display, &relayControlCircuit, &relayPowerCircuit);
-PowerUp powerUp(&display, &relayControlCircuit, &relayPowerCircuit);
-IgnorePowerUpWhenOn ignorePowerUp;
-Shutdown shutdown(&display, &relayControlCircuit, &relayPowerCircuit, &stateMachineTimer);
-SoftPowerDown softPowerDown(&display, &relayControlCircuit, &relayPowerCircuit);
-HardPowerDown hardPowerDownWhenOn(&display, &relayControlCircuit,
-                                  &relayPowerCircuit, STATE_ON);
-HardPowerDown hardPowerDownWhenStarting(&display, &relayControlCircuit,
-                                        &relayPowerCircuit, STATE_STARTING_UP);
-HardPowerDown hardPowerDownWhenShuttingDown(&display, &relayControlCircuit,
-                                            &relayPowerCircuit, STATE_SHUTTING_DOWN);
-ShowMenu showMenu(&display, &menu);
-HideMenu hideMenu(&display);
-NextMenuItem nextMenuItem(&display, &menu);
-PreviousMenuItem previousMenuItem(&display, &menu);
-SelectMenuItem selectMenuItem(&display, &menu);
-SendingMenuItem sendingMenuItem(&display, &stateMachineTimer);
-CancelMenuItem cancelMenuItem(&display, &menu);
-SentMenuItem sentMenuItem(&display);
-TimeoutMenuItem timeoutMenuItem(&display);
-
-// The buttons
+ButtonPanel buttonPanel;
 AnalogButton selectButton(&arduino, 0, BUTTON_SELECT, 0, 50);
 AnalogButton upButton(&arduino, 0, BUTTON_UP, 50, 175);
 AnalogButton downButton(&arduino, 0, BUTTON_DOWN, 175, 325);
 AnalogButton menuButton(&arduino, 0, BUTTON_MENU, 325, 520);
 AnalogButton onoffButton(&arduino, 0, BUTTON_ONOFF, 520, 850);
+EventTimer eventTimer;
+CrystalDisplay display(PIN_RS,  PIN_EN,  PIN_D4,  PIN_D5,  PIN_D6,  PIN_D7);
+Relay relayControlCircuit(&arduino, PIN_RELAY1);
+Relay relayPowerCircuit(&arduino, PIN_RELAY2);
 
-void init_state_machine()
-{
-        stateMachine.add(&ready);
-        stateMachine.add(&startUp);
-        stateMachine.add(&powerUp);
-        stateMachine.add(&ignorePowerUp);
-        stateMachine.add(&shutdown);
-        stateMachine.add(&softPowerDown);
-        stateMachine.add(&hardPowerDownWhenOn);
-        stateMachine.add(&hardPowerDownWhenStarting);
-        stateMachine.add(&hardPowerDownWhenShuttingDown);
-        stateMachine.add(&showMenu);
-        stateMachine.add(&hideMenu);
-        stateMachine.add(&nextMenuItem);
-        stateMachine.add(&previousMenuItem);        
-        stateMachine.add(&selectMenuItem);
-        stateMachine.add(&sendingMenuItem);
-        stateMachine.add(&cancelMenuItem);
-        stateMachine.add(&sentMenuItem);
-        stateMachine.add(&timeoutMenuItem);
-}
+// One control panel to unity them all
+ControlPanel controlPanel(&serial, &buttonPanel, &eventTimer, &display,
+                          &relayControlCircuit, &relayPowerCircuit);
 
-void init_button_panel()
+void initButtonPanel()
 {
         buttonPanel.addButton(&selectButton);
         buttonPanel.addButton(&upButton);
@@ -117,13 +61,13 @@ void init_button_panel()
 
 void setup()
 {
+        initButtonPanel();
+        serial.init(115200);
         controlPanel.init();        
-        init_state_machine();
-        init_button_panel();
-        stateMachine.handleEvent(EVENT_READY);        
 }
 
 void loop()
 {
-        controlPanel.loop();
+        unsigned long t = ::millis();
+        controlPanel.update(t);
 }

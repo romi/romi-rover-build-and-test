@@ -35,28 +35,26 @@
 class ButtonPanel : public IButtonPanel
 {
 protected:
-        IArduino *_arduino;
         IButton *_buttons[BUTTONPANEL_MAX_BUTTONS];
         uint8_t _numButtons;
         
 public:
-        ButtonPanel(IArduino *arduino) : _arduino(arduino), _numButtons(0) {}
+        ButtonPanel() : _numButtons(0) {}
         
         virtual ~ButtonPanel() {}
 
-        virtual void addButton(IButton *button) {
+        void addButton(IButton *button) {
                 if (_numButtons < BUTTONPANEL_MAX_BUTTONS) {
                         _buttons[_numButtons++] = button;
                 } // else ?!
         }
         
-        virtual void update(IStateMachine *stateMachine) {
-                unsigned long t = _arduino->millis();
+        void update(IStateMachine *stateMachine, unsigned long t) override {
                 for (int i = 0; i < _numButtons; i++) {
                         uint8_t e = _buttons[i]->update(t);
                         if (e != 0) {
-                                int event = ButtonEvent(_buttons[i]->id(), e);
-                                stateMachine->handleEvent(event);
+                                int16_t event = ButtonEvent(_buttons[i]->id(), e);
+                                stateMachine->handleEvent(event, t);
                         }
                 }
         }

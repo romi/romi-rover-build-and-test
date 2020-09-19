@@ -35,14 +35,17 @@ static const char *errorFail = "ERR fail";
 
 void ControlPanel::init()
 {
-        _serial->init(115200);
+        initStateMachine();
+        _stateMachine.handleEvent(EVENT_READY, 0);        
 }
 
-void ControlPanel::loop()
+void ControlPanel::update(unsigned long t)
 {
-        _buttonPanel->update(_stateMachine);
-        handleSerialInput();
-        _timer->update(_arduino->millis());
+        _buttonPanel->update(&_stateMachine, t);
+        handleSerialInput(t);
+        int16_t event =_eventTimer->update(t);
+        if (event >= 0)
+                _stateMachine.handleEvent(event, t);
 }
 
 void ControlPanel::sendState()
@@ -50,25 +53,21 @@ void ControlPanel::sendState()
         static char buffer[64];
         snprintf(buffer, sizeof(buffer),
                  "S[\"%s\",%d]",
-                 getStateString(_stateMachine->getState()),
-                 _menu->currentMenuItemID());
+                 getStateString(_stateMachine.getState()),
+                 _menu.currentMenuItemID());
         _serial->println(buffer);
-        
-        if (_stateMachine->getState() == STATE_SENDING) {
-                _stateMachine->handleEvent(EVENT_ACTION_SENT);
-        }
 }
 
-void ControlPanel::handleSerialInput()
+void ControlPanel::handleSerialInput(unsigned long t)
 {
         while (_serial->available()) {
                 int c = _serial->read();
-                if (_parser->process(c)) {                        
-                        switch (_parser->opcode()) {
+                if (_parser.process(c)) {                        
+                        switch (_parser.opcode()) {
                         default: break;
                         case '0':
-                                if (_parser->length() == 0) {
-                                        int r = _stateMachine->handleEvent(EVENT_SHUTDOWN);
+                                if (_parser.length() == 0) {
+                                        int r = _stateMachine.handleEvent(EVENT_SHUTDOWN, t);
                                         if (r == IStateMachine::OK)
                                                 _serial->println(ok);
                                         else if (r == IStateMachine::Ignored)
@@ -80,8 +79,8 @@ void ControlPanel::handleSerialInput()
                                 }
                                 break;
                         case '1':
-                                if (_parser->length() == 0) {
-                                        int r = _stateMachine->handleEvent(EVENT_POWERUP);
+                                if (_parser.length() == 0) {
+                                        int r = _stateMachine.handleEvent(EVENT_POWERUP, t);
                                         if (r == IStateMachine::OK)
                                                 _serial->println(ok);
                                         else if (r == IStateMachine::Ignored)
@@ -94,18 +93,20 @@ void ControlPanel::handleSerialInput()
                                 break;
                         case 'S':
                                 sendState();
+                                if (_stateMachine.getState() == STATE_SENDING) {
+                                        _stateMachine.handleEvent(EVENT_ACTION_SENT, t);
+                                }
                                 break;
                         case 'M':
-                                if (_parser->has_string() && _parser->length() == 1) {
-                                        _menu->setMenuItem(_parser->string(),
-                                                           _parser->value());
+                                if (_parser.has_string() && _parser.length() == 1) {
+                                        _menu.setMenuItem(_parser.string(), _parser.value());
                                         _serial->println(ok);
                                 } else {
                                         _serial->println(errorBadArgs);
                                 }
                                 break;
                         case '?':
-                                _serial->println("?[\"RomiControlPanel\",\"0.1\"]"); 
+                                _serial->println("?[\"RomiControlPanel\",\"0.2\"]"); 
                                 break;
                         }
                 }

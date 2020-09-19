@@ -26,11 +26,11 @@
 #define __STATES_H
 
 enum {
-        // STATE_ERROR(-1) and STATE_START(0) are defined by default
+        // STATE_ERROR(0) and STATE_START(1) are defined by default
         // in IStateMachine.h
 
         // Both relays off.
-        STATE_OFF = 1,
+        STATE_OFF = 2,
         // Power relay off and controller relay on. Waiting for
         // controller circuit to send powerup event.
         STATE_STARTING_UP,
@@ -45,8 +45,20 @@ enum {
         // Confirm menu selection
         STATE_CONFIRM,
         // Sending selection to rover
-        STATE_SENDING 
+        STATE_SENDING,
+        // Insert new state before this one :)
+        STATE_LAST
 };
+
+#define STATE_ERROR_STR         "Error"
+#define STATE_START_STR         "Start"
+#define STATE_OFF_STR           "Off"
+#define STATE_STARTING_UP_STR   "Starting up"
+#define STATE_SHUTTING_DOWN_STR "Shutting down"
+#define STATE_ON_STR            "On"
+#define STATE_MENU_STR          "Menu"
+#define STATE_CONFIRM_STR       "Confirm"
+#define STATE_SENDING_STR       "Action"
 
 const char* getStateString(int state);
 

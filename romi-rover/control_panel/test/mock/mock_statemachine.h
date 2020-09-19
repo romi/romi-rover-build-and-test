@@ -8,9 +8,8 @@ class MockStateMachine : public IStateMachine
 {
 public:
         MOCK_METHOD(int, getState, (), (override));
-        MOCK_METHOD(int, getError, (), (override));
         MOCK_METHOD(void, add, (IStateTransition *transition), (override));
-        MOCK_METHOD(int, handleEvent, (int event), (override));
+        MOCK_METHOD(int, handleEvent, (int16_t event, unsigned long t), (override));
 };
 
 #endif // __MOCK_STATE_MACHINE_H

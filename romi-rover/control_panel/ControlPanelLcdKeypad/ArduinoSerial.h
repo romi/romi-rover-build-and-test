@@ -50,11 +50,11 @@ public:
         }
         
         virtual void print(const char *s) override {
-                return Serial.print(s);
+                Serial.print(s);
         }
         
         virtual void println(const char *s) override {
-                return Serial.println(s);
+                Serial.println(s);
         }
 };
 

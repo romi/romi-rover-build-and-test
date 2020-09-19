@@ -28,11 +28,6 @@ int StateMachine::getState()
         return _currentState;
 }
 
-int StateMachine::getError()
-{
-        return _error;
-}
-
 void StateMachine::add(IStateTransition *transition)
 {
         // FIXME: what happens if _length >= MAX_TRANSITIONS ?!
@@ -41,23 +36,29 @@ void StateMachine::add(IStateTransition *transition)
         } 
 }
 
-int StateMachine::handleEvent(int event)
+int StateMachine::handleEvent(int16_t event, unsigned long t)
 {
         int r = Ignored;
         for (int i = 0; i < _length; i++) {
-                IStateTransition *t = _transitions[i];
-                if (t->state() == _currentState
-                    && t->event() == event) {
-                        int err = t->doTransition();
-                        if (err == 0) {
-                                _currentState = t->nextState();
-                                r = OK;
-                        } else {
-                                _currentState = STATE_ERROR;
-                                _error = err;
-                                r = Error;
-                        }
+                IStateTransition *transition = _transitions[i];
+                if (transition->state() == _currentState
+                    && transition->event() == event) {
+                        transition->doTransition(t);
+                        _currentState = transition->nextState();
+                        r = OK;
                         break;
+                }
+        }
+        if (r == Ignored) {
+                for (int i = 0; i < _length; i++) {
+                        IStateTransition *transition = _transitions[i];
+                        if (transition->state() == ALL_STATES
+                            && transition->event() == event) {
+                                transition->doTransition(t);
+                                _currentState = transition->nextState();
+                                r = OK;
+                                break;
+                        }
                 }
         }
         return r;

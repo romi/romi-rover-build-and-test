@@ -298,19 +298,15 @@ TEST_F(buttonpanel_tests, buttonpanel_test_buttonpanel_button_pressed)
         EXPECT_CALL(arduino, analogRead)
                 .WillOnce(Return(150))
                 .WillOnce(Return(150));
-        
-        EXPECT_CALL(arduino, millis)
-                .WillOnce(Return(100))
-                .WillOnce(Return(100 + MIN_TIME_PRESSED + 1));
-        
-        EXPECT_CALL(stateMachine, handleEvent(ButtonEvent(1, BUTTON_PRESSED)))
+                
+        EXPECT_CALL(stateMachine, handleEvent(ButtonEvent(1, BUTTON_PRESSED), _))
                 .Times(1);        
         
         // Act
-        ButtonPanel buttonpannel(&arduino);
+        ButtonPanel buttonpannel;
         buttonpannel.addButton(&button);
-        buttonpannel.update(&stateMachine);
-        buttonpannel.update(&stateMachine);
+        buttonpannel.update(&stateMachine, 0);
+        buttonpannel.update(&stateMachine, MIN_TIME_PRESSED + 1);
 
         //Assert
         ASSERT_EQ(button.state(), IButton::Pressed);

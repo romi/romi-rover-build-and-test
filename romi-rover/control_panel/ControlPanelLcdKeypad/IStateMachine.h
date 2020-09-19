@@ -26,20 +26,20 @@
 
 #include "IStateTransition.h"
 
-#define STATE_ERROR -1
-#define STATE_START 0
+#define STATE_ERROR 0
+#define STATE_START 1
+#define ALL_STATES -1
 
 class IStateMachine
 {
 public:
-        enum { OK = 0, Ignored = 1, Error = 2 };
+        enum { OK = 0, Ignored = 1 };
         
         virtual ~IStateMachine() {}
 
         virtual int getState() = 0;
-        virtual int getError() = 0;
         virtual void add(IStateTransition *transition) = 0;
-        virtual int handleEvent(int event) = 0;
+        virtual int handleEvent(int16_t event, unsigned long t) = 0;
 };
 
 #endif // __I_STATE_MACHINE_H

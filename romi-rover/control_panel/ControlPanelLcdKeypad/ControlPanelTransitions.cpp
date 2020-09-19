@@ -22,165 +22,121 @@
 
  */
 #include "ControlPanelTransitions.h"
+#include "ControlPanel.h"
 #include "pins.h"
+#include <stdio.h>
 
-int Ready::doTransition()
+void ControlPanelTransition::displayState()
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_OFF));
-        return 0;
+        _controlPanel->display()->showState(getStateString(_to));
+}
+        
+void ControlPanelTransition::displayMenu()
+{
+        const char *s = _controlPanel->menu()->currentMenuItemName();
+        _controlPanel->display()->showMenu(s);
 }
 
-int StartUp::doTransition()
+void ControlPanelTransition::hideMenu()
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_STARTING_UP));
-        
-        _relayControlCircuit->close();
-        _relayPowerCircuit->open();
-        
-        return 0;
+        _controlPanel->display()->clearMenu();
 }
 
-int PowerUp::doTransition()
+void ControlPanelTransition::setTimer(unsigned long when, int event)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_ON));
-        
-        _relayControlCircuit->close();
-        _relayPowerCircuit->close();
-        
-        return 0;
+        _controlPanel->timer()->setTimeout(when, event);
 }
 
-int Shutdown::doTransition()
+void ControlPanelTransition::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_SHUTTING_DOWN));
-        
-        _relayControlCircuit->close();
-        _relayPowerCircuit->open();
-        
-        _timer->setTimeout(5000, EVENT_POWERDOWN);
-        return 0;
+        displayState();
 }
 
-int SoftPowerDown::doTransition()
+void Ready::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_OFF));
-        
-        _relayControlCircuit->open();
-        _relayPowerCircuit->open();
-        
-        return 0;
+        displayState();
+        hideMenu();
 }
 
-int HardPowerDown::doTransition()
+void StartUp::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_OFF));
-        
-        _relayControlCircuit->open();
-        _relayPowerCircuit->open();
-        
-        return 0;
+        displayState();
+        _controlPanel->controlRelay()->close();
+        _controlPanel->powerRelay()->open();
 }
 
-int ShowMenu::doTransition()
+void PowerUp::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_MENU));
-        
-        _menu->firstMenuItem();
-        _display->setCursor(0, 1);
-        _display->print(_menu->currentMenuItemName());
-        return 0;
+        displayState();
+        _controlPanel->controlRelay()->close();
+        _controlPanel->powerRelay()->close();
 }
 
-int HideMenu::doTransition()
+void Shutdown::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_ON));
-        return 0;
+        displayState();
+        _controlPanel->controlRelay()->close();
+        _controlPanel->powerRelay()->open();
+        setTimer(t + 7000, EVENT_POWERDOWN);
 }
 
-int NextMenuItem::doTransition()
+void SoftPowerDown::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_MENU));
-        
-        _menu->nextMenuItem();
-        _display->setCursor(0, 1);
-        _display->print(_menu->currentMenuItemName());
-        return 0;
+        displayState();
+        _controlPanel->controlRelay()->open();
+        _controlPanel->powerRelay()->open();
 }
 
-int PreviousMenuItem::doTransition()
+void HardPowerDown::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_MENU));
-        
-        _menu->nextMenuItem();
-        _display->setCursor(0, 1);
-        _display->print(_menu->currentMenuItemName());
-        return 0;
+        displayState();
+        _controlPanel->controlRelay()->open();
+        _controlPanel->powerRelay()->open();
 }
 
-int SelectMenuItem::doTransition()
+void ShowMenu::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print("Confirm?");
-        return 0;
+        displayState();
+        _controlPanel->menu()->firstMenuItem();
+        displayMenu();
 }
 
-int SendingMenuItem::doTransition()
+void NextMenuItem::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print("Sending");
-        _timer->setTimeout(5000, EVENT_ACTION_TIMEOUT);
-        return 0;
+        displayState();        
+        _controlPanel->menu()->nextMenuItem();
+        displayMenu();
 }
 
-int CancelMenuItem::doTransition()
+void PreviousMenuItem::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_MENU));
-        
-        _display->setCursor(0, 1);
-        _display->print(_menu->currentMenuItemName());
-        return 0;
+        displayState();
+        _controlPanel->menu()->nextMenuItem();
+        displayMenu();
 }
 
-int SentMenuItem::doTransition()
+void SendingMenuItem::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_ON));
-        return 0;
+        displayState();
+        setTimer(t + 5000, EVENT_ACTION_TIMEOUT);
 }
 
-int TimeoutMenuItem::doTransition()
+void CancelMenuItem::doTransition(unsigned long t)
 {
-        _display->clear();
-        _display->setCursor(0, 0);
-        _display->print(getStateString(STATE_ON));
-        _display->setCursor(0, 1);
-        _display->print("Sending timeout");
-        return 0;
+        displayState();
+        hideMenu();
+}
+
+void SentMenuItem::doTransition(unsigned long t)
+{
+        displayState();
+        hideMenu();
+}
+
+void TimeoutMenuItem::doTransition(unsigned long t)
+{
+        displayState();
+        hideMenu();
 }
 
 

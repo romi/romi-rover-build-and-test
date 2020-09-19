@@ -33,30 +33,37 @@ class CrystalDisplay : public IDisplay
 protected:
 
         LiquidCrystal _lcd;
-        
+
+        void clearLine(int row) {
+                for (int col = 0; col < 16; col++) {
+                        _lcd.setCursor(col, row);
+                        _lcd.write(' ');
+                }
+        }
+
 public:
 
         CrystalDisplay(int rs, int enable, int d4, int d5, int d6, int d7,
                        int cols = 16, int rows = 2)
                 : _lcd(rs, enable, d4, d5, d6, d7) {
-                begin(cols, rows);
+                _lcd.begin(cols, rows);
         }
         virtual ~CrystalDisplay() {}
 
-        void begin(int cols, int rows) {
-                _lcd.begin(cols, rows);
-        }
-        
-        virtual void clear() override {
-                _lcd.clear();
-        }
-        
-        virtual void setCursor(int col, int row) override {
-                _lcd.setCursor(col, row);
-        }
-        
-        virtual void print(const char* s) override {
+        void showState(const char* s) override {
+                clearLine(0);
+                _lcd.setCursor(0, 0);
                 _lcd.print(s);
+        }
+        
+        void showMenu(const char* s) override {
+                clearLine(1);
+                _lcd.setCursor(0, 1);
+                _lcd.print(s);
+        }
+        
+        void clearMenu() override {
+                clearLine(1);
         }
 };
 

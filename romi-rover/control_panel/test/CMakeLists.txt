@@ -39,10 +39,8 @@ set(SRCS_CONTROLPANEL
   ../ControlPanelLcdKeypad/Parser.h
   ../ControlPanelLcdKeypad/StateMachine.cpp
   ../ControlPanelLcdKeypad/StateMachine.h
-  ../ControlPanelLcdKeypad/StateMachineTimer.cpp
-  ../ControlPanelLcdKeypad/StateMachineTimer.h
+  ../ControlPanelLcdKeypad/EventTimer.h
   ../ControlPanelLcdKeypad/StateTransition.h
-  ../ControlPanelLcdKeypad/StateTransition.cpp
   ../ControlPanelLcdKeypad/ControlPanelTransitions.h
   ../ControlPanelLcdKeypad/ControlPanelTransitions.cpp
   )

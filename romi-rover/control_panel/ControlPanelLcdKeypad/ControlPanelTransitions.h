@@ -22,307 +22,248 @@
 
  */
 #include "StateTransition.h"
-#include "StateMachine.h"
-#include "IStateMachineTimer.h"
-#include "IArduino.h"
-#include "IDisplay.h"
-#include "IRelay.h"
-#include "IMenu.h"
 #include "States.h"
 #include "Events.h"
 
-#ifndef __STATE_MACHINE_CONTROL_PANEL_H
-#define __STATE_MACHINE_CONTROL_PANEL_H
+#ifndef __CONTROL_PANEL_TRANSITIONS_H
+#define __CONTROL_PANEL_TRANSITIONS_H
+
+class ControlPanel;
 
 const char* getStateString(int state);
 
-class Ready : public StateTransition
+class ControlPanelTransition : public StateTransition
 {
 protected:
-        IDisplay *_display;
-        
+        ControlPanel *_controlPanel;
+
+        void displayState();
+        void displayMenu();
+        void hideMenu();
+        void setTimer(unsigned long when, int event);
+
 public:
-        Ready(IDisplay *display) : StateTransition(STATE_START,
-                                                    EVENT_READY,
-                                                    STATE_OFF),
-                                    _display(display) {}
+        ControlPanelTransition(ControlPanel *controlPanel,
+                               int8_t from, int16_t event, int8_t to)
+                : StateTransition(from, event, to),
+                  _controlPanel(controlPanel) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class StartUp : public StateTransition
+class Ready : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IRelay *_relayControlCircuit;
-        IRelay *_relayPowerCircuit;
-        
 public:
-        StartUp(IDisplay *display,
-                IRelay *relayControlCircuit,
-                IRelay *relayPowerCircuit)
-                : StateTransition(STATE_OFF,
-                                  EVENT_ONOFF_HELD,
-                                  STATE_STARTING_UP),
-                  _display(display),
-                  _relayControlCircuit(relayControlCircuit),
-                  _relayPowerCircuit(relayPowerCircuit) {}
+        Ready(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_START,
+                                         EVENT_READY,
+                                         STATE_OFF) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class PowerUp : public StateTransition
+class StartUp : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IRelay *_relayControlCircuit;
-        IRelay *_relayPowerCircuit;
+public:
+        StartUp(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_OFF,
+                                         EVENT_ONOFF_HELD,
+                                         STATE_STARTING_UP) {}
         
+        void doTransition(unsigned long t) override;
+};
+
+class PowerUp : public ControlPanelTransition
+{
 public:
         // The power up event is sent by the control software when
         // the controllers are initialized and ready to go.
-        PowerUp(IDisplay *display,
-                IRelay *relayControlCircuit,
-                IRelay *relayPowerCircuit)
-                : StateTransition(STATE_STARTING_UP,
-                                  EVENT_POWERUP,
-                                  STATE_ON),
-                  _display(display),
-                  _relayControlCircuit(relayControlCircuit),
-                  _relayPowerCircuit(relayPowerCircuit) {}
+        PowerUp(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_STARTING_UP,
+                                         EVENT_POWERUP,
+                                         STATE_ON) {}
                 
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class IgnorePowerUpWhenOn : public StateTransition
+class IgnorePowerUpWhenOn : public ControlPanelTransition
 {
 public:
         // Ignore the power down event if the state is already
         // on. This may happen when the control panel node reboots
         // when the rover is running.
-        IgnorePowerUpWhenOn() : StateTransition(STATE_ON,
-                                                EVENT_POWERUP,
-                                                STATE_ON) {}
-        
-        virtual int doTransition() { return 0; }
+        IgnorePowerUpWhenOn(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_ON,
+                                         EVENT_POWERUP,
+                                         STATE_ON) {}
 };
 
-class Shutdown : public StateTransition
+class Shutdown : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IRelay *_relayControlCircuit;
-        IRelay *_relayPowerCircuit;
-        IStateMachineTimer *_timer;
-        
 public:
-        // The shutdown event is sent by the control software when the
-        // user requested to turn of the robot trough the user
-        // interface. It powers off the motors and waits 5s before
-        // shutting down the controllers. This gives the controller
-        // the time to shut down cleanly.
-        Shutdown(IDisplay *display,
-                 IRelay *relayControlCircuit,
-                 IRelay *relayPowerCircuit,
-                 IStateMachineTimer *timer)
-                : StateTransition(STATE_ON,
-                                  EVENT_SHUTDOWN,
-                                  STATE_SHUTTING_DOWN),
-                  _display(display),
-                  _relayControlCircuit(relayControlCircuit),
-                  _relayPowerCircuit(relayPowerCircuit),
-                  _timer(timer) {}
+        // The shutdown event is sent by holding the on/off button or
+        // by the control software or when the user requested to turn
+        // of the robot trough the user interface. It powers off the
+        // motors and waits 5-10s before shutting down the
+        // controllers. This gives the controller the time to shut
+        // down cleanly.
+        Shutdown(ControlPanel *controlPanel, int event)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_ON,
+                                         event,
+                                         STATE_SHUTTING_DOWN) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class SoftPowerDown : public StateTransition
+class IgnoreShutdownWhenShuttingDown : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IRelay *_relayControlCircuit;
-        IRelay *_relayPowerCircuit;
-        
+public:
+        // Ignore the shutdown event if the state is already shutting
+        // down. This may happen when the user requtes a shutdown both
+        // from the control panel and through the web interface.
+        IgnoreShutdownWhenShuttingDown(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_SHUTTING_DOWN,
+                                         EVENT_SHUTDOWN,
+                                         STATE_SHUTTING_DOWN) {}
+};
+
+class SoftPowerDown : public ControlPanelTransition
+{
 public:
         // The soft power down event is sent 5s after the shutdown
         // event.
-        SoftPowerDown(IDisplay *display,
-                      IRelay *relayControlCircuit,
-                      IRelay *relayPowerCircuit)
-                : StateTransition(STATE_SHUTTING_DOWN,
-                                  EVENT_POWERDOWN,
-                                  STATE_OFF),
-                  _display(display),
-                  _relayControlCircuit(relayControlCircuit),
-                  _relayPowerCircuit(relayPowerCircuit) {}
+        SoftPowerDown(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_SHUTTING_DOWN,
+                                         EVENT_POWERDOWN,
+                                         STATE_OFF) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class HardPowerDown : public StateTransition
+class HardPowerDown : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IRelay *_relayControlCircuit;
-        IRelay *_relayPowerCircuit;
-        
 public:
         // The hard power down event is sent when the user presses and
         // holds the select button. It powers off the motors and the
         // controllers.
-        HardPowerDown(IDisplay *display,
-                      IRelay *relayControlCircuit,
-                      IRelay *relayPowerCircuit,
-                      int from)
-                : StateTransition(from,
-                                  EVENT_ONOFF_HELD,
-                                  STATE_OFF),
-                  _display(display),
-                  _relayControlCircuit(relayControlCircuit),
-                  _relayPowerCircuit(relayPowerCircuit) {}
+        HardPowerDown(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         ALL_STATES,
+                                         EVENT_ONOFF_HELD,
+                                         STATE_OFF) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class ShowMenu : public StateTransition
+class ShowMenu : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IMenu* _menu;
-        
 public:
-        ShowMenu(IDisplay *display, IMenu* menu)
-                : StateTransition(STATE_ON,
-                                  EVENT_MENU_HELD,
-                                  STATE_MENU),
-                  _display(display),_menu(menu) {}
+        ShowMenu(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_ON,
+                                         EVENT_MENU_HELD,
+                                         STATE_MENU) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class HideMenu : public StateTransition
+class HideMenu : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        
 public:
-        HideMenu(IDisplay *display)
-                : StateTransition(STATE_MENU,
-                                  EVENT_MENU_PRESSED,
-                                  STATE_ON),
-                  _display(display) {}
-        
-        virtual int doTransition();
+        HideMenu(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_MENU,
+                                         EVENT_MENU_PRESSED,
+                                         STATE_ON) {}
 };
 
-class NextMenuItem : public StateTransition
+class NextMenuItem : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IMenu *_menu;
-        
 public:
-        NextMenuItem(IDisplay *display, IMenu* menu)
-                : StateTransition(STATE_MENU,
-                                  EVENT_DOWN_PRESSED,
-                                  STATE_MENU),
-                  _display(display), _menu(menu) {}
+        NextMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_MENU,
+                                         EVENT_DOWN_PRESSED,
+                                         STATE_MENU) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class PreviousMenuItem : public StateTransition
+class PreviousMenuItem : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IMenu *_menu;
-        
 public:
-        PreviousMenuItem(IDisplay *display, IMenu* menu)
-                : StateTransition(STATE_MENU,
-                                  EVENT_UP_PRESSED,
-                                  STATE_MENU),
-                  _display(display), _menu(menu) {}
+        PreviousMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_MENU,
+                                         EVENT_UP_PRESSED,
+                                         STATE_MENU) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class SelectMenuItem : public StateTransition
+class SelectMenuItem : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IMenu *_menu;
-        
 public:
-        SelectMenuItem(IDisplay *display, IMenu* menu)
-                : StateTransition(STATE_MENU,
-                                  EVENT_SELECT_PRESSED,
-                                  STATE_CONFIRM),
-                  _display(display), _menu(menu) {}
-        
-        virtual int doTransition();
+        SelectMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_MENU,
+                                         EVENT_SELECT_PRESSED,
+                                         STATE_CONFIRM) {}
 };
 
-class SendingMenuItem : public StateTransition
+class SendingMenuItem : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IStateMachineTimer *_timer;
-        
 public:
-        SendingMenuItem(IDisplay *display, IStateMachineTimer *timer)
-                : StateTransition(STATE_CONFIRM,
-                                  EVENT_SELECT_PRESSED,
-                                  STATE_SENDING),
-                  _display(display), _timer(timer) {}
+        SendingMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_CONFIRM,
+                                         EVENT_SELECT_PRESSED,
+                                         STATE_SENDING) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class CancelMenuItem : public StateTransition
+class CancelMenuItem : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        IMenu *_menu;
-        
 public:
-        CancelMenuItem(IDisplay *display, IMenu* menu)
-                : StateTransition(STATE_CONFIRM,
-                                  EVENT_MENU_PRESSED,
-                                  STATE_MENU),
-                  _display(display), _menu(menu) {}
+        CancelMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_CONFIRM,
+                                         EVENT_MENU_PRESSED,
+                                         STATE_MENU) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class SentMenuItem : public StateTransition
+class SentMenuItem : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        
 public:
-        SentMenuItem(IDisplay *display)
-                : StateTransition(STATE_SENDING,
-                                  EVENT_ACTION_SENT,
-                                  STATE_ON),
-                  _display(display) {}
-        
-        virtual int doTransition();
+        SentMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_SENDING,
+                                         EVENT_ACTION_SENT,
+                                         STATE_ON) {}
+
+        void doTransition(unsigned long t) override;
 };
 
-class TimeoutMenuItem : public StateTransition
+class TimeoutMenuItem : public ControlPanelTransition
 {
-protected:
-        IDisplay *_display;
-        
 public:
-        TimeoutMenuItem(IDisplay *display)
-                : StateTransition(STATE_SENDING,
-                                  EVENT_ACTION_TIMEOUT,
-                                  STATE_ON),
-                  _display(display) {}
+        TimeoutMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_SENDING,
+                                         EVENT_ACTION_TIMEOUT,
+                                         STATE_ON) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-#endif // __STATE_MACHINE_CONTROL_PANEL_H
+#endif // __CONTROL_PANEL_TRANSITIONS_H

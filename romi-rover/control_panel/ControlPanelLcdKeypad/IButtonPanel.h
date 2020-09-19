@@ -36,7 +36,7 @@ public:
         virtual ~IButtonPanel() {}
 
         // Update sends button events to the state machine.
-        virtual void update(IStateMachine *stateMachine) = 0;
+        virtual void update(IStateMachine *stateMachine, unsigned long t) = 0;
 };
 
 #endif // __IBUTTON_PANEL_H

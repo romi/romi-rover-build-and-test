@@ -39,7 +39,7 @@ enum {
 
 #define EVENT_BUTTON 0x1000
 
-#define ButtonEvent(_button, _state) (EVENT_BUTTON | (_button << 4) | _state)
+#define ButtonEvent(_button, _state) ((int16_t) (EVENT_BUTTON | (_button << 4) | _state))
 
 #define EVENT_ONOFF_HELD ButtonEvent(BUTTON_ONOFF, BUTTON_HELD)
 #define EVENT_MENU_PRESSED ButtonEvent(BUTTON_MENU, BUTTON_PRESSED)

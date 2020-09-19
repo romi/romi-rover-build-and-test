@@ -21,16 +21,35 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __I_STATE_MACHINE_TIMER_H
-#define __I_STATE_MACHINE_TIMER_H
+#ifndef __EVENT_TIMER_H
+#define __EVENT_TIMER_H
 
-#include "IStateMachine.h"
+#include "IEventTimer.h"
 
-class IStateMachineTimer
+class EventTimer : public IEventTimer
 {
+protected:
+        int _enabled;
+        int _event;
+        unsigned long _timeout;
+
 public:
-        virtual void setTimeout(int milliseconds, int event) = 0;
-        virtual void update(unsigned long t) = 0;
+        EventTimer() : _enabled(0), _event(0), _timeout(0) {}
+
+        void setTimeout(unsigned long milliseconds, int event) override {
+                _enabled = 1;
+                _timeout = milliseconds;
+                _event = event;
+        }
+        
+        int16_t update(unsigned long t) override {
+                int r = -1;
+                if (_enabled && t > _timeout) {
+                        r = _event;
+                        _enabled = 0;
+                }
+                return r;
+        }
 };
 
-#endif // __I_STATE_MACHINE_TIMER_H
+#endif // __EVENT_TIMER_H

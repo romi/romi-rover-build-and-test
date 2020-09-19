@@ -21,6 +21,7 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#include <string.h>
 #include "IMenu.h"
 
 #ifndef __MENU_H

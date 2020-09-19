@@ -3,7 +3,7 @@
 #include "AnalogButton.h"
 #include "ButtonPanel.h"
 #include "ControlPanelTransitions.h"
-#include "StateMachineTimer.h"
+#include "EventTimer.h"
 #include "Parser.h"
 #include "Menu.h"
 #include "ControlPanel.h"
@@ -13,6 +13,8 @@
 #include "../mock/mock_serial.h"
 #include "../mock/mock_display.h"
 #include "../mock/mock_relay.h"
+#include "../mock/mock_timer.h"
+#include "../mock/mock_button.h"
 
 using namespace std;
 using namespace testing;
@@ -22,111 +24,34 @@ class controlpanel_tests : public ::testing::Test
 protected:
         MockArduino arduino;
         MockSerial serial;
+        ButtonPanel buttonPanel;
+        MockButton selectButton;
+        MockButton upButton;
+        MockButton downButton;
+        MockButton menuButton;
+        MockButton onoffButton;        
+        MockTimer eventTimer;
         MockDisplay display;
         MockRelay relayControlCircuit;
-        MockRelay relayPowerCircuit;
-
-        ButtonPanel buttonPanel;
-        Parser parser;
-        Menu menu;
-        StateMachine stateMachine;
-        StateMachineTimer stateMachineTimer;
+        MockRelay relayPowerCircuit;        
         ControlPanel controlPanel;
-
-        Ready ready;
-        StartUp startUp;
-        PowerUp powerUp;
-        IgnorePowerUpWhenOn ignorePowerUp;
-        Shutdown shutdown;
-        SoftPowerDown softPowerDown;
-        HardPowerDown hardPowerDownWhenOn;
-        HardPowerDown hardPowerDownWhenStarting;
-        HardPowerDown hardPowerDownWhenShuttingDown;
-        ShowMenu showMenu;
-        HideMenu hideMenu;
-        NextMenuItem nextMenuItem;
-        PreviousMenuItem previousMenuItem;
-        SelectMenuItem selectMenuItem;
-        SendingMenuItem sendingMenuItem;
-        CancelMenuItem cancelMenuItem;
-        SentMenuItem sentMenuItem;
-        TimeoutMenuItem timeoutMenuItem;
-
-        AnalogButton selectButton;
-        AnalogButton upButton;
-        AnalogButton downButton;
-        AnalogButton menuButton;
-        AnalogButton onoffButton;
         
 	controlpanel_tests()
-                : buttonPanel(&arduino),
-                  parser("M", "01S?"),
-                  stateMachineTimer(&stateMachine, &arduino),
-                  controlPanel(&arduino, &serial, &display, &buttonPanel, &parser,
-                               &menu, &stateMachine, &stateMachineTimer),
-                  ready(&display),
-                  startUp(&display, &relayControlCircuit, &relayPowerCircuit),
-                  powerUp(&display, &relayControlCircuit, &relayPowerCircuit),
-                  shutdown(&display, &relayControlCircuit,
-                           &relayPowerCircuit, &stateMachineTimer),
-                  softPowerDown(&display, &relayControlCircuit, &relayPowerCircuit),
-                  hardPowerDownWhenOn(&display, &relayControlCircuit,
-                                      &relayPowerCircuit, STATE_ON),
-                  hardPowerDownWhenStarting(&display, &relayControlCircuit,
-                                            &relayPowerCircuit, STATE_STARTING_UP),
-                  hardPowerDownWhenShuttingDown(&display, &relayControlCircuit,
-                                                &relayPowerCircuit, STATE_SHUTTING_DOWN),
-                  showMenu(&display, &menu),
-                  hideMenu(&display),
-                  nextMenuItem(&display, &menu),
-                  previousMenuItem(&display, &menu),
-                  selectMenuItem(&display, &menu),
-                  sendingMenuItem(&display, &stateMachineTimer),
-                  cancelMenuItem(&display, &menu),
-                  sentMenuItem(&display),
-                  timeoutMenuItem(&display),
-                  selectButton(&arduino, 0, BUTTON_SELECT, 0, 50),
-                  upButton(&arduino, 0, BUTTON_UP, 50, 175),
-                  downButton(&arduino, 0, BUTTON_DOWN, 175, 325),
-                  menuButton(&arduino, 0, BUTTON_MENU, 325, 520),
-                  onoffButton(&arduino, 0, BUTTON_ONOFF, 520, 850)
-                {
-                }
-
-	~controlpanel_tests() override = default;
-
-        void init_state_machine() {
-                stateMachine.add(&ready);
-                stateMachine.add(&startUp);
-                stateMachine.add(&powerUp);
-                stateMachine.add(&ignorePowerUp);
-                stateMachine.add(&shutdown);
-                stateMachine.add(&softPowerDown);
-                stateMachine.add(&hardPowerDownWhenOn);
-                stateMachine.add(&hardPowerDownWhenStarting);
-                stateMachine.add(&hardPowerDownWhenShuttingDown);
-                stateMachine.add(&showMenu);
-                stateMachine.add(&hideMenu);
-                stateMachine.add(&nextMenuItem);
-                stateMachine.add(&previousMenuItem);        
-                stateMachine.add(&selectMenuItem);
-                stateMachine.add(&sendingMenuItem);
-                stateMachine.add(&cancelMenuItem);
-                stateMachine.add(&sentMenuItem);
-                stateMachine.add(&timeoutMenuItem);
-        }
-
-        void init_button_panel() {
+                : controlPanel(&serial, &buttonPanel, &eventTimer, &display,
+                               &relayControlCircuit, &relayPowerCircuit) {
                 buttonPanel.addButton(&selectButton);
                 buttonPanel.addButton(&upButton);
                 buttonPanel.addButton(&downButton);
                 buttonPanel.addButton(&menuButton);
                 buttonPanel.addButton(&onoffButton);
         }
+        
+	~controlpanel_tests() override = default;
 
 	void SetUp() override {
-                init_state_machine();
-                init_button_panel();
+                EXPECT_CALL(display, clearMenu)
+                        .Times(AtLeast(1));
+
 	}
 
 	void TearDown() override {
@@ -136,61 +61,171 @@ protected:
 TEST_F(controlpanel_tests, controlpanel_test_init)
 {
         // Arrange
-        EXPECT_CALL(serial, init)
+        EXPECT_CALL(display, showState(StrEq("Off")))
                 .Times(1);
+        // EXPECT_CALL(display, clearMenu)
+        //         .Times(1);
         
         // Act
         controlPanel.init();
         
         //Assert
+        ASSERT_EQ(controlPanel.stateMachine()->getState(), STATE_OFF);
 }
 
-TEST_F(controlpanel_tests, controlpanel_test_ready_state)
+TEST_F(controlpanel_tests, controlpanel_test_update_0)
 {
         // Arrange
-        EXPECT_CALL(serial, init)
+        EXPECT_CALL(display, showState(StrEq("Off")))
                 .Times(1);
-        EXPECT_CALL(display, clear)
+        // EXPECT_CALL(display, clearMenu)
+        //         .Times(1);
+
+        EXPECT_CALL(serial, available)
+                .Times(AtLeast(1));
+        
+        EXPECT_CALL(onoffButton, update)
                 .Times(1);
-        EXPECT_CALL(display, setCursor)
+        EXPECT_CALL(menuButton, update)
                 .Times(1);
-        EXPECT_CALL(display, print)
+        EXPECT_CALL(downButton, update)
+                .Times(1);
+        EXPECT_CALL(upButton, update)
+                .Times(1);
+        EXPECT_CALL(selectButton, update)
+                .Times(1);
+        
+        EXPECT_CALL(eventTimer, update)
                 .Times(1);
         
         // Act
         controlPanel.init();
-        stateMachine.handleEvent(EVENT_READY);
+        controlPanel.update(0);
         
         //Assert
-        ASSERT_EQ(stateMachine.getState(), STATE_OFF);
+        ASSERT_EQ(controlPanel.stateMachine()->getState(), STATE_OFF);
 }
 
-TEST_F(controlpanel_tests, controlpanel_test_startingup_state)
+TEST_F(controlpanel_tests, controlpanel_test_starting_up)
 {
         // Arrange
-        EXPECT_CALL(serial, init)
+        {
+                InSequence seq;
+                EXPECT_CALL(display, showState(StrEq(STATE_OFF_STR)))
+                        .Times(1);
+                EXPECT_CALL(display, showState(StrEq(STATE_STARTING_UP_STR)))
+                        .Times(1);
+        }
+        
+        // EXPECT_CALL(display, clearMenu)
+        //         .Times(AtLeast(1));
+
+        EXPECT_CALL(serial, available)
+                .Times(AtLeast(1));
+        
+        EXPECT_CALL(onoffButton, update)
+                .WillOnce(Return(BUTTON_HELD));
+        EXPECT_CALL(onoffButton, id)
                 .Times(1);
-        EXPECT_CALL(display, clear)
-                .Times(2);
-        EXPECT_CALL(display, setCursor)
-                .Times(2);
-        EXPECT_CALL(display, print)
-                .Times(2);
+
+        EXPECT_CALL(menuButton, update)
+                .Times(AtLeast(1));
+        EXPECT_CALL(downButton, update)
+                .Times(AtLeast(1));
+        EXPECT_CALL(upButton, update)
+                .Times(AtLeast(1));
+        EXPECT_CALL(selectButton, update)
+                .Times(AtLeast(1));
+        
+        EXPECT_CALL(eventTimer, update)
+                .Times(AtLeast(1));
         
         EXPECT_CALL(relayControlCircuit, close)
                 .Times(1);
+        
         EXPECT_CALL(relayPowerCircuit, open)
                 .Times(1);
+
         
         // Act
         controlPanel.init();
-        stateMachine.handleEvent(EVENT_READY);
-        stateMachine.handleEvent(EVENT_ONOFF_HELD);
+        controlPanel.update(0);
         
         //Assert
-        ASSERT_EQ(stateMachine.getState(), STATE_STARTING_UP);
+        ASSERT_EQ(controlPanel.stateMachine()->getState(), STATE_STARTING_UP);
 }
 
+TEST_F(controlpanel_tests, controlpanel_test_on)
+{
+        // Arrange
+        {
+                InSequence seq;
+                EXPECT_CALL(display, showState(StrEq(STATE_OFF_STR)))
+                        .Times(1);
+                EXPECT_CALL(display, showState(StrEq(STATE_STARTING_UP_STR)))
+                        .Times(1);
+                EXPECT_CALL(display, showState(StrEq(STATE_ON_STR)))
+                        .Times(1);
+        }
+        
+        // EXPECT_CALL(display, clearMenu)
+        //         .Times(AtLeast(1));
+
+        EXPECT_CALL(serial, available)
+                .WillOnce(Return(0))
+                .WillOnce(Return(2))
+                .WillOnce(Return(1))
+                .WillOnce(Return(0));
+        EXPECT_CALL(serial, read)
+                .WillOnce(Return('1'))
+                .WillOnce(Return('\r'));
+        EXPECT_CALL(serial, println(StrEq("OK")))
+                .Times(1);
+        
+        EXPECT_CALL(onoffButton, update)
+                .WillOnce(Return(BUTTON_HELD))
+                .WillOnce(Return(0));
+        EXPECT_CALL(onoffButton, id)
+                .Times(1);
+
+        EXPECT_CALL(menuButton, update)
+                .Times(AtLeast(1));
+        EXPECT_CALL(downButton, update)
+                .Times(AtLeast(1));
+        EXPECT_CALL(upButton, update)
+                .Times(AtLeast(1));
+        EXPECT_CALL(selectButton, update)
+                .Times(AtLeast(1));
+        
+        EXPECT_CALL(eventTimer, update)
+                .Times(AtLeast(1));
+        
+        {
+                InSequence seq;
+                EXPECT_CALL(relayControlCircuit, close)
+                        .Times(1);
+                EXPECT_CALL(relayControlCircuit, close)
+                        .Times(1);
+        }
+        
+        {
+                InSequence seq;
+                EXPECT_CALL(relayPowerCircuit, open)
+                        .Times(1);
+                EXPECT_CALL(relayPowerCircuit, close)
+                        .Times(1);
+        }
+        
+        // Act
+        controlPanel.init();
+        controlPanel.update(0);
+        controlPanel.update(1);
+        
+        //Assert
+        ASSERT_EQ(controlPanel.stateMachine()->getState(), STATE_ON);
+}
+
+#if 0
 TEST_F(controlpanel_tests, controlpanel_test_on_state)
 {
         // Arrange
@@ -220,10 +255,9 @@ TEST_F(controlpanel_tests, controlpanel_test_on_state)
         stateMachine.handleEvent(EVENT_POWERUP);
         
         //Assert
-        ASSERT_EQ(stateMachine.getState(), STATE_ON);
+        ASSERT_EQ(controlPanel.stateMachine()->getState(), STATE_ON);
 }
 
-#if 0
 TEST_F(controlpanel_tests, controlpanel_test_shuttingdown_state)
 {
         // Arrange

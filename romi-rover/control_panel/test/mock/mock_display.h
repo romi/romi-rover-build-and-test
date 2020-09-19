@@ -7,9 +7,9 @@
 class MockDisplay : public IDisplay
 {
 public:
-        MOCK_METHOD(void, clear, ());
-        MOCK_METHOD(void, setCursor, (int col, int row));
-        MOCK_METHOD(void, print, (const char* s));        
+        MOCK_METHOD(void, showState, (const char* s));        
+        MOCK_METHOD(void, showMenu, (const char* s));        
+        MOCK_METHOD(void, clearMenu, ());
 };
 
 #endif // __MOCK_DISPLAY_H

@@ -29,10 +29,10 @@ class IDisplay
 {
 public:
         virtual ~IDisplay() {}
-        
-        virtual void clear() = 0;
-        virtual void setCursor(int col, int row) = 0;
-        virtual void print(const char* s) = 0;
+
+        virtual void showState(const char* s) = 0;
+        virtual void showMenu(const char* s) = 0;
+        virtual void clearMenu() = 0;
 };
 
 #endif // __IDISPLAY_H
