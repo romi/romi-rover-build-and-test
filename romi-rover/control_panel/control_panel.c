@@ -24,42 +24,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "control_panel.h"
+#include "ControlPanelLcdKeypad/States.h"
 
 #define DISPLAY_LENGTH 16
-
-messagehub_t *get_messagehub_watchdog();
-
-enum {
-        PANEL_STATE_ERROR = 0,
-        PANEL_STATE_STARTING_UP,
-        PANEL_STATE_POWERING_UP,
-        PANEL_STATE_ON,
-        PANEL_STATE_SHUTTING_DOWN,
-        PANEL_STATE_OFF
-};
-
-const char *panel_state_str[] = {"error", "starting_up", "powering_up",
-                                 "on", "shutting_down", "off"};
-
-enum {
-        APP_STATE_INITIALIZING = 0,
-        APP_STATE_INITIALIZED,
-        APP_STATE_POWERING_UP,
-        APP_STATE_POWERED_UP,
-        APP_STATE_ERROR
-};
-
-const char *app_state_str[] = {"initializing", "initialized",
-                               "powering_up", "powered_up", "error"};
 
 static char *device = NULL;
 static serial_t *serial = NULL;
 static membuf_t *state_buf = NULL;
 static mutex_t *mutex = NULL;
-/* static list_t *apps = NULL; */
-/* static double timeout = 10.0; */
-/* static int prev_apps_state = APP_STATE_ERROR; */
-/* static int prev_panel_state = PANEL_STATE_ERROR; */
+static json_object_t scripts;
+
+static int execute_script(int id);
 
 static void broadcast_log(void *userdata, const char* s)
 {
@@ -92,7 +67,8 @@ static int open_serial(const char *dev)
 static void close_serial()
 {
         mutex_lock(mutex);        
-        if (serial) delete_serial(serial);
+        if (serial)
+                delete_serial(serial);
         serial = NULL;
         mutex_unlock(mutex);        
 }
@@ -127,9 +103,8 @@ static int send_command_unlocked(const char *cmd, membuf_t *message)
         if (r == NULL) {
                 membuf_printf(message, "Unknown error");
                 return -1;
-        } else if (strncmp(r, "ERR", 3) == 0) {
-                return -1;
-        } 
+        }
+        membuf_append_zero(message);
         
         return 0;
 }
@@ -142,13 +117,6 @@ static int send_command(const char *cmd, membuf_t *message)
         mutex_unlock(mutex);        
         return err;
 }
-
-/* static int set_state(int state) */
-/* { */
-/*         char cmd[18]; */
-/*         rprintf(cmd, sizeof(cmd), "S%d", state); */
-/*         return send_command(cmd, state_buf); */
-/* } */
 
 /* static int display_message(const char *s) */
 /* { */
@@ -164,305 +132,116 @@ static int send_command(const char *cmd, membuf_t *message)
 /*         return send_command(cmd, state_buf); */
 /* } */
 
-/* static void set_error(const char *s) */
-/* { */
-/*         display_message(s); */
-/*         set_state(PANEL_STATE_ERROR); */
-/*         r_err("%s", s); */
-/* } */
+static int set_menu_item(const char *name, int id)
+{
+        char cmd[64];
+        rprintf(cmd, sizeof(cmd), "M[\"%s\",%d]", name, id);
+        return send_command(cmd, state_buf);
+}
 
-/* static int get_state() */
-/* { */
-/*         int s = PANEL_STATE_ERROR; */
+static int start_shutdown()
+{
+        int r = -1;
+	r_info("Shutting down");
+        FILE *fp = popen("/sbin/poweroff", "r");
+        if (fp != NULL) {
+                while (!feof(fp) && !ferror(fp)) {
+                        char c;
+                        fread(&c, 1, 1, fp);
+                }
+                fclose(fp);
+                r = 0;
+        }
+        return r;
+}
 
-/*         mutex_lock(mutex); */
-/*         s = send_command_unlocked("s", state_buf); */
-/*         if (s != 0) { */
-/*                 s = -1; */
-/*                 goto unlock; */
-/*         } */
+int control_panel_shutdown(void *userdata,
+                           messagelink_t *link,
+                           json_object_t command,
+                           membuf_t *message)
+{
+        int r = -1;        
+        if (send_command("0", state_buf) == 0) {
+                const char* t = membuf_data(state_buf);
+                if (strncmp(t, "OK", 2) == 0) {
+                        r = start_shutdown();
+                } else {
+                        r_err("control_panel_shutdown: start_shutdown failed: %s", t);
+                        membuf_printf(message, "start_shutdown failed: %s", t);
+                }
+        } else {
+                r_err("control_panel_shutdown: send_command failed");
+                membuf_printf(message, "send_command failed");
+        }
+        return r;
+}
+
+static int handle_state(const char *state, int menu)
+{
+        int r = -1;
+        r_debug("State %s", state);
+        if (rstreq(state, STATE_SENDING_STR)) {
+                r_debug("Execute script %d", menu);
+                r = execute_script(menu);
+        } else if (rstreq(state, STATE_SHUTTING_DOWN_STR)) {
+                r = start_shutdown();
+        }
+        return r;
+}
+
+static int analyse_state(json_object_t state)
+{
+        int r = -1;
+        if (json_isarray(state)) {
+                const char *s = json_array_getstr(state, 0);
+                double menu = json_array_getnum(state, 1);
+                if (s != NULL && !isnan(menu)) {
+                        r = handle_state(s, (int) menu);
+                } else {
+                        r_warn("handle_state_str: invalid state");
+                }
+        } else {
+                r_warn("handle_state_str: state is not a valid json array");
+        }
+        return r;
+}
+
+static json_object_t get_state()
+{
+        json_object_t r = json_null();
         
-/*         membuf_append_zero(state_buf); */
-/*         const char* r = membuf_data(state_buf); */
-/*         if (r[0] != 's') { */
-/*                 s = -2; */
-/*                 goto unlock; */
-/*         } */
-
-/*         s = atoi(r + 1); */
+        mutex_lock(mutex);
+        int s = send_command_unlocked("S", state_buf);
+        if (s == 0) {
+                const char* t = membuf_data(state_buf);
+                if (t[0] == 'S') 
+                        r = json_parse(t+1);
+        }
         
-/* unlock: */
-/*         mutex_unlock(mutex); */
-/*         return s; */
-/* } */
-
-/* typedef struct _app_state_t { */
-/*         char *name; */
-/*         int state; */
-/*         double timestamp; */
-/* } app_state_t; */
-
-/* static app_state_t *new_app_state(const char *name) */
-/* { */
-/*         app_state_t *s = r_new(app_state_t); */
-/*         if (s == NULL) */
-/*                 return NULL; */
-/*         s->name = r_strdup(name); */
-/*         if (s->name == NULL) { */
-/*                 r_delete(s); */
-/*                 return NULL; */
-/*         } */
-/*         s->state = APP_STATE_INITIALIZING;  */
-/*         s->timestamp = clock_time(); */
-/*         return s; */
-/* } */
-
-/* __attribute_used__ */
-/* static void delete_app_state(app_state_t *s) */
-/* { */
-/*         if (s) { */
-/*                 if (s->name) */
-/*                         r_free(s->name); */
-/*                 r_delete(s); */
-/*         } */
-/* } */
-
-/* static int add_app_state(const char *name) */
-/* { */
-/*         app_state_t *s = new_app_state(name); */
-/*         if (s == NULL) */
-/*                 return -1; */
-
-/*         apps = list_append(apps, s); */
-/*         if (apps == NULL) */
-/*                 return -1; */
-        
-/*         return 0; */
-/* } */
-
-/* static app_state_t *get_app_state(const char *name) */
-/* { */
-/*         for (list_t *l = apps; l != NULL; l = list_next(l)) { */
-/*                 app_state_t *s = list_get(l, app_state_t); */
-/*                 if (rstreq(s->name, name)) */
-/*                         return s; */
-/*         } */
-/*         return NULL; */
-/* } */
-
-/* static void app_set_state(json_object_t message) */
-/* { */
-/*         const char *name = json_object_getstr(message, "name"); */
-/*         if (name == NULL) { */
-/*                 r_warn("app_set_ready: missing name"); */
-/*                 return; */
-/*         } */
-        
-/*         const char *state = json_object_getstr(message, "state"); */
-/*         if (state == NULL) { */
-/*                 r_warn("app_set_ready: missing state"); */
-/*                 return; */
-/*         } */
-        
-/*         app_state_t *s = get_app_state(name); */
-/*         if (s == NULL) { */
-/*                 r_warn("app_set_ready: can't find app named '%s'", name); */
-/*                 return; */
-/*         } */
-
-/*         int last_state = s->state; */
-                
-/*         if (rstreq(state, "initializing")) */
-/*                 s->state = APP_STATE_INITIALIZING; */
-/*         else if (rstreq(state, "initialized")) */
-/*                 s->state = APP_STATE_INITIALIZED; */
-/*         else if (rstreq(state, "powering_up")) */
-/*                 s->state = APP_STATE_POWERING_UP; */
-/*         else if (rstreq(state, "powered_up")) */
-/*                 s->state = APP_STATE_POWERED_UP; */
-/*         else if (rstreq(state, "error")) */
-/*                 s->state = APP_STATE_ERROR; */
-/*         else { */
-/*                 r_err("app '%s' returned unknown state '%s'", name, state); */
-/*                 s->state = APP_STATE_ERROR; */
-/*         } */
-/*         s->timestamp = clock_time(); */
-
-/*         if (last_state != s->state) */
-/*                 r_debug("app_set_state: state(%s)=%s", name, state); */
-/* } */
-
-/*  Apps 0 to n   App n+1                               State
- *  ---           ---                                   ---
- *  error         ?                                     error
- *  ?             error                                 error
- *  -
- *  initializing  initializing, initialized             initializing
- *  initializing  powering_up, powered_up               error
- *  -
- *  initialized   initializing                          initializing
- *  initialized   initialized                           initialized
- *  initialized   powering_up, powered_up               powering_up
- *  -
- *  powering_up   initializing                          error
- *  powering_up   initialized, powering_up, powered_up  powering_up
- *  -
- *  powered_up    initializing                          error
- *  powered_up    initialized                           powering_up
- *  powered_up    powering_up                           powering_up
- *  powered_up    powered_up                            powered
- *
- *  If an app hasn't responded to an state update request for more
- *  than three seconds, the state switches to 'error'.
- *
- */
-/* static int get_apps_state() */
-/* { */
-/*         double t = clock_time(); */
-        
-/*         list_t *l = apps; */
-/*         if (l == NULL) */
-/*                 return APP_STATE_INITIALIZING; */
-        
-/*         app_state_t *s = list_get(l, app_state_t); */
-/*         int state = s->state; */
-/*         if (t - s->timestamp > timeout) { */
-/*                 r_err("app '%s' timed out", s->name); */
-/*                 return APP_STATE_ERROR; */
-/*         } */
-                
-/*         l = list_next(l); */
-        
-/*         while (l != NULL) { */
-/*                 s = list_get(l, app_state_t); */
-
-/*                 if (t - s->timestamp > timeout) { */
-/*                         r_err("app '%s' timed out", s->name); */
-/*                         return APP_STATE_ERROR; */
-/*                 } */
-
-/*                 switch (state) { */
-/*                 case APP_STATE_ERROR: */
-/*                         return APP_STATE_ERROR; */
-                        
-/*                 case APP_STATE_INITIALIZING: */
-/*                         if (s->state == APP_STATE_INITIALIZING */
-/*                             || s->state == APP_STATE_INITIALIZED) */
-/*                                 state = APP_STATE_INITIALIZING; */
-/*                         else if (s->state == APP_STATE_POWERING_UP */
-/*                                  || s->state == APP_STATE_POWERED_UP) */
-/*                                 return APP_STATE_ERROR; */
-/*                         break; */
-                        
-/*                 case APP_STATE_INITIALIZED: */
-/*                         if (s->state == APP_STATE_INITIALIZING) */
-/*                                 state = APP_STATE_INITIALIZING; */
-/*                         else if (s->state == APP_STATE_INITIALIZED) */
-/*                                 state = APP_STATE_INITIALIZED; */
-/*                         else if (s->state == APP_STATE_POWERING_UP */
-/*                                  || s->state == APP_STATE_POWERED_UP) */
-/*                                 state = APP_STATE_POWERING_UP; */
-/*                         break; */
-                        
-/*                 case APP_STATE_POWERING_UP: */
-/*                         if (s->state == APP_STATE_INITIALIZING) */
-/*                                 return APP_STATE_ERROR; */
-/*                         else if (s->state == APP_STATE_INITIALIZED */
-/*                                 || s->state == APP_STATE_POWERING_UP */
-/*                                 || s->state == APP_STATE_POWERED_UP) */
-/*                                 state = APP_STATE_POWERING_UP; */
-/*                         break; */
-
-/*                 case APP_STATE_POWERED_UP: */
-/*                         if (s->state == APP_STATE_INITIALIZING) */
-/*                                 return APP_STATE_ERROR; */
-/*                         else if (s->state == APP_STATE_INITIALIZED */
-/*                                 || s->state == APP_STATE_POWERING_UP) */
-/*                                 state = APP_STATE_POWERING_UP; */
-/*                         else if (s->state == APP_STATE_POWERED_UP) */
-/*                                 state = APP_STATE_POWERED_UP; */
-/*                         break; */
-/*                 } */
-                
-/*                 l = list_next(l); */
-/*         } */
-        
-/*         return state; */
-/* } */
-
-/* static int apps_ask_state() */
-/* { */
-/*         messagehub_t *hub = get_messagehub_watchdog(); */
-/*         if (hub == NULL) { */
-/*                 r_err("apps_ask_state: hub is NULL"); */
-/*                 return -1; */
-/*         } */
-                
-/*         const char *s = "{\"request\": \"state?\"}"; */
-/*         return messagehub_broadcast_text(hub, NULL, s, strlen(s)); */
-/* } */
-
-/* static int apps_power_up() */
-/* { */
-/*         messagehub_t *hub = get_messagehub_watchdog(); */
-/*         if (hub == NULL) { */
-/*                 r_err("apps_ask_state: hub is NULL"); */
-/*                 return -1; */
-/*         } */
-
-/*         const char *s = "{\"request\": \"power_up\"}"; */
-/*         return messagehub_broadcast_text(hub, NULL, s, strlen(s)); */
-/* } */
-
-/* static int get_apps() */
-/* { */
-/*         json_object_t config = client_get("configuration", "watchdog"); */
-/*         if (!json_isobject(config)) { */
-/*                 r_err("unexpected value for 'watchdog'"); */
-/*                 json_unref(config); */
-/*                 return -1; */
-/*         } */
-
-/*         json_object_t applist = json_object_get(config, "apps"); */
-/*         if (!json_isarray(applist)) { */
-/*                 r_err("invalid watchdog settings. Expected an array for apps."); */
-/*                 json_unref(config); */
-/*                 return -1; */
-/*         } */
-
-/*         for (int i = 0; i < json_array_length(applist); i++) { */
-/*                 const char *name = json_array_getstr(applist, i); */
-/*                 int err = add_app_state(name); */
-/*                 if (err != 0) { */
-/*                         json_unref(config); */
-/*                         return -1; */
-/*                 } */
-/*         } */
-/*         json_unref(config); */
-/*         return 0; */
-/* } */
+        mutex_unlock(mutex);
+        return r;
+}
 
 static int get_device()
 {
-    if (device == NULL) {
-        const char *dev = NULL;
-        json_object_t port = client_get("configuration", "ports/control_panel/port");
-        if (!json_isstring(port)) {
-            r_err("missing value for 'ports' in the configuration");
-            json_unref(port);
-            return -1;
-        } else {
-            dev = json_string_value(port);
+        int r = -1;
+        if (device == NULL) {
+                const char *dev = NULL;
+                json_object_t port = client_get("configuration",
+                                                "ports/control_panel/port");
+                if (!json_isstring(port)) {
+                        r_err("missing value for 'ports' in the configuration");
+                } else {
+                        dev = json_string_value(port);
+                }
+
+                if (dev != NULL && set_device(dev) == 0) {
+                        r = 0;
+                }
+                json_unref(port);
         }
 
-        if (set_device(dev) != 0) {
-            json_unref(port);
-            return -1;
-        }
-        json_unref(port);
-    }
-
-    return 0;
+        return r;
 }
 
 static int get_configuration()
@@ -470,10 +249,80 @@ static int get_configuration()
         if (get_device() != 0)
                 return -1;
 
-        /* if (get_apps() != 0) */
-        /*         return -1; */
-
         return 0;
+}
+
+static int execute_script(int id)
+{
+        json_object_t script = json_array_get(scripts, id);
+        const char *name = json_object_getstr(script, "name");
+        if (name) {
+                char uri[1024];
+                r_info("execute_script: %s(%d)", name, id);
+                rprintf(uri, sizeof(uri), "/execute?%s", name);
+                //json_object_t r =
+                client_get("script_engine", uri);
+                // FIXME: script_engine_execute() returns no body?
+        } else {
+                r_warn("execute_script: script %d has no name", id);
+        }
+        return 0;
+}
+
+static int init_menus(json_object_t obj)
+{
+        if (json_isarray(obj)) {
+                scripts = obj;
+                for (int i = 0; i < json_array_length(scripts); i++) {
+                        json_object_t script = json_array_get(scripts, i);
+                        const char *name = json_object_getstr(script, "display_name");
+                        if (name) {
+                                r_debug("create_menus: menu[%d]: %s", i, name);
+                                set_menu_item(name, i);
+                        } else {
+                                r_warn("create_menus: script %d has no display name", i);
+                        }
+                }
+        } else {
+                r_warn("create_menus: invalid scripts array");
+        }
+        return 0;
+}
+
+static int power_up()
+{
+        int r = -1;        
+        if (send_command("1", state_buf) == 0) {
+                const char* t = membuf_data(state_buf);
+                if (strncmp(t, "OK", 2) == 0) {
+                        r = 0;
+                } else {
+                        r_err("power_up: failed: %s", t);
+                }
+        } else {
+                r_err("power_up: send_command failed");
+        }
+        return r;
+}
+
+static int download_scripts()
+{
+        scripts = json_null();
+        
+        int err = -1;
+        for (int i = 0; i < 10; i++) {
+                json_object_t obj = client_get("script_engine", "/scripts.json");
+                if (!json_isnull(obj)) {
+                        err = init_menus(obj);
+                        if (err == 0)
+                                break;
+                } else {
+                        r_err("Failed to download the scripts (%d/10)", i+1);
+                }
+                clock_sleep(1.0);
+        }
+        
+        return err;
 }
 
 int control_panel_init(int argc, char **argv)
@@ -508,9 +357,15 @@ int control_panel_init(int argc, char **argv)
         if (open_serial(device) != 0)
                 return -1;
 
-        if (send_command("E1", state_buf) != 0)
-                r_err("Failed to enable the main power: %s",
-                      membuf_data(state_buf));
+        if (download_scripts() != 0) {
+                r_err("Failed to download the scripts: no menus");
+        }
+        
+        if (power_up() != 0) {
+                r_err("Power up failed");
+                return -1;
+        }
+        
         
         /* if (display_message("Watchdog started")) { */
         /*         close_serial(); */
@@ -527,26 +382,7 @@ void control_panel_cleanup()
                 delete_mutex(mutex);
         if (state_buf)
                 delete_membuf(state_buf);
-}
-
-static void shutdown_system()
-{
-	/* r_info("Shutting down"); */
-        /* FILE *fp = popen("/sbin/poweroff", "r"); */
-        /* while (!feof(fp) && !ferror(fp)) { */
-        /*         char c; */
-        /*         fread(&c, 1, 1, fp); */
-        /* } */
-        /* fclose(fp); */
-}
-
-int control_panel_shutdown(void *userdata,
-                           messagelink_t *link,
-                           json_object_t command,
-                           membuf_t *message)
-{
-        shutdown_system();
-        return 0;
+        json_unref(scripts);
 }
 
 int control_panel_display(void *userdata,
@@ -555,86 +391,16 @@ int control_panel_display(void *userdata,
                           membuf_t *message)
 {
 	r_info("Display");
-        return 0;
+        membuf_printf(message, "Not implemented yet");
+        return -1;
 }
 
-void watchdog_onmessage(void *userdata,
-                        messagelink_t *link,
-                        json_object_t message)
+void control_panel_onidle()
 {
-        //r_debug("watchdog_onmessage");
-        /* const char *r = json_object_getstr(message, "request"); */
-        /* if (r == NULL) */
-        /*         r_warn("watchdog_onmessage: invalid message: empty request"); */
-        /* else if (rstreq(r, "state")) */
-        /*         app_set_state(message); */
-        /* else  */
-        /*         r_warn("watchdog_onmessage: unhandled message: %s", r); */
-}
-
-void watchdog_onidle()
-{
-        /* int err = apps_ask_state(); */
-        /* if (err != 0) { */
-        /*         set_error("ERR #000"); */
-        /*         return; */
-        /* } */
-        
-        /* clock_sleep(1); */
-
-        /* int apps_state = get_apps_state(); */
-        /* int panel_state = get_state(); */
-        
-        /* if (panel_state < 0) { */
-        /*         set_error("ERR #002"); */
-        /*         clock_sleep(1); */
-        /*         return; */
-        /* } */
-
-        /* if (apps_state != prev_apps_state) */
-        /*         r_info("Apps: %s", app_state_str[apps_state]); */
-        /* if (panel_state != prev_panel_state) */
-        /*         r_info("Panel: %s", panel_state_str[panel_state]); */
-        
-        /* prev_apps_state = apps_state; */
-        /* prev_panel_state = panel_state; */
-        
-        /* if (panel_state == PANEL_STATE_ERROR) { */
-        /*         clock_sleep(1); */
-        /*         return; */
-        /* } */
-        
-        /* if (panel_state == PANEL_STATE_SHUTTING_DOWN) { */
-        /*         shutdown_system(); */
-        /*         return; */
-        /* } */
-        
-        
-        /* if (apps_state == APP_STATE_ERROR) { */
-        /*         set_error("ERR #001"); */
-        /*         clock_sleep(1); */
-        /*         return; */
-        /* } */
-
-        /* if (panel_state == PANEL_STATE_STARTING_UP) { */
-        /*         if (apps_state == APP_STATE_INITIALIZED) { */
-                        
-        /*                 if (set_state(PANEL_STATE_POWERING_UP) != 0) */
-        /*                         set_error("ERR #003"); */
-                        
-        /*                 if (apps_power_up() != 0) */
-        /*                         set_error("ERR #005"); */
-                        
-        /*                 // Reduce the timeout */
-        /*                 timeout = 3.0; */
-        /*         } */
-                
-        /* } else if (panel_state == PANEL_STATE_POWERING_UP) { */
-        /*         if (apps_state == APP_STATE_POWERED_UP) { */
-                        
-        /*                 if (set_state(PANEL_STATE_ON) != 0) */
-        /*                         set_error("ERR #003"); */
-        /*         } */
-                
-        /* } */
+        json_object_t state = get_state();
+        if (!json_isnull(state)) {
+                analyse_state(state);
+                json_unref(state);
+        }
+        clock_sleep(1.0);
 }
