@@ -543,8 +543,8 @@ int script_engine_init(int argc, char **argv)
         if (mutex == NULL)
                 return -1;
         
-        if (argc == 3) {
-                if (set_script_path(argv[2]) != 0)
+        if (argc == 2) {
+                if (set_script_path(argv[1]) != 0)
                         return -1;
         }
         
