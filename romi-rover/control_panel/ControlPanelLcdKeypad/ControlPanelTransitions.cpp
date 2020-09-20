@@ -101,6 +101,12 @@ void ShowMenu::doTransition(unsigned long t)
         displayMenu();
 }
 
+void HideMenu::doTransition(unsigned long t)
+{
+        displayState();
+        hideMenu();
+}
+
 void NextMenuItem::doTransition(unsigned long t)
 {
         displayState();        
@@ -119,12 +125,6 @@ void SendingMenuItem::doTransition(unsigned long t)
 {
         displayState();
         setTimer(t + 5000, EVENT_ACTION_TIMEOUT);
-}
-
-void CancelMenuItem::doTransition(unsigned long t)
-{
-        displayState();
-        hideMenu();
 }
 
 void SentMenuItem::doTransition(unsigned long t)

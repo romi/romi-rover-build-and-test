@@ -80,9 +80,9 @@ class PowerUp : public ControlPanelTransition
 public:
         // The power up event is sent by the control software when
         // the controllers are initialized and ready to go.
-        PowerUp(ControlPanel *controlPanel)
+        PowerUp(ControlPanel *controlPanel, int8_t from)
                 : ControlPanelTransition(controlPanel,
-                                         STATE_STARTING_UP,
+                                         from,
                                          EVENT_POWERUP,
                                          STATE_ON) {}
                 
@@ -182,6 +182,8 @@ public:
                                          STATE_MENU,
                                          EVENT_MENU_PRESSED,
                                          STATE_ON) {}
+        
+        void doTransition(unsigned long t) override;
 };
 
 class NextMenuItem : public ControlPanelTransition
@@ -238,8 +240,6 @@ public:
                                          STATE_CONFIRM,
                                          EVENT_MENU_PRESSED,
                                          STATE_MENU) {}
-        
-        void doTransition(unsigned long t) override;
 };
 
 class SentMenuItem : public ControlPanelTransition

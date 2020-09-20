@@ -60,7 +60,8 @@ protected:
         // State transitions
         Ready _ready;
         StartUp _startUp;
-        PowerUp _powerUp;
+        PowerUp _powerUpFromStartingUp;
+        PowerUp _powerUpFromOff;
         IgnorePowerUpWhenOn _ignorePowerUp;
         Shutdown _shutdownFromSoftware;
         Shutdown _shutdownFromControlPanel;
@@ -81,7 +82,8 @@ protected:
         {
                 _stateMachine.add(&_ready);
                 _stateMachine.add(&_startUp);
-                _stateMachine.add(&_powerUp);
+                _stateMachine.add(&_powerUpFromStartingUp);
+                _stateMachine.add(&_powerUpFromOff);
                 _stateMachine.add(&_ignorePowerUp);
                 _stateMachine.add(&_shutdownFromSoftware);
                 _stateMachine.add(&_shutdownFromControlPanel);
@@ -120,7 +122,8 @@ public:
                 _parser("M", "01S?"),
                 _ready(this),
                 _startUp(this),
-                _powerUp(this),
+                _powerUpFromStartingUp(this, STATE_STARTING_UP),
+                _powerUpFromOff(this, STATE_OFF),
                 _ignorePowerUp(this),
                 _shutdownFromSoftware(this, EVENT_SHUTDOWN),
                 _shutdownFromControlPanel(this, EVENT_ONOFF_HELD),
