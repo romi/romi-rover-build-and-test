@@ -34,15 +34,63 @@ protected:
         int _currentState;
         IStateTransition *_transitions[MAX_TRANSITIONS];
         int8_t _length;
+
+        int doTransition(IStateTransition *transition, unsigned long t) {
+                transition->doTransition(t);
+                _currentState = transition->nextState();
+                return OK;
+        }
+        
+        int tryTransition(int16_t event, unsigned long t) {
+                int r = Ignored;
+                for (int i = 0; i < _length; i++) {
+                        IStateTransition *transition = _transitions[i];
+                        if (transition->state() == _currentState
+                            && transition->event() == event) {
+                                r = doTransition(transition, t);
+                                break;
+                        }
+                }
+                return r;
+        }
+        
+        int tryCatchAllTransition(int16_t event, unsigned long t) {
+                int r = Ignored;
+                for (int i = 0; i < _length; i++) {
+                        IStateTransition *transition = _transitions[i];
+                        if (transition->state() == ALL_STATES
+                            && transition->event() == event) {
+                                r = doTransition(transition, t);
+                                break;
+                        }
+                }
+                return r;
+        }
         
 public:
         
         StateMachine() : _currentState(STATE_START), _length(0) {}
         virtual ~StateMachine() {}
 
-        int getState() override;
-        void add(IStateTransition *transition) override;
-        int handleEvent(int16_t event, unsigned long t) override;
+        int getState() override {
+                return _currentState;
+        }
+        
+        void add(IStateTransition *transition) override {
+                // FIXME: what happens if _length >= MAX_TRANSITIONS ?!
+                if (transition != 0 && _length < MAX_TRANSITIONS) {
+                        _transitions[_length++] = transition;
+                } 
+        }
+
+        
+        int handleEvent(int16_t event, unsigned long t) override {
+                int r = tryTransition(event, t);
+                if (r == Ignored)
+                        r = tryCatchAllTransition(event, t);
+                return r;
+        }
+
 };
 
 #endif // __STATE_MACHINE_H

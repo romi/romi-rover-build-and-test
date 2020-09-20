@@ -106,11 +106,11 @@ public:
         
         virtual void previousMenuItem() {
                 int cur = _current - 1;
-                if (cur <= 0)
+                if (cur < 0)
                         cur = MAX_MENU_ITEMS - 1;
                 while (!_items[cur].hasName()) {
                         cur--;
-                        if (cur <= 0)
+                        if (cur < 0)
                                 cur = MAX_MENU_ITEMS - 1;
                         if (cur == _current)
                                 break;

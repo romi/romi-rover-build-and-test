@@ -39,6 +39,8 @@ public:
 
         virtual int getState() = 0;
         virtual void add(IStateTransition *transition) = 0;
+
+        // Returns OK if a transition was found, or Ignored otherwise.
         virtual int handleEvent(int16_t event, unsigned long t) = 0;
 };
 

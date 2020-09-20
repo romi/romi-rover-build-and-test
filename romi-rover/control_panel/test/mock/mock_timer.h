@@ -7,7 +7,7 @@
 class MockTimer : public IEventTimer
 {
 public:
-        MOCK_METHOD(void, setTimeout, (unsigned long milliseconds, int event));
+        MOCK_METHOD(void, setTimeout, (unsigned long milliseconds, int16_t event));
         MOCK_METHOD(int16_t, update, (unsigned long t));
 };
 

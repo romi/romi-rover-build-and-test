@@ -29,22 +29,22 @@
 class EventTimer : public IEventTimer
 {
 protected:
-        int _enabled;
-        int _event;
+        bool _enabled;
+        int16_t _event;
         unsigned long _timeout;
 
 public:
-        EventTimer() : _enabled(0), _event(0), _timeout(0) {}
+        EventTimer() : _enabled(false), _event(EventTimerNoEvent), _timeout(0) {}
 
-        void setTimeout(unsigned long milliseconds, int event) override {
-                _enabled = 1;
+        void setTimeout(unsigned long milliseconds, int16_t event) override {
+                _enabled = true;
                 _timeout = milliseconds;
                 _event = event;
         }
         
         int16_t update(unsigned long t) override {
-                int r = -1;
-                if (_enabled && t > _timeout) {
+                int r = EventTimerNoEvent;
+                if (_enabled && t >= _timeout) {
                         r = _event;
                         _enabled = 0;
                 }

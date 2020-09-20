@@ -24,10 +24,13 @@
 #ifndef __I_EVENT_TIMER_H
 #define __I_EVENT_TIMER_H
 
+#define EventTimerNoEvent -1
+
 class IEventTimer
 {
 public:
-        virtual void setTimeout(unsigned long milliseconds, int event) = 0;
+        
+        virtual void setTimeout(unsigned long milliseconds, int16_t event) = 0;
 
         // Returns the event number (>=0) if the timer timed out, or
         // -1 otherwise
