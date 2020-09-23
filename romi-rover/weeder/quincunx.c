@@ -111,8 +111,6 @@ static void store_svg(fileset_t *fileset,
                 return;
         
         membuf_t *buffer = new_membuf();
-        if (buffer == NULL)
-                return;
         
         membuf_printf(buffer,
                       ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
@@ -130,6 +128,7 @@ static void store_svg(fileset_t *fileset,
         membuf_printf(buffer, "</svg>\n");
 
         file_import_svg(file, membuf_data(buffer), membuf_len(buffer));
+        delete_membuf(buffer);
 }
 
 static void store_quincunx_metadata(fileset_t *fileset, quincunx_module_t *module, double duration)
@@ -297,11 +296,14 @@ static image_t *compute_convolution(fileset_t *fileset, image_t *image, int w, f
                 corr_avg /= (corr->width * corr->height);
                 *avg = corr_avg;
 
-                image_t *im = image_clone(corr);
-                int len = im->width * im->height;
-                for (int i = 0; i < len; i++)
-                        im->data[i] /= corr_max;
-                store_png(fileset, "position-probability-map", im);
+                {
+                        image_t *im = image_clone(corr);
+                        int len = im->width * im->height;
+                        for (int i = 0; i < len; i++)
+                                im->data[i] /= corr_max;
+                        store_png(fileset, "position-probability-map", im);
+                        delete_image(im);
+                }
         } else {
                 corr = image_clone(image);
         }
