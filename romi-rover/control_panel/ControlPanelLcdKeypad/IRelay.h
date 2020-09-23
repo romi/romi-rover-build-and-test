@@ -22,20 +22,15 @@
 
  */
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#ifndef __IRELAY_H
+#define __IRELAY_H
 
-#include <stdint.h>
-
-class IArduino
+class IRelay
 {
 public:
-        virtual ~IArduino() = default;
-
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        virtual ~IRelay() {}        
+        virtual void open() = 0;
+        virtual void close() = 0;
 };
 
-#endif // __IARDUINO_H
+#endif // __IRELAY_H

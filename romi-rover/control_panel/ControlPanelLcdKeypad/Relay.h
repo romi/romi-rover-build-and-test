@@ -21,34 +21,41 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __STATE_TRANSITION_H
-#define __STATE_TRANSITION_H
 
-#include "IStateTransition.h"
+#ifndef __RELAY_H
+#define __RELAY_H
 
-class StateTransition : public IStateTransition
+#include "IArduino.h" 
+#include "IRelay.h" 
+#include "ArduinoConstants.h" 
+
+class Relay : public IRelay
 {
 protected:
-        int8_t _from;
-        int16_t _event;
-        int8_t _to;
-
+        IArduino *_arduino;
+        uint8_t _pin;
+        
 public:
-        StateTransition(int8_t from, int16_t event, int8_t to)
-                : _from(from), _event(event), _to(to) {}
-        virtual ~StateTransition() {}
-                
-        int16_t event() override {
-                return _event;
+        Relay(IArduino *arduino, uint8_t pin) : _arduino(arduino), _pin(pin) {
+                _arduino->pinMode(_pin, OUTPUT);
+                open();
         }
         
-        int8_t state() override {
-                return _from;
+        virtual ~Relay() {
+                open();
+        }
+
+        // "open" means that the "Normally Open" pin (NO) on the relay
+        // will be connected after this operation.
+        virtual void open() override {
+                _arduino->digitalWrite(_pin, LOW);
         }
         
-        int8_t nextState() override {
-                return _to;
+        // "close" means that the "Normally Closed" pin (NC) on the
+        // relay will be connected after this operation.
+        virtual void close() override {
+                _arduino->digitalWrite(_pin, HIGH);
         }
 };
 
-#endif // __STATE_TRANSITION_H
+#endif // __RELAY_H

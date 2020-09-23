@@ -21,34 +21,42 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __STATE_TRANSITION_H
-#define __STATE_TRANSITION_H
 
-#include "IStateTransition.h"
+#include <Arduino.h>
+#include "IInputStream.h"
+#include "IOutputStream.h"
 
-class StateTransition : public IStateTransition
+#ifndef __ARDUINO_SERIAL_H
+#define __ARDUINO_SERIAL_H
+
+class ArduinoSerial : public IInputStream, public IOutputStream
 {
-protected:
-        int8_t _from;
-        int16_t _event;
-        int8_t _to;
-
 public:
-        StateTransition(int8_t from, int16_t event, int8_t to)
-                : _from(from), _event(event), _to(to) {}
-        virtual ~StateTransition() {}
-                
-        int16_t event() override {
-                return _event;
+        ArduinoSerial() {}
+        
+        virtual ~ArduinoSerial() {}
+
+        void init(long baudrate) {
+                Serial.begin(baudrate);
+                while (!Serial)
+                        ;
         }
         
-        int8_t state() override {
-                return _from;
+        virtual int available() override {
+                return Serial.available();
         }
         
-        int8_t nextState() override {
-                return _to;
+        virtual int read() override {
+                return Serial.read();
+        }
+        
+        virtual void print(const char *s) override {
+                Serial.print(s);
+        }
+        
+        virtual void println(const char *s) override {
+                Serial.println(s);
         }
 };
 
-#endif // __STATE_TRANSITION_H
+#endif // __ARDUINO_SERIAL_H

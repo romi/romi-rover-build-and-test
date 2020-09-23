@@ -21,21 +21,22 @@
   <http://www.gnu.org/licenses/>.
 
  */
-
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#ifndef __IBUTTON_PANEL_H
+#define __IBUTTON_PANEL_H
 
 #include <stdint.h>
+#include "IStateMachine.h"
 
-class IArduino
+#define BUTTON_PRESSED 0x01
+#define BUTTON_HELD    0x02
+
+class IButtonPanel
 {
 public:
-        virtual ~IArduino() = default;
+        virtual ~IButtonPanel() {}
 
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        // Update sends button events to the state machine.
+        virtual void update(IStateMachine *stateMachine, unsigned long t) = 0;
 };
 
-#endif // __IARDUINO_H
+#endif // __IBUTTON_PANEL_H

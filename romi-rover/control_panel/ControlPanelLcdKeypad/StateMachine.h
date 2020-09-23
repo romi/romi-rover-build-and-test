@@ -26,27 +26,71 @@
 
 #include "IStateMachine.h"
 
-#define MAX_TRANSITIONS 64
+#define MAX_TRANSITIONS 32
 
 class StateMachine : public IStateMachine
 {
 protected:
         int _currentState;
-        int _error;
         IStateTransition *_transitions[MAX_TRANSITIONS];
-        int _length;
+        int8_t _length;
+
+        int doTransition(IStateTransition *transition, unsigned long t) {
+                transition->doTransition(t);
+                _currentState = transition->nextState();
+                return OK;
+        }
+        
+        int tryTransition(int16_t event, unsigned long t) {
+                int r = Ignored;
+                for (int i = 0; i < _length; i++) {
+                        IStateTransition *transition = _transitions[i];
+                        if (transition->state() == _currentState
+                            && transition->event() == event) {
+                                r = doTransition(transition, t);
+                                break;
+                        }
+                }
+                return r;
+        }
+        
+        int tryCatchAllTransition(int16_t event, unsigned long t) {
+                int r = Ignored;
+                for (int i = 0; i < _length; i++) {
+                        IStateTransition *transition = _transitions[i];
+                        if (transition->state() == ALL_STATES
+                            && transition->event() == event) {
+                                r = doTransition(transition, t);
+                                break;
+                        }
+                }
+                return r;
+        }
         
 public:
         
-        StateMachine() : _currentState(0), _error(0), _length(0) {}
+        StateMachine() : _currentState(STATE_START), _length(0) {}
         virtual ~StateMachine() {}
 
-        int getState() override;
-        void setError(int error) override;
-        int getError() override;
-        int countTransitions() override;
-        void add(IStateTransition *transition) override;
-        int handleEvent(int event) override;
+        int getState() override {
+                return _currentState;
+        }
+        
+        void add(IStateTransition *transition) override {
+                // FIXME: what happens if _length >= MAX_TRANSITIONS ?!
+                if (transition != 0 && _length < MAX_TRANSITIONS) {
+                        _transitions[_length++] = transition;
+                } 
+        }
+
+        
+        int handleEvent(int16_t event, unsigned long t) override {
+                int r = tryTransition(event, t);
+                if (r == Ignored)
+                        r = tryCatchAllTransition(event, t);
+                return r;
+        }
+
 };
 
 #endif // __STATE_MACHINE_H

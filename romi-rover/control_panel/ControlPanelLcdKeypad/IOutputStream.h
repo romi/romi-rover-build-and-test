@@ -22,20 +22,15 @@
 
  */
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#ifndef __IOUTPUTSTREAM_H
+#define __IOUTPUTSTREAM_H
 
-#include <stdint.h>
-
-class IArduino
+class IOutputStream
 {
 public:
-        virtual ~IArduino() = default;
-
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        virtual ~IOutputStream() {}        
+        virtual void print(const char *s) = 0;
+        virtual void println(const char *s) = 0;
 };
 
-#endif // __IARDUINO_H
+#endif // __IOUTPUTSTREAM_H

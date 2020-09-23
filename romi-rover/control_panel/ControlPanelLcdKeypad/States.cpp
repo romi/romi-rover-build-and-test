@@ -22,20 +22,25 @@
 
  */
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#include "IStateMachine.h"
+#include "States.h"
 
-#include <stdint.h>
-
-class IArduino
-{
-public:
-        virtual ~IArduino() = default;
-
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+static const char *_stateStrings[] = {
+        STATE_ERROR_STR,
+        STATE_START_STR,
+        STATE_OFF_STR,
+        STATE_STARTING_UP_STR,
+        STATE_SHUTTING_DOWN_STR,
+        STATE_ON_STR,
+        STATE_MENU_STR,
+        STATE_CONFIRM_STR,
+        STATE_SENDING_STR
 };
 
-#endif // __IARDUINO_H
+const char* getStateString(int state)
+{
+        if (state >= 0 && state < STATE_LAST) 
+                return _stateStrings[state];
+        else
+                return "?";
+}

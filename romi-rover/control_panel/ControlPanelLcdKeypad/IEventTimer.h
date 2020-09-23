@@ -21,21 +21,20 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#ifndef __I_EVENT_TIMER_H
+#define __I_EVENT_TIMER_H
 
-#ifndef __IARDUINO_H
-#define __IARDUINO_H
+#define EventTimerNoEvent -1
 
-#include <stdint.h>
-
-class IArduino
+class IEventTimer
 {
 public:
-        virtual ~IArduino() = default;
+        
+        virtual void setTimeout(unsigned long milliseconds, int16_t event) = 0;
 
-        virtual unsigned long millis() = 0;
-        virtual int analogRead(int pin) = 0;
-        virtual void digitalWrite(int pin, int high_low) = 0;
-        virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
+        // Returns the event number (>=0) if the timer timed out, or
+        // -1 otherwise
+        virtual int16_t update(unsigned long t) = 0;
 };
 
-#endif // __IARDUINO_H
+#endif // __I_EVENT_TIMER_H

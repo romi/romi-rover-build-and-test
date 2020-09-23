@@ -22,231 +22,294 @@
 
  */
 #include <string.h>
-#include <HardwareSerial.h>
 #include "Parser.h"
 
 enum parser_state_t {
         wait_opcode = 0,
-        wait_bracket_sign_digit_or_quote = 1,
-        wait_sign_or_digit_scalar = 2,
-        wait_sign_or_digit_vector = 3,
+        wait_bracket_or_minus_or_digit_or_quote = 1,
+        wait_minus_or_digit_scalar = 2,
+        wait_minus_digit_or_quote_vector = 3,
         wait_digit_scalar = 4,
         wait_digit_vector = 5,
-        wait_digits_or_separator = 6,
-        wait_digits_comma_or_bracket = 7,
-        wait_separator = 8,
-        wait_text_or_quote = 9
+        wait_digits_or_cr = 6,
+        wait_digits_or_comma_or_bracket = 7,
+        wait_carriage_return = 8,
+        wait_opcode_or_linefeed = 9,
+        wait_single_string = 10,
+        wait_string_in_vector = 11,
+        wait_comma_or_bracket = 12
 };
 
-#define SIGN(_c)             ((_c) == '-')
-#define DIGIT(_c)            ((_c) >= '0' && (_c) <= '9')
-#define OPENBRACKET(_c)      ((_c) == '[')
-#define CLOSEBRACKET(_c)     ((_c) == ']')
-#define SEPARATOR(_c)        ((_c) == ' ' || (_c) == '\n' || (_c) == '\r')
-#define COMMA(_c)            ((_c) == ',')
-#define VALUE(_c)            ((int)((_c) - '0'))
-#define OPCODE_W_VALUE(_c)   (strchr(_opcodesWithValue, (_c)) != NULL)
-#define OPCODE_WO_VALUE(_c)  (strchr(_opcodesWithoutValue, (_c)) != NULL)
+#define MINUS(_c)             ((_c) == '-')
 #define QUOTE(_c)             ((_c) == '"')
+#define DIGIT(_c)             ((_c) >= '0' && (_c) <= '9')
+#define OPENBRACKET(_c)       ((_c) == '[')
+#define CLOSEBRACKET(_c)      ((_c) == ']')
+#define LINEFEED(_c)          ((_c) == '\n')
+#define CARRIAGE_RETURN(_c)   ((_c) == '\r')
+#define COMMA(_c)             ((_c) == ',')
+#define VALUE(_c)             ((int)((_c) - '0'))
+#define OPCODE_W_VALUE(_c)    (strchr(_opcodesWithValue, (_c)) != NULL)
+#define OPCODE_WO_VALUE(_c)   (strchr(_opcodesWithoutValue, (_c)) != NULL)
+#define VALID_STRING_CHAR(_c) (('a' <= (_c) && (_c) <= 'z') \
+                               || ('A' <= (_c) && (_c) <= 'Z') \
+                               || ('0' <= (_c) && (_c) <= '9') \
+                               || strchr("-_ !?%#()[]{}&=+*/.,;:", (_c)) != NULL)
+
+void Parser::set_error(char what)
+{
+        _state = wait_opcode;
+        _error = what;
+        _length = 0;
+        _opcode = 0;
+        _has_string = 0;
+}
+
+int Parser::append_char(char c)
+{
+        int r = -1;
+        if (VALID_STRING_CHAR(c)) {
+                if (_string_length < 31) {
+                        _string[_string_length] = c;
+                        // Assure that the buffer is always zero-terminted
+                        _string[_string_length+1] = 0;
+                        _string_length++;
+                        r = 0;
+                } else {
+                        set_error(parser_string_too_long);
+                        r = -1;
+                }
+        } else {
+                set_error(parser_invalid_string);
+                r = -1;
+        }
+        return r;
+}
+
+void Parser::init_value(char c, int16_t sign)
+{
+        _tmpval = VALUE(c);
+        _sign = sign;
+}
+
+int Parser::append_value(int32_t v)
+{
+        int r = -1;
+        if (_length < 32) {
+                _value[_length++] = v;
+                r = 0;
+        } else {
+                set_error(parser_vector_too_long);
+                r = -1;
+        }
+        return r;
+}
+
+int Parser::append_digit(char c)
+{
+        int r = 0;
+        _tmpval = 10 * _tmpval + _sign * VALUE(c);
+        if (_tmpval > 32767 || _tmpval < -32768) {
+                set_error(parser_value_out_of_range);
+                r = -1;
+        }
+        return r;
+}
+
+void Parser::reset_values()
+{
+        _length = 0;
+        unsigned int n = sizeof(_value) / sizeof(int16_t);
+        for (unsigned int i = 0; i < n; i++)
+                _value[i] = 0;
+}
+
+void Parser::reset_string()
+{
+        _has_string = 0;
+        _string_length = 0;
+        for (unsigned int i = 0; i < sizeof(_string); i++)
+                _string[i] = 0;
+}
+
+void Parser::reset()
+{
+        _state = wait_opcode;
+        _error = parser_error_none;
+        _opcode = 0;
+        reset_values();
+        reset_string();
+}
 
 bool Parser::process(char c)
 {
+        bool r = false;
+        
         switch(_state) {
         case wait_opcode:
-                //Serial.print("(wait_opcode,'"); Serial.print(c); Serial.print("')=");
                 if (OPCODE_W_VALUE(c)) {
+                        reset();
                         _opcode = c;
-                        _length = 0;
-                        _textlen = 0;
-                        _text[0] = '\0';
-                        _state = wait_bracket_sign_digit_or_quote;
-                        //Serial.println("wait_bracket_sign_digit_or_quote");
-                        return false;
+                        _state = wait_bracket_or_minus_or_digit_or_quote;
                 } else if (OPCODE_WO_VALUE(c)) {
+                        reset();
                         _opcode = c;
-                        _length = 0;
-                        _textlen = 0;
-                        _text[0] = '\0';
-                        _state = wait_separator;
-                        //Serial.println("wait_separator");
-                        return false;
+                        _state = wait_carriage_return;
                 } else {
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return false;
+                        set_error(parser_unexpected_char);
                 }
                 break;
-        case wait_separator:
-                //Serial.print("(wait_separator,'"); Serial.print(c); Serial.print("')=");
-                if (SEPARATOR(c)) {
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return true;
+                
+        case wait_opcode_or_linefeed:
+                if (LINEFEED(c)) {
+                        // The command was terminated by \r\n
+                        _state = wait_opcode; 
                 } else {
+                        // The command was terminated by \r. The new
+                        // character belongs to the next command. Call
+                        // process again with the proper state.
                         _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return false;
+                        process(c);
                 }
                 break;
-        case wait_bracket_sign_digit_or_quote:
-                //Serial.print("(wait_bracket_sign_digit_or_quote,'"); Serial.print(c); Serial.print("')=");
+                
+        case wait_carriage_return:
+                if (CARRIAGE_RETURN(c)) {
+                        // The command may be terminated by \n, or by \r\n
+                        _state = wait_opcode_or_linefeed;
+                        r = true; 
+                } else if (LINEFEED(c)) {
+                        _state = wait_opcode;
+                        r = true; // The command was terminated by \n
+                } else {
+                        set_error(parser_unexpected_char);
+                }
+                break;
+
+        case wait_bracket_or_minus_or_digit_or_quote:
                 if (OPENBRACKET(c)) {
-                        _tmpval = 0;
-                        _sign = -1;
-                        _state = wait_sign_or_digit_vector;
-                        //Serial.println("wait_sign_or_digit_vector");
-                        return false;
-                } else if (SIGN(c)) {
-                        _tmpval = 0;
-                        _sign = -1;
+                        _state = wait_minus_digit_or_quote_vector;
+              } else if (MINUS(c)) {
+                        init_value('0', -1);
                         _state = wait_digit_scalar;
-                        //Serial.println("wait_digit_scalar");
-                        return false;
                 } else if (DIGIT(c)) {
-                        _tmpval = VALUE(c);
-                        _sign = 1;
-                        _state = wait_digits_or_separator;
-                        //Serial.println("wait_digits_or_separator");
-                        return false;
+                        init_value(c, 1);
+                        _state = wait_digits_or_cr;
                 } else if (QUOTE(c)) {
-                        _state = wait_text_or_quote;
-                        _textlen = 0;
-                        //Serial.println("wait_text_or_quote");
-                        return false;
+                        reset_string();
+                        _state = wait_single_string;
                 } else {
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return false;
+                        set_error(parser_unexpected_char);
                 }
                 break;
-        case wait_sign_or_digit_scalar:
-                //Serial.print("(wait_sign_or_digit_scalar,'"); Serial.print(c); Serial.print("')=");
-                if (SIGN(c)) {
-                        _tmpval = 0;
-                        _sign = -1;
+                
+        case wait_minus_or_digit_scalar:
+                if (MINUS(c)) {
+                        init_value('0', -1);
                         _state = wait_digit_scalar;
-                        //Serial.println("wait_digit_scalar");
-                        return false;
                 } else if (DIGIT(c)) {
-                        _tmpval = VALUE(c);
-                        _sign = 1;
-                        _state = wait_digits_or_separator;
-                        //Serial.println("wait_digits_or_separator");
-                        return false;
+                        init_value(c, 1);
+                        _state = wait_digits_or_cr;
                 } else {
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return false;
+                        set_error(parser_unexpected_char);
                 }
                 break;
+                
         case wait_digit_scalar:
-                //Serial.print("(wait_digit_scalar,'"); Serial.print(c); Serial.print("')=");
                 if (DIGIT(c)) {
-                        _tmpval = _sign * VALUE(c);
-                        _state = wait_digits_or_separator;
-                        //Serial.println("wait_digits_or_separator");
-                        return false;
+                        if (append_digit(c) == 0)
+                                _state = wait_digits_or_cr;
                 } else {
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return false;
+                        set_error(parser_unexpected_char);
                 }
                 break;
-        case wait_digits_or_separator:
-                //Serial.print("(wait_digits_or_separator,'"); Serial.print(c); Serial.print("')=");
+                
+        case wait_digits_or_cr:
                 if (DIGIT(c)) {
-                        _tmpval = 10 * _tmpval + _sign * VALUE(c);
-                        _state = wait_digits_or_separator;
-                        //Serial.println("wait_digits_or_separator");
-                        return false;
-                } else if (SEPARATOR(c)) {
-                        _value[0] = _tmpval;
-                        _length = 1;
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return true;
+                        if (append_digit(c) == 0)
+                                _state = wait_digits_or_cr;
+                } else if (CARRIAGE_RETURN(c)) {
+                        if (append_value(_tmpval) == 0)
+                                _state = wait_opcode_or_linefeed;
+                        r = true;
+                } else if (LINEFEED(c)) {
+                        if (append_value(_tmpval) == 0)
+                                _state = wait_opcode;
+                        r = true;
                 } else {
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return false;
+                        set_error(parser_unexpected_char);
                 }
                 break;
-        case wait_sign_or_digit_vector:
-                //Serial.print("(wait_sign_or_digit_vector,'"); Serial.print(c); Serial.print("')=");
-                if (SIGN(c)) {
-                        _tmpval = 0;
-                        _sign = -1;
+                
+        case wait_minus_digit_or_quote_vector:
+                if (MINUS(c)) {
+                        init_value('0', -1);
                         _state = wait_digit_vector;
-                        //Serial.println("wait_digit_vector");
-                        return false;
                 } else if (DIGIT(c)) {
-                        _tmpval = VALUE(c);
-                        _sign = 1;
-                        _state = wait_digits_comma_or_bracket;
-                        //Serial.println("wait_digits_comma_or_bracket");
-                        return false;
+                        init_value(c, 1);
+                        _state = wait_digits_or_comma_or_bracket;
+                } else if (QUOTE(c)) {
+                        reset_string();
+                        _state = wait_string_in_vector;
                 } else {
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return false;
+                        set_error(parser_unexpected_char);
                 }
                 break;
+                
         case wait_digit_vector:
-                //Serial.print("(wait_digit_vector,'"); Serial.print(c); Serial.print("')=");
                 if (DIGIT(c)) {
-                        _tmpval = _sign * VALUE(c);
-                        _state = wait_digits_comma_or_bracket;
-                        //Serial.println("wait_digits_comma_or_bracket");
-                        return false;
+                        if (append_digit(c) == 0)
+                                _state = wait_digits_or_comma_or_bracket;
                 } else {
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return false;
+                        set_error(parser_unexpected_char);
                 }
                 break;
-        case wait_digits_comma_or_bracket:
-                //Serial.print("(wait_digits_comma_or_bracket,'"); Serial.print(c); Serial.print("')=");
+                
+        case wait_digits_or_comma_or_bracket:
                 if (DIGIT(c)) {
-                        _tmpval = 10 * _tmpval + _sign * VALUE(c);
-                        _state = wait_digits_comma_or_bracket;
-                        //Serial.println("wait_digits_comma_or_bracket");
-                        return false;
+                        if (append_digit(c) == 0)
+                                _state = wait_digits_or_comma_or_bracket;
                 } else if (COMMA(c)) {
-                        if (_length < 32)
-                                _value[_length++] = _tmpval;
-                        _state = wait_sign_or_digit_vector;
-                        //Serial.println("wait_sign_or_digit_vector");
-                        return false;
+                        if (append_value(_tmpval) == 0)
+                                _state = wait_minus_digit_or_quote_vector;
                 } else if (CLOSEBRACKET(c)) {
-                        if (_length < 32)
-                                _value[_length++] = _tmpval;
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return true;
+                        if (append_value(_tmpval) == 0)
+                                _state = wait_carriage_return;
                 } else {
-                        _state = wait_opcode;
-                        //Serial.println("wait_opcode");
-                        return false;
+                        set_error(parser_unexpected_char);
                 }
                 break;
-        case wait_text_or_quote:
-                //Serial.print("(wait_text_or_quote,'"); Serial.print(c); Serial.print("')=");
+                
+        case wait_single_string:
                 if (QUOTE(c)) {
-                        //Serial.println("wait_opcode");
-                        _state = wait_opcode;
-                        if (_textlen < sizeof(_text))
-                                _text[_textlen] = '\0';
-                        else
-                                _text[sizeof(_text)-1] = '\0';                        
-                        //Serial.println(_text);
-                        return true;
+                        _has_string = 1;
+                        _state = wait_carriage_return;                        
                 } else {
-                        //Serial.println("wait_text_or_quote");
-                        if (_textlen < sizeof(_text))
-                                _text[_textlen++] = c;
+                        if (append_char(c) != 0) 
+                                _state = wait_opcode;
+                } 
+                break;
+                
+        case wait_string_in_vector:
+                if (QUOTE(c)) {
+                        _has_string = 1;
+                        _state = wait_comma_or_bracket;                        
+                } else {
+                        if (append_char(c) != 0)
+                                _state = wait_opcode;                                
                 }
                 break;
-        default:
-                return false;
+                
+        case wait_comma_or_bracket:
+                if (COMMA(c)) {
+                        _state = wait_minus_digit_or_quote_vector;                        
+                } else if (CLOSEBRACKET(c)) {
+                        _state = wait_carriage_return;                        
+                } else {
+                        append_char(c);
+                }
+                break;
         }
+
+        return r;
 }

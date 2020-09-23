@@ -30,8 +30,8 @@
 
 #define HIGH 0x1
 #define LOW  0x0
-#define PIN_RELAY1 1
-#define PIN_RELAY2 2
+#define A1 101
+#define A2 102
 #endif
 
 #endif // __ARDUINO_CONSTANTS_H

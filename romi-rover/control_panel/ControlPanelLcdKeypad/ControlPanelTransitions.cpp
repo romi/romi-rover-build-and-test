@@ -22,40 +22,121 @@
 
  */
 #include "ControlPanelTransitions.h"
+#include "ControlPanel.h"
 #include "pins.h"
+#include <stdio.h>
 
-int StartUp::doTransition()
+void ControlPanelTransition::displayState()
 {
-        _arduino->digitalWrite(PIN_RELAY1, HIGH);
-        _arduino->digitalWrite(PIN_RELAY2, LOW);
-        return 0;
+        _controlPanel->display()->showState(getStateString(_to));
+}
+        
+void ControlPanelTransition::displayMenu()
+{
+        const char *s = _controlPanel->menu()->currentMenuItemName();
+        _controlPanel->display()->showMenu(s);
 }
 
-int PowerUp::doTransition()
+void ControlPanelTransition::hideMenu()
 {
-        _arduino->digitalWrite(PIN_RELAY1, HIGH);
-        _arduino->digitalWrite(PIN_RELAY2, HIGH);
-        return 0;
+        _controlPanel->display()->clearMenu();
 }
 
-int Shutdown::doTransition()
+void ControlPanelTransition::setTimer(unsigned long when, int event)
 {
-        _arduino->digitalWrite(PIN_RELAY1, HIGH);
-        _arduino->digitalWrite(PIN_RELAY2, LOW);
-        _timer->setTimeout(5000, EVENT_POWERDOWN);
-        return 0;
+        _controlPanel->timer()->setTimeout(when, event);
 }
 
-int SoftPowerDown::doTransition()
+void ControlPanelTransition::doTransition(unsigned long t)
 {
-        _arduino->digitalWrite(PIN_RELAY1, LOW);
-        _arduino->digitalWrite(PIN_RELAY2, LOW);
-        return 0;
+        displayState();
 }
 
-int HardPowerDown::doTransition()
+void Ready::doTransition(unsigned long t)
 {
-        _arduino->digitalWrite(PIN_RELAY1, LOW);
-        _arduino->digitalWrite(PIN_RELAY2, LOW);
-        return 0;
+        displayState();
+        hideMenu();
 }
+
+void StartUp::doTransition(unsigned long t)
+{
+        displayState();
+        _controlPanel->controlRelay()->close();
+        _controlPanel->powerRelay()->open();
+}
+
+void PowerUp::doTransition(unsigned long t)
+{
+        displayState();
+        _controlPanel->controlRelay()->close();
+        _controlPanel->powerRelay()->close();
+}
+
+void Shutdown::doTransition(unsigned long t)
+{
+        displayState();
+        _controlPanel->controlRelay()->close();
+        _controlPanel->powerRelay()->open();
+        setTimer(t + 7000, EVENT_POWERDOWN);
+}
+
+void SoftPowerDown::doTransition(unsigned long t)
+{
+        displayState();
+        _controlPanel->controlRelay()->open();
+        _controlPanel->powerRelay()->open();
+}
+
+void HardPowerDown::doTransition(unsigned long t)
+{
+        displayState();
+        _controlPanel->controlRelay()->open();
+        _controlPanel->powerRelay()->open();
+}
+
+void ShowMenu::doTransition(unsigned long t)
+{
+        displayState();
+        _controlPanel->menu()->firstMenuItem();
+        displayMenu();
+}
+
+void HideMenu::doTransition(unsigned long t)
+{
+        displayState();
+        hideMenu();
+}
+
+void NextMenuItem::doTransition(unsigned long t)
+{
+        displayState();        
+        _controlPanel->menu()->nextMenuItem();
+        displayMenu();
+}
+
+void PreviousMenuItem::doTransition(unsigned long t)
+{
+        displayState();
+        _controlPanel->menu()->nextMenuItem();
+        displayMenu();
+}
+
+void SendingMenuItem::doTransition(unsigned long t)
+{
+        displayState();
+        setTimer(t + 5000, EVENT_ACTION_TIMEOUT);
+}
+
+void SentMenuItem::doTransition(unsigned long t)
+{
+        displayState();
+        hideMenu();
+}
+
+void TimeoutMenuItem::doTransition(unsigned long t)
+{
+        displayState();
+        hideMenu();
+}
+
+

@@ -1,7 +1,7 @@
 /*
   romi-rover
 
-  Copyright (C) 2019-2020 Sony Computer Science Laboratories
+  Copyright (C) 2019 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
   romi-rover is collection of applications for the Romi Rover.
@@ -21,20 +21,23 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#ifndef __IPARSER_H
+#define __IPARSER_H
 
-#include "StateTransition.h"
+#include <stdint.h>
 
-int StateTransition::event()
+class IParser
 {
-        return _event;
-}
+public:
+        virtual ~IParser() {}
 
-int StateTransition::state()
-{
-        return _from;
-}
+        virtual int16_t value(int index = 0) = 0;
+        virtual int length() = 0;
+        virtual char has_string() = 0;
+        virtual char *string() = 0;
+        virtual char opcode() = 0;
+        virtual char error() = 0;        
+        virtual bool process(char c) = 0;
+};
 
-int StateTransition::nextState()
-{
-        return _to;
-}
+#endif
