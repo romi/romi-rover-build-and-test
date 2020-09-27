@@ -52,9 +52,9 @@ static image_t *svm_segmentation_function(segmentation_module_t *m,
 
         int len = image_width(in) * image_height(in);
         for (int i = 0, j = 0; i < len; i++, j += 3) {
-                float x = (in->data[j] * module->a[0]
-                           + in->data[j+1] * module->a[1]
-                           + in->data[j+2] * module->a[2]
+                float x = (255.0 * in->data[j] * module->a[0]
+                           + 255.0 * in->data[j+1] * module->a[1]
+                           + 255.0 * in->data[j+2] * module->a[2]
                            + module->b);
                 out->data[i] = (x > 0.0f)? 1.0 : 0.0;
         }

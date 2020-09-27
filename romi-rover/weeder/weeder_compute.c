@@ -31,9 +31,10 @@
 #include "profiling.h"
 
 static workspace_t workspace;
+static cnc_range_t _range = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
 static double quincunx_threshold = 0.0;
 
-static int init_workspace(const char *config_file)
+static int init_workspace_and_range(const char *config_file)
 {
         int err;
         char errmsg[200];
@@ -67,13 +68,36 @@ static int init_workspace(const char *config_file)
         }
         quincunx_threshold = threshold;
         
+        json_object_t cnc = json_object_get(config, "cnc");
+        if (json_falsy(cnc)) {
+                fprintf(stderr, "Couldn't find 'cnc' in configuration file\n");
+                json_unref(config);
+                return -1;
+        }
+
+        json_object_t range = json_object_get(cnc, "range");
+        if (cnc_range_parse(&_range, range) != 0) {
+                json_unref(config);
+                return -1;
+        }
+        
         json_unref(config);
         return 0;
 }
 
-static image_t *compute_mask(fileset_t *fileset, image_t *image)
+static image_t *compute_mask_otsu(fileset_t *fileset, image_t *image)
 {
         segmentation_module_t *segmentation = new_otsu_module();
+        image_t *mask = segmentation_module_segment(segmentation, image, fileset, NULL);
+        delete_segmentation_module(segmentation);
+        return mask;
+}
+
+static image_t *compute_mask_svm(fileset_t *fileset, image_t *image)
+{
+        float a[] = {-0.04152306,  0.0472676 , -0.00709334};
+        float b = 0.66209273;
+        segmentation_module_t *segmentation = new_svm_module(a, b);
         image_t *mask = segmentation_module_segment(segmentation, image, fileset, NULL);
         delete_segmentation_module(segmentation);
         return mask;
@@ -96,9 +120,11 @@ static list_t *_path_compute(fileset_t *fileset,
 }
 
 list_t *compute_path(scan_t *session, const char *fileset_id, image_t *camera,
-                     workspace_t *workspace, double distance_plants,
+                     workspace_t *workspace, cnc_range_t *range,
+                     double distance_plants,
                      double distance_rows, double radius_zones,
-                     double diameter_tool, float *confidence)
+                     double diameter_tool, float *confidence,
+                     const char *segmentation)
 {
         list_t *path = NULL;
         image_t *image = NULL;
@@ -111,33 +137,54 @@ list_t *compute_path(scan_t *session, const char *fileset_id, image_t *camera,
         fileset_set_metadata(fileset, "workspace", w);
         json_unref(w);
         
+        double width_meters = fabs(range->x[1] - range->x[0]);
+        double meters_to_pixels = workspace->width / width_meters;
+        double diameter = meters_to_pixels * diameter_tool;
+        int border = (int) (diameter / 2.0);
+        
         // 1. preprocessing: rotate, crop, and scale the camera image
-        image = get_workspace_view(fileset, camera, workspace);
+        image = get_workspace_view(fileset, camera, workspace, border);
         if (image == NULL)
                 goto cleanup_and_exit;
 
         // 2. compute the binary mask (plants=white, soil=black...)
-        mask = compute_mask(fileset, image);
-        if (mask == NULL)
+        if (rstreq(segmentation, "otsu")) {
+                r_debug("*** using Otsu ***");
+                mask = compute_mask_otsu(fileset, image);
+                if (mask == NULL)
+                                goto cleanup_and_exit;
+        } else if (rstreq(segmentation, "svm")) {
+                r_debug("*** using SVM ***");
+                mask = compute_mask_svm(fileset, image);
+                if (mask == NULL)
+                                goto cleanup_and_exit;
+        } else {
+                r_err("Unknown segmentation method %s", segmentation);
                 goto cleanup_and_exit;
-
+        }
+                
         // 3. compute the path
-        double meters_to_pixels = mask->width / workspace->width_meter;
         path = _path_compute(fileset, mask,
                              distance_plants,
                              distance_rows,
                              radius_zones,
                              diameter_tool,
-                             meters_to_pixels);
+                             meters_to_pixels / 3.0);
         if (path == NULL)
                 goto cleanup_and_exit;
         
         // 4. Change the coordinates from pixels to meters
+
+        double ax = (range->x[1] -  range->x[0]) / mask->width;
+        double bx = range->x[0];
+        double ay = (range->y[1] -  range->y[0]) / mask->height;
+        double by = range->y[0];
+
         for (list_t *l = path; l != NULL; l = list_next(l)) {
                 point_t *p = list_get(l, point_t);
                 p->y = mask->height - p->y;
-                p->y = (float) workspace->height_meter * p->y / (float) mask->height;
-                p->x = (float) workspace->width_meter * p->x / (float) mask->width;
+                p->x = (float) (ax * p->x + bx);
+                p->y = (float) (ay * p->y + by);
         }
         
 cleanup_and_exit:
@@ -162,6 +209,7 @@ int main(int argc, char **argv)
         double radius_zones = 0.10;
         double diameter_tool = 0.05;
         int do_print_usage = 0;
+        const char *segmentation = "otsu";
         
         int option_index;
         static char *optchars = "d:s:f:C:p:r:z:t:";
@@ -174,6 +222,7 @@ int main(int argc, char **argv)
                 {"rows", required_argument, 0, 'r'},
                 {"zone-radius", required_argument, 0, 'z'},
                 {"tool-diameter", required_argument, 0, 't'},
+                {"segmentation", required_argument, 0, 'g'},
                 {0, 0, 0, 0}
         };
 
@@ -189,6 +238,7 @@ int main(int argc, char **argv)
                 case 'r': distance_rows = atof(optarg); break;
                 case 'z': radius_zones = atof(optarg); break;
                 case 't': diameter_tool = atof(optarg); break;
+                case 'g': segmentation = optarg; break;
                 }
         }
 
@@ -223,6 +273,7 @@ int main(int argc, char **argv)
                 printf("--rows=distance, -r value: the distance between rows (m)\n");
                 printf("--zone-radius=value, -z value: the radius of the zones around the plants (m)\n");
                 printf("--tool-diameter=value, -t value: the diameter of the weeding tool (m)\n");
+                printf("--segmentation=[otsu|svm], -g [otsu|svm]: the segmentation method\n");
                 return -1;
         }
 
@@ -244,7 +295,7 @@ int main(int argc, char **argv)
         if (distance_rows == 0)
                 distance_rows = distance_plants;
 
-        if (init_workspace(config_file) != 0)
+        if (init_workspace_and_range(config_file) != 0)
                 return 1;
         
         database_t *db = new_database(db_path);
@@ -269,12 +320,18 @@ int main(int argc, char **argv)
         }
 
         float confidence;
-        // list_t *path =
-        compute_path(session, fileset_id, camera, &workspace,
-                                    distance_plants, distance_rows,
+        list_t *path = compute_path(session, fileset_id, camera, &workspace,
+                                    &_range, distance_plants, distance_rows,
                                     radius_zones, diameter_tool,
-                                    &confidence);
+                                    &confidence, segmentation);
 
+        for (list_t *l = path; l != NULL; l = list_next(l)) {
+                point_t *p = list_get(l, point_t);
+                delete_point(p);
+        }
+        delete_list(path);
+        
         delete_database(db);
+        delete_image(camera);
         return 0;
 }

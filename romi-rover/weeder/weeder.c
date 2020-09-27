@@ -218,14 +218,22 @@ static int init_pipeline()
 {
         if (pipeline != NULL)
                 return 0;
+
+        float a[] = {-0.04152306,  0.0472676 , -0.00709334};
+        float b = 0.66209273;
+        segmentation_module_t *segmentation = new_svm_module(a, b);
+        /* segmentation_module_t *segmentation = new_otsu_module(); */
+        double width = fabs(_range.x[1] - _range.x[0]);
+
+        r_debug("init_pipeline: width=%f", width);
+        r_debug("quincunx pixels/meter: %f", workspace.width / width / 3.0);
         
-        segmentation_module_t *segmentation = new_otsu_module();
         path_module_t *path = new_quincunx_module(0.3, 0.3, 0.1, 0.05, quincunx_threshold,
-                                                  workspace.width / workspace.width_meter / 3.0f); // FIXME!
+                                                  workspace.width / width / 3.0); // FIXME!
         if (segmentation == NULL || path == NULL)
                 return -1;
             
-        pipeline = new_pipeline(&workspace, segmentation, path);
+        pipeline = new_pipeline(&workspace, &_range, segmentation, path);
         if (pipeline == NULL)
                 return -1;
 
@@ -324,7 +332,7 @@ static int move_away_arm()
         // move weeding tool to the end of the workspace
         reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", "
                                            "\"x\": 0, \"y\": %.4f}",
-                                           workspace.height_meter);
+                                           _range.y[1]);
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
                 delete_membuf(message);
@@ -413,8 +421,17 @@ static int send_path(list_t *path, double z0, membuf_t *message)
                 double x = p->x;
                 double y = p->y;
                 double z = z0;
-                
+
                 if (!cnc_range_is_valid(&_range, x, y, z)) {
+                        
+                        r_err("Point: %.3f, %.3f, %.3f: "
+                              "*** Out of range ***: (%.3f, %.3f), (%.3f, %.3f), (%.3f, %.3f)",
+                              x, y, z,
+                              _range.x[0], _range.x[1],
+                              _range.y[0], _range.y[1],
+                              _range.z[0], _range.z[1]);
+                
+                        
                         if (cnc_range_error(&_range, x, y, z) < 0.01) {
                                 // Small error: clip
                                 // TODO: call cnc_range to do this
@@ -434,7 +451,14 @@ static int send_path(list_t *path, double z0, membuf_t *message)
                                 r_err("Computed point out of range: %.3f, %.3f, %.3f", x, y, z);
                                 delete_membuf(buf);
                                 return -1;
-                        }
+                        } 
+                } else {
+                        r_err("Point: %.3f, %.3f, %.3f: "
+                              "In range: (%.3f, %.3f), (%.3f, %.3f), (%.3f, %.3f)",
+                              x, y, z,
+                              _range.x[0], _range.x[1],
+                              _range.y[0], _range.y[1],
+                              _range.z[0], _range.z[1]);
                 }
                 
                 membuf_printf(buf, "[%.4f,%.4f,%.4f]", x, y, z);
@@ -484,7 +508,7 @@ static int send_path(list_t *path, double z0, membuf_t *message)
         reply = messagelink_send_command_f(cnc,
                                            "{\"command\": \"moveto\", "
                                            "\"x\": 0, \"y\": %.4f}",
-                                           workspace.height_meter);
+                                           _range.y[1]);
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
                 json_unref(reply);
