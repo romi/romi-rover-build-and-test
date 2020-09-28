@@ -22,6 +22,7 @@
 
  */
 #include "svm.h"
+#include "profiling.h"
 
 typedef struct _svm_module_t {
         segmentation_module_t interface;
@@ -58,6 +59,8 @@ static image_t *svm_segmentation_function(segmentation_module_t *m,
                            + module->b);
                 out->data[i] = (x > 0.0f)? 1.0 : 0.0;
         }
+        
+        store_png(fileset, "mask", out);
         
         return out;
 }
