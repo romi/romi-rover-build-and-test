@@ -53,6 +53,7 @@ add_subdirectory(webproxy)
 add_subdirectory(rclogger)
 add_subdirectory(control_panel)
 add_subdirectory(gimbal_servo)
+add_subdirectory(gimbal_bldc)
 add_subdirectory(oquam)
 
 if(WITH_REALSENSE)
