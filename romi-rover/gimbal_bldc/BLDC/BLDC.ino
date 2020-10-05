@@ -32,7 +32,7 @@
 
 ArduinoImpl arduino;
 PwmEncoder encoder(&arduino, P_ENC, 11, 959);
-Parser parser("XKP", "?ks");
+Parser parser("XP", "?sC");
 
 PwmOut pwm1(&arduino, P_IN1);
 PwmOut pwm2(&arduino, P_IN2);
@@ -57,7 +57,6 @@ void setup()
         Serial.begin(115200);
         while (!Serial)
                 ;
-        motor.setPIDValues(1.000, 0.060, 0.072);
         motor.wake();
         motor.setPower(0.5f);
         Serial.println("Ready");
@@ -78,33 +77,8 @@ void handleSerialInput()
                                         Serial.println("ERR bad args");
                                 }
                                 break;
-                        case 'K':
-                                if (parser.length() == 3) {
-                                        float kp = (float) parser.value(0) / 1000.0f;
-                                        float ki = (float) parser.value(1) / 1000.0f;
-                                        float kd = (float) parser.value(2) / 1000.0f;
-                                        motor.setPIDValues(kp, ki, kd);
-                                        Serial.println("OK");
-                                } else {
-                                        Serial.println("ERR bad args");
-                                }
-                                break;
-                        case 'k':
-                                if (1) {
-                                        float kp, ki, kd;
-                                        motor.getPIDValues(kp, ki, kd);
-                                        Serial.print("k[");
-                                        Serial.print(kp);
-                                        Serial.print(",");
-                                        Serial.print(ki);
-                                        Serial.print(",");
-                                        Serial.print(kd);
-                                }
-                                break;
                         case 's':
                                 if (1) {
-                                        float kp, ki, kd;
-                                        motor.getPIDValues(kp, ki, kd);
                                         Serial.print("s[");
                                         Serial.print(360.0f * encoder.getAngle());
                                         Serial.println("]");
@@ -118,6 +92,9 @@ void handleSerialInput()
                                 } else {
                                         Serial.println("ERR bad args");
                                 }
+                                break;
+                        case 'C':
+                                motor.calibrate();
                                 break;
                         case '?':
                                 Serial.println("?['BLDCController','0.1']");

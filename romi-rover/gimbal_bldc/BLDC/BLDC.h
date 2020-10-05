@@ -24,7 +24,6 @@
 #ifndef __BLDC_H
 #define __BLDC_H
 
-#include <PID_v1.h>
 #include "IArduino.h"
 #include "IEncoder.h"
 #include "IOutputPin.h"
@@ -43,29 +42,23 @@ protected:
         IOutputPin *sleepPin;
         IOutputPin *resetPin;
         double targetPosition;
-        double currentPosition;
-        double outputSignal;
         double offsetAngleZero;
         double speed;
-        PID pid;
+        double lastSpeed;
 
         float power;
         double phase;
         
-        float sineTable[SINE_TABLE_SIZE];
-        
         void moveat(float rpm, float dt);
         void updatePosition(float dt);
-        
-        
-        void initializeSineTable();
-
+                
         void setPhase(double value);
         
         void incrPhase(double delta) {
                 setPhase(phase + delta);
         }
-
+        
+        float angleToPhase(float angle);
         
 public:
         BLDC(IEncoder* _encoder,
@@ -89,10 +82,10 @@ public:
 
         void wake();
         void sleep();
-        void setPIDValues(float kp, float ki, float kd);
-        void getPIDValues(float &kp, float &ki, float &kd);
 
         void update(float dt);
+
+        void calibrate();
 };
 
 #endif // __BLDC_H

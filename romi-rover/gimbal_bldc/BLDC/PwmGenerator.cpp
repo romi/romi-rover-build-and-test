@@ -37,18 +37,34 @@ PwmGenerator::PwmGenerator(IOutputPin *_pwm1,
           pwm3(_pwm3),
           enable1(_enable1),
           enable2(_enable2),
-          enable3(_enable3)
+          enable3(_enable3),
+          amplitude(0.0f)
 {
+        initializeSineTable();
         configurePwmFrequency();
 }
 
-void PwmGenerator::set(float duty_cycle1,
-                       float duty_cycle2,
-                       float duty_cycle3)
-{        
-        pwm1->set(duty_cycle1);
-        pwm2->set(duty_cycle2);
-        pwm3->set(duty_cycle3);
+void PwmGenerator::setPhase(float phase)
+{
+        int i1 = phase * SINE_TABLE_SIZE;
+        
+        int i2 = i1 + SINE_TABLE_SIZE / 3;
+        if (i2 >= SINE_TABLE_SIZE)
+                i2 -= SINE_TABLE_SIZE;
+        
+        int i3 = i1 + 2 * SINE_TABLE_SIZE / 3;
+        if (i3 >= SINE_TABLE_SIZE)
+                i3 -= SINE_TABLE_SIZE;
+        
+        pwm1->set(0.5 + amplitude * 0.5 * sineTable[i1]);
+        pwm2->set(0.5 + amplitude * 0.5 * sineTable[i2]);
+        pwm3->set(0.5 + amplitude * 0.5 * sineTable[i3]);
+}
+
+void PwmGenerator::setAmplitude(float value)
+{
+        if (value >= 0.0f && value <= 1.0f)
+                amplitude = value;
 }
 
 void PwmGenerator::enable()
@@ -63,6 +79,12 @@ void PwmGenerator::disable()
         enable1->set(0.0f);
         enable2->set(0.0f);
         enable3->set(0.0f);
+}
+
+void PwmGenerator::initializeSineTable()
+{
+        for (int i = 0; i < SINE_TABLE_SIZE; i++)
+                sineTable[i] = sinf((float) (i * 2.0f * M_PI) / SINE_TABLE_SIZE);
 }
 
 void PwmGenerator::configurePwmFrequency()

@@ -28,6 +28,8 @@
 #include "IOutputPin.h"
 #include "IPwmGenerator.h"
 
+#define SINE_TABLE_SIZE 1536
+
 class PwmGenerator : public IPwmGenerator
 {
 protected:
@@ -37,8 +39,11 @@ protected:
         IOutputPin *enable1;
         IOutputPin *enable2;
         IOutputPin *enable3;
-
+        float sineTable[SINE_TABLE_SIZE];
+        float amplitude;
+        
         void configurePwmFrequency();
+        void initializeSineTable();
         
 public:
         PwmGenerator(IOutputPin *_pwm1,
@@ -50,7 +55,12 @@ public:
         
         virtual ~PwmGenerator() {}
 
-        void set(float duty_cycle1, float duty_cycle2, float duty_cycle3) override;
+        /** The phase should be a normalized angle between 0 and 1. */
+        void setPhase(float phase) override;
+        
+        /** The ampltide should be a a value between 0 and 1. */
+        void setAmplitude(float p) override;
+        
         void enable() override;
         void disable() override;
 };

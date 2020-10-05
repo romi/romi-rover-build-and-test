@@ -50,34 +50,15 @@ BLDC::BLDC(IEncoder* _encoder,
         : encoder(_encoder),
           generator(_generator),
           sleepPin(_sleep),
-          resetPin(_reset),
-          pid(&currentPosition, &outputSignal, &targetPosition, 0.0, 0.0, 0.0, DIRECT)
+          resetPin(_reset)
 {
         targetPosition = 0.0f;
         setPower(0.0f);
         setPhase(0.0f);
         speed = 0.0f;
+        lastSpeed = 0.0f;
         offsetAngleZero = 0.0;
-        initializeSineTable();
         resetPin->set(1.0f);
-
-        setTargetPosition(0.5f); // DEBUG
-        
-        pid.SetMode(AUTOMATIC);
-        pid.SetSampleTime(10);
-        pid.SetOutputLimits(-1.0, 1.0);
-}
-
-void BLDC::setPIDValues(float kp, float ki, float kd)
-{
-        pid.SetTunings(kp, ki, kd);
-}
-
-void BLDC::getPIDValues(float &kp, float &ki, float &kd)
-{
-        kp = pid.GetKp();
-        ki = pid.GetKi();
-        kd = pid.GetKd();
 }
 
 void BLDC::setOffsetAngleZero(double angle)
@@ -93,12 +74,17 @@ void BLDC::setTargetPosition(double position)
 void BLDC::setPower(float p)
 {
         if (p >= 0.0f && p <= 1.0f) {
+                if (power == 0.0f)
+                        //generator->setPhase(encoder->getAngle());
+                        generator->setPhase(phase); // FIXME
+                else 
+                        generator->setPhase(phase);
                 power = p;
-                setPhase(phase);
+                generator->setAmplitude(p);
                 generator->enable();
         } else {
                 power = 0.0f;
-                generator->set(0.0f, 0.0f, 0.0f);
+                generator->setAmplitude(p);
                 generator->disable();
         }
 }
@@ -115,91 +101,70 @@ void BLDC::sleep()
 
 void BLDC::setPhase(double value)
 {
-        phase = value;
-
-        int i1 = phase * SINE_TABLE_SIZE;
-        while (i1 < 0)
-                i1 += SINE_TABLE_SIZE;
-        while (i1 >= SINE_TABLE_SIZE)
-                i1 -= SINE_TABLE_SIZE;
-        
-        int i2 = i1 + SINE_TABLE_SIZE / 3;
-        while (i2 < 0)
-                i2 += SINE_TABLE_SIZE;
-        while (i2 >= SINE_TABLE_SIZE)
-                i2 -= SINE_TABLE_SIZE;
-        
-        int i3 = i1 + 2 * SINE_TABLE_SIZE / 3;
-        while (i3 < 0)
-                i3 += SINE_TABLE_SIZE;
-        while (i3 >= SINE_TABLE_SIZE)
-                i3 -= SINE_TABLE_SIZE;
-        
-        generator->set(0.5 + power * 0.5 * sineTable[i1],
-                       0.5 + power * 0.5 * sineTable[i2],
-                       0.5 + power * 0.5 * sineTable[i3]);
-}
-
-void BLDC::initializeSineTable()
-{
-        for (int i = 0; i < SINE_TABLE_SIZE; i++)
-                sineTable[i] = sinf((float) (i * 2.0f * M_PI) / SINE_TABLE_SIZE);
+        phase = normalizeAngle(value);
+        generator->setPhase(phase);
 }
 
 void BLDC::moveat(float rpm, float dt)
 {
         float delta = 11.0f * rpm * dt / 60.0f;
-        //float delta = 0.0005f;
         incrPhase(delta);
-        Serial.print(phase);
-        Serial.print(", ");
-        Serial.println(encoder->getAngle());
+}
+
+float BLDC::angleToPhase(float angle)
+{
+        float phase = 11.0f * angle;
+        int pole = (int) phase;
+        phase -= (float) pole;
+        return phase;
 }
 
 void BLDC::updatePosition(float dt)
 {
-        /* The PID controller doesn't understand anything about angles
-         * that wrap around and gets pretty confused when the angle
-         * jumps from 0.01 to 0.99. Therefore, we'll compute the
-         * current position manually and take into account the wrap
+        /* Compute the current position, taking into account the wrap
          * around and the fact its shorter to go from 10° to 350°
          * going clock-wise than counter clock-wise. */
         float angle = encoder->getAngle();
         float error = targetPosition - angle;
         while (error > 0.5f)
                 error -= 1.0f;
-        while (error < -0.5f)
+        while (error <= -0.5f)
                 error += 1.0f;
-        currentPosition = targetPosition - error;
 
-        if (pid.Compute()) {
-                speed = outputSignal * 10.0f;
-                
-                if (0) {
-                        Serial.print("T:");
-                        Serial.print(targetPosition);
-                        Serial.print(", C:");
-                        Serial.print(currentPosition);
-                        Serial.print(", P:");
-                        Serial.print(phase);
-                        Serial.print(", O:");
-                        Serial.print(outputSignal);
-                        Serial.print(", v:");
-                        Serial.print(speed);
-                        Serial.print(", dt:");
-                        Serial.print(dt);
-                        Serial.print(", D:");
-                        Serial.println(speed * dt);
-                }
+        // Serial.print(targetPosition, 5);
+        // Serial.print(',');
+        // Serial.print(angle, 5);
+        // Serial.print(',');
+        // Serial.print(error, 5);
+        // Serial.print(',');
+        
+        // The speed is proportional to the error...
+        double speed = error * 10.0;
+
+        // Serial.print(speed, 5);
+        // Serial.print(',');
+        
+        // ... but the acceleration should not surpass the maximum
+        // acceleration.
+        double acceleration = (speed - lastSpeed) / dt;
+        if (acceleration < -20.0)
+                acceleration = -20.0;
+        else if (acceleration > 20.0)
+                acceleration = 20.0;
+        speed = lastSpeed + acceleration * dt;
+
+        // Serial.print(speed, 5);
+        // Serial.print(',');
+        // Serial.println(speed * dt, 5);
+        
+        // when the given precision is reached (+-0.36°) then stop.
+        if (error >= -0.001 && error <= 0.001) {
+                //setPhase(angleToPhase(targetPosition));
+        } else {
+                float delta_phase = speed * dt;
+                incrPhase(delta_phase);
+                lastSpeed = speed;
         }
-
-        // delta = speed * dt = outputSignal * 1.0f * dt;
-        // max(delta) = max(outputSignal) * max(dt) * 0.1f 
-        // max(delta) = 1 * 0.005 * 0.1 = 0.0005 * 360° / 11 pole pairs
-        // = 0.16° 
-                
-        float delta_phase = speed * dt;
-        incrPhase(delta_phase);
 }
 
 void BLDC::update(float dt)
@@ -210,4 +175,43 @@ void BLDC::update(float dt)
                 else
                         moveat(15.0f, dt);
         }        
+}
+
+void BLDC::calibrate()
+{
+        // Position at angle zero
+        setTargetPosition(0.0);
+        for (int i = 0; i < 1000; i++) {
+                update(0.003f);
+                ::delay(3);
+        }
+        
+        // Mve towards phase zero
+        float delta = phase / 100.0f;
+        for (int i = 1; i <= 100; i++) {
+                setPhase((100 - i) * delta);
+                ::delay(10);
+        }
+
+        ::delay(200);
+
+        int step = 15;
+        
+        // Start calibration
+        for (int pole = 0; pole < 11; pole++) {
+                for (int iphase = 0; iphase < 360; iphase += step) {
+                        setPhase(iphase / 360.0);
+                        ::delay(1000);
+
+                        double angle = encoder->getAngle();
+                        Serial.print(angle, 5);
+                        Serial.print(", ");
+                        Serial.println(pole + iphase / 360.0, 5);
+
+                        for (int d = 0; d < step; d++) {
+                                setPhase((iphase + d) / 360.0);
+                                ::delay(5);
+                        }
+                }
+        }
 }
