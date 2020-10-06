@@ -37,6 +37,7 @@ double normalizeAngle(double angle);
 class BLDC
 {
 protected:
+        IArduino *arduino;
         IEncoder* encoder;
         IPwmGenerator *generator;
         IOutputPin *sleepPin;
@@ -50,7 +51,7 @@ protected:
         double phase;
         
         void moveat(float rpm, float dt);
-        void updatePosition(float dt);
+        bool updatePosition(float dt);
                 
         void setPhase(double value);
         
@@ -59,9 +60,12 @@ protected:
         }
         
         float angleToPhase(float angle);
-        
+
+        bool tryMoveto(float angle, float timeOut);
+
 public:
-        BLDC(IEncoder* _encoder,
+        BLDC(IArduino *_arduino,
+             IEncoder* _encoder,
              IPwmGenerator *_generator,
              IOutputPin *_sleep,
              IOutputPin *_reset);
@@ -86,6 +90,8 @@ public:
         void update(float dt);
 
         void calibrate();
+
+        bool moveto(float angle);
 };
 
 #endif // __BLDC_H

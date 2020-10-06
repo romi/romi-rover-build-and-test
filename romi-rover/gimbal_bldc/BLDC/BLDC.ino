@@ -48,7 +48,7 @@ DigitalOut sleepPin(&arduino, P_SLEEP);
 DigitalOut resetPin(&arduino, P_RESET);
 
 
-BLDC motor(&encoder, &pwmGenerator, &sleepPin, &resetPin);
+BLDC motor(&arduino, &encoder, &pwmGenerator, &sleepPin, &resetPin);
 
 unsigned long prev_time = 0;
 
@@ -71,8 +71,14 @@ void handleSerialInput()
                         case 'X':
                                 if (parser.length() == 1) {
                                         float value = (float) parser.value() / 360.0f;
-                                        motor.setTargetPosition(value);
-                                        Serial.println("OK");
+                                        //motor.setTargetPosition(value);
+                                        bool success = motor.moveto(value);
+                                        if (success) {
+                                                Serial.print("OK X");
+                                                Serial.println(parser.value());
+                                        } else {
+                                                Serial.println("ERR");
+                                        }
                                 } else {
                                         Serial.println("ERR bad args");
                                 }
@@ -108,8 +114,8 @@ void loop()
 {
         static unsigned long lastTime = 0;
         unsigned long t = arduino.micros();
-        motor.update((float)(t - lastTime) / 1000000.0f);
+        // motor.update((float)(t - lastTime) / 1000000.0f);
         handleSerialInput();
         lastTime = t;
-        delay(2);
+        delay(10);
 }

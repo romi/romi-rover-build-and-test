@@ -42,12 +42,14 @@ double normalizeAngle(double angle)
         return angle;
 }
 
-BLDC::BLDC(IEncoder* _encoder,
+BLDC::BLDC(IArduino *_arduino,
+           IEncoder* _encoder,
            IPwmGenerator *_generator,
            IOutputPin *_sleep,
            IOutputPin *_reset)
         
-        : encoder(_encoder),
+        : arduino(_arduino),
+          encoder(_encoder),
           generator(_generator),
           sleepPin(_sleep),
           resetPin(_reset)
@@ -119,8 +121,10 @@ float BLDC::angleToPhase(float angle)
         return phase;
 }
 
-void BLDC::updatePosition(float dt)
+bool BLDC::updatePosition(float dt)
 {
+        bool done = false;
+        
         /* Compute the current position, taking into account the wrap
          * around and the fact its shorter to go from 10° to 350°
          * going clock-wise than counter clock-wise. */
@@ -160,11 +164,14 @@ void BLDC::updatePosition(float dt)
         // when the given precision is reached (+-0.36°) then stop.
         if (error >= -0.001 && error <= 0.001) {
                 //setPhase(angleToPhase(targetPosition));
+                done = true;
         } else {
                 float delta_phase = speed * dt;
                 incrPhase(delta_phase);
                 lastSpeed = speed;
         }
+        
+        return done;
 }
 
 void BLDC::update(float dt)
@@ -177,23 +184,51 @@ void BLDC::update(float dt)
         }        
 }
 
+bool BLDC::moveto(float angle)
+{
+        return tryMoveto(angle, 20.0f);
+}
+
+bool BLDC::tryMoveto(float angle, float timeOut)
+{
+        unsigned long startTime = arduino->micros();
+        unsigned long lastTime = startTime;
+        bool done = false;
+        float duration = 0.0f;
+        
+        setTargetPosition(angle);
+
+        while (!done && duration < timeOut) {
+                unsigned long t = arduino->micros();
+                float dt = (t - lastTime) / 1000000.0f;
+                
+                done = updatePosition(dt);
+                        
+                duration = (t - startTime) / 1000000.0f;
+                lastTime = t;
+                arduino->delay(2);
+        }
+
+        return done;
+}
+
 void BLDC::calibrate()
 {
         // Position at angle zero
         setTargetPosition(0.0);
         for (int i = 0; i < 1000; i++) {
                 update(0.003f);
-                ::delay(3);
+                arduino->delay(3);
         }
         
         // Mve towards phase zero
         float delta = phase / 100.0f;
         for (int i = 1; i <= 100; i++) {
                 setPhase((100 - i) * delta);
-                ::delay(10);
+                arduino->delay(10);
         }
 
-        ::delay(200);
+        arduino->delay(200);
 
         int step = 15;
         
@@ -201,7 +236,7 @@ void BLDC::calibrate()
         for (int pole = 0; pole < 11; pole++) {
                 for (int iphase = 0; iphase < 360; iphase += step) {
                         setPhase(iphase / 360.0);
-                        ::delay(1000);
+                        arduino->delay(1000);
 
                         double angle = encoder->getAngle();
                         Serial.print(angle, 5);
@@ -210,7 +245,7 @@ void BLDC::calibrate()
 
                         for (int d = 0; d < step; d++) {
                                 setPhase((iphase + d) / 360.0);
-                                ::delay(5);
+                                arduino->delay(5);
                         }
                 }
         }

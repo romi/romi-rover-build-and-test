@@ -50,6 +50,9 @@ public:
                 ::digitalWrite(pin, high_low);
         }
 
+        void delay(unsigned long ms) override {
+                ::delay(ms);
+        }
 };
 
 #endif // __IARDUINO_H

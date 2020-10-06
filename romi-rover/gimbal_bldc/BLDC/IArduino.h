@@ -39,6 +39,7 @@ public:
         virtual void attachInterrupt(int pin, ISR isr, int mode) = 0;
         virtual void pinMode(uint8_t pin, uint8_t mode) = 0;
         virtual void digitalWrite(int pin, int high_low) = 0;
+        virtual void delay(unsigned long ms) = 0;
 };
 
 #endif // __IARDUINO_H
