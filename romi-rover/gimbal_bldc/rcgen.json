@@ -1,0 +1,10 @@
+{
+    "name": "gimbal_bldc",
+    "com": [
+        {
+            "type": "controller",
+            "topic": "gimbal",
+            "commands": [{"name": "moveto", "oncommand": "gimbal_onmoveto"}]
+        }
+    ]
+}
