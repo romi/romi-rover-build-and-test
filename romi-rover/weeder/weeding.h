@@ -103,11 +103,13 @@ int path_module_set(path_module_t *module,
 
 typedef struct _pipeline_t {
         workspace_t *workspace;
+        cnc_range_t *cnc_range;
         segmentation_module_t *segmentation_module;
         path_module_t *path_module;
 } pipeline_t;
 
 pipeline_t *new_pipeline(workspace_t *workspace,
+                         cnc_range_t *range,
                          segmentation_module_t *segmentation_module,
                          path_module_t *path_module);
 void delete_pipeline(pipeline_t *pipeline);
@@ -134,7 +136,8 @@ void point_set(point_t *p, float x, float y, float z);
 
 ////
 
-image_t *get_workspace_view(fileset_t *fileset, image_t *camera, workspace_t *workspace);
+image_t *get_workspace_view(fileset_t *fileset, image_t *camera,
+                            workspace_t *workspace, int border);
 list_t *compute_boustrophedon(workspace_t *workspace, double diameter_tool);
 
 
