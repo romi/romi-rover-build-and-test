@@ -27,43 +27,46 @@
 #include <r.h>
 #include "StepperController.hpp" 
 
-class OquamStepperController : public StepperController
-{
-public:
-        
-        OquamStepperController(const char *device,
-                               double *xmax, double *vmax, double *amax,
-                               double deviation, double *scale, double interval);
-        
-        virtual ~OquamStepperController();
+namespace oquam {
 
-        virtual int get_position(double *pos);
-        virtual int execute(block_t *block);
-        virtual int is_busy();
-        virtual int moveat(double *v);
-        virtual int moveto(double x, double y, double z, double v,
-                           int move_x = 1, int move_y = 1, int move_z = 1);
-        virtual int continue_script();
+        class OquamStepperController : public StepperController
+        {
+        public:
+        
+                OquamStepperController(const char *device,
+                                       double *xmax, double *vmax, double *amax,
+                                       double deviation, double *scale, double interval);
+        
+                virtual ~OquamStepperController();
+
+                virtual int get_position(double *pos);
+                virtual int execute(block_t *block);
+                virtual int is_busy();
+                virtual int moveat(double *v);
+                virtual int moveto(double x, double y, double z, double v,
+                                   int move_x = 1, int move_y = 1, int move_z = 1);
+                virtual int continue_script();
 
         
-protected:
+        protected:
 
-        int send_command(const char *cmd);
-        int update_status();
+                int send_command(const char *cmd);
+                int update_status();
         
-        membuf_t *_buffer;
-        serial_t *_serial;
+                membuf_t *_buffer;
+                serial_t *_serial;
 
-        int _status;
-        int _available;
-        int _block_id;
-        int _block_ms;
-        int _milliseconds;
-        int _interrupts;
-        int _trigger;
-        int32_t _stepper_position[3];
-        int32_t _encoder_position[3];
-        uint32_t _millis;
-};
+                int _status;
+                int _available;
+                int _block_id;
+                int _block_ms;
+                int _milliseconds;
+                int _interrupts;
+                int _trigger;
+                int32_t _stepper_position[3];
+                int32_t _encoder_position[3];
+                uint32_t _millis;
+        };
+}
 
 #endif // _OQUAM_OQUAMSTEPPERCONTROLLER_HPP_

@@ -28,7 +28,7 @@
 #include "plotter.h"
 
 static mutex_t *mutex = NULL;
-static Controller *controller = 0;
+static oquam::Controller *controller = 0;
 static int use_virtual_controller = 1;
 
 static double xmax[3] = { 0.6, 0.6, -0.3 };
@@ -67,12 +67,12 @@ int oquam_init(int argc, char **argv)
         double period = 0.014;
 
         if (use_virtual_controller) 
-                controller = new VirtualStepperController(xmax, vm, amax,
-                                                          0.001, scale, period);
+                controller = new oquam::VirtualStepperController(xmax, vm, amax,
+                                                                 0.001, scale, period);
         else
-                controller = new OquamStepperController("/dev/ttyACM0",
-                                                        xmax, vm, amax,
-                                                        0.001, scale, period);
+                controller = new oquam::OquamStepperController("/dev/ttyACM0",
+                                                               xmax, vm, amax,
+                                                               0.001, scale, period);
         if (controller == 0) {
                 r_err("Failed to create the virtual controller");
                 return -1;

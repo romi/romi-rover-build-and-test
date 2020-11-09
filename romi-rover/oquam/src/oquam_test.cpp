@@ -42,7 +42,7 @@ static inline double sign(double v)
 
 int main(int argc, char **argv)
 {
-        Controller *controller;
+        oquam::Controller *controller;
         
         r_init(0, NULL);
 
@@ -81,12 +81,13 @@ int main(int argc, char **argv)
         printf("scale[%.3f,%.3f,%.3f]\n", scale[0], scale[1], scale[2]);
         
         if (use_virtual_controller) 
-                controller = new VirtualStepperController(xmax, vmax, amax, deviation,
-                                                          scale, period);
+                controller = new oquam::VirtualStepperController(xmax, vmax, amax,
+                                                                 deviation,
+                                                                 scale, period);
         else
-                controller = new OquamStepperController("/dev/ttyACM0",
-                                                        xmax, vmax, amax, deviation,
-                                                        scale, period);
+                controller = new oquam::OquamStepperController("/dev/ttyACM0",
+                                                               xmax, vmax, amax, deviation,
+                                                               scale, period);
         if (controller == NULL) {
                 r_err("Failed to create the virtual controller");
                 return 1;
