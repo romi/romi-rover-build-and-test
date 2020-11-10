@@ -92,8 +92,14 @@ public:
                 _v[1] = a[1];
                 _v[2] = a[2];
         }
-        
+
         V3(const V3 &a) {
+                _v[0] = a._v[0];
+                _v[1] = a._v[1];
+                _v[2] = a._v[2];
+        }
+
+        void operator=(const V3&a) {
                 _v[0] = a._v[0];
                 _v[1] = a._v[1];
                 _v[2] = a._v[2];
