@@ -104,8 +104,14 @@ add_test(
 
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
-            NAME romi_rover_unit_tests_statemachine_coverage
+            NAME romi_rover_unit_tests_coverage
             EXECUTABLE ctest -V ${n_cores} -R "romi_rover"
-            DEPENDENCIES romi_rover_unit_tests_statemachine)
+            DEPENDENCIES
+                romi_rover_unit_tests_controlpanel_parser
+                romi_rover_unit_tests_controlpanel_buttonpanel
+                romi_rover_unit_tests_controlpanel_eventtimer
+                romi_rover_unit_tests_controlpanel_menu
+                romi_rover_unit_tests_controlpanel_statemachine
+                romi_rover_unit_tests_controlpanel_controlpanel)
 endif()
 
