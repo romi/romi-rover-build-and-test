@@ -27,7 +27,7 @@
 #include "IParser.h"
 #include "CRC8.h"
 
-#define PARSER_MAXIMUM_ARGUMENTS 26
+#define PARSER_MAXIMUM_ARGUMENTS 12
 #define PARSER_MAXIMUM_STRING_LENGTH 32
 
 class Parser : public IParser
@@ -38,6 +38,7 @@ protected:
         int8_t _error;
         uint8_t _opcode;
         uint8_t _id;
+        uint8_t _has_id;
         CRC8 _crc;
         uint8_t _crc_metadata;
         int16_t _value[PARSER_MAXIMUM_ARGUMENTS];
@@ -91,6 +92,10 @@ public:
 
         virtual uint8_t id() {
                 return _id;
+        }
+
+        virtual uint8_t has_id() {
+                return _has_id;
         }
 
         virtual uint8_t crc() {

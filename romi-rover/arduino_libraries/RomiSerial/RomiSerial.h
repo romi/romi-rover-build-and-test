@@ -54,6 +54,7 @@ protected:
         Parser _parser;
         bool _sent_response;
         CRC8 _crc;
+        uint8_t _last_id;
         
         void handle_message();
 
@@ -69,7 +70,8 @@ public:
                   _out(0),
                   _handlers(handlers),
                   _num_handlers(num_handlers),
-                  _sent_response(false)
+                  _sent_response(false),
+                  _last_id(255)
         {
         }
 

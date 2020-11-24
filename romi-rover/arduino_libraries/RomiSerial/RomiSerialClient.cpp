@@ -21,11 +21,13 @@
   <http://www.gnu.org/licenses/>.
 
  */
+
+#if !defined(ARDUINO)
+
+#include <stdexcept>
 #include <CRC8.h>
 #include <RomiSerialClient.h>
 #include <RomiSerialErrors.h>
-
-#if !defined(ARDUINO)
 
 using namespace std;
 
@@ -34,7 +36,8 @@ RomiSerialClient::RomiSerialClient(IInputStream *in, IOutputStream *out)
 {
         _id_request = 255;
         _mutex = new_mutex();
-        in->set_timeout(0.1f);
+        if (_in)
+                in->set_timeout(0.1f);
 }
 
 RomiSerialClient::~RomiSerialClient()
@@ -47,30 +50,60 @@ static char hex(uint8_t value) {
         return (value < 10)? '0' + value : 'a' + (value - 10);
 }
 
-bool RomiSerialClient::make_request(const char *command)
+bool RomiSerialClient::make_request(const char *command, std::string &request)
 {
         CRC8 crc;
         _id_request++;
-        _request = "#";
-        _request += command;
-        _request += ":";
-        _request += hex(_id_request >> 4);
-        _request += hex(_id_request);
-        uint8_t code = crc.compute(_request.c_str(), _request.length());
-        _request += hex(code >> 4);
-        _request += hex(code);
-        _request += "\r";
+        request = "#";
+        request += command;
+        request += ":";
+        request += hex(_id_request >> 4);
+        request += hex(_id_request);
+        uint8_t code = crc.compute(request.c_str(), request.length());
+        request += hex(code >> 4);
+        request += hex(code);
+        request += "\r";
 
-        if (_request.length() > 64)
+        if (request.length() > 64)
                 return false;
 
         return true;
 }
 
-bool RomiSerialClient::send_request()
+
+json_object_t RomiSerialClient::try_sending_request(std::string &request)
 {
-        size_t n = _out->print(_request.c_str());
-        return n == _request.length();
+        json_object_t response = json_null();
+        
+        for (int i = 0; i < 3; i++) {
+                if (send_request(request)) {
+                        
+                        json_unref(response);
+                        
+                        response = read_response();
+
+                        /* Check the error code. If the error relates
+                         * to the protocol layer (error < 0) then send
+                         * the message again. Duplicate messages are
+                         * intercepted by the firmware, in which case
+                         * the romiserial_duplicate error code is
+                         * returned.  */
+                        int code = (int) json_array_getnum(response, 0);
+                        if (code >= 0 || code == romiserial_duplicate)
+                                break;
+
+                }
+                clock_sleep(0.010);
+        }
+
+        return response;
+}
+
+bool RomiSerialClient::send_request(std::string &request)
+{
+        r_debug("RomiSerialClient::send_request: %s", request.c_str());
+        size_t n = _out->print(request.c_str());
+        return n == request.length();
 }
 
 json_object_t RomiSerialClient::make_error(int code, const char *message)
@@ -226,6 +259,7 @@ void RomiSerialClient::parse_char(int c)
 
         case romiserialclient_line_feed:
                 if (c == '\n') {
+                        r_debug("romiserialclient_line_feed: %s\n", _response.c_str());
                         _state = romiserialclient_message_complete;
                 } else {
                         printf("romiserialclient_line_feed: romiserialclient_unexpected_char: 0x%02x\n", (int) c);
@@ -322,15 +356,27 @@ json_object_t RomiSerialClient::read_response()
 
                         if (_state == romiserialclient_message_complete) {
 
+                                result = parse_response();
+                                
                                 if (_id_response == _id_request) {
-                                        result = parse_response();
+                                        break;
+                                        
+                                } else if (json_array_getnum(result, 0) != 0.0) {
+                                        /* It's OK if the ID in the
+                                         * response is not equal to
+                                         * the ID in the request when
+                                         * the response is an error
+                                         * because errors can be sent
+                                         * before the complete request
+                                         * is parsed. */
                                         break;
                                         
                                 } else {
                                         r_warn("RomiSerialClient: ID mismatch: "
-                                               "request(%d) != response(%d)",
-                                               _id_request, _id_response);
-                                        
+                                               "request(%d) != response(%d): "
+                                               "response: %s",
+                                               _response.c_str());
+
                                         // Try again
                                         _state = romiserialclient_start_message;
                                         _error = 0;
@@ -338,6 +384,7 @@ json_object_t RomiSerialClient::read_response()
                                 }
                                 
                         } else if (_error != 0) {
+                                r_warn("response: %s", _response.c_str());
                                 result = make_error(_error);
                                 break;
                         }
@@ -356,16 +403,16 @@ json_object_t RomiSerialClient::read_response()
 
 json_object_t RomiSerialClient::send(const char *command)
 {
+        std::string request;
         json_object_t response = json_null();
 
+        if (_in == 0 || _out == 0)
+                throw std::runtime_error("RomiSerialClient: Streams not initialized");
+        
         mutex_lock(_mutex);
 
-        if (make_request(command)) {
-                if (send_request()) {
-                        response = read_response();
-                } else {
-                        response = make_error(romiserialclient_connection_failed);
-                }
+        if (make_request(command, request)) {
+                response = try_sending_request(request);
         } else {
                 response = make_error(romiserialclient_too_long);
         }

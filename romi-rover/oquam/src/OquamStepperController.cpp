@@ -23,6 +23,7 @@
  */
 #include <stdexcept>
 #include "OquamStepperController.hpp" 
+#include "RomiSerialErrors.h" 
 
 namespace oquam {
 
@@ -36,111 +37,126 @@ namespace oquam {
                                                        double *xmax, double *vmax,
                                                        double *amax, double deviation,
                                                        double *scale, double interval)
-                : StepperController(xmax, vmax, amax, deviation, scale, interval),
-                  _buffer(0), _serial(0)
+                : StepperController(xmax, vmax, amax, deviation, scale, interval)
         {
-                _buffer = new_membuf();;
-                if (_buffer == 0)
-                        throw std::runtime_error("OquamStepperController: Out of memory");
-        
-                _serial = new_serial(device, 38400, 1);
-                if (_serial == 0)
-                        throw std::runtime_error("OquamStepperController: "
-                                                 "Failed to open the serial connection");
+                _serial = new RSerial(device, 115200, 1);
+                _romi_serial = new RomiSerialClient(_serial, _serial);
+
+                clock_sleep(2.0f);
+                for (int i = 0; i < 3; i++) {
+                        int r = update_status();
+                        if (r == 0)
+                                break;
+                }
         }
         
         OquamStepperController:: ~OquamStepperController()
         {
+                if (_romi_serial)
+                        delete _romi_serial;
                 if (_serial)
-                        delete_serial(_serial);
-                if (_buffer)
-                        delete_membuf(_buffer);
+                        delete _serial;
         }
 
-        int OquamStepperController::send_command(const char *cmd)
+        int OquamStepperController::send_command(const char *command)
         {
-                membuf_clear(_buffer);
+                int r = -1;
+                json_object_t response;
 
-                r_debug("%s", cmd);
-        
-                const char *r = serial_command_send(_serial, _buffer, cmd);
-                r_debug("%s -> %s", cmd, r);
-        
-                if (strncmp(r, "RE", 2) == 0)
-                        return 1;
-                if (strncmp(r, "OK", 2) == 0)
-                        return 0;
-                if (strncmp(r, "ERR", 3) == 0) {
-                        r_err("OquamStepperController::send_command: %s", r);
-                        return -1;
+                /* The number of loops is a bit random but it avoids
+                 * an infinite loop. The loop will take at the most 10
+                 * seconds to complete. This gives the firmware 10
+                 * seconds to free a slot in the command buffer. */
+                for (int i = 0; i < 100; i++) {
+                        
+                        response = _romi_serial->send(command);
+
+                        r = (int) json_array_getnum(response, 0);
+                        if (r == 0) {
+                                break;
+                                
+                        } else if (r == 1) {
+                                // Error code 1 indicates that the
+                                // command buffer in the firmware is
+                                // full. Wait a bit and try again.
+                                json_unref(response);
+                                clock_sleep(0.1);
+                                
+                        } else {
+                                r_err("OquamStepperController::execute: error: %s",
+                                      json_array_getstr(response, 1));
+                                break;
+                        }
                 }
-                return -1;
+                
+                json_unref(response);
+        
+                return r;
         }
 
         int OquamStepperController::update_status()
         {
-                membuf_clear(_buffer);
+                json_object_t s = _romi_serial->send("S");
 
-                const char *r = serial_command_send(_serial, _buffer, "S");
-                r_debug("S -> %s", r);
-        
-                if (strncmp(r, "ERR", 3) == 0) {
-                        r_err("oquam_stepper_controller_get_status: %s", r);
-                        return -1;
+                int r = (int) json_array_getnum(s, 0);
+                if (r == 0) {
+                        if (json_array_length(s) == 15) {
+                        
+                                const char* status = json_array_getstr(s, 1);
+                                if (status == NULL) {
+                                        r_err("OquamStepperController::update_status: "
+                                              "NULL status");
+                                        r = -1;
+                                } else if (rstreq(status, "e")) {
+                                        _status = CONTROLLER_EXECUTING;
+                                } else if (rstreq(status, "i")) {
+                                        _status = CONTROLLER_IDLE;
+                                } else if (rstreq(status, "t")) {
+                                        _status = CONTROLLER_TRIGGER;
+                                }
+
+                                _available = (int) json_array_getnum(s, 2);
+                                _block_id = (int) json_array_getnum(s, 3);
+                                _block_ms = (int) json_array_getnum(s, 4);
+                                _milliseconds = (int) json_array_getnum(s, 5);
+                                _interrupts = (int) json_array_getnum(s, 6);
+                                _trigger = (int) json_array_getnum(s, 7);
+                                _stepper_position[0] = (int32_t) json_array_getnum(s, 8);
+                                _stepper_position[1] = (int32_t) json_array_getnum(s, 9);
+                                _stepper_position[2] = (int32_t) json_array_getnum(s, 10);
+                                _encoder_position[0] = (int32_t) json_array_getnum(s, 11);
+                                _encoder_position[1] = (int32_t) json_array_getnum(s, 12);
+                                _encoder_position[2] = (int32_t) json_array_getnum(s, 13);
+                                _millis = (uint32_t) json_array_getnum(s, 14);
+
+                                // if (controller->available > 0
+                                //     || controller->block_id >= 0) {
+                                //         r_debug("Block %d, %d blocks avail., "
+                                //                 "block dur. %d, block ms. %d, "
+                                //                 "pos. [%d,%d,%d]s=[%.3f,%.3f,%.3f]m",
+                                //                 controller->block_id,
+                                //                 controller->available,
+                                //                 controller->block_ms,
+                                //                 controller->milliseconds,
+                                //                 controller->stepper_position[0],
+                                //                 controller->stepper_position[1],
+                                //                 controller->stepper_position[2],
+                                //                 (double) controller->stepper_position[0] / controller->stepper.scale[0],
+                                //                 (double) controller->stepper_position[1] / controller->stepper.scale[1],
+                                //                 (double) controller->stepper_position[2] / controller->stepper.scale[2]);
+                                // }
+                        } else {
+                                r_err("OquamStepperController::update_status: error: "
+                                      "invalid array length");
+                        }
+                } else {
+                        r_err("OquamStepperController::update_status: error: %s",
+                              json_array_getstr(s, 1));
                 }
 
-                json_object_t s = json_parse(r+1);
-                if (!json_isarray(s)) {
-                        r_err("oquam_stepper_controller_get_status: expected an array: got %s",
-                              r+1);
-                        return -1;
-                }
-        
-                const char* status = json_array_getstr(s, 0);
-                if (status == NULL) {
-                        r_err("oquam_stepper_controller_get_status: empty status: got %s",
-                              r+1);
-                        return -1;
-                } else if (rstreq(status, "e")) {
-                        _status = CONTROLLER_EXECUTING;
-                } else if (rstreq(status, "i")) {
-                        _status = CONTROLLER_IDLE;
-                } else if (rstreq(status, "t")) {
-                        _status = CONTROLLER_TRIGGER;
-                }
-
-                _available = (int) json_array_getnum(s, 1);
-                _block_id = (int) json_array_getnum(s, 2);
-                _block_ms = (int) json_array_getnum(s, 3);
-                _milliseconds = (int) json_array_getnum(s, 4);
-                _interrupts = (int) json_array_getnum(s, 5);
-                _trigger = (int) json_array_getnum(s, 6);
-                _stepper_position[0] = (int32_t) json_array_getnum(s, 7);
-                _stepper_position[1] = (int32_t) json_array_getnum(s, 8);
-                _stepper_position[2] = (int32_t) json_array_getnum(s, 9);
-                _encoder_position[0] = (int32_t) json_array_getnum(s, 10);
-                _encoder_position[1] = (int32_t) json_array_getnum(s, 11);
-                _encoder_position[2] = (int32_t) json_array_getnum(s, 12);
-                _millis = (uint32_t) json_array_getnum(s, 13);
-
-                // if (controller->available > 0
-                //     || controller->block_id >= 0) {
-                //         r_debug("Block %d, %d blocks avail., "
-                //                 "block dur. %d, block ms. %d, "
-                //                 "pos. [%d,%d,%d]s=[%.3f,%.3f,%.3f]m",
-                //                 controller->block_id,
-                //                 controller->available,
-                //                 controller->block_ms,
-                //                 controller->milliseconds,
-                //                 controller->stepper_position[0],
-                //                 controller->stepper_position[1],
-                //                 controller->stepper_position[2],
-                //                 (double) controller->stepper_position[0] / controller->stepper.scale[0],
-                //                 (double) controller->stepper_position[1] / controller->stepper.scale[1],
-                //                 (double) controller->stepper_position[2] / controller->stepper.scale[2]);
-                // }
-        
-                return 0;
+                json_unref(s);
+                
+                return r;
         }
 
         int OquamStepperController::get_position(double *pos)
@@ -153,13 +169,13 @@ namespace oquam {
                 return 0;
         }
 
-        int OquamStepperController::execute(block_t *block)
+        int OquamStepperController::encode(block_t *block, char *buffer, int len)
         {
-                char cmd[64];
-        
+                int r = 0;
+                
                 switch (block->type) {
                 case BLOCK_WAIT:
-                        rprintf(cmd, sizeof(cmd), "W");
+                        rprintf(buffer, len, "W");
                         break;
                 case BLOCK_MOVE:
                         if (block->data[0] <= 0)
@@ -168,7 +184,7 @@ namespace oquam {
                             && block->data[2] == 0
                             && block->data[3] == 0)
                                 return 0;
-                        rprintf(cmd, sizeof(cmd), "M[%d,%d,%d,%d,%d]",
+                        rprintf(buffer, len, "M[%d,%d,%d,%d,%d]",
                                 block->data[0],
                                 block->data[1],
                                 block->data[2],
@@ -178,29 +194,30 @@ namespace oquam {
                 case BLOCK_DELAY:
                         if (block->data[0] <= 0)
                                 return 0;
-                        rprintf(cmd, sizeof(cmd), "D%d", block->data[0]);
+                        rprintf(buffer, len, "D%d", block->data[0]);
                         break;
                 case BLOCK_TRIGGER:
-                        rprintf(cmd, sizeof(cmd), "T[%d,%d]",
+                        rprintf(buffer, len, "T[%d,%d]",
                                 block->data[0], block->data[1]);
                         break;
                 default:
                         r_err("oquam_stepper_controller_send_block: Unknown block type");
-                        return -1;
+                        r = -1;
+                }
+                
+                return r;
+        }
+        
+        int OquamStepperController::execute(block_t *block)
+        {
+                int r = -1;
+                char cmd[64];
+        
+                if (encode(block, cmd, sizeof(cmd)) == 0) {
+                        r = send_command(cmd);
                 }
 
-                while (1) {
-                        //int err = 0;
-                        int err = send_command(cmd);
-                        if (err == 0)
-                                return 0;
-                        if (err < 0)
-                                return err;
-                        if (err > 0)
-                                clock_sleep(1.0);
-                }
-        
-                return 0;
+                return r;
         }
 
         int OquamStepperController::is_busy()
@@ -217,7 +234,7 @@ namespace oquam {
                         return -1;
                 }
                 char cmd[64];
-                rprintf(cmd, sizeof(cmd), "V[%d,%d,%d]",
+                rprintf(cmd, sizeof(cmd), "V[%d,%d,%d,0]",
                         (int) (v[0] * _scale[0]),
                         (int) (v[2] * _scale[1]),
                         (int) (v[2] * _scale[2]));
@@ -258,9 +275,9 @@ namespace oquam {
                 int zi = move_z? (int) (z * _scale[2]) : -1;
         
                 char cmd[64];
-                rprintf(cmd, sizeof(cmd), "m[%d,%d,%d,%d]", v_steps, xi, yi, zi);
+                rprintf(cmd, sizeof(cmd), "m[%d,%d,%d,%d,0]", v_steps, xi, yi, zi);
+
                 return send_command(cmd);
-                //return -1;
         }
 
         int OquamStepperController::continue_script()

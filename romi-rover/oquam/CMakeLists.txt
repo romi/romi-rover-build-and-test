@@ -7,6 +7,8 @@ set(oquam_VERSION_MINOR 1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../arduino_libraries/RomiSerial" )
+
 set(SOURCES
   src/script.c
   src/script.h
@@ -22,7 +24,16 @@ set(SOURCES
   src/plotter.c
   src/plotter.h
   src/v.c
-  src/v.h)
+  src/v.h
+  ../arduino_libraries/RomiSerial/IInputStream.h
+  ../arduino_libraries/RomiSerial/IOutputStream.h
+  ../arduino_libraries/RomiSerial/CRC8.h
+  ../arduino_libraries/RomiSerial/IRomiSerialClient.h
+  ../arduino_libraries/RomiSerial/RomiSerialClient.h
+  ../arduino_libraries/RomiSerial/RomiSerialClient.cpp
+  ../arduino_libraries/RomiSerial/RSerial.h
+  ../arduino_libraries/RomiSerial/RSerial.cpp
+  )
 
 add_library(liboquam SHARED ${SOURCES})
 target_link_libraries(liboquam r m)
@@ -44,5 +55,8 @@ ADD_CUSTOM_COMMAND(
   COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/oquam_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
   DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
   )
+
+
+add_subdirectory(test)
 
 

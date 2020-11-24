@@ -22,11 +22,13 @@ protected:
         string output_message;
         string expected_message;
         
-	romiserialclient_tests() : client(&in, &out) {}
+	romiserialclient_tests() {}
 
 	~romiserialclient_tests() override = default;
 
 	void SetUp() override {
+                EXPECT_CALL(in, set_timeout(_));
+                client.init(&in, &out);
 	}
 
 	void TearDown() override {
@@ -43,7 +45,6 @@ protected:
         }
         
         void initInput(const char *s) {
-                //EXPECT_CALL(in, set_timeout(_));
                 initSerialRead(s);
         }
 

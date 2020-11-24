@@ -306,15 +306,13 @@ TEST_F(parser_tests, parser_succeeds_on_two_commands)
         ASSERT_EQ(parser.length(), 0);
 }
 
-TEST_F(parser_tests, parser_succeeds_on_26_args)
+TEST_F(parser_tests, parser_succeeds_on_12_args)
 {
         // Arrange
         Parser parser;
 
         // Act
-        const char *s = ("#a[0,1,2,3,4,5,6,7,8,9,"
-                         "0,1,2,3,4,5,6,7,8,9,"
-                         "0,1,2,3,4,5]\r");
+        const char *s = ("#a[0,1,2,3,4,5,6,7,8,9,0,1]\r");
         vector<bool> r;
         vector<int8_t> e;
         send_command(&parser, s, r, e);
@@ -327,15 +325,13 @@ TEST_F(parser_tests, parser_succeeds_on_26_args)
                 ASSERT_EQ(parser.value(i), (i % 10));
 }
 
-TEST_F(parser_tests, parser_fails_on_27_args)
+TEST_F(parser_tests, parser_fails_on_13_args)
 {
         // Arrange
         Parser parser;
 
         // Act
-        const char *s = ("#a[0,1,2,3,4,5,6,7,8,9,"
-                         "0,1,2,3,4,5,6,7,8,9,"
-                         "0,1,2,3,4,5,6]\r");
+        const char *s = ("#a[0,1,2,3,4,5,6,7,8,9,0,1,2]\r");
         vector<bool> r;
         vector<int8_t> e;
         send_command(&parser, s, r, e);

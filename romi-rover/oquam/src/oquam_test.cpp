@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
         /* vdiv(amax, amax, gears); */
         
-        double period = 0.014;
+        double period = 0.010;
         double deviation = 0.010;
 
         printf("xmax[%.3f,%.3f,%.3f]\n", xmax[0], xmax[1], xmax[2]);
@@ -115,6 +115,7 @@ int main(int argc, char **argv)
                 script_moveto(script, dx, 0.0, 0.0, 0.1, 0);
                 script_moveto(script, dx,  dy, 0.0, 0.1, 1);
                 script_moveto(script, 0.0, dy, 0.0, 0.1, 2);
+                script_moveto(script, 0.0, 0.0, 0.0, 0.1, 3);
                 controller->run(script);
                 delete_script(script);
         }
@@ -372,8 +373,8 @@ int main(int argc, char **argv)
 
                 controller->run(script);                
 
-                plot_to_file("oquam_test.svg", script,
-                             xmax, vmax, amax, scale);
+                // plot_to_file("oquam_test.svg", script,
+                //              xmax, vmax, amax, scale);
                 
                 delete_script(script);
         }

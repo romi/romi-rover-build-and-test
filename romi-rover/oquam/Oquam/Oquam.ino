@@ -27,7 +27,7 @@
 #include "config.h"
 #include "limit.h"
 #include "encoder.h"
-#include "Parser.h"
+#include <RomiSerial.h>
 
 /**
  *  \brief The possible states of the controller (the main thread).
@@ -47,54 +47,40 @@ extern volatile int8_t stepper_reset;
 
 uint8_t controller_state;
 uint8_t error_number;
-Parser parser("mMDTV", "?SCWXZ");
+
+void handle_moveto(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_move(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_moveat(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_delay(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_trigger(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_wait(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void send_state(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_reset(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_zero(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+
+const static MessageHandler handlers[] = {
+        { 'm', 5, false, handle_moveto },
+        { 'M', 5, false, handle_move },
+        { 'V', 4, false, handle_moveat },
+        { 'D', 1, false, handle_delay },
+        { 'T', 2, false, handle_trigger },
+        { 'W', 0, false, handle_wait },
+        { 'C', 0, false, handle_continue },
+        { 'S', 0, false, send_state },
+        { 'X', 0, false, handle_reset },
+        { 'Z', 0, false, handle_zero },
+        { '?', 0, false, send_info },
+};
+
+RomiSerial romiSerial(handlers, sizeof(handlers) / sizeof(MessageHandler));
+
 
 // DEBUG
 extern int32_t accumulation_error[3];
 
 static char reply_string[80];
-
-#define set_reply(__s)  snprintf(reply_string, sizeof(reply_string), "%s", __s)
-
-
-char* get_state_string()
-{
-        uint8_t n = block_buffer_available();
-        char *status;
-        int16_t trigger = -1;
-        
-        if (trigger_buffer_available() > 0) {
-                status = "t";
-                trigger = trigger_buffer_get();
-        } else {
-                switch (thread_state) {
-                case STATE_THREAD_EXECUTING:
-                        status = "e";
-                        break;
-                case STATE_THREAD_IDLE:
-                        status = "i";
-                        break;
-                }
-        }
-        
-        snprintf(reply_string, sizeof(reply_string),
-                 "S['%s',%d,%d,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%lu]",
-                 status,
-                 (int) block_buffer_available(),
-                 (int) block_id,
-                 (int) block_ms,
-                 (int) milliseconds,
-                 (int) interrupts,
-                 (int) trigger,
-                 (int32_t) stepper_position[0],
-                 (int32_t) stepper_position[1],
-                 (int32_t) stepper_position[2],
-                 (int32_t) encoder_position[0],
-                 (int32_t) encoder_position[1],
-                 (int32_t) encoder_position[2],
-                 millis());
-        return reply_string;
-}
 
 void reset()
 {
@@ -109,179 +95,6 @@ void zero()
                 stepper_position[i] = 0;
                 encoder_position[i] = 0;
                 accumulation_error[i] = 0;
-        }
-}
-
-/**
- * \brief Handle incoming serial data.
- *
- * Only one byte is handled at a time to avoid delaying the other
- * functions.
- */
-void handle_input()
-{
-        if (Serial.available() > 0) {
-                char c = Serial.read();
-                if (parser.process(c)) {                        
-                        switch (parser.opcode()) {
-                        default:
-                                set_reply("ERR Unknown command");
-                                break;
-                                
-                                /* First handle the commands 'm', 'M',
-                                 * 'V', 'D, 'T', 'W' to create a new
-                                 * block.
-                                 */
-                                
-                        case 'm':
-                                if (parser.length() >= 4
-                                    && parser.value(0) > 0) {
-                                        block_t *block = block_buffer_get_empty();
-                                        if (block == 0) {
-                                                set_reply("RE m");
-                                        } else {
-                                                block->type = BLOCK_MOVETO;
-                                                block->data[DT] = parser.value(0);
-                                                block->data[DX] = parser.value(1);
-                                                block->data[DY] = parser.value(2);
-                                                block->data[DZ] = parser.value(3);
-                                                if (parser.length() == 5)
-                                                        block->id = parser.value(4);
-                                                block_buffer_ready();
-
-                                                snprintf(reply_string, sizeof(reply_string),
-                                                         "OK m");
-                                                
-                                        }
-                                } else if (parser.value(0) <= 0) {
-                                        set_reply("ERR invalid speed");
-                                } else if (parser.length() < 4) {
-                                        set_reply("ERR missing args");
-                                }
-                                break;
-                        case 'M':
-                                if (parser.length() >= 4
-                                    && parser.value(0) > 0) {
-                                        block_t *block = block_buffer_get_empty();
-                                        if (block == 0) {
-                                                set_reply("RE M");
-                                        } else {
-                                                block->type = BLOCK_MOVE;
-                                                block->data[DT] = parser.value(0);
-                                                block->data[DX] = parser.value(1);
-                                                block->data[DY] = parser.value(2);
-                                                block->data[DZ] = parser.value(3);
-                                                if (parser.length() == 5)
-                                                        block->id = parser.value(4);
-                                                block_buffer_ready();
-
-                                                snprintf(reply_string, sizeof(reply_string),
-                                                         "OK M");
-                                        }
-                                } else if (parser.value(0) <= 0) {
-                                        // Zero duration: just skip
-                                        set_reply("OK M");
-                                } else if (parser.length() < 4) {
-                                        set_reply("ERR missing args");
-                                }
-                                break;
-                        case 'V':
-                                if (parser.length() >= 3) {
-                                        block_t *block = block_buffer_get_empty();
-                                        if (block == 0) {
-                                                set_reply("RE V");
-                                        } else {
-                                                block->type = BLOCK_MOVEAT;
-                                                block->data[DT] = 1000;
-                                                block->data[DX] = parser.value(0);
-                                                block->data[DY] = parser.value(1);
-                                                block->data[DZ] = parser.value(2);
-                                                if (parser.length() == 4)
-                                                        block->id = parser.value(3);
-                                                block_buffer_ready();
-                                                set_reply("OK V");
-                                        }
-                                } else if (parser.length() < 3) {
-                                        set_reply("ERR missing args");
-                                }
-                                break;
-                        case 'D':
-                                if (parser.length() == 1
-                                    && parser.value(0) > 0) {
-                                        block_t *block = block_buffer_get_empty();
-                                        if (block == 0) {
-                                                set_reply("RE D");
-                                        } else {
-                                                block->type = BLOCK_DELAY;
-                                                block->data[0] = parser.value(0);
-                                                block_buffer_ready();
-                                                set_reply("OK D");
-                                        }
-                                } else {
-                                        set_reply("ERR bad arg");
-                                }
-                                break;
-                        case 'T':
-                                if (parser.length() == 1
-                                    || parser.length() == 2) {
-                                        int16_t id, delay = 0;
-                                        id = parser.value(2);
-                                        if (parser.length() == 2)
-                                                delay = parser.value(1);
-                                        block_t *block = block_buffer_get_empty();
-                                        if (block == 0) {
-                                                set_reply("RE T");
-                                        } else {
-                                                block->type = BLOCK_TRIGGER;
-                                                block->data[0] = id;
-                                                block->data[1] = delay;
-                                                block_buffer_ready();
-                                                set_reply("OK T");
-                                        }
-                                } else {
-                                        set_reply("ERR bad arg");
-                                }
-                                break;
-                        case 'W':
-                                if (1) {
-                                        block_t *block = block_buffer_get_empty();
-                                        if (block == 0) {
-                                                set_reply("RE W");
-                                        } else {
-                                                block->type = BLOCK_WAIT;
-                                                block_buffer_ready();
-                                                set_reply("OK W");
-                                        }
-                                } else {
-                                        set_reply("ERR bad arg");
-                                }
-                                break;
-
-                                /* The other, 'real-time', commands. */
-                                
-                        case 'C':
-                                enable_stepper_timer();
-                                set_reply("OK Cont");
-                                break;
-                        case 'S':
-                                get_state_string();
-                                break;
-                        case 'X':
-                                reset();
-                                set_reply("OK Clear");
-                                break;
-                        case 'Z':
-                                reset();
-                                zero();
-                                set_reply("OK Zero");
-                                break;
-                        case '?':
-                                set_reply("?[\"Oquam\",\"0.1\"]"); 
-                                break;
-                        }
-                        
-                        Serial.println(reply_string);
-                }
         }
 }
 
@@ -335,12 +148,12 @@ static int16_t id = 0;
 
 void loop()
 {
-        handle_input();
+        romiSerial.handle_input();
         check_accuracy();
 
         if (0) {
                 unsigned long time = millis();
-                if (time - last_time > 100) {
+                if (time - last_time > 400) {
                         block_t *block = block_buffer_get_empty();
                         if (block == 0) {
                                 Serial.print("RE ");
@@ -391,5 +204,175 @@ void loop()
                         //         Serial.println("z");
                 }
         }
+}
+
+void handle_moveto(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        if (args[0] > 0) {
+                block_t *block = block_buffer_get_empty();
+                if (block == 0) {
+                        romiSerial->send_error(1, "Again");  
+                } else {
+                        block->type = BLOCK_MOVETO;
+                        block->data[DT] = args[0];
+                        block->data[DX] = args[1];
+                        block->data[DY] = args[2];
+                        block->data[DZ] = args[3];
+                        block->id = args[4];
+                        block_buffer_ready();
+                        romiSerial->send_ok();  
+                }
+        } else {
+                romiSerial->send_error(100, "Invalid speed");  
+        } 
+}
+
+void handle_move(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        if (args[0] > 0) {
+                block_t *block = block_buffer_get_empty();
+                if (block == 0) {
+                        romiSerial->send_error(1, "Again");  
+                } else {
+                        block->type = BLOCK_MOVE;
+                        block->data[DT] = args[0];
+                        block->data[DX] = args[1];
+                        block->data[DY] = args[2];
+                        block->data[DZ] = args[3];
+                        block->id = args[4];
+                        block_buffer_ready();
+                        romiSerial->send_ok();  
+                }
+        } else {
+                romiSerial->send_error(100, "Invalid speed");                  
+        }
+}
+
+void handle_moveat(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        block_t *block = block_buffer_get_empty();
+        if (block == 0) {
+                romiSerial->send_error(1, "Again");  
+        } else {
+                block->type = BLOCK_MOVEAT;
+                block->data[DT] = 1000;
+                block->data[DX] = args[0];
+                block->data[DY] = args[1];
+                block->data[DZ] = args[2];
+                block->id = args[3];
+                block_buffer_ready();
+                romiSerial->send_ok();  
+        }
+}
+
+void handle_delay(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        if (args[0] > 0) {
+                block_t *block = block_buffer_get_empty();
+                if (block == 0) {
+                        romiSerial->send_error(1, "Again");  
+                } else {
+                        block->type = BLOCK_DELAY;
+                        block->data[0] = args[0];
+                        block_buffer_ready();
+                        romiSerial->send_ok();  
+                }
+        } else {
+                romiSerial->send_error(100, "Invalid delay");                  
+        }
+}
+
+void handle_trigger(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        if (args[1] >= 0) {
+                block_t *block = block_buffer_get_empty();
+                if (block == 0) {
+                        romiSerial->send_error(1, "Again");  
+                } else {
+                        block->type = BLOCK_TRIGGER;
+                        block->data[0] = args[0];
+                        block->data[1] = args[1];
+                        block_buffer_ready();
+                        romiSerial->send_ok();  
+                }
+        } else {
+                romiSerial->send_error(100, "Invalid delay");                  
+        }
+}
+
+void handle_wait(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        block_t *block = block_buffer_get_empty();
+        if (block == 0) {
+                romiSerial->send_error(1, "Again");  
+        } else {
+                block->type = BLOCK_WAIT;
+                block_buffer_ready();
+                romiSerial->send_ok();  
+        }
+}
+
+void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        enable_stepper_timer();
+        romiSerial->send_ok();  
+}
+
+void send_state(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        uint8_t n = block_buffer_available();
+        char *status;
+        int16_t trigger = -1;
+        
+        if (trigger_buffer_available() > 0) {
+                status = "t";
+                trigger = trigger_buffer_get();
+        } else {
+                switch (thread_state) {
+                case STATE_THREAD_EXECUTING:
+                        status = "e";
+                        break;
+                case STATE_THREAD_IDLE:
+                        status = "i";
+                        break;
+                }
+        }
+        
+        snprintf(reply_string, sizeof(reply_string),
+                 "[0,'%s',%d,%d,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%lu]",
+                 status,
+                 (int) block_buffer_available(),
+                 (int) block_id,
+                 (int) block_ms,
+                 (int) milliseconds,
+                 (int) interrupts,
+                 (int) trigger,
+                 (int32_t) stepper_position[0],
+                 (int32_t) stepper_position[1],
+                 (int32_t) stepper_position[2],
+                 (int32_t) encoder_position[0],
+                 (int32_t) encoder_position[1],
+                 (int32_t) encoder_position[2],
+                 millis());
+        
+        romiSerial->send(reply_string); 
+}
+
+void handle_reset(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        reset();
+        romiSerial->send_ok();  
+}
+
+void handle_zero(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        reset();
+        zero();
+        romiSerial->send_ok();  
+}
+
+void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        romiSerial->send("[\"Oquam\",\"0.1\"]"); 
 }
 

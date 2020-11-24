@@ -36,7 +36,12 @@ void RomiSerial::handle_input()
                 if (c > 0) {
                         bool has_message = _parser.process((char) c);
                         if (has_message) {
-                                handle_message();
+                                if (_parser.has_id()
+                                    && _parser.id() != _last_id) {
+                                        handle_message();
+                                } else {
+                                        send_error(romiserial_duplicate, 0);
+                                }
                         } else if (_parser.error() != 0) {
                                 send_error(_parser.error(), 0);
                         }
@@ -127,6 +132,7 @@ void RomiSerial::send_ok()
         append_message("[0]");
         finalize_message();
         _sent_response = true;
+        _last_id = _parser.id();
 }
 
 void RomiSerial::send(const char *message)
@@ -135,6 +141,7 @@ void RomiSerial::send(const char *message)
         append_message(message);
         finalize_message();
         _sent_response = true;
+        _last_id = _parser.id();
 }
 
 void RomiSerial::log(const char *message)

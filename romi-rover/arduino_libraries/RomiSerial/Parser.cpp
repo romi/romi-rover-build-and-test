@@ -148,6 +148,7 @@ void Parser::reset()
         _error = romiserial_error_none;
         _opcode = 0;
         _id = 0;
+        _has_id = 0;
         _crc.start();
         _crc_metadata = 0;
         reset_values();
@@ -289,6 +290,7 @@ bool Parser::process(char c)
         case wait_id2:
                 if (VALID_HEX_CHAR(c)) {
                         _id = 16 * _id + hex_to_int(c);
+                        _has_id = 1;
                         _state = wait_crc1;
                 } else {
                         set_error(c, romiserial_invalid_id);

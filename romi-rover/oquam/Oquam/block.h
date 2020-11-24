@@ -60,41 +60,49 @@ enum {
  * \brief The 'block' structure contains the information of one
  * instruction.
  *
- * There are three types of blocks that the controller can execute:
+ * The controller can execute the following types of blocks:
  *
- * 1. stop: Come to a standstill and enter idle mode. There's no extra
+ * 1. WAIT: Come to a standstill and enter idle mode. There's no extra
  *    data.
  *
- * 2. move: This block represents a physical movement. The block
+ * 2. MOVE: This block represents a physical movement. The block
  *    contains the following data fields: a) the duration of the
  *    movement in milliseconds (data[0]), b) the number of motor steps
- *    to execute in each of the three directions (data[1-3]).
+ *    to execute in each of the three directions (data[1-3]). The
+ *    displacement is relative to the current position.
  *
- * 3. delay: The controller should pause for a given delay. The delay
+ * 3. MOVETO: Similar to 'move'. However in this case, the position
+ *    indicates an absolute position.
+ *
+ * 4. MOVEAT: This request to move at at given speed. The speed values
+ *    are incoded in the DX, DY and DZ field and are measured in
+ *    steps/second.
+ *
+ * 5. DELAY: The controller should pause for a given delay. The delay
  *    value is specified in data[0] and is expressed in
  *    milliseconds. The maximum delay is 2^15-1 ms or 32.7 s.
  *
- * 4. trigger: This instruction requests to send a trigger to the
+ * 6. TRIGGER: This instruction requests to send a trigger to the
  *    controlling program. The trigger ID in stored in data[0].
  */
-typedef struct _block_t {
+struct block_t {
         uint8_t type;
-        int16_t id;
+        uint16_t id;
         int16_t data[4];
-} block_t;
+};
 
 /* The buffer size should be a power of two. */
-#define BLOCK_BUFFER_SIZE 64
+#define BLOCK_BUFFER_SIZE 32
 #define BLOCK_BUFFER_SIZE_MASK (BLOCK_BUFFER_SIZE - 1)
 
 /**
  * \brief The 'block_buffer' is a circular buffer of blocks.
  */
-typedef struct _block_buffer_t {
+struct block_buffer_t {
         int16_t readpos;
         int16_t writepos;
         block_t block[BLOCK_BUFFER_SIZE];
-} block_buffer_t;
+};
 
 extern block_buffer_t block_buffer;
 

@@ -25,6 +25,8 @@
 #define _OQUAM_OQUAMSTEPPERCONTROLLER_HPP_
 
 #include <r.h>
+#include "RomiSerialClient.h" 
+#include "RSerial.h" 
 #include "StepperController.hpp" 
 
 namespace oquam {
@@ -50,11 +52,14 @@ namespace oquam {
         
         protected:
 
+                int encode(block_t *block, char *buffer, int len);
                 int send_command(const char *cmd);
                 int update_status();
-        
-                membuf_t *_buffer;
-                serial_t *_serial;
+
+                RSerial *_serial;
+                RomiSerialClient *_romi_serial;
+                // membuf_t *_buffer;
+                // serial_t *_serial;
 
                 int _status;
                 int _available;

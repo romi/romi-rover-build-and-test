@@ -66,151 +66,165 @@ double *vconvif(double *r, int *a);
 
 #include <math.h>
 
-class V3
-{
-public:
-        double _v[3];
+namespace oquam {
 
-        V3() {
-                _v[0] = _v[1] = _v[2] = 0.0;
-        }
+        class V3
+        {
+        public:
+                double _v[3];
 
-        V3(double a) {
-                _v[0] = a;
-                _v[1] = a;
-                _v[2] = a;
-        }
+                V3() {
+                        _v[0] = _v[1] = _v[2] = 0.0;
+                }
 
-        V3(double a, double b, double c) {
-                _v[0] = a;
-                _v[1] = b;
-                _v[2] = c;
-        }
+                V3(double a) {
+                        _v[0] = a;
+                        _v[1] = a;
+                        _v[2] = a;
+                }
 
-        V3(double *a) {
-                _v[0] = a[0];
-                _v[1] = a[1];
-                _v[2] = a[2];
-        }
+                V3(double a, double b, double c) {
+                        _v[0] = a;
+                        _v[1] = b;
+                        _v[2] = c;
+                }
+
+                V3(double *a) {
+                        _v[0] = a[0];
+                        _v[1] = a[1];
+                        _v[2] = a[2];
+                }
         
-        V3(const V3 &a) {
-                _v[0] = a._v[0];
-                _v[1] = a._v[1];
-                _v[2] = a._v[2];
-        }
+                V3(const V3 &a) {
+                        _v[0] = a._v[0];
+                        _v[1] = a._v[1];
+                        _v[2] = a._v[2];
+                }
 
-        V3 operator+(V3 const &a) { 
-                V3 r; 
-                r._v[0] = _v[0] + a._v[0]; 
-                r._v[1] = _v[1] + a._v[1]; 
-                r._v[2] = _v[2] + a._v[2]; 
-                return r; 
-        } 
+                V3 operator+(V3 const &a) { 
+                        V3 r; 
+                        r._v[0] = _v[0] + a._v[0]; 
+                        r._v[1] = _v[1] + a._v[1]; 
+                        r._v[2] = _v[2] + a._v[2]; 
+                        return r; 
+                } 
 
-        V3 operator-(V3 const &a) { 
-                V3 r; 
-                r._v[0] = _v[0] - a._v[0]; 
-                r._v[1] = _v[1] - a._v[1]; 
-                r._v[2] = _v[2] - a._v[2]; 
-                return r; 
-        } 
+                V3 operator-(V3 const &a) { 
+                        V3 r; 
+                        r._v[0] = _v[0] - a._v[0]; 
+                        r._v[1] = _v[1] - a._v[1]; 
+                        r._v[2] = _v[2] - a._v[2]; 
+                        return r; 
+                } 
         
-        V3 operator*(V3 const &a) { 
-                V3 r; 
-                r._v[0] = _v[0] * a._v[0]; 
-                r._v[1] = _v[1] * a._v[1]; 
-                r._v[2] = _v[2] * a._v[2]; 
-                return r; 
-        } 
+                V3 operator*(V3 const &a) { 
+                        V3 r; 
+                        r._v[0] = _v[0] * a._v[0]; 
+                        r._v[1] = _v[1] * a._v[1]; 
+                        r._v[2] = _v[2] * a._v[2]; 
+                        return r; 
+                } 
 
-        V3 operator/(V3 const &a) { 
-                V3 r; 
-                r._v[0] = _v[0] / a._v[0]; 
-                r._v[1] = _v[1] / a._v[1]; 
-                r._v[2] = _v[2] / a._v[2]; 
-                return r; 
-        } 
+                V3 operator/(V3 const &a) { 
+                        V3 r; 
+                        r._v[0] = _v[0] / a._v[0]; 
+                        r._v[1] = _v[1] / a._v[1]; 
+                        r._v[2] = _v[2] / a._v[2]; 
+                        return r; 
+                } 
         
-        V3 operator+(double s) { 
-                V3 r; 
-                r._v[0] = _v[0] + s;
-                r._v[1] = _v[1] + s;
-                r._v[2] = _v[2] + s;
-                return r; 
-        } 
+                V3 operator+(double s) { 
+                        V3 r; 
+                        r._v[0] = _v[0] + s;
+                        r._v[1] = _v[1] + s;
+                        r._v[2] = _v[2] + s;
+                        return r; 
+                } 
 
-        V3 operator-(double s) { 
-                V3 r; 
-                r._v[0] = _v[0] - s;
-                r._v[1] = _v[1] - s;
-                r._v[2] = _v[2] - s;
-                return r; 
-        } 
+                V3 operator-(double s) { 
+                        V3 r; 
+                        r._v[0] = _v[0] - s;
+                        r._v[1] = _v[1] - s;
+                        r._v[2] = _v[2] - s;
+                        return r; 
+                } 
 
-        V3 operator*(double s) { 
-                V3 r; 
-                r._v[0] = _v[0] * s;
-                r._v[1] = _v[1] * s;
-                r._v[2] = _v[2] * s;
-                return r; 
-        } 
+                V3 operator*(double s) { 
+                        V3 r; 
+                        r._v[0] = _v[0] * s;
+                        r._v[1] = _v[1] * s;
+                        r._v[2] = _v[2] * s;
+                        return r; 
+                } 
 
-        V3 operator/(double s) { 
-                V3 r; 
-                r._v[0] = _v[0] / s;
-                r._v[1] = _v[1] / s;
-                r._v[2] = _v[2] / s;
-                return r; 
-        } 
+                V3 operator/(double s) { 
+                        V3 r; 
+                        r._v[0] = _v[0] / s;
+                        r._v[1] = _v[1] / s;
+                        r._v[2] = _v[2] / s;
+                        return r; 
+                } 
 
-        V3 abs() { 
-                V3 r; 
-                r._v[0] = fabs(_v[0]);
-                r._v[1] = fabs(_v[1]);
-                r._v[2] = fabs(_v[2]);
-                return r; 
-        } 
+                bool operator==(const V3& v) {
+                        return (_v[0] == v._v[0]
+                                && _v[1] == v._v[1]
+                                && _v[2] == v._v[2]);
+                }
 
-        V3 sqrt() { 
-                V3 r; 
-                r._v[0] = ::sqrt(_v[0]);
-                r._v[1] = ::sqrt(_v[1]);
-                r._v[2] = ::sqrt(_v[2]);
-                return r; 
-        } 
+                V3 abs() { 
+                        V3 r; 
+                        r._v[0] = fabs(_v[0]);
+                        r._v[1] = fabs(_v[1]);
+                        r._v[2] = fabs(_v[2]);
+                        return r; 
+                } 
 
-        double max() { 
-                double r = _v[0];
-                if (_v[1] > r)
-                        r = _v[1];
-                if (_v[2] > r)
-                        r = _v[2];
-                return r; 
-        } 
+                V3 sqrt() { 
+                        V3 r; 
+                        r._v[0] = ::sqrt(_v[0]);
+                        r._v[1] = ::sqrt(_v[1]);
+                        r._v[2] = ::sqrt(_v[2]);
+                        return r; 
+                } 
 
-        double min() { 
-                double r = _v[0];
-                if (_v[1] < r)
-                        r = _v[1];
-                if (_v[2] < r)
-                        r = _v[2];
-                return r; 
-        } 
+                double max() { 
+                        double r = _v[0];
+                        if (_v[1] > r)
+                                r = _v[1];
+                        if (_v[2] > r)
+                                r = _v[2];
+                        return r; 
+                } 
 
-        double norm() { 
-                double r = _v[0] * _v[0];
-                r += _v[1] * _v[1]; 
-                r += _v[2] * _v[2]; 
-                return ::sqrt(r); 
-        } 
+                double min() { 
+                        double r = _v[0];
+                        if (_v[1] < r)
+                                r = _v[1];
+                        if (_v[2] < r)
+                                r = _v[2];
+                        return r; 
+                } 
 
-        V3 normalize() { 
-                V3 r = *this; 
-                r = r / norm();
-                return r;
-        } 
+                double norm() { 
+                        double r = _v[0] * _v[0];
+                        r += _v[1] * _v[1]; 
+                        r += _v[2] * _v[2]; 
+                        return ::sqrt(r); 
+                } 
 
-};
+                V3 normalize() { 
+                        V3 r = *this; 
+                        r = r / norm();
+                        return r;
+                } 
+
+                double *ptr() { 
+                        return _v;
+                } 
+
+        };
+}
+
 #endif
 
 #endif // _OQUAM_V_H_
