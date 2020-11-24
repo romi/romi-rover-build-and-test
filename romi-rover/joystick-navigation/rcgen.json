@@ -1,0 +1,14 @@
+{
+    "name": "joystick_navigation",
+    "com": [
+        {
+            "type": "messagelink",
+            "topic": "motorcontroller"
+        },
+        {
+            "type": "datalink",
+            "topic": "joystick",
+            "ondata": "joystick_navigation_onevent"
+        }
+    ]
+}

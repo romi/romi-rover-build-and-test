@@ -1,0 +1,14 @@
+{
+    "name": "joystick",
+    "idle": "joystick_handle_events",
+    "com": [
+        {
+            "type": "messagehub",
+            "topic": "joystick"
+        },
+        {
+            "type": "datahub",
+            "topic": "joystick"
+        }
+    ]
+}
