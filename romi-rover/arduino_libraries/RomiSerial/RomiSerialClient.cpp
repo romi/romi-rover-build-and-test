@@ -101,7 +101,6 @@ json_object_t RomiSerialClient::try_sending_request(std::string &request)
 
 bool RomiSerialClient::send_request(std::string &request)
 {
-        r_debug("RomiSerialClient::send_request: %s", request.c_str());
         size_t n = _out->print(request.c_str());
         return n == request.length();
 }
@@ -228,7 +227,6 @@ void RomiSerialClient::parse_char(int c)
                         _crc_response = hex_to_int(c);
                         _state = romiserialclient_crc2;
                 } else {
-                        printf("romiserialclient_crc1: romiserialclient_unexpected_char\n");
                         _error = romiserialclient_unexpected_char;
                 }
                 break;
@@ -243,7 +241,6 @@ void RomiSerialClient::parse_char(int c)
                         else
                                 _state = romiserialclient_carriage_return;
                 } else {
-                        printf("romiserialclient_crc2: romiserialclient_unexpected_char\n");
                         _error = romiserialclient_unexpected_char;
                 }
                 break;
@@ -252,17 +249,14 @@ void RomiSerialClient::parse_char(int c)
                 if (c == '\r') {
                         _state = romiserialclient_line_feed;
                 } else {
-                        printf("romiserialclient_carriage_return: romiserialclient_unexpected_char: 0x%02x\n", (int) c);
                         _error = romiserialclient_unexpected_char;
                 }
                 break;
 
         case romiserialclient_line_feed:
                 if (c == '\n') {
-                        r_debug("romiserialclient_line_feed: %s\n", _response.c_str());
                         _state = romiserialclient_message_complete;
                 } else {
-                        printf("romiserialclient_line_feed: romiserialclient_unexpected_char: 0x%02x\n", (int) c);
                         _error = romiserialclient_unexpected_char;
                 }
                 break;
@@ -277,7 +271,6 @@ void RomiSerialClient::parse_char(int c)
                 
         case romiserialclient_log_line_feed:
                 if (c == '\n') {
-                        r_debug("RomiSerial: %s", _log_message.c_str());
                         _state = romiserialclient_start_message;
                 } else {
                         _error = romiserialclient_unexpected_char;
@@ -349,15 +342,18 @@ json_object_t RomiSerialClient::read_response()
         _response = "";
         
         while (true) {
-                
-                if (_in->available() > 0) {
+
+                int available = _in->available();
+                if (available > 0) {
+
                         
                         read_one_char();
 
                         if (_state == romiserialclient_message_complete) {
 
                                 result = parse_response();
-                                
+
+                                // Check whether we have a valid response.
                                 if (_id_response == _id_request) {
                                         break;
                                         
@@ -372,15 +368,21 @@ json_object_t RomiSerialClient::read_response()
                                         break;
                                         
                                 } else {
+                                        /* There's an ID
+                                         * mismatch. Drop this
+                                         * response and try reading
+                                         * the next one. */
                                         r_warn("RomiSerialClient: ID mismatch: "
                                                "request(%d) != response(%d): "
                                                "response: %s",
+                                               _id_request, _id_response, 
                                                _response.c_str());
 
                                         // Try again
                                         _state = romiserialclient_start_message;
                                         _error = 0;
                                         _response = "";
+                                        json_unref(result);
                                 }
                                 
                         } else if (_error != 0) {

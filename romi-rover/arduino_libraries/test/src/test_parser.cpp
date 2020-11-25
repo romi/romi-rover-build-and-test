@@ -4,6 +4,7 @@
 #include <Parser.h>
 #include <RomiSerialErrors.h>
 #include <CRC8.h>
+#include <iostream>
 
 using namespace std;
 using namespace testing;
@@ -320,8 +321,8 @@ TEST_F(parser_tests, parser_succeeds_on_12_args)
         //Assert
         assert_success(r, e);
         ASSERT_EQ(parser.opcode(), 'a');
-        ASSERT_EQ(parser.length(), 26);
-        for (int i = 0; i < 26; i++)
+        ASSERT_EQ(parser.length(), 12);
+        for (int i = 0; i < 12; i++)
                 ASSERT_EQ(parser.value(i), (i % 10));
 }
 
@@ -337,7 +338,7 @@ TEST_F(parser_tests, parser_fails_on_13_args)
         send_command(&parser, s, r, e);
         
         //Assert
-        assert_failure(r, e, romiserial_vector_too_long, 56);
+        assert_failure(r, e, romiserial_vector_too_long, 28);
 }
 
 TEST_F(parser_tests, parser_fails_on_large_value)
@@ -525,7 +526,7 @@ TEST_F(parser_tests, parser_accepts_message_64_chars_long)
         Parser parser;
 
         // Act
-        const char *s = ("#a[\"012345678901234567890\",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\r");
+        const char *s = ("#a[\"0123456789012345678901234567890\",10,0,0,0,0,0,0,0,0,0,0,0]\r");
         vector<bool> r;
         vector<int8_t> e;
         send_command(&parser, s, r, e);
@@ -533,7 +534,7 @@ TEST_F(parser_tests, parser_accepts_message_64_chars_long)
         //Assert
         assert_success(r, e);
         ASSERT_EQ(parser.opcode(), 'a');
-        ASSERT_EQ(parser.length(), 18);
+        ASSERT_EQ(parser.length(), 12);
         ASSERT_EQ(parser.has_string(), 1);
 }
 
@@ -543,7 +544,7 @@ TEST_F(parser_tests, parser_returns_error_on_message_too_long)
         Parser parser;
 
         // Act
-        const char *s = ("#a[\"012345678901234567890\",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]\r");
+        const char *s = ("#a[\"0123456789012345678901234567890\",100,100,100,100,100,100,100,100,100,100]\r");
         vector<bool> r;
         vector<int8_t> e;
         send_command(&parser, s, r, e);

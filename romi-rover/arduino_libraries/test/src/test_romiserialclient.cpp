@@ -34,17 +34,28 @@ protected:
 	void TearDown() override {
 	}
 
+        void initSerialAvailable(const char *s) {
+                InSequence seq;
+                int len = strlen(s);
+                for (int i = len; i >= 1; i--) {
+                        EXPECT_CALL(in, available)
+                                .WillOnce(Return(i))
+                                .RetiresOnSaturation();
+                }
+        }
+
         void initSerialRead(const char *s) {
                 InSequence seq;
                 int len = strlen(s);
                 for (int i = 0; i < len; i++) {
                         EXPECT_CALL(in, read)
                                 .WillOnce(Return(s[i]))
-                                .RetiresOnSaturation();;
+                                .RetiresOnSaturation();
                 }
         }
         
         void initInput(const char *s) {
+                initSerialAvailable(s);
                 initSerialRead(s);
         }
 
@@ -184,23 +195,6 @@ TEST_F(romiserialclient_tests, message_too_long)
         EXPECT_EQ(1, json_isarray(response));
         EXPECT_EQ(2, json_array_length(response));
         EXPECT_EQ(romiserialclient_too_long, json_array_getnum(response, 0));
-
-        json_unref(response);
-}
-
-TEST_F(romiserialclient_tests, correctly_handle_print_failure)
-{
-        // Arrange
-        EXPECT_CALL(out, print(_))
-                .WillOnce(Return(0));
-
-        // Act
-        json_object_t response = client.send("a");
-        
-        //Assert
-        EXPECT_EQ(1, json_isarray(response));
-        EXPECT_EQ(2, json_array_length(response));
-        EXPECT_EQ(romiserialclient_connection_failed, json_array_getnum(response, 0));
 
         json_unref(response);
 }

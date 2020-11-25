@@ -36,11 +36,14 @@ void RomiSerial::handle_input()
                 if (c > 0) {
                         bool has_message = _parser.process((char) c);
                         if (has_message) {
-                                if (_parser.has_id()
-                                    && _parser.id() != _last_id) {
+                                if (_parser.has_id()) {
+                                        if (_parser.id() != _last_id) {
+                                                handle_message();
+                                        } else {
+                                                send_error(romiserial_duplicate, 0);
+                                        }
+                                } else { // no id
                                         handle_message();
-                                } else {
-                                        send_error(romiserial_duplicate, 0);
                                 }
                         } else if (_parser.error() != 0) {
                                 send_error(_parser.error(), 0);
