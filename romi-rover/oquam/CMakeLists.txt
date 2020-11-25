@@ -57,6 +57,6 @@ ADD_CUSTOM_COMMAND(
   )
 
 
-add_subdirectory(test)
+#add_subdirectory(test)
 
 
