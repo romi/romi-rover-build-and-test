@@ -1,0 +1,14 @@
+{
+    "name": "weeder",
+    "com": [
+        {
+            "type": "controller",
+            "topic": "weeder",
+            "commands": [{"name": "hoe", "oncommand": "weeder_onhoe"}]
+        },
+        {
+            "type": "messagelink",
+            "topic": "cnc"
+        }
+    ]
+}
