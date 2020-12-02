@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(realsense realsense.cc realsense_main.c convert.c)
-target_link_libraries(realsense rcom romi r jpeg png realsense2)
+target_link_libraries(realsense rcomlib romi r jpeg png realsense2)
 install(TARGETS realsense DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(

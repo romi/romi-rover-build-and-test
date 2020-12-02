@@ -28,7 +28,7 @@ add_library(liboquam SHARED ${SOURCES})
 target_link_libraries(liboquam r m)
 
 add_executable(oquam oquam.cpp oquam.hpp oquam_main.c)
-target_link_libraries(oquam liboquam rcom)
+target_link_libraries(oquam liboquam rcomlib)
 target_include_directories(oquam PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src")
 install(TARGETS oquam DESTINATION bin/romi)
 

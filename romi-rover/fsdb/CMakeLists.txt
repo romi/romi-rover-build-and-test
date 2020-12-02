@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(fsdb fsdb_node.c fsdb_main.c)
-target_link_libraries(fsdb rcom romi r)
+target_link_libraries(fsdb rcomlib romi r)
 install(TARGETS fsdb DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(

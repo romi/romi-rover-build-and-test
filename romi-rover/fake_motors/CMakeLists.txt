@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(fake_motors fake_motors.c fake_motors_main.c)
-target_link_libraries(fake_motors rcom r m)
+target_link_libraries(fake_motors rcomlib r m)
 install(TARGETS fake_motors DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(

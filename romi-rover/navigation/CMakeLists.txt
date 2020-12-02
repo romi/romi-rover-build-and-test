@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(navigation navigation.c navigation_main.c)
-target_link_libraries(navigation romi rcom r)
+target_link_libraries(navigation romi rcomlib r)
 install(TARGETS navigation DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(
