@@ -519,7 +519,7 @@ static int send_path(list_t *path, double z0, membuf_t *message)
         return 0;
 }
 
-static int32 _set_param(const char* key, json_object_t value, void* data)
+static int32_t _set_param(const char* key, json_object_t value, void* data)
 {
         membuf_t *message = (membuf_t *) data;
         

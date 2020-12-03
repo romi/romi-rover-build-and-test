@@ -86,7 +86,7 @@ if (BUILD_COVERAGE AND BUILD_TESTS)
         # lcov doesn't build with CMake so we download, set lcov as an external target, then call make.
         # we then manually add the bin path so that we can call it later.
         download_project(   PROJ              lcov
-                URL               https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz
+                URL               https://github.com/linux-test-project/lcov/releases/download/v1.15/lcov-1.15.tar.gz
                 PREFIX            ${CMAKE_DOWNLOAD_DIRECTORY}/lcov
                 TIMEOUT           180
                 ${UPDATE_DISCONNECTED_IF_AVAILABLE}
