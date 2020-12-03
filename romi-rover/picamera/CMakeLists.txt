@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(picamera picamera.cc picamera_main.c)
-target_link_libraries(picamera rcomlib romi r raspicam)
+target_link_libraries(picamera librcom romi r raspicam)
 install(TARGETS picamera DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(

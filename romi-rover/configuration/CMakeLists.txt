@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(configuration configuration.c configuration_main.c)
-target_link_libraries(configuration rcomlib r)
+target_link_libraries(configuration librcom r)
 install(TARGETS configuration DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(

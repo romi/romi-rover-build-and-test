@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(gimbal_bldc gimbal_bldc.c gimbal_bldc_main.c)
-target_link_libraries(gimbal_bldc romi rcomlib r m)
+target_link_libraries(gimbal_bldc romi librcom r m)
 #install(TARGETS gimbal_bldc DESTINATION bin/romi)
 
 #if(BUILD_TESTS)

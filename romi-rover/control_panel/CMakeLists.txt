@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(control_panel control_panel.c control_panel_main.c)
-target_link_libraries(control_panel rcomlib r m)
+target_link_libraries(control_panel librcom r m)
 install(TARGETS control_panel DESTINATION bin/romi)
 
 if(BUILD_TESTS)
