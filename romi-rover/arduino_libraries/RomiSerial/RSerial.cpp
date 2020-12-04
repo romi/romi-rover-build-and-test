@@ -37,7 +37,7 @@
 RSerial::RSerial(const char *device, int baudrate, bool reset)
         : _device(device),
           _fd(-1),
-          _timeout(0.0f),
+          _timeout(0.1f),
           _baudrate(baudrate),
           _reset(reset)
 {
@@ -71,13 +71,13 @@ int RSerial::available()
         int pollrc = poll(fds, 1, _timeout_ms);
         if (pollrc < 0) {
                 r_err("serial_read_timeout poll error %d on %s", errno, _device.c_str());
-                retval = -2;
+                retval = 0;
                 
         } else if ((pollrc > 0) && (fds[0].revents & POLLIN)) {
                 retval = 1;
         } else{
-                r_warn("serial_read_timeout poll timed out on %s", _device.c_str());
-                retval = -3;
+                //r_warn("serial_read_timeout poll timed out on %s", _device.c_str());
+                retval = 0;
         }
         
         return retval;
@@ -93,6 +93,36 @@ int RSerial::read()
                 //printf("%c 0x%02x\n", c, (int) c);
         } 
         return retval;
+}
+
+int RSerial::readline(std::string &line)
+{
+        enum { READ, NL, DONE };
+        
+        int state = READ;
+        
+        line = "";
+        while (available()) {
+                int c = read();
+                switch (state) {
+                case READ:
+                        line += (char) c;
+                        if (c == '\r')
+                                state = NL;
+                        break;
+                case NL:
+                        if (c == '\n') {
+                                line += (char) c;
+                                state = DONE;
+                        } else {
+                                state = READ;
+                        }
+                        break;
+                }
+                if (state == DONE)
+                        break;
+        }
+        return 0;
 }
 
 bool RSerial::poll_write()
@@ -166,6 +196,9 @@ void RSerial::open_device()
                 _fd = -1;
                 throw std::runtime_error("Failed to open the serial device");
         }
+        // FIXME: the connection resets the Arduino and it can take
+        // some time before the serial on the board is up and running. 
+        clock_sleep(3.0); 
 }
 
 void RSerial::configure_termios()

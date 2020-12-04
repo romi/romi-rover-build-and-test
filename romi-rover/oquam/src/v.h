@@ -37,6 +37,7 @@ double *vadd(double *r, double *a, double *b);
 double *vsub(double *r, double *a, double *b);
 double *vmul(double *r, double *a, double *b);
 double *vdiv(double *r, double *a, double *b);
+double *vcross(double *r, double *a, double *b);
 
 double vmax(double *a);
 double vmin(double *a);
@@ -56,7 +57,8 @@ int *vsubi(int *r, int *a, int *b);
 int *vconvfi(int *r, double *a);
 double *vconvif(double *r, int *a);
 
-        
+int veq(double *a, int *b);
+
 #ifdef __cplusplus
 }
 #endif

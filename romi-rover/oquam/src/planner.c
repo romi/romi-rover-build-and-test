@@ -68,8 +68,9 @@ static section_t *new_section_init(double t, double at,
                                    double *a, int id)
 {
         section_t *section = new_section();
-        if (section == NULL)
+        if (section == NULL) {
                 return NULL;
+        }
 
         section->t = t;
         section->at = at;
@@ -108,7 +109,9 @@ static list_t *section_slice(section_t *section, double period, double maxlen, i
                 T = maxlen;
 
         double t = 0.0;
-                
+
+        r_debug("section->t=%f", section->t);
+        
         while (t < section->t) {
                 double dt = section->t - t;
                 if (dt > T)
@@ -138,17 +141,21 @@ static list_t *section_slice(section_t *section, double period, double maxlen, i
                                                 p0, p1, v0, v1,
                                                 section->a, id);
                 if (s == NULL) {
+                        r_err("section_slice: new_section_init returned NULL");
                         delete_section_list(slices);
                         return NULL;
                 }
 
                 slices = list_append(slices, s);
-                if (slices == NULL)
-                        return NULL;                
+                if (slices == NULL) {
+                        r_err("section_slice: list_append returned NULL");
+                        return NULL;
+                }
                 
                 t += dt;
         }
         
+        r_err("section_slice: return %p", slices);
         return slices;
 }
 
@@ -222,10 +229,15 @@ void delete_atdc(atdc_t *atdc)
 static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
 {
         list_t *list = NULL;
-        
+
+        /* r_err("atdc_slice: a=%f, t=%f, d=%f, c=%f", */
+        /*       atdc->accelerate.t, atdc->travel.t, */
+        /*       atdc->decelerate.t, atdc->curve.t); */
+
         if (atdc->accelerate.t > 0) {
                 list_t *slices = section_slice(&atdc->accelerate, period, maxlen, atdc->id);
                 if (slices == NULL) {
+                        r_err("atdc_slice(a): section_slice returned NULL");
                         delete_section_list(list);
                         return NULL;
                 }
@@ -235,6 +247,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         if (atdc->travel.t > 0) {
                 list_t *slices = section_slice(&atdc->travel, period, maxlen, atdc->id);
                 if (slices == NULL) {
+                        r_err("atdc_slice(t): section_slice returned NULL");
                         delete_section_list(list);
                         return NULL;
                 }
@@ -244,6 +257,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         if (atdc->decelerate.t > 0) {
                 list_t *slices = section_slice(&atdc->decelerate, period, maxlen, atdc->id);
                 if (slices == NULL) {
+                        r_err("atdc_slice(d): section_slice returned NULL");
                         delete_section_list(list);
                         return NULL;
                 }
@@ -253,6 +267,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         if (atdc->curve.t > 0) {
                 list_t *slices = section_slice(&atdc->curve, period, maxlen, atdc->id);
                 if (slices == NULL) {
+                        r_err("atdc_slice(c): section_slice returned NULL");
                         delete_section_list(list);
                         return NULL;
                 }
@@ -262,8 +277,10 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         if (atdc->actions != NULL) {
                 // FIXME: Add an empty section with only actions
                 section_t *section = new_section();
-                if (section == NULL)
+                if (section == NULL) {
+                        r_err("atdc_slice(actions): new_section returned NULL");
                         return NULL;
+                }
                                 
                 // Clone the list of actions
                 for (list_t *l = atdc->actions; l; l = list_next(l)) {
@@ -275,6 +292,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
                 list = list_append(list, section);
         }
         
+        //r_err("atdc_slice: return %p", list);
         return list;
 }
 
@@ -285,6 +303,7 @@ static list_t *atdc_list_slice(atdc_t *atdc_list, double period, double maxlen)
         for (atdc_t *atdc = atdc_list; atdc != NULL; atdc = atdc->next) {
                 list_t *slices = atdc_slice(atdc, period, maxlen);
                 if (slices == NULL) {
+                        r_err("atdc_list_slice: atdc_slice returned NULL");
                         delete_section_list(list);
                         return NULL;
                 }
@@ -387,90 +406,65 @@ static void segment_compute_curve(segment_t *s0, atdc_t *t0, double d, double *a
         // The x and y unit vectors in the new coordinate space (ex,
         // ey). The wx0 and wy0 are the speeds in these directions.
         double ex[3] = { 0.0, 0.0, 0.0 };
-        vadd(ex, w1, w0);
-        smul(ex, ex, 0.5);
-        double wx0 = norm(ex);
-        smul(ex, ex, 1/wx0);
+        double ey[3] = { 0.0, 0.0, 0.0 };
+        double wx0, wy0;
 
-        double ey[3] = { 0.0, 0.0, 0.0 };;
-        vsub(ey, w0, w1);
-        smul(ey, ey, 0.5);        
-        double wy0 = norm(ey);
-        smul(ey, ey, -1 / wy0);
+        double c[3];
+        vcross(c, w0, w1);
 
+        if (norm(c) < 0.001) {
+                // The two speed vectors are collinear...
+                double n;
+                
+                if (w1[0] != 0.0)
+                        n = w0[0] / w1[0];
+                else if (w1[1] != 0.0)
+                        n = w0[1] / w1[1];
+                else if (w1[2] != 0.0)
+                        n = w0[2] / w1[2];
+                
+                if (n > 0.0) {
+                        // pointing in the same direction.
+                        wx0 = norm(w0);
+                        wy0 = 0.0;
+                        smul(ex, w0, 1/wx0);
+                        ey[0] = -ex[1];
+                        ey[1] = ex[0];
+                        ey[2] = ex[2];
+
+                } else {
+                        // pointing in the opposite directions.
+                        wx0 = 0.0;
+                        wy0 = norm(w0);
+                        smul(ey, w0, -1/wy0);
+                        ex[0] = ey[1];
+                        ex[1] = -ey[0];
+                        ex[2] = ey[2];
+                }
+                
+        } else {
+                vadd(ex, w1, w0);
+                smul(ex, ex, 0.5);
+                wx0 = norm(ex);
+                smul(ex, ex, 1/wx0);
+
+                vsub(ey, w0, w1);
+                smul(ey, ey, 0.5);        
+                wy0 = norm(ey);
+                smul(ey, ey, -1 / wy0);
+        }
 
         /* Compute the maximum allowed acceleration in the direction
            of wy (or ey). */
         double a[3];
-        
-        if (1) {
-
-                double s = DBL_MAX;
-                for (int i = 0; i < 3; i++) {
-                        if (ey[i] != 0.0)
-                                s = min(s, amax[i] / fabs(ey[i]));
-                }
-                vcopy(a, ey);
-                smul(a, a, s);
-                        
-                
-        } else {
-        
-                /*
-                  The Ellipsoid describing the maximum accelerations is:
-                  ax²/amax_x² + ay²/amax_y² + az²/amax_z² = 1
-
-                  We need to know where the line (0,ey) crosses the ellipsoid.
-                  The points on the line satisfy the following:
-                  p(x,y,z) = (x, (ey_y/ey_x).x, (ey_z/ey_x).x)
-          
-                  Substituting the parametric values for y and z in the
-                  equation for the ellipsoid and solving for x gives the value
-                  for x below.
-          
-                */
-        
-                // First, handle some simple cases
-                if (ey[0] == 0.0 && ey[1] == 0.0) {
-                        a[2] = amax[2];
-                } else if (ey[0] == 0.0 && ey[2] == 0.0) {
-                        a[1] = amax[1];
-                } else if (ey[1] == 0.0 && ey[2] == 0.0) {
-                        a[0] = amax[0];
-                } else if (ey[2] == 0.0) {
-                        // An ellepsis and line in the xy plane
-                        a[0] = ((ey[0] * amax[0] * amax[1])
-                                / sqrt((ey[0] * ey[0] * amax[1] * amax[1])
-                                       + (ey[1] * ey[1] * amax[0] * amax[0])));
-                        a[1] = ey[1] * a[0] / ey[0];
-
-                } else if (ey[1] == 0.0) {
-                        // An ellepsis and line in the xz plane
-                        a[0] = ((ey[0] * amax[0] * amax[2])
-                                / sqrt((ey[0] * ey[0] * amax[2] * amax[2])
-                                       + (ey[2] * ey[2] * amax[0] * amax[0])));
-                        a[2] = ey[2] * a[1] / ey[1];
-
-                } else if (ey[0] == 0.0) {
-                        // An ellepsis and line in the yz plane
-                        a[1] = ((ey[1] * amax[1] * amax[2])
-                                / sqrt((ey[1] * ey[1] * amax[2] * amax[2])
-                                       + (ey[2] * ey[2] * amax[1] * amax[1])));
-                        a[2] = ey[2] * a[1] / ey[1];
-                
-                } else {        
-                        a[0] = ((ey[0] * amax[0] * amax[1] * amax[2])
-                                / sqrt((ey[0] * ey[0] * amax[1] * amax[1] * amax[2] * amax[2])
-                                       + (ey[1] * ey[1] * amax[0] * amax[0] * amax[2] * amax[2])
-                                       + (ey[2] * ey[2] * amax[0] * amax[0] * amax[1] * amax[1])));
-                        a[1] = ey[1] * a[0] / ey[0];
-                        a[2] = ey[2] * a[0] / ey[0];
-                }
+        double s = DBL_MAX;
+        for (int i = 0; i < 3; i++) {
+                if (ey[i] != 0.0)
+                        s = min(s, amax[i] / fabs(ey[i]));
         }
+        vcopy(a, ey);
+        smul(a, a, s);
 
-        
-        // This is the maximum acceleration that we can tolerate along
-        // the ey axis.
         double am = norm(a);
 
         /*
@@ -609,7 +603,148 @@ static void segment_compute_curve(segment_t *s0, atdc_t *t0, double d, double *a
         t0->curve.t = fabs(2.0 * wy0 / am);                      // t
 }
 
-static void segment_compute_accelerations(atdc_t *t0, double *v, double *amax, double at)
+static int section_is_valid(section_t *s,
+                            const char *name,
+                            double tmax,
+                            double *xmin, 
+                            double *xmax, 
+                            double *vmax,
+                            double *amax)
+{
+        if (s->t > tmax) {
+                r_warn("section_is_valid (%s): t too long", name);
+                return 0;
+        }
+        if (s->t < 0.0) {
+                r_warn("section_is_valid (%s): t < 0", name);
+                return 0;
+        }
+        if (s->at < 0.0) {
+                r_warn("section_is_valid (%s): at < 0", name);
+                return 0;
+        }
+        
+        double dx[3];
+        double dmax;
+
+        vsub(dx, xmax, xmin);
+        dmax = norm(dx);
+        
+        for (int i = 0; i < 3; i++) {
+                if (isnan(s->p0[i])) {
+                        r_warn("section_is_valid (%s): p0[%d] is NaN", name, i);
+                        return 0;
+                }
+                if (isnan(s->p1[i])) {
+                        r_warn("section_is_valid (%s): p1[%d] is NaN", name, i);
+                        return 0;
+                }
+                if (isnan(s->v0[i])) {
+                        r_warn("section_is_valid (%s): v0[%d] is NaN", name, i);
+                        return 0;
+                }
+                if (isnan(s->v1[i])) {
+                        r_warn("section_is_valid (%s): v1[%d] is NaN", name, i);
+                        return 0;
+                }
+                if (isnan(s->a[i])) {
+                        r_warn("section_is_valid (%s): a[%d] is NaN", name, i);
+                        return 0;
+                }
+                if (isnan(s->d[i])) {
+                        r_warn("section_is_valid (%s): d[%d] is NaN", name, i);
+                        return 0;
+                }
+                
+                if (s->p0[i] < xmin[i] - 0.001) {
+                        r_warn("section_is_valid (%s): p0[%d] is too small: %.12f < %.12f",
+                               name, i, s->p0[i], xmin[i]);
+                        return 0;
+                }
+                if (s->p0[i] > xmax[i] + 0.001) {
+                        r_warn("section_is_valid (%s): p0[%d] is too large: %.12f > %.12f",
+                               name, i, s->p0[i], xmax[i]);
+                        return 0;
+                }
+                if (s->p1[i] < xmin[i] - 0.001) {
+                        r_warn("section_is_valid (%s): p1[%d] is too small: %.12f < %.12f",
+                               name, i, s->p1[i], xmin[i]);
+                        return 0;
+                }
+                if (s->p1[i] > xmax[i] + 0.001) {
+                        r_warn("section_is_valid (%s): p1[%d] is too large: %.12f > %.12f",
+                               name, i, s->p1[i], xmax[i]);
+                        return 0;
+                }
+                if (fabs(s->v0[i]) > vmax[i] + 0.01) {
+                        r_warn("section_is_valid (%s): v0[%d] is too large: %.12f > %.12f",
+                               name, i, fabs(s->v0[i]), vmax[i]);
+                        return 0;
+                }
+                if (fabs(s->v1[i]) > vmax[i] + 0.01) {
+                        r_warn("section_is_valid (%s): v1[%d] is too large: %.12f > %.12f",
+                               name, i, fabs(s->v1[i]), vmax[i]);
+                        return 0;
+                }
+                if (fabs(s->a[i]) > amax[i] + 0.001) {
+                        r_warn("section_is_valid (%s): a[%d] is too large: %.12f > %.12f",
+                               name, i, fabs(s->a[i]), amax[i]);
+                        return 0;
+                }
+                if (fabs(s->d[i]) > dmax + 0.01) {
+                        r_warn("section_is_valid (%s): d[%d] is too large: %.12f > %.12f",
+                               name, i, fabs(s->d[i]), dmax);
+                        return 0;
+                }
+        }
+
+
+        double v = norm(vmax); 
+        double a = norm(amax);
+        if (norm(s->v0) + 0.0001 > v) {
+                r_warn("section_is_valid (%s): v0 is too large");
+                return 0;
+        }
+        if (norm(s->v1) + 0.0001 > v) {
+                r_warn("section_is_valid (%s): v1 is too large");
+                return 0;
+        }
+        if (norm(s->a) + 0.0001 > a) {
+                r_warn("section_is_valid (%s): a is too large");
+                return 0;
+        }
+        
+        return 1;
+}
+
+static int atdc_is_valid(atdc_t *t,
+                         double tmax,
+                         double *xmin, 
+                         double *xmax, 
+                         double *vmax,
+                         double *amax)
+{
+        if (t->accelerate.t == 0.0
+            && t->travel.t == 0.0
+            && t->decelerate.t == 0.0
+            && t->curve.t == 0.0
+            && t->actions == NULL) {
+                r_warn("segment_is_valid: empty segment");
+                return 0;
+        }
+
+        if (!section_is_valid(&t->accelerate, "accelerate", tmax, xmin, xmax, vmax, amax)
+            || !section_is_valid(&t->travel, "travel", tmax, xmin, xmax, vmax, amax)
+            || !section_is_valid(&t->decelerate, "decelerate", tmax, xmin, xmax, vmax, amax)
+            || !section_is_valid(&t->curve, "curve", tmax, xmin, xmax, vmax, amax)) {
+                return 0;
+        }
+
+        return 1;
+}
+
+static void segment_compute_accelerations(atdc_t *t0, double *v,
+                                          double *amax, double at)
 {
         double dv[3];
         double dt[3];
@@ -620,111 +755,185 @@ static void segment_compute_accelerations(atdc_t *t0, double *v, double *amax, d
         vsub(dx, t0->curve.p0, t0->accelerate.p0);
         double len = norm(dx);
 
-        /* Accelerate */
-        
-        // p0 and v0 are already set
-        vsub(dv, v, t0->accelerate.v0);
-        vdiv(dt, dv, amax);
-        vabs(dt, dt);
-        t0->accelerate.t = vmax(dt);                             // t
-        if (t0->accelerate.t == 0) {
-                vzero(t0->accelerate.a);                         // a
-                vcopy(t0->accelerate.v1, t0->accelerate.v0);     // v1
-                vzero(t0->accelerate.d);                         // d
-                vcopy(t0->accelerate.p1, t0->accelerate.p0);     // p1
-        } else {
-                sdiv(t0->accelerate.a, dv, t0->accelerate.t);    // a
-                vcopy(t0->accelerate.v1, v);                     // v1
-                smul(dx, t0->accelerate.v0, t0->accelerate.t);
-                smul(tmp, t0->accelerate.a, 0.5 * t0->accelerate.t * t0->accelerate.t);
-                vadd(dx, dx, tmp);
-                vcopy(t0->accelerate.d, dx);                     // d
-                vadd(t0->accelerate.p1, t0->accelerate.p0, dx);  // p1
-        }
-        vsub(dx, t0->accelerate.p1, t0->accelerate.p0);
-        double len_a = norm(dx);
+        if (len == 0.0) {
 
-        /* Decelerate */
-        
-        vcopy(t0->decelerate.v0, v);                             // v0
-        vcopy(t0->decelerate.p1, t0->curve.p0);                  // p1
-        vcopy(t0->decelerate.v1, t0->curve.v0);                  // v1
-        vsub(dv, t0->decelerate.v0, t0->decelerate.v1);
-        vdiv(dt, dv, amax);
-        vabs(dt, dt);
-        t0->decelerate.t = vmax(dt);                             // t
-        
-        if (t0->decelerate.t == 0.0) {
-                vzero(t0->decelerate.a);                         // a
-                vzero(t0->decelerate.d);                         // d
-                vcopy(t0->decelerate.p0, t0->decelerate.p1);     // p0
-        } else {
-                sdiv(t0->decelerate.a, dv, -t0->decelerate.t);   // a
-                smul(dx, t0->decelerate.v0, t0->decelerate.t);
-                smul(tmp, t0->decelerate.a, 0.5 * t0->decelerate.t * t0->decelerate.t);
-                vadd(dx, dx, tmp);
-                vcopy(t0->decelerate.d, dx);                     // d
-                vsub(t0->decelerate.p0, t0->decelerate.p1, dx);  // p0
-        }
-        vsub(dx, t0->decelerate.p1, t0->decelerate.p0);
-        double len_d = norm(dx);
-
-        /* Travel at constant speed for the remaining lenght */
-        if (len_a + len_d < len) {
-                double len_t = len - len_a - len_d;
-                double vn = norm(v);
-                t0->travel.t = len_t / vn;                         // t
-                vcopy(t0->travel.p0, t0->accelerate.p1);           // p0
-                vcopy(t0->travel.p1, t0->decelerate.p0);           // p1
-                vcopy(t0->travel.v0, v);                           // v0
-                vcopy(t0->travel.v1, v);                           // v1
-                vzero(t0->travel.a);                               // a
-                vsub(t0->travel.d, t0->travel.p1, t0->travel.p0);  // d
+                r_debug("segment_compute_accelerations: len =0");
+                
+                t0->accelerate.t = 0.0;                      // t
+                vzero(t0->accelerate.a);                     // a
+                vzero(t0->accelerate.d);                     // d
+                vcopy(t0->accelerate.p1, t0->curve.p0);      // p1
+                vcopy(t0->accelerate.v1, t0->curve.v0);      // v1
+                
+                t0->travel.t = 0;                            // t
+                vzero(t0->travel.a);                         // a
+                vzero(t0->travel.d);                         // d
+                vcopy(t0->travel.p0, t0->curve.p0);          // p1
+                vcopy(t0->travel.p1, t0->curve.p0);          // p1
+                vcopy(t0->travel.v0, t0->curve.v0);          // v0
+                vcopy(t0->travel.v1, t0->curve.v0);          // v1
+                
+                t0->decelerate.t = 0;                        // t
+                vzero(t0->decelerate.a);                     // a
+                vzero(t0->decelerate.d);                     // d
+                vcopy(t0->decelerate.p0, t0->curve.p0);      // p0
+                vcopy(t0->decelerate.p1, t0->curve.p0);      // p1
+                vcopy(t0->decelerate.v0, t0->curve.v0);      // v0
+                vcopy(t0->decelerate.v1, t0->curve.v0);      // v1
                 
         } else {
+        
+                /* Accelerate */
+        
+                // p0 and v0 are already set
+                vsub(dv, v, t0->accelerate.v0);
+                vdiv(dt, dv, amax);
+                vabs(dt, dt);
+                t0->accelerate.t = vmax(dt);                             // t
+                if (t0->accelerate.t == 0) {
+                        vzero(t0->accelerate.a);                         // a
+                        vcopy(t0->accelerate.v1, t0->accelerate.v0);     // v1
+                        vzero(t0->accelerate.d);                         // d
+                        vcopy(t0->accelerate.p1, t0->accelerate.p0);     // p1
+                } else {
+                        sdiv(t0->accelerate.a, dv, t0->accelerate.t);    // a
+                        vcopy(t0->accelerate.v1, v);                     // v1
+                        smul(dx, t0->accelerate.v0, t0->accelerate.t);
+                        smul(tmp, t0->accelerate.a, 0.5 * t0->accelerate.t * t0->accelerate.t);
+                        vadd(dx, dx, tmp);
+                        vcopy(t0->accelerate.d, dx);                     // d
+                        vadd(t0->accelerate.p1, t0->accelerate.p0, dx);  // p1
+                }
+                vsub(dx, t0->accelerate.p1, t0->accelerate.p0);
+                double len_a = norm(dx);
 
-                /* There isn't enough space to accelerate to the
-                 * maximum speed and decelerate again. In this case,
-                 * we use a simpler strategy: instead of the
-                 * accelerate-travel-decelarate combo, we apply a
-                 * constant acceleration to change the speed from the
-                 * start and end value. */
+                /* Decelerate */
+        
+                vcopy(t0->decelerate.v0, v);                             // v0
+                vcopy(t0->decelerate.p1, t0->curve.p0);                  // p1
+                vcopy(t0->decelerate.v1, t0->curve.v0);                  // v1
+                vsub(dv, t0->decelerate.v0, t0->decelerate.v1);
+                vdiv(dt, dv, amax);
+                vabs(dt, dt);
+                t0->decelerate.t = vmax(dt);                             // t
+        
+                if (t0->decelerate.t == 0.0) {
+                        vzero(t0->decelerate.a);                         // a
+                        vzero(t0->decelerate.d);                         // d
+                        vcopy(t0->decelerate.p0, t0->decelerate.p1);     // p0
+                } else {
+                        sdiv(t0->decelerate.a, dv, -t0->decelerate.t);   // a
+                        smul(dx, t0->decelerate.v0, t0->decelerate.t);
+                        smul(tmp, t0->decelerate.a, 0.5 * t0->decelerate.t * t0->decelerate.t);
+                        vadd(dx, dx, tmp);
+                        vcopy(t0->decelerate.d, dx);                     // d
+                        vsub(t0->decelerate.p0, t0->decelerate.p1, dx);  // p0
+                }
+                vsub(dx, t0->decelerate.p1, t0->decelerate.p0);
+                double len_d = norm(dx);
 
-                r_debug("** constant acceleration from start to end **");
+                /* Travel at constant speed for the remaining lenght */
+                if (len_a + len_d < len) {
+
+                        r_debug("segment_compute_accelerations: "
+                                "accelerate/travel/decelerate");
+                                        
+                        double len_t = len - len_a - len_d;
+                        double vn = norm(v);
+                        t0->travel.t = len_t / vn;                         // t
+                        vcopy(t0->travel.p0, t0->accelerate.p1);           // p0
+                        vcopy(t0->travel.p1, t0->decelerate.p0);           // p1
+                        vcopy(t0->travel.v0, v);                           // v0
+                        vcopy(t0->travel.v1, v);                           // v1
+                        vzero(t0->travel.a);                               // a
+                        vsub(t0->travel.d, t0->travel.p1, t0->travel.p0);  // d
+                
+                } else {
+
+                        /* There isn't enough space to accelerate to the
+                         * maximum speed and decelerate again. In this case,
+                         * we use a simpler strategy: instead of the
+                         * accelerate-travel-decelarate combo, we apply a
+                         * constant acceleration to change the speed from the
+                         * start and end value. */
+
+                        r_debug("** constant acceleration from start to end **");
 
 //                if (t0->id == 36) {
 //                        double dummy = fabs(0.0);
 //                }
                 
-                vsub(dv, t0->curve.v0, t0->accelerate.v0);
-                vdiv(dt, dv, amax);
-                vabs(dt, dt);
-                double t = vmax(dt);
-                sdiv(a, dv, t);
-
-                t0->accelerate.t = t;                        // t
-                vcopy(t0->accelerate.a, a);                  // a
-                vcopy(t0->accelerate.p1, t0->curve.p0);      // p1
-                vsub(t0->accelerate.d, t0->accelerate.p1, t0->accelerate.p0); // d
-                vcopy(t0->accelerate.v1, t0->curve.v0);      // v1
-                                                
-                t0->travel.t = 0;                            // t
-                vzero(t0->travel.a);                         // a
-                vzero(t0->travel.d);                         // d
-                vcopy(t0->travel.p0, t0->accelerate.p1);     // p0
-                vcopy(t0->travel.p1, t0->accelerate.p1);     // p1
-                vcopy(t0->travel.v0, t0->curve.v0);          // v0
-                vcopy(t0->travel.v1, t0->curve.v0);          // v1
+                        vsub(dv, t0->curve.v0, t0->accelerate.v0);
                         
-                t0->decelerate.t = 0;                        // t
-                vzero(t0->decelerate.a);                     // a
-                vzero(t0->decelerate.d);                     // d
-                vcopy(t0->decelerate.p0, t0->accelerate.p1); // p0
-                vcopy(t0->decelerate.p1, t0->accelerate.p1); // p1
-                vcopy(t0->decelerate.v0, t0->curve.v0);      // v0
-                vcopy(t0->decelerate.v1, t0->curve.v0);      // v1
+                        if (norm(dv) > 0.0) {
+
+                                r_debug("segment_compute_accelerations: "
+                                        "constant acceleration, no travel");
+                                
+                                vdiv(dt, dv, amax);
+                                vabs(dt, dt);
+                                double t = vmax(dt);
+                
+                                sdiv(a, dv, t);
+
+                                t0->accelerate.t = t;                        // t
+                                vcopy(t0->accelerate.a, a);                  // a
+                                vcopy(t0->accelerate.p1, t0->curve.p0);      // p1
+                                vsub(t0->accelerate.d, t0->accelerate.p1, t0->accelerate.p0); // d
+                                vcopy(t0->accelerate.v1, t0->curve.v0);      // v1
+                                                
+                                t0->travel.t = 0;                            // t
+                                vzero(t0->travel.a);                         // a
+                                vzero(t0->travel.d);                         // d
+                                vcopy(t0->travel.p0, t0->accelerate.p1);     // p0
+                                vcopy(t0->travel.p1, t0->accelerate.p1);     // p1
+                                vcopy(t0->travel.v0, t0->curve.v0);          // v0
+                                vcopy(t0->travel.v1, t0->curve.v0);          // v1
+                        
+                                t0->decelerate.t = 0;                        // t
+                                vzero(t0->decelerate.a);                     // a
+                                vzero(t0->decelerate.d);                     // d
+                                vcopy(t0->decelerate.p0, t0->accelerate.p1); // p0
+                                vcopy(t0->decelerate.p1, t0->accelerate.p1); // p1
+                                vcopy(t0->decelerate.v0, t0->curve.v0);      // v0
+                                vcopy(t0->decelerate.v1, t0->curve.v0);      // v1
+                        
+                        } else {
+                                // No acceleration / deceleration is
+                                // required because same speed at the
+                                // start and end. Travel at constant
+                                // speed.
+
+                                r_debug("segment_compute_accelerations: "
+                                        "constant travel, no acceleration/deceleration");
+                                
+                                t0->accelerate.t = 0.0;                      // t
+                                vzero(t0->accelerate.a);                     // a
+                                vcopy(t0->accelerate.p1, t0->accelerate.p0); // p1
+                                vsub(t0->accelerate.d, t0->accelerate.p1, t0->accelerate.p0); // d
+                                vcopy(t0->accelerate.v1, t0->curve.v0);      // v1
+                                                
+                                t0->travel.t = 0;                            // t
+                                vzero(t0->travel.a);                         // a
+                                vcopy(t0->travel.p0, t0->accelerate.p1);     // p1
+                                vcopy(t0->travel.p1, t0->curve.p0);          // p1
+                                vsub(t0->travel.d, t0->travel.p1, t0->travel.p0); // d
+                                vcopy(t0->travel.v0, t0->curve.v0);          // v0
+                                vcopy(t0->travel.v1, t0->curve.v0);          // v1
+                        
+                                t0->decelerate.t = 0;                        // t
+                                vzero(t0->decelerate.a);                     // a
+                                vzero(t0->decelerate.d);                     // d
+                                vcopy(t0->decelerate.p0, t0->accelerate.p1); // p0
+                                vcopy(t0->decelerate.p1, t0->accelerate.p1); // p1
+                                vcopy(t0->decelerate.v0, t0->curve.v0);      // v0
+                                vcopy(t0->decelerate.v1, t0->curve.v0);      // v1
+                        }
+                }
         }
 
+        
+        
         t0->accelerate.at = at;             
         t0->travel.at = t0->accelerate.at + t0->accelerate.t;
         t0->decelerate.at = t0->travel.at + t0->travel.t;
@@ -775,7 +984,7 @@ static void segment_update_speeds(segment_t *s0, atdc_t *t0, double *amax)
         /* The path length needed to change the speed */
         double dv = v1 - v0;
         double dt = sign(dv) * dv / am;
-        double dx = v0 * dt + 0.5 * am * dt * dt;
+        double dx = v0 * dt + sign(dv) * 0.5 * am * dt * dt;
 
         if (dx > len && v0 > v1) {
                 
@@ -791,6 +1000,7 @@ static void segment_update_speeds(segment_t *s0, atdc_t *t0, double *amax)
                 
                 dt = (sqrt(v1 * v1 + 2.0 * am * len) - v1) / am;
                 double v0s = v1 + am * dt;
+                v0s = sqrt(2 * am * len + v1 * v1);
                 double alpha = v0s / v0;
                 smul(t0->accelerate.v0, t0->accelerate.v0, alpha);
 
@@ -842,8 +1052,10 @@ static void segment_check_max_speed(segment_t *s0, double *vmax)
 {
         double s = 1.0;
 
-        for (int i = 0; i < 3; i++)
-                s = min(s, vmax[i] / fabs(s0->section.v0[i]));
+        for (int i = 0; i < 3; i++) {
+                if (s0->section.v0[i] != 0.0)
+                        s = min(s, vmax[i] / fabs(s0->section.v0[i]));
+        }
         
         smul(s0->section.v0, s0->section.v0, s);
         smul(s0->section.v1, s0->section.v1, s);
@@ -864,18 +1076,39 @@ static void compute_curves_and_speeds(segment_t *path, atdc_t *atdc,
         }
 }
 
-static void compute_accelerations(segment_t *path, atdc_t *atdc, double *amax)
+static void compute_accelerations(segment_t *path,
+                                  atdc_t *atdc,
+                                  int path_count,
+                                  double tmax,
+                                  double *xmin, 
+                                  double *xmax, 
+                                  double *vmax,
+                                  double *amax)
 {
         segment_t *s0 = path;
         atdc_t *t0 = atdc;
         double at = 0.0;
+        int atdc_count = 0;
         
         while (s0) {
+                r_debug("compute_accelerations: ==== path %d, atdc %d ===================",
+                       path_count, atdc_count);
+
                 segment_compute_accelerations(t0, s0->section.v0, amax, at);
+
+                if (!atdc_is_valid(t0, tmax, xmin, xmax, vmax, amax)) {
+                        r_warn("compute_accelerations: invalid atdc: "
+                               "path %d, atdc %d", path_count, atdc_count);
+                }
+
+                
                 at = t0->curve.at + t0->curve.t;
                 s0 = s0->next;
                 t0 = t0->next;
+                atdc_count++;
         }
+
+        r_debug("compute_accelerations: ========================================");
 }
 
 static void check_max_speeds(segment_t *path, double *vmax)
@@ -913,34 +1146,50 @@ static atdc_t *copy_segments_to_atdc(segment_t *path)
         return first;
 }
 
-static atdc_t *segments_to_atdc(segment_t *path, double d, double *vmax, double *amax)
+static atdc_t *segments_to_atdc(segment_t *path,
+                                int path_count,
+                                double d,                                   
+                                double tmax,
+                                double *xmin, 
+                                double *xmax, 
+                                double *vmax,
+                                double *amax)
 {
         check_max_speeds(path, vmax);
         atdc_t *atdc = copy_segments_to_atdc(path);
 
         compute_curves_and_speeds(path, atdc, d, amax);
                 
-        printf("Curves and speed:\n");
-        atdc_print(atdc);
-        printf("\n\n");
+        /* printf("Curves and speed:\n"); */
+        /* atdc_print(atdc); */
+        /* printf("\n\n"); */
         
-        compute_accelerations(path, atdc, amax);
-                
-        printf("Accelerations:\n");
-        atdc_print(atdc);
-        printf("\n\n");
+        compute_accelerations(path, atdc, path_count, tmax, xmin, xmax, vmax, amax);
+
+        /* printf("Accelerations:\n"); */
+        /* atdc_print(atdc); */
+        /* printf("\n\n"); */
 
         return atdc;
 }
 
-static list_t *segment_list_to_atdc_list(list_t *paths, double d, double *vmax, double *amax)
+static list_t *segment_list_to_atdc_list(list_t *paths,
+                                         double d,
+                                         double tmax,
+                                         double *xmin, 
+                                         double *xmax, 
+                                         double *vmax,
+                                         double *amax)
 {
         list_t *atdc_list = NULL;
+        int path_count = 0;
         
         for (list_t *l = paths; l != NULL; l = list_next(l)) {
                 segment_t *path = list_get(l, segment_t);
-                atdc_t *atdc = segments_to_atdc(path, d, vmax, amax);
+                atdc_t *atdc = segments_to_atdc(path, path_count, d, tmax,
+                                                xmin, xmax, vmax, amax);
                 atdc_list = list_append(atdc_list, atdc);
+                path_count++;
         }
         return atdc_list;
 }
@@ -958,50 +1207,46 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                 
                 if (action->type == ACTION_MOVE) {
 
-                        /* If the displacement is less then 0.05 mm, skip it. */
+                        /* If the displacement is less then 0.1 mm, skip it. */
                         double d[3];
                         vsub(d, action->data.move.p, pos); 
-                        if (norm(d) < 0.00005) {
-                                actions = list_next(actions);
-                                continue;
+                        if (norm(d) > 0.0001) {
+                                segment_t *segment = new_segment();
+
+                                // chain the segment
+                                segment->prev = prev;
+                                if (prev) 
+                                        prev->next = segment;
+                                else 
+                                        paths = list_append(paths, segment);
+                        
+                                prev = segment;
+                                last = segment;
+
+                                segment->section.id = action->data.move.id; 
+
+                                // p0 and p1
+                                vcopy(segment->section.p0, pos); 
+                                vcopy(segment->section.p1, action->data.move.p); 
+
+                                // d
+                                vsub(segment->section.d,
+                                     segment->section.p1,
+                                     segment->section.p0); 
+                        
+                                // v0 and v1
+                                normalize(segment->section.v0, segment->section.d);
+                                smul(segment->section.v0,
+                                     segment->section.v0,
+                                     action->data.move.v);
+                                vcopy(segment->section.v1, segment->section.v0);
+                        
+                                // a
+                                vzero(segment->section.a);
+
+                                // update current position
+                                vcopy(pos, action->data.move.p); 
                         }
-                        
-                        segment_t *segment = new_segment();
-                        if (segment == NULL)
-                                return NULL;
-
-                        // chain the segment
-                        segment->prev = prev;
-                        if (prev) 
-                                prev->next = segment;
-                        else 
-                                paths = list_append(paths, segment);
-                        
-                        prev = segment;
-                        last = segment;
-
-                        segment->section.id = action->data.move.id; 
-
-                        // p0 and p1
-                        vcopy(segment->section.p0, pos); 
-                        vcopy(segment->section.p1, action->data.move.p); 
-
-                        // d
-                        vsub(segment->section.d,
-                             segment->section.p1,
-                             segment->section.p0); 
-                        
-                        // v0 and v1
-//                        double len = norm(segment->section.d);
-                        normalize(segment->section.v0, segment->section.d);
-                        smul(segment->section.v0, segment->section.v0, action->data.move.v);
-                        vcopy(segment->section.v1, segment->section.v0);
-                        
-                        // a
-                        vzero(segment->section.a);
-
-                        // update current position
-                        vcopy(pos, action->data.move.p); 
                         
                 } else {
 
@@ -1009,8 +1254,6 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                                 // Create a dummy segment to attach
                                 // this action to.
                                 last = new_segment();
-                                if (last == NULL)
-                                        return NULL;
                                 paths = list_append(paths, last);
                         }
 
@@ -1033,7 +1276,9 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
 /******************************************************************/
 
 int planner_convert_script(script_t *script, double *position,
-                           double *vmax, double *amax, double deviation)
+                           double *xmin, double *xmax,
+                           double *vmax, double *amax,
+                           double deviation)
 {
 //        int err = 0;
         double pos[3];
@@ -1047,9 +1292,30 @@ int planner_convert_script(script_t *script, double *position,
         if (script->segments == NULL)
                 return -1;
         
-        script->atdc_list = segment_list_to_atdc_list(script->segments, deviation, vmax, amax);
+        script->atdc_list = segment_list_to_atdc_list(script->segments,
+                                                      deviation, 120.0,
+                                                      xmin, xmax, vmax, amax);
+
         if (script->atdc_list == NULL)
                 return -1;
+
+
+        if (0) {
+                int path_count = 0;
+                list_t *atdc_list = script->atdc_list;
+                for (list_t *l = atdc_list; l != NULL; l = list_next(l), path_count++) {
+                        atdc_t *atdc = list_get(l, atdc_t);
+                        int segment_count = 0;
+                        for (atdc_t *t0 = atdc; t0; t0 = t0->next, segment_count++) {
+                                if (!atdc_is_valid(t0, 120.0, xmin, xmax, vmax, amax)) {
+                                        r_warn("planner_convert_script: invalid atdc: "
+                                               "path %d, atdc %d",
+                                               path_count,
+                                               segment_count);
+                                }
+                        }
+                }
+        }
         
         return 0;
 }
@@ -1061,6 +1327,7 @@ int planner_slice(script_t *script, double period, double maxlen)
                 atdc_t *atdc = list_get(l, atdc_t);
                 list_t *slices = atdc_list_slice(atdc, period, maxlen);
                 if (slices == NULL) {
+                        r_err("planner_slice: atdc_list_slice returned NULL");
                         delete_section_list(list);
                         return -1;
                 }

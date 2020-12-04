@@ -49,7 +49,7 @@ protected:
         std::string _log_message;
 
 
-        bool make_request(const char *command, std::string &request);
+        int make_request(const char *command, std::string &request);
         json_object_t try_sending_request(std::string &request);
         bool send_request(std::string &request);
         const char *get_error_message(int code, const char *message = 0);

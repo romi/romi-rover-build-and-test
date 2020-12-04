@@ -157,7 +157,7 @@ void Parser::reset()
 
 bool Parser::process(char c)
 {
-        bool r = false;
+        bool has_request = false;
         bool update_crc = true;
 
         _error = 0;
@@ -187,7 +187,7 @@ bool Parser::process(char c)
                 } else if (CARRIAGE_RETURN(c)) {
                         _state = wait_start_message;
                         update_crc = false;
-                        r = true;
+                        has_request = true;
                 } else if (START_METADATA(c)) {
                         _state = wait_id1;
                 } else {
@@ -199,7 +199,7 @@ bool Parser::process(char c)
                 if (CARRIAGE_RETURN(c)) {
                         _state = wait_start_message;
                         update_crc = false;
-                        r = true;
+                        has_request = true;
                 } else if (START_METADATA(c)) {
                         _state = wait_id1;
                 } else {
@@ -211,7 +211,7 @@ bool Parser::process(char c)
                 if (CARRIAGE_RETURN(c)) {
                         _state = wait_start_message;
                         update_crc = false;
-                        r = true;
+                        has_request = true;
                 } else {
                         set_error(c, romiserial_unexpected_char);
                 }
@@ -326,9 +326,9 @@ bool Parser::process(char c)
         
         if (_state != wait_start_message) {
                 _count++;
-                if (r == false && _count > 64)
+                if (!has_request && _count > 64)
                         set_error(c, romiserial_too_long);
         }
         
-        return r;
+        return has_request;
 }

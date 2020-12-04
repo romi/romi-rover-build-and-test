@@ -21,45 +21,39 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _OQUAM_OQUAMSTEPPERCONTROLLER_HPP_
-#define _OQUAM_OQUAMSTEPPERCONTROLLER_HPP_
+#ifndef __OQUAM_OQUAM_STEPPER_H_
+#define __OQUAM_OQUAM_STEPPER_H
 
 #include <r.h>
 #include "RomiSerialClient.h" 
 #include "RSerial.h" 
-#include "StepperController.hpp" 
+#include "IBlockController.h" 
 
-namespace oquam {
+namespace romi {
 
-        class OquamStepperController : public StepperController
+        class OquamStepper : public IBlockController
         {
         public:
         
-                OquamStepperController(const char *device,
-                                       double *xmax, double *vmax, double *amax,
-                                       double deviation, double *scale, double interval);
-        
-                virtual ~OquamStepperController();
+                OquamStepper(RomiSerialClient &romi_serial);
+                virtual ~OquamStepper();
 
-                virtual int get_position(double *pos);
-                virtual int execute(block_t *block);
-                virtual int is_busy();
-                virtual int moveat(double *v);
-                virtual int moveto(double x, double y, double z, double v,
-                                   int move_x = 1, int move_y = 1, int move_z = 1);
-                virtual int continue_script();
-
+                bool get_position(int32_t *pos) override;
+                bool homing() override;
+                
+                bool move(int16_t millis, int16_t steps_x,
+                          int16_t steps_y, int16_t steps_z,
+                          int16_t id = 0) override;
+                
+                bool synchronize(double timeout) override;
         
         protected:
 
-                int encode(block_t *block, char *buffer, int len);
+                int encode(block_t &block, char *buffer, int len);
                 int send_command(const char *cmd);
                 int update_status();
 
-                RSerial *_serial;
-                RomiSerialClient *_romi_serial;
-                // membuf_t *_buffer;
-                // serial_t *_serial;
+                RomiSerialClient &_romi_serial;
 
                 int _status;
                 int _available;
@@ -74,4 +68,4 @@ namespace oquam {
         };
 }
 
-#endif // _OQUAM_OQUAMSTEPPERCONTROLLER_HPP_
+#endif // __OQUAM_OQUAM_STEPPER_H

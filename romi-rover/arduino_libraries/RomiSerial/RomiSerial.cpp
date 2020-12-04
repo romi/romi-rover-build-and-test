@@ -22,6 +22,7 @@
 
  */
 
+//#include <Arduino.h>
 #include "RomiSerial.h"
 #include "RomiSerialErrors.h"
 #include <stdio.h>

@@ -21,29 +21,21 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "script.h"
+#ifndef __ROMI_I_CONTROLLER_H
+#define __ROMI_I_CONTROLLER_H
 
-#ifndef _OQUAM_PLANNER_H_
-#define _OQUAM_PLANNER_H_
+#include <string>
+#include <rcom.h>
+#include "JSON.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct _planner_t planner_t;
-
-int planner_convert_script(script_t *script, double *position,
-                           double *xmin, double *xmax,
-                           double *vmax, double *amax,
-                           double deviation);
-
-int planner_slice(script_t *script, double period, double maxlen);
-
-int planner_compile_for_stepper(script_t *script, double *scale);
-
-
-#ifdef __cplusplus
+namespace romi {
+        
+        class IController
+        {
+        public:
+                virtual ~IController() = default;
+                virtual JSON execute(JSON cmd) = 0;
+        };
 }
-#endif
 
-#endif // _OQUAM_PLANNER_H_
+#endif // __ROMI_I_CONTROLLER_H

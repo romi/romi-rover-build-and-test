@@ -158,8 +158,8 @@ static void print_text(plot_t *plot, const char *s, double x, double y)
                       2 * y, x, y, s);
 }
 
-#define _X(_r, _v) ((_r)->w * ((_v) - (_r)->x0) / ((_r)->x1 - (_r)->x0))
-#define _Y(_r, _v) ((_r)->h * ((_v) - (_r)->y0) / ((_r)->y1 - (_r)->y0))
+#define _X(_r, _v) (((_r)->x1 - (_r)->x0 != 0.0)? (_r)->w * ((_v) - (_r)->x0) / ((_r)->x1 - (_r)->x0) : (_r)->x0)
+#define _Y(_r, _v) (((_r)->y1 - (_r)->y0 != 0.0)? (_r)->h * ((_v) - (_r)->y0) / ((_r)->y1 - (_r)->y0) : (_r)->y0)
 
 static void print_atdc_ij(plot_t *plot, atdc_t *path,
                           int i, int j, rect_t *r)

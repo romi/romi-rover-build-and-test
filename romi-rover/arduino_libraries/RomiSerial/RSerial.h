@@ -22,7 +22,6 @@
 
  */
 
-#include <string>
 #include "IInputStream.h"
 #include "IOutputStream.h"
 
@@ -50,12 +49,13 @@ public:
         RSerial(const char *device, int baudrate, bool reset);        
         virtual ~RSerial();
 
-        virtual void set_timeout(float seconds) override;
-        virtual int available() override;
-        virtual int read() override;
-        virtual size_t write(char c) override;
-        virtual size_t print(const char *s) override;
-        virtual size_t println(const char *s) override;
+        void set_timeout(float seconds) override;
+        int available() override;
+        int read() override;
+        int readline(std::string &line) override;
+        size_t write(char c) override;
+        size_t print(const char *s) override;
+        size_t println(const char *s) override;
 };
 
 #endif // __R_SERIAL_H

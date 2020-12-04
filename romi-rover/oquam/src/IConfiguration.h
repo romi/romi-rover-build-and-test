@@ -21,17 +21,21 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _OQUAM_HPP_
-#define _OQUAM_HPP_
+#ifndef __ROMI_I_CONFIGURATION_H
+#define __ROMI_I_CONFIGURATION_H
 
-#include "planner.h"
-#include "plotter.h"
-#include "script.h"
-#include "v.h"
+#include <r.h>
+#include "JSON.h"
 
-#include "Controller.hpp"
-#include "StepperController.hpp"
-#include "VirtualStepperController.hpp"
-#include "OquamStepperController.hpp"
+namespace romi {
+        
+        class IConfiguration
+        {
+        public:
+                virtual ~IConfiguration() = default;
+                virtual JSON get() = 0;
+                virtual JSON get(const char *key) = 0;
+        };
+}
 
-#endif // _OQUAM_HPP_
+#endif // __ROMI_I_CONFIGURATION_H

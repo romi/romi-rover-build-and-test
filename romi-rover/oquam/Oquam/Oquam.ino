@@ -33,7 +33,9 @@
  *  \brief The possible states of the controller (the main thread).
  */
 enum {
-        STATE_INTERACTIVE
+        STATE_RUNNING,
+        STATE_HOMING,
+        STATE_ERROR
 };
 
 extern volatile uint8_t thread_state;
@@ -45,8 +47,7 @@ extern volatile int16_t block_id;
 extern volatile int16_t block_ms;
 extern volatile int8_t stepper_reset;
 
-uint8_t controller_state;
-uint8_t error_number;
+uint8_t controller_state = STATE_RUNNING;
 
 void handle_moveto(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_move(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
@@ -56,8 +57,7 @@ void handle_trigger(RomiSerial *romiSerial, int16_t *args, const char *string_ar
 void handle_wait(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void send_state(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
-void handle_reset(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
-void handle_zero(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_homing(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 
 const static MessageHandler handlers[] = {
@@ -69,8 +69,7 @@ const static MessageHandler handlers[] = {
         { 'W', 0, false, handle_wait },
         { 'C', 0, false, handle_continue },
         { 'S', 0, false, send_state },
-        { 'X', 0, false, handle_reset },
-        { 'Z', 0, false, handle_zero },
+        { 'H', 0, false, handle_homing },
         { '?', 0, false, send_info },
 };
 
@@ -114,12 +113,11 @@ void check_accuracy()
 
 void setup()
 {
-        //Serial.begin(115200);
-        Serial.begin(38400);
+        Serial.begin(115200);
         while (!Serial)
                 ;
 
-        controller_state = STATE_INTERACTIVE;
+        controller_state = STATE_RUNNING;
         
         init_block_buffer();
         init_trigger_buffer();
@@ -150,172 +148,146 @@ void loop()
 {
         romiSerial.handle_input();
         check_accuracy();
-
-        if (0) {
-                unsigned long time = millis();
-                if (time - last_time > 400) {
-                        block_t *block = block_buffer_get_empty();
-                        if (block == 0) {
-                                Serial.print("RE ");
-                                Serial.println(block_buffer_available());
-                        } else {
-                                block->type = BLOCK_MOVE;
-                                block->id = id++;
-                                block->data[DT] = 500;
-                                block->data[DX] = 1000;
-                                block->data[DY] = 1000;
-                                block->data[DZ] = 0;
-                                block_buffer_ready();
-                                Serial.print("OK ");
-                                Serial.println(block_buffer_available());
-                        }
-                        last_time = time;
-                }
-        }
-
-        if (0) {
-                unsigned long time = millis();
-                if (block_id >= 0 && time - last_print_time > 50) {
-                        Serial.print(block_id);
-                        Serial.print(":");
-                        Serial.print(milliseconds);
-                        Serial.print(":");
-                        Serial.print(interrupts);
-                        Serial.print(":");
-                        Serial.print(stepper_position[0]);
-                        Serial.print(",");
-                        Serial.print(stepper_position[1]);
-                        Serial.print(",");
-                        Serial.print(stepper_position[2]);
-                        Serial.println();
-                        last_print_time = time;
-                }
-        }
-
-        if (0) {
-                unsigned long time = millis();
-                if (time - last_time > 100) {
-                        last_time = time;
-                        if (reached_x_limit())
-                                Serial.println("x");
-                        if (reached_y_limit())
-                                Serial.println("y");
-                        // if (reached_z_limit())
-                        //         Serial.println("z");
-                }
-        }
 }
 
 void handle_moveto(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        if (args[0] > 0) {
-                block_t *block = block_buffer_get_empty();
-                if (block == 0) {
-                        romiSerial->send_error(1, "Again");  
+        if (controller_state == STATE_RUNNING) {
+                if (args[0] > 0) {
+                        block_t *block = block_buffer_get_empty();
+                        if (block == 0) {
+                                romiSerial->send_error(1, "Again");  
+                        } else {
+                                block->type = BLOCK_MOVETO;
+                                block->data[DT] = args[0];
+                                block->data[DX] = args[1];
+                                block->data[DY] = args[2];
+                                block->data[DZ] = args[3];
+                                block->id = args[4];
+                                block_buffer_ready();
+                                romiSerial->send_ok();  
+                        }
                 } else {
-                        block->type = BLOCK_MOVETO;
-                        block->data[DT] = args[0];
-                        block->data[DX] = args[1];
-                        block->data[DY] = args[2];
-                        block->data[DZ] = args[3];
-                        block->id = args[4];
-                        block_buffer_ready();
-                        romiSerial->send_ok();  
+                        romiSerial->send_error(100, "Invalid DT");  
                 }
         } else {
-                romiSerial->send_error(100, "Invalid speed");  
-        } 
+                romiSerial->send_error(101, "Invalid state");  
+        }
 }
 
 void handle_move(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        if (args[0] > 0) {
-                block_t *block = block_buffer_get_empty();
-                if (block == 0) {
-                        romiSerial->send_error(1, "Again");  
+        if (controller_state == STATE_RUNNING) {
+                if (args[0] > 0) {
+                        block_t *block = block_buffer_get_empty();
+                        if (block == 0) {
+                                romiSerial->send_error(1, "Again");  
+                        } else {
+                                block->type = BLOCK_MOVE;
+                                block->data[DT] = args[0];
+                                block->data[DX] = args[1];
+                                block->data[DY] = args[2];
+                                block->data[DZ] = args[3];
+                                block->id = args[4];
+                                block_buffer_ready();
+                                romiSerial->send_ok();  
+                        }
                 } else {
-                        block->type = BLOCK_MOVE;
-                        block->data[DT] = args[0];
-                        block->data[DX] = args[1];
-                        block->data[DY] = args[2];
-                        block->data[DZ] = args[3];
-                        block->id = args[4];
-                        block_buffer_ready();
-                        romiSerial->send_ok();  
+                        romiSerial->send_error(100, "Invalid DT");                  
                 }
         } else {
-                romiSerial->send_error(100, "Invalid speed");                  
+                romiSerial->send_error(101, "Invalid state");  
         }
 }
 
 void handle_moveat(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        block_t *block = block_buffer_get_empty();
-        if (block == 0) {
-                romiSerial->send_error(1, "Again");  
+        if (controller_state == STATE_RUNNING) {
+                block_t *block = block_buffer_get_empty();
+                if (block == 0) {
+                        romiSerial->send_error(1, "Again");  
+                } else {
+                        block->type = BLOCK_MOVEAT;
+                        block->data[DT] = 1000;
+                        block->data[DX] = args[0];
+                        block->data[DY] = args[1];
+                        block->data[DZ] = args[2];
+                        block->id = args[3];
+                        block_buffer_ready();
+                        romiSerial->send_ok();  
+                }
         } else {
-                block->type = BLOCK_MOVEAT;
-                block->data[DT] = 1000;
-                block->data[DX] = args[0];
-                block->data[DY] = args[1];
-                block->data[DZ] = args[2];
-                block->id = args[3];
-                block_buffer_ready();
-                romiSerial->send_ok();  
+                romiSerial->send_error(101, "Invalid state");  
         }
 }
 
 void handle_delay(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        if (args[0] > 0) {
-                block_t *block = block_buffer_get_empty();
-                if (block == 0) {
-                        romiSerial->send_error(1, "Again");  
+        if (controller_state == STATE_RUNNING) {
+                if (args[0] > 0) {
+                        block_t *block = block_buffer_get_empty();
+                        if (block == 0) {
+                                romiSerial->send_error(1, "Again");  
+                        } else {
+                                block->type = BLOCK_DELAY;
+                                block->data[0] = args[0];
+                                block_buffer_ready();
+                                romiSerial->send_ok();  
+                        }
                 } else {
-                        block->type = BLOCK_DELAY;
-                        block->data[0] = args[0];
-                        block_buffer_ready();
-                        romiSerial->send_ok();  
+                        romiSerial->send_error(100, "Invalid delay");                  
                 }
         } else {
-                romiSerial->send_error(100, "Invalid delay");                  
+                romiSerial->send_error(101, "Invalid state");  
         }
 }
 
 void handle_trigger(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        if (args[1] >= 0) {
-                block_t *block = block_buffer_get_empty();
-                if (block == 0) {
-                        romiSerial->send_error(1, "Again");  
+        if (controller_state == STATE_RUNNING) {
+                if (args[1] >= 0) {
+                        block_t *block = block_buffer_get_empty();
+                        if (block == 0) {
+                                romiSerial->send_error(1, "Again");  
+                        } else {
+                                block->type = BLOCK_TRIGGER;
+                                block->data[0] = args[0];
+                                block->data[1] = args[1];
+                                block_buffer_ready();
+                                romiSerial->send_ok();  
+                        }
                 } else {
-                        block->type = BLOCK_TRIGGER;
-                        block->data[0] = args[0];
-                        block->data[1] = args[1];
-                        block_buffer_ready();
-                        romiSerial->send_ok();  
+                        romiSerial->send_error(100, "Invalid delay");                  
                 }
         } else {
-                romiSerial->send_error(100, "Invalid delay");                  
+                romiSerial->send_error(101, "Invalid state");  
         }
 }
 
 void handle_wait(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        block_t *block = block_buffer_get_empty();
-        if (block == 0) {
-                romiSerial->send_error(1, "Again");  
+        if (controller_state == STATE_RUNNING) {
+                block_t *block = block_buffer_get_empty();
+                if (block == 0) {
+                        romiSerial->send_error(1, "Again");  
+                } else {
+                        block->type = BLOCK_WAIT;
+                        block_buffer_ready();
+                        romiSerial->send_ok();  
+                }
         } else {
-                block->type = BLOCK_WAIT;
-                block_buffer_ready();
-                romiSerial->send_ok();  
+                romiSerial->send_error(101, "Invalid state");  
         }
 }
 
 void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        enable_stepper_timer();
-        romiSerial->send_ok();  
+        if (controller_state == STATE_RUNNING) {
+                enable_stepper_timer();
+                romiSerial->send_ok();  
+        } else {
+                romiSerial->send_error(101, "Invalid state");  
+        }
 }
 
 void send_state(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
@@ -328,18 +300,21 @@ void send_state(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
                 status = "t";
                 trigger = trigger_buffer_get();
         } else {
-                switch (thread_state) {
-                case STATE_THREAD_EXECUTING:
-                        status = "e";
+                switch (controller_state) {
+                case STATE_RUNNING:
+                        status = "r";
                         break;
-                case STATE_THREAD_IDLE:
-                        status = "i";
+                case STATE_HOMING:
+                        status = "";
+                        break;
+                case STATE_ERROR:
+                        status = "e";
                         break;
                 }
         }
         
         snprintf(reply_string, sizeof(reply_string),
-                 "[0,'%s',%d,%d,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%lu]",
+                 "[0,\"%s\",%d,%d,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%lu]",
                  status,
                  (int) block_buffer_available(),
                  (int) block_id,
@@ -358,17 +333,127 @@ void send_state(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
         romiSerial->send(reply_string); 
 }
 
-void handle_reset(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+void wait()
 {
-        reset();
-        romiSerial->send_ok();  
+        while (block_buffer_available() > 0
+               || block_id != -1) {
+                delay(10);
+        }
 }
 
-void handle_zero(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+int oquam_delay(int dt)
 {
-        reset();
-        zero();
-        romiSerial->send_ok();  
+        int err = 0;
+        block_t *block = block_buffer_get_empty();
+        if (block == 0) {
+                err = -1;
+        } else {
+                block->type = BLOCK_DELAY;
+                block->data[0] = dt;
+                block_buffer_ready();
+        }
+        return err;
+}
+
+int moveat(int dt, int dx, int dy, int dz)
+{
+        int err = 0;
+        block_t *block = block_buffer_get_empty();
+        if (block == 0) {
+                err = -1;
+        } else {
+                block->type = BLOCK_MOVEAT;
+                block->data[DT] = dt;
+                block->data[DX] = dx;
+                block->data[DY] = dy;
+                block->data[DZ] = dz;
+                block->id = 0;
+                block_buffer_ready();
+        }
+        return err;
+}
+
+int move(int dt, int dx, int dy, int dz)
+{
+        int err = 0;
+        block_t *block = block_buffer_get_empty();
+        if (block == 0) {
+                err = -1;
+        } else {
+                block->type = BLOCK_MOVE;
+                block->data[DT] = dt;
+                block->data[DX] = dx;
+                block->data[DY] = dy;
+                block->data[DZ] = dz;
+                block->id = 0;
+                block_buffer_ready();
+        }
+        return err;
+}
+
+int homing_wait_xy_switches_toggle(int dt, int dx, int dy, int state)
+{
+        int err = 0;
+        
+        err = moveat(dt, dx, dy, 0);
+        if (err != 0) return err;
+        
+        while (1) {
+                int x_limit_status = digitalRead(9);
+                int y_limit_status = digitalRead(10);
+                
+                if (x_limit_status == state && y_limit_status == state) {
+                        err = oquam_delay(10);
+                        break;
+                        
+                } else if (x_limit_status == state) {
+                        err = moveat(dt, 0, dy, 0);
+                        if (err != 0) break;
+                        
+                } else if (y_limit_status == state) {
+                        err = moveat(dt, dx, 0, 0); 
+                        if (err != 0) break;
+               }
+                        
+                delay(1);
+        }
+        return err;
+}
+
+int homing_moveto_xy_switches_pressed()
+{
+        return homing_wait_xy_switches_toggle(1000, -1000, -1000, LOW);
+}
+
+int homing_moveto_xy_switches_released()
+{
+        return homing_wait_xy_switches_toggle(300, 1000, 1000, HIGH);
+}
+
+bool do_homing()
+{
+        bool success = false; 
+        if (homing_moveto_xy_switches_pressed() == 0 
+            && homing_moveto_xy_switches_released() == 0
+            && move(100, 100, 100, 0) == 0) {
+                wait();
+                success = true;
+        }
+        return success;
+}
+
+void handle_homing(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        controller_state = STATE_HOMING;
+        romiSerial->send_ok();
+        
+        if (do_homing()) {
+                reset();
+                zero();
+                controller_state = STATE_RUNNING;
+        } else {
+                controller_state = STATE_ERROR;
+        }
 }
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)

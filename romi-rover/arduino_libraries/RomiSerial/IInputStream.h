@@ -25,12 +25,15 @@
 #ifndef __IINPUTSTREAM_H
 #define __IINPUTSTREAM_H
 
+#include <string>
+
 class IInputStream
 {
 public:
         virtual ~IInputStream() = default;
         virtual int available() = 0;
         virtual int read() = 0;
+        virtual int readline(std::string &line) = 0;
         virtual void set_timeout(float seconds) = 0;
 };
 

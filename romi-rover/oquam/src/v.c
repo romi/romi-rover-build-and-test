@@ -147,6 +147,14 @@ double *vdiv(double *r, double *a, double *b)
         return r;
 }
 
+double *vcross(double *r, double *a, double *b)
+{
+        r[0] =   a[1] * b[2] - a[2] * b[1];
+        r[1] = -(a[0] * b[2] - a[2] * b[0]);
+        r[2] =   a[0] * b[1] - a[1] * b[0];
+        return r;
+}
+
 double *normalize(double *w, double *v)
 {
         double L = norm(v);
@@ -186,4 +194,9 @@ double *vconvif(double *r, int *a)
         r[1] = (double) a[1];
         r[2] = (double) a[2];
         return r;
+}
+
+int veq(double *a, int *b)
+{
+        return ((a[0] == b[0]) && (a[1] == b[1]) && (a[2] == b[2]));
 }

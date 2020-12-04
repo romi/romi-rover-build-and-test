@@ -10,21 +10,30 @@ set(CMAKE_BUILD_TYPE Debug)
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../arduino_libraries/RomiSerial" )
 
 set(SOURCES
-  src/script.c
-  src/script.h
-  src/Controller.hpp
-  src/StepperController.cpp
-  src/StepperController.hpp
-  src/VirtualStepperController.cpp
-  src/VirtualStepperController.hpp
-  src/OquamStepperController.cpp
-  src/OquamStepperController.hpp
+  src/main.cpp
+  src/JSON.h
+  src/Path.h
+  src/CNCRange.h
+  src/IBlockController.h
+  src/OquamStepper.cpp
+  src/OquamStepper.h
   src/planner.c
   src/planner.h
   src/plotter.c
   src/plotter.h
   src/v.c
   src/v.h
+  src/script.c
+  src/script.h
+  src/script_priv.h
+  src/ICNC.h
+  src/Oquam.cpp
+  src/Oquam.h
+  src/IController.h
+  src/CNCClient.h
+  src/CNCClient.cpp
+  src/ControllerServer.h
+  src/ControllerServer.cpp
   ../arduino_libraries/RomiSerial/IInputStream.h
   ../arduino_libraries/RomiSerial/IOutputStream.h
   ../arduino_libraries/RomiSerial/CRC8.h
@@ -35,28 +44,25 @@ set(SOURCES
   ../arduino_libraries/RomiSerial/RSerial.cpp
   )
 
-add_library(liboquam SHARED ${SOURCES})
-target_link_libraries(liboquam r m)
-
-add_executable(oquam oquam.cpp oquam.hpp oquam_main.c)
-target_link_libraries(oquam liboquam rcom)
+add_executable(oquam ${SOURCES})
+target_link_libraries(oquam r rcom)
 target_include_directories(oquam PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src")
 install(TARGETS oquam DESTINATION bin/romi)
 
-add_executable(oquam_test src/oquam_test.cpp)
-target_link_libraries(oquam_test liboquam)
-install(TARGETS oquam_test DESTINATION bin/romi)
+#add_executable(oquam_test src/oquam_test.cpp)
+#target_link_libraries(oquam_test liboquam)
+#install(TARGETS oquam_test DESTINATION bin/romi)
 
-install(DIRECTORY src DESTINATION include/oquam FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY src DESTINATION include/oquam FILES_MATCHING PATTERN "*.hpp")
+#install(DIRECTORY src DESTINATION include/oquam FILES_MATCHING PATTERN "*.h")
+#install(DIRECTORY src DESTINATION include/oquam FILES_MATCHING PATTERN "*.hpp")
 
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/oquam_main.c
-  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/oquam_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
-  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
-  )
+#ADD_CUSTOM_COMMAND(
+#  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/oquam_main.c
+#  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/oquam_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
+#  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
+#  )
 
 
-#add_subdirectory(test)
+add_subdirectory(test)
 
 

@@ -57,6 +57,7 @@ enum {
         romiserialclient_connection_timeout = -205,
         romiserialclient_invalid_error = -206,
         romiserialclient_too_long = -207,
+        romiserialclient_empty_request = -208,
 };
 
 #endif
