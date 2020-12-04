@@ -31,7 +31,7 @@ namespace romi {
         class IBlockController
         {
         public:
-                enum { RUNNING, HOMING, TRIGGER, ERROR };
+                enum { RUNNING, HOMING, ERROR };
                         
                 virtual ~IBlockController() = default;
                 

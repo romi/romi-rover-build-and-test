@@ -22,7 +22,6 @@
 
  */
 #include "block.h"
-#include "trigger.h"
 #include "stepper.h"
 #include "config.h"
 #include "limit.h"
@@ -52,9 +51,6 @@ uint8_t controller_state = STATE_RUNNING;
 void handle_moveto(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_move(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_moveat(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
-void handle_delay(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
-void handle_trigger(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
-void handle_wait(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void send_state(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_homing(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
@@ -64,9 +60,6 @@ const static MessageHandler handlers[] = {
         { 'm', 5, false, handle_moveto },
         { 'M', 5, false, handle_move },
         { 'V', 4, false, handle_moveat },
-        { 'D', 1, false, handle_delay },
-        { 'T', 2, false, handle_trigger },
-        { 'W', 0, false, handle_wait },
         { 'C', 0, false, handle_continue },
         { 'S', 0, false, send_state },
         { 'H', 0, false, handle_homing },
@@ -85,7 +78,6 @@ void reset()
 {
         stepper_reset = 1;
         block_buffer_clear();
-        trigger_buffer_clear();
 }
 
 void zero()
@@ -120,7 +112,6 @@ void setup()
         controller_state = STATE_RUNNING;
         
         init_block_buffer();
-        init_trigger_buffer();
         init_output_pins();
         init_encoders();
         
@@ -221,65 +212,6 @@ void handle_moveat(RomiSerial *romiSerial, int16_t *args, const char *string_arg
         }
 }
 
-void handle_delay(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
-{
-        if (controller_state == STATE_RUNNING) {
-                if (args[0] > 0) {
-                        block_t *block = block_buffer_get_empty();
-                        if (block == 0) {
-                                romiSerial->send_error(1, "Again");  
-                        } else {
-                                block->type = BLOCK_DELAY;
-                                block->data[0] = args[0];
-                                block_buffer_ready();
-                                romiSerial->send_ok();  
-                        }
-                } else {
-                        romiSerial->send_error(100, "Invalid delay");                  
-                }
-        } else {
-                romiSerial->send_error(101, "Invalid state");  
-        }
-}
-
-void handle_trigger(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
-{
-        if (controller_state == STATE_RUNNING) {
-                if (args[1] >= 0) {
-                        block_t *block = block_buffer_get_empty();
-                        if (block == 0) {
-                                romiSerial->send_error(1, "Again");  
-                        } else {
-                                block->type = BLOCK_TRIGGER;
-                                block->data[0] = args[0];
-                                block->data[1] = args[1];
-                                block_buffer_ready();
-                                romiSerial->send_ok();  
-                        }
-                } else {
-                        romiSerial->send_error(100, "Invalid delay");                  
-                }
-        } else {
-                romiSerial->send_error(101, "Invalid state");  
-        }
-}
-
-void handle_wait(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
-{
-        if (controller_state == STATE_RUNNING) {
-                block_t *block = block_buffer_get_empty();
-                if (block == 0) {
-                        romiSerial->send_error(1, "Again");  
-                } else {
-                        block->type = BLOCK_WAIT;
-                        block_buffer_ready();
-                        romiSerial->send_ok();  
-                }
-        } else {
-                romiSerial->send_error(101, "Invalid state");  
-        }
-}
-
 void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
         if (controller_state == STATE_RUNNING) {
@@ -294,34 +226,27 @@ void send_state(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
         uint8_t n = block_buffer_available();
         char *status;
-        int16_t trigger = -1;
         
-        if (trigger_buffer_available() > 0) {
-                status = "t";
-                trigger = trigger_buffer_get();
-        } else {
-                switch (controller_state) {
-                case STATE_RUNNING:
-                        status = "r";
-                        break;
-                case STATE_HOMING:
-                        status = "";
-                        break;
-                case STATE_ERROR:
-                        status = "e";
-                        break;
-                }
+        switch (controller_state) {
+        case STATE_RUNNING:
+                status = "r";
+                break;
+        case STATE_HOMING:
+                status = "";
+                break;
+        case STATE_ERROR:
+                status = "e";
+                break;
         }
         
         snprintf(reply_string, sizeof(reply_string),
-                 "[0,\"%s\",%d,%d,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%lu]",
+                 "[0,\"%s\",%d,%d,%d,%d,%d,%ld,%ld,%ld,%ld,%ld,%ld,%lu]",
                  status,
                  (int) block_buffer_available(),
                  (int) block_id,
                  (int) block_ms,
                  (int) milliseconds,
                  (int) interrupts,
-                 (int) trigger,
                  (int32_t) stepper_position[0],
                  (int32_t) stepper_position[1],
                  (int32_t) stepper_position[2],
@@ -339,20 +264,6 @@ void wait()
                || block_id != -1) {
                 delay(10);
         }
-}
-
-int oquam_delay(int dt)
-{
-        int err = 0;
-        block_t *block = block_buffer_get_empty();
-        if (block == 0) {
-                err = -1;
-        } else {
-                block->type = BLOCK_DELAY;
-                block->data[0] = dt;
-                block_buffer_ready();
-        }
-        return err;
 }
 
 int moveat(int dt, int dx, int dy, int dz)
@@ -403,7 +314,7 @@ int homing_wait_xy_switches_toggle(int dt, int dx, int dy, int state)
                 int y_limit_status = digitalRead(10);
                 
                 if (x_limit_status == state && y_limit_status == state) {
-                        err = oquam_delay(10);
+                        err = move(0, 0, 0, 0); // This will stop the moveat
                         break;
                         
                 } else if (x_limit_status == state) {

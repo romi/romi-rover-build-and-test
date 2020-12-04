@@ -46,7 +46,7 @@ namespace romi {
         {
         public:
                 JSONTypeError(const char *expected) : JSONError() {
-                        _what = "Invalid type. Expected JSON type ";
+                        _what = "Invalid type. Expected JSON ";
                         _what += expected;
                 }
         };

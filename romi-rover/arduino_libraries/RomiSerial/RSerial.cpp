@@ -95,34 +95,39 @@ int RSerial::read()
         return retval;
 }
 
-int RSerial::readline(std::string &line)
+bool RSerial::readline(char *buffer, int buflen) 
 {
         enum { READ, NL, DONE };
         
         int state = READ;
+        int n = 0;
+        bool success = false;
         
-        line = "";
         while (available()) {
                 int c = read();
                 switch (state) {
                 case READ:
-                        line += (char) c;
+                        buffer[n++] = (char) c;
                         if (c == '\r')
                                 state = NL;
                         break;
                 case NL:
                         if (c == '\n') {
-                                line += (char) c;
+                                buffer[n++] = (char) c;
+                                success = true;
                                 state = DONE;
                         } else {
                                 state = READ;
                         }
                         break;
                 }
+                if (n == buflen-1)
+                        break;
                 if (state == DONE)
                         break;
         }
-        return 0;
+        buffer[n] = '\0';
+        return success;
 }
 
 bool RSerial::poll_write()

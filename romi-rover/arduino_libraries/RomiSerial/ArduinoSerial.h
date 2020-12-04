@@ -42,29 +42,39 @@ public:
                         ;
         }
 
-        virtual void set_timeout(float seconds) {
+        void set_timeout(float seconds) override {
                 Serial.setTimeout((int) (seconds * 1000.0f));                
         }
         
-        virtual int available() override {
+        int available() override {
                 return Serial.available();
         }
         
-        virtual int read() override {
+        int read() override {
                 char c;
                 size_t n = Serial.readBytes(&c, 1);
                 return (n == 1)? c : -1;
         }
+        
+        bool readline(char *buffer, int buflen) override {
+                size_t n = Serial.readBytesUntil('\n', buffer, buflen);
+                if (n < buflen) {
+                        buffer[n] = '\0';
+                } else {
+                        buffer[buflen-1] = '\0';
+                }
+                return n > 0 && n < buflen;
+        }
 
-        virtual size_t write(char c) {
+        size_t write(char c) {
                 return Serial.write(c);
         }
         
-        virtual size_t print(const char *s) override {
+        size_t print(const char *s) override {
                 return Serial.print(s);
         }
         
-        virtual size_t println(const char *s) override {
+        size_t println(const char *s) override {
                 return Serial.println(s);
         }
 };

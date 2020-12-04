@@ -108,7 +108,7 @@ namespace romi {
 
                 int r = (int) s.num(0);
                 if (r == 0) {
-                        if (s.length() == 15) {
+                        if (s.length() == 14) {
                         
                                 const char* status = s.str(1);
                                 if (status == NULL) {
@@ -119,8 +119,6 @@ namespace romi {
                                         _status = RUNNING;
                                 } else if (rstreq(status, "h")) {
                                         _status = HOMING;
-                                } else if (rstreq(status, "t")) {
-                                        _status = TRIGGER;
                                 } else if (rstreq(status, "e")) {
                                         _status = ERROR;
                                 } 
@@ -130,14 +128,13 @@ namespace romi {
                                 _block_ms = (int) s.num(4);
                                 _milliseconds = (int) s.num(5);
                                 _interrupts = (int) s.num(6);
-                                _trigger = (int) s.num(7);
-                                _stepper_position[0] = (int32_t) s.num(8);
-                                _stepper_position[1] = (int32_t) s.num(9);
-                                _stepper_position[2] = (int32_t) s.num(10);
-                                _encoder_position[0] = (int32_t) s.num(11);
-                                _encoder_position[1] = (int32_t) s.num(12);
-                                _encoder_position[2] = (int32_t) s.num(13);
-                                _millis = (uint32_t) s.num(14);
+                                _stepper_position[0] = (int32_t) s.num(7);
+                                _stepper_position[1] = (int32_t) s.num(8);
+                                _stepper_position[2] = (int32_t) s.num(9);
+                                _encoder_position[0] = (int32_t) s.num(10);
+                                _encoder_position[1] = (int32_t) s.num(11);
+                                _encoder_position[2] = (int32_t) s.num(12);
+                                _millis = (uint32_t) s.num(13);
                         } else {
                                 r_err("OquamStepper::update_status: error: "
                                       "invalid array length");
@@ -167,9 +164,6 @@ namespace romi {
                 int r = 0;
                 
                 switch (block.type) {
-                case BLOCK_WAIT:
-                        rprintf(buffer, len, "W");
-                        break;
                 case BLOCK_MOVE:
                         if (block.data[0] <= 0)
                                 return 0;
@@ -183,15 +177,6 @@ namespace romi {
                                 block.data[2],
                                 block.data[3],
                                 block.id);
-                        break;
-                case BLOCK_DELAY:
-                        if (block.data[0] <= 0)
-                                return 0;
-                        rprintf(buffer, len, "D%d", block.data[0]);
-                        break;
-                case BLOCK_TRIGGER:
-                        rprintf(buffer, len, "T[%d,%d]",
-                                block.data[0], block.data[1]);
                         break;
                 default:
                         r_err("oquam_stepper_controller_send_block: Unknown block type");

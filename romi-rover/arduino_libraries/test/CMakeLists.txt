@@ -81,6 +81,8 @@ add_test(
 
 
 set(SRCS_PARSER
+  src/tests_main.cpp
+  src/test_romiserial_arduino.cpp
   ../RomiSerial/IInputStream.h
   ../RomiSerial/IOutputStream.h
   ../RomiSerial/RSerial.cpp
@@ -88,8 +90,7 @@ set(SRCS_PARSER
   ../RomiSerial/CRC8.h
   ../RomiSerial/RomiSerialErrors.h
   ../RomiSerial/RomiSerialClient.cpp
-  ../RomiSerial/RomiSerialClient.h
-  src/test_romiserial_arduino.cpp)
+  ../RomiSerial/RomiSerialClient.h)
 
 add_executable(r_test_romiserial_arduino ${SRCS_PARSER})
 

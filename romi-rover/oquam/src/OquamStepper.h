@@ -61,7 +61,6 @@ namespace romi {
                 int _block_ms;
                 int _milliseconds;
                 int _interrupts;
-                int _trigger;
                 int32_t _stepper_position[3];
                 int32_t _encoder_position[3];
                 uint32_t _millis;

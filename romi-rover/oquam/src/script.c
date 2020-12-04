@@ -42,23 +42,6 @@ action_t *action_clone(action_t *a)
         return action;
 }
 
-action_t *new_wait()
-{
-        action_t *action = new_action(ACTION_WAIT);
-        if (action == NULL)
-                return NULL;
-        return action;
-}
-
-action_t *new_delay(double delay)
-{
-        action_t *action = new_action(ACTION_DELAY);
-        if (action == NULL)
-                return NULL;
-        action->data.delay.duration = delay;
-        return action;
-}
-
 action_t *new_move(double x, double y, double z, double v, int id)
 {
         action_t *action = new_action(ACTION_MOVE);
@@ -69,18 +52,6 @@ action_t *new_move(double x, double y, double z, double v, int id)
         action->data.move.p[2] = z;
         action->data.move.v = v;
         action->data.move.id = id;
-        return action;
-}
-
-action_t *new_trigger(trigger_callback_t callback, void *userdata, int16_t arg, double delay)
-{
-        action_t *action = new_action(ACTION_TRIGGER);
-        if (action == NULL)
-                return NULL;
-        action->data.trigger.callback = callback;
-        action->data.trigger.userdata = userdata;
-        action->data.trigger.arg = arg;
-        action->data.trigger.delay = delay;
         return action;
 }
 
@@ -158,13 +129,7 @@ void script_clear(script_t *script)
         script->block = NULL;
         script->num_blocks = 0;
         script->block_length = 0;
-        script->block_id = 0;
-        
-        if (script->trigger)
-                r_delete(script->trigger);
-        script->trigger = NULL;
-        script->num_triggers = 0;
-        script->trigger_length = 0;        
+        script->block_id = 0;        
 }
 
 static void script_append(script_t *script, action_t *action)
@@ -185,37 +150,6 @@ int script_moveto(script_t *script, double x, double y, double z, double v, int 
         
         script_append(script, action);
         return 0;
-}
-
-int script_delay(script_t *script, double seconds)
-{        
-        action_t *action = new_delay(seconds);
-        if (action == NULL)
-                return -1;
-        
-        script_append(script, action);
-        return 0;
-}
-
-int script_trigger(script_t *script, trigger_callback_t cb, void *userdata, int16_t arg, double delay)
-{        
-        action_t *action = new_trigger(cb, userdata, arg, delay);
-        if (action == NULL)
-                return -1;
-        
-        script_append(script, action);
-        return 0;
-}
-
-static trigger_t *script_get_trigger(script_t* script, int id)
-{
-        return &script->trigger[id];
-}
-
-void script_do_trigger(script_t* script, int id)
-{
-        trigger_t *trigger = script_get_trigger(script, id);
-        trigger->callback(trigger->userdata, trigger->arg);
 }
 
 static int script_expand_blocks(script_t* script)
@@ -242,32 +176,5 @@ int script_push_block(script_t* script, block_t *block)
         block_t *p = &script->block[script->num_blocks];
         memcpy(p, block, sizeof(block_t));
         script->num_blocks++;
-        return 0;
-}
-
-static int script_expand_triggers(script_t* script)
-{
-        int len;
-        trigger_t *p;
-        
-        len = script->trigger_length + 256;
-        p = (trigger_t *) r_realloc(script->trigger, len * sizeof(trigger_t));
-        if (p == NULL)
-                return -1;
-        
-        script->trigger = p;
-        script->trigger_length = len;
-        return 0;
-}
-
-int script_push_trigger(script_t* script, trigger_t *trigger)
-{
-        if (script->num_triggers == script->trigger_length
-            && script_expand_triggers(script) != 0)
-                return -1;
-        
-        trigger_t *p = &script->trigger[script->num_triggers];
-        memcpy(p, trigger, sizeof(trigger_t));
-        script->num_triggers++;
         return 0;
 }

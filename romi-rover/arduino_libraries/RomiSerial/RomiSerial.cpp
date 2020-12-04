@@ -22,7 +22,12 @@
 
  */
 
-//#include <Arduino.h>
+#define ARDUINO_DEBUG 0
+
+#if ARDUINO_DEBUG
+#include <Arduino.h>
+#endif
+
 #include "RomiSerial.h"
 #include "RomiSerialErrors.h"
 #include <stdio.h>
@@ -38,6 +43,12 @@ void RomiSerial::handle_input()
                         bool has_message = _parser.process((char) c);
                         if (has_message) {
                                 if (_parser.has_id()) {
+#if ARDUINO_DEBUG
+                                        Serial.print("!has id: id=");
+                                        Serial.print(_parser.id());
+                                        Serial.print(", last id=");
+                                        Serial.println(_last_id);
+#endif
                                         if (_parser.id() != _last_id) {
                                                 handle_message();
                                         } else {

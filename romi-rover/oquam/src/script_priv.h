@@ -35,14 +35,10 @@ extern "C" {
  */
 
 enum {
-        ACTION_WAIT = 0,
         ACTION_MOVE,
-        ACTION_DELAY,
-        ACTION_TRIGGER
 };
 
 typedef struct _controller_t controller_t;
-typedef void (*trigger_callback_t)(void *userdata, int16_t arg);
 
 typedef struct _action_t action_t;
 
@@ -56,25 +52,12 @@ struct _action_t {
                         int id;
                 } move;
                 
-                struct {
-                        double duration;
-                } delay;
-
-                struct {
-                        trigger_callback_t callback;
-                        void *userdata;
-                        int arg;
-                        double delay;
-                } trigger;
         } data;
 };
 
 action_t *new_action(int type);
 action_t *action_clone(action_t *a);
-action_t *new_wait();
-action_t *new_delay(double delay);
 action_t *new_move(double x, double y, double z, double v, int id);
-action_t *new_trigger(trigger_callback_t callback, void *userdata, int16_t arg, double delay);
 void delete_action(action_t *action);
 
 
@@ -121,10 +104,6 @@ struct _section_t {
 
         /* The id of the corresponding move action. */
         int id;
-        
-        /* The list of actions the execute at the end of this
-         * section */
-        list_t *actions;
 };
 
 section_t *new_section();
@@ -177,9 +156,6 @@ struct _atdc_t {
         section_t travel;
         section_t decelerate;
         section_t curve;
-
-        /* The list of actions the execute at the end */
-        list_t *actions;
         
         /* The id of the corresponding move action. */
         int id;
@@ -198,12 +174,9 @@ void atdc_print(atdc_t *atdc);
  */
 
 enum {
-        BLOCK_WAIT = 0,
-        BLOCK_MOVE,
+        BLOCK_MOVE = 0,
         BLOCK_MOVETO,
         BLOCK_MOVEAT,
-        BLOCK_DELAY,
-        BLOCK_TRIGGER
 };
 
 /** 
@@ -218,22 +191,6 @@ typedef struct _block_t {
         int action_id;
 } block_t;
 
-
-/**
- *   trigger
- */
-
-/** 
- * \brief Stores the information to handle trigger events coming back
- * from the controller.
- */
-typedef struct _trigger_t {
-        int16_t id;
-        int arg;
-        trigger_callback_t callback;
-        void *userdata;
-        double delay;
-} trigger_t;
 
 /**
  *   script
@@ -260,18 +217,11 @@ typedef struct _script_t {
         int32_t num_blocks;
         int32_t block_length;
         int32_t block_id;
-        
-        /* The trigger callbacks */
-        trigger_t *trigger;
-        int32_t num_triggers;
-        int32_t trigger_length;
 
 } script_t;
 
 void script_clear(script_t *script);
 int script_push_block(script_t* script, block_t *block);
-int script_push_trigger(script_t* script, trigger_t *trigger);
-void script_do_trigger(script_t* script, int id);
 
 #ifdef __cplusplus
 }

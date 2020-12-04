@@ -22,6 +22,7 @@ static inline double sign(double v)
 int main(int argc, char** argv)
 {
         app_init(&argc, argv);
+        app_set_name("oquam");
         
         try {
                 CNCRange range;

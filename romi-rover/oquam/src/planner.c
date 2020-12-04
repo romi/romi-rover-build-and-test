@@ -88,11 +88,6 @@ static section_t *new_section_init(double t, double at,
 void delete_section(section_t *section)
 {
         if (section) {
-                for (list_t *l = section->actions; l; l = list_next(l)) {
-                        action_t *a = list_get(l, action_t);
-                        delete_action(a);
-                }
-                delete_list(section->actions);
                 r_delete(section);
         }
 }
@@ -186,11 +181,6 @@ segment_t *new_segment()
 void delete_segment(segment_t *segment)
 {
         if (segment) {
-                for (list_t *l = segment->section.actions; l; l = list_next(l)) {
-                        action_t *a = list_get(l, action_t);
-                        delete_action(a);
-                }
-                delete_list(segment->section.actions);
                 r_delete(segment);
         }
 }
@@ -217,11 +207,6 @@ atdc_t *new_atdc()
 void delete_atdc(atdc_t *atdc)
 {
         if (atdc) {
-                for (list_t *l = atdc->actions; l; l = list_next(l)) {
-                        action_t *a = list_get(l, action_t);
-                        delete_action(a);
-                }
-                delete_list(atdc->actions);
                 r_delete(atdc);
         }
 }
@@ -274,24 +259,6 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
                 list = list_concat(list, slices);
         }
 
-        if (atdc->actions != NULL) {
-                // FIXME: Add an empty section with only actions
-                section_t *section = new_section();
-                if (section == NULL) {
-                        r_err("atdc_slice(actions): new_section returned NULL");
-                        return NULL;
-                }
-                                
-                // Clone the list of actions
-                for (list_t *l = atdc->actions; l; l = list_next(l)) {
-                        action_t *a = list_get(l, action_t);
-                        section->actions = list_append(section->actions,
-                                                       action_clone(a));
-                }
-
-                list = list_append(list, section);
-        }
-        
         //r_err("atdc_slice: return %p", list);
         return list;
 }
@@ -727,8 +694,7 @@ static int atdc_is_valid(atdc_t *t,
         if (t->accelerate.t == 0.0
             && t->travel.t == 0.0
             && t->decelerate.t == 0.0
-            && t->curve.t == 0.0
-            && t->actions == NULL) {
+            && t->curve.t == 0.0) {
                 r_warn("segment_is_valid: empty segment");
                 return 0;
         }
@@ -1134,13 +1100,7 @@ static atdc_t *copy_segments_to_atdc(segment_t *path)
                 }
                 prev = atdc;
                 
-                atdc->id = segment->section.id;
-                
-                // Clone the list of actions
-                for (list_t *l = segment->section.actions; l; l = list_next(l)) {
-                        action_t *a = list_get(l, action_t);
-                        atdc->actions = list_append(atdc->actions, action_clone(a));
-                }
+                atdc->id = segment->section.id;                
         }
 
         return first;
@@ -1199,7 +1159,6 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
         list_t *actions = script->actions;
         list_t *paths = NULL;
         segment_t *prev = NULL;
-        segment_t *last = NULL;
 
         while (actions) {
                 
@@ -1221,7 +1180,6 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                                         paths = list_append(paths, segment);
                         
                                 prev = segment;
-                                last = segment;
 
                                 segment->section.id = action->data.move.id; 
 
@@ -1246,25 +1204,7 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
 
                                 // update current position
                                 vcopy(pos, action->data.move.p); 
-                        }
-                        
-                } else {
-
-                        if (last == NULL) {
-                                // Create a dummy segment to attach
-                                // this action to.
-                                last = new_segment();
-                                paths = list_append(paths, last);
-                        }
-
-                        // Execute the action to the end of the current segment
-                        last->section.actions = list_append(last->section.actions,
-                                                            action_clone(action));
-
-                        if (action->type == ACTION_DELAY
-                           || action->type == ACTION_WAIT)
-                                // Start a new path
-                                prev = NULL;
+                        }                        
                 }
                 
                 actions = list_next(actions);

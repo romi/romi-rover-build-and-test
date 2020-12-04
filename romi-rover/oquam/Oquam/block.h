@@ -38,12 +38,9 @@
  * \brief The possible block types.
  */
 enum {
-        BLOCK_WAIT = 0,
-        BLOCK_MOVE,
+        BLOCK_MOVE = 0,
         BLOCK_MOVETO,
         BLOCK_MOVEAT,
-        BLOCK_DELAY,
-        BLOCK_TRIGGER
 };
 
 /**
@@ -62,28 +59,18 @@ enum {
  *
  * The controller can execute the following types of blocks:
  *
- * 1. WAIT: Come to a standstill and enter idle mode. There's no extra
- *    data.
- *
- * 2. MOVE: This block represents a physical movement. The block
+ * 1. MOVE: This block represents a physical movement. The block
  *    contains the following data fields: a) the duration of the
  *    movement in milliseconds (data[0]), b) the number of motor steps
  *    to execute in each of the three directions (data[1-3]). The
  *    displacement is relative to the current position.
  *
- * 3. MOVETO: Similar to 'move'. However in this case, the position
+ * 2. MOVETO: Similar to 'move'. However in this case, the position
  *    indicates an absolute position.
  *
- * 4. MOVEAT: This request to move at at given speed. The speed values
+ * 3. MOVEAT: This request to move at at given speed. The speed values
  *    are incoded in the DX, DY and DZ field and are measured in
  *    steps/second.
- *
- * 5. DELAY: The controller should pause for a given delay. The delay
- *    value is specified in data[0] and is expressed in
- *    milliseconds. The maximum delay is 2^15-1 ms or 32.7 s.
- *
- * 6. TRIGGER: This instruction requests to send a trigger to the
- *    controlling program. The trigger ID in stored in data[0].
  */
 struct block_t {
         uint8_t type;

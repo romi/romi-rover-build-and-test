@@ -1,77 +1,89 @@
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include <RSerial.h>
 #include <RomiSerialClient.h>
+#include <RomiSerialErrors.h>
 
-int main()
+class romiserial_arduino_tests : public ::testing::Test
 {
-        RSerial serial("/dev/ttyACM0", 115200, 0);
-        RomiSerialClient romiserial(&serial, &serial); 
-        json_object_t response;
-        int successes = 0;
-        int errors = 0;
-        int num_loops = 1024;
+protected:
+        RSerial serial;
+        RomiSerialClient romiserial;
+
+	romiserial_arduino_tests()
+                : serial("/dev/ttyACM0", 115200, 1),
+                  romiserial(&serial, &serial) {
+                //romiserial.set_debug(true);
+	}
         
-        for (int i = 0; i < num_loops; i++) {
-                
-                response = romiserial.send("a");
-                if (json_array_getnum(response, 0) == 0)
-                        successes++;
-                else
-                        errors++;
-                json_unref(response);
+	~romiserial_arduino_tests() override = default;
 
-                // Error: bad number of arguments
-                response = romiserial.send("b");
-                if (json_array_getnum(response, 0) == 0)
-                        successes++;
-                else
-                        errors++;
-                json_unref(response);
+	void SetUp() override {
+	}
 
-                response = romiserial.send("b[1,2]");
-                if (json_array_getnum(response, 0) == 0)
-                        successes++;
-                else
-                        errors++;
-                json_unref(response);
-                
-                response = romiserial.send("c[1,\"Dinner's ready\"]");
-                if (json_array_getnum(response, 0) == 0)
-                        successes++;
-                else
-                        errors++;
-                json_unref(response);
-                
-                response = romiserial.send("d[1,1]");
-                if (json_array_getnum(response, 0) == 0)
-                        successes++;
-                else
-                        errors++;
-                json_unref(response);
-                
-                response = romiserial.send("e[\"he's resting\"]");
-                if (json_array_getnum(response, 0) == 0)
-                        successes++;
-                else
-                        errors++;
-                json_unref(response);
-                
-                // Always error
-                response = romiserial.send("f");
-                if (json_array_getnum(response, 0) == 0)
-                        successes++;
-                else
-                        errors++;
-                json_unref(response);
-        }
+	void TearDown() override {
+	}
+};
 
-        int r;
-        if (successes == 5 * num_loops
-            && errors == 2 * num_loops) {
-                printf("OK\n");
-                r = 0;
-        } else {
-                printf("FAIL (%d, %d)\n", successes, errors);
-                r = 1;
-        }
-        return r;
+TEST_F(romiserial_arduino_tests, test_success_of_simple_command)
+{
+        json_object_t response = romiserial.send("a");
+        int code = (int) json_array_getnum(response, 0);
+        json_unref(response);
+        
+        ASSERT_EQ(0, code);        
 }
+
+TEST_F(romiserial_arduino_tests, test_failure_bad_number_of_arguments)
+{
+        json_object_t response = romiserial.send("b");
+        int code = (int) json_array_getnum(response, 0);
+        json_unref(response);
+        
+        ASSERT_EQ(romiserial_bad_number_of_arguments, code);
+}
+
+TEST_F(romiserial_arduino_tests, test_success_two_arguments)
+{
+        json_object_t response = romiserial.send("b[1,2]");
+        int code = (int) json_array_getnum(response, 0);
+        json_unref(response);
+        
+        ASSERT_EQ(0, code);
+}
+
+TEST_F(romiserial_arduino_tests, test_success_string_argument)
+{
+        json_object_t response = romiserial.send("c[1,\"Dinner's ready\"]");
+        int code = (int) json_array_getnum(response, 0);
+        json_unref(response);
+        
+        ASSERT_EQ(0, code);
+}
+
+TEST_F(romiserial_arduino_tests, test_success_two_arguments_returning_value)
+{
+        json_object_t response = romiserial.send("d[1,1]");
+        int code = (int) json_array_getnum(response, 0);
+        int result = (int) json_array_getnum(response, 1);
+        json_unref(response);
+        
+        ASSERT_EQ(0, code);
+        ASSERT_EQ(2, result);
+}
+
+TEST_F(romiserial_arduino_tests, test_success_string_argument_returning_string)
+{
+        json_object_t response = romiserial.send("e[\"he's resting\"]");
+        
+        //bool is_array = json_isarray(response);
+        //int len = json_array_length(response);
+        int code = (int) json_array_getnum(response, 0);
+        //bool is_string = json_isstring(json_array_get(response, 1));
+        std::string result = json_array_getstr(response, 1);
+        json_unref(response);
+        
+        ASSERT_EQ(0, code);
+        ASSERT_STREQ("he's resting", result.c_str());
+}
+

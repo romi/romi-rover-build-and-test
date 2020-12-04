@@ -46,14 +46,15 @@ protected:
         uint8_t _crc_response; 
         int _error;
         int _state;
+        bool _debug;
         std::string _log_message;
 
 
         int make_request(const char *command, std::string &request);
         json_object_t try_sending_request(std::string &request);
         bool send_request(std::string &request);
-        const char *get_error_message(int code, const char *message = 0);
-        json_object_t make_error(int code, const char *message = 0);
+        const char *get_error_message(int code);
+        json_object_t make_error(int code);
         void parse_char(int c);
         json_object_t parse_response();
         json_object_t read_response();
@@ -76,6 +77,11 @@ public:
         }
         
         json_object_t send(const char *command) override;
+
+        
+        void set_debug(bool value) {
+                _debug = value;
+        }        
 };
 
 #endif
