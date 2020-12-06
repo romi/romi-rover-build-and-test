@@ -60,8 +60,8 @@ namespace romi {
                                 int16_t step_y = (int16_t) (dx[1] * scale[1]);
                                 int16_t step_z = (int16_t) (dx[2] * scale[2]);
                                 
-                                _block_controller.move(millis, step_x, step_y, step_z);
-                                _block_controller.synchronize(2.0 * duration);
+                                _controller.move(millis, step_x, step_y, step_z);
+                                _controller.synchronize(2.0 * duration);
                                 
                         }
                 } else {
@@ -69,6 +69,22 @@ namespace romi {
                 }
         }
 
+        void Oquam::store_script(script_t *script) 
+        {
+                if (_file_cabinet) {
+                        IFolder &folder = _file_cabinet->get_current_folder();
+                        membuf_t *svg = plot_to_mem(script, _xmin, _xmax, _vmax,
+                                                    _amax, _scale_meters_to_steps);
+                        if (svg != 0) {
+                                folder.store_svg("path", membuf_data(svg),
+                                                 membuf_len(svg));
+                                delete_membuf(svg);
+                        } else {
+                                r_warn("Oquam::store_script: plot failed");
+                        }
+                }
+        }
+        
         void Oquam::travel_synchronized(Path &path, double relative_speed) 
         {
                 r_debug("Oquam::travel_synchronized");
@@ -89,22 +105,18 @@ namespace romi {
                 if (script != 0) {
                                 
                         if (convert_script(script, position, relative_speed)) {
-                                        
-                                r_debug("Oquam::travel_synchronized: "
-                                        "execute_script");
-                                        
+
+                                store_script(script);
+                                
                                 if (execute_script(script)) {
                                                 
                                         double duration = script_duration(script);
+                                        double timeout = 60.0 + 1.5 * duration;
                                                 
                                         delete_script(script);
-                                                
-                                        r_debug("Oquam::travel_synchronized: synchronize");
-                                                
-                                        if (!_block_controller.synchronize(60.0 + 1.5 * duration)) 
+                                        
+                                        if (!_controller.synchronize(timeout)) 
                                                 throw std::runtime_error("Time out");
-                                                
-                                        r_debug("Oquam::travel_synchronized: done");
                                                 
                                 } else {
                                         delete_script(script);
@@ -133,7 +145,7 @@ namespace romi {
                         double z = path[i].z;
 
                         if (valid_x(x) && valid_y(y) && valid_z(z)) {
-                                script_moveto(script, x, y, z, speed, i);
+                                script_moveto(script, x, y, z, speed);
                         } else {
                                 r_warn("Oquam::build_script: Point[%d]: out of bounds: "
                                        "(%0.4f, %0.4f, %0.4f)", x, y, z);
@@ -147,7 +159,7 @@ namespace romi {
         
         void Oquam::get_position(int32_t *position) 
         {
-                if (!_block_controller.get_position(position)) {
+                if (!_controller.get_position(position)) {
                         r_err("controller.get_position failed");
                         throw std::runtime_error("controller.get_position failed");
                 }
@@ -191,9 +203,6 @@ namespace romi {
                 } else {
                         r_err("planner_convert_script failed");
                 }
-
-                plot_to_file("path.svg", script, _xmax, _vmax, _amax,
-                             _scale_meters_to_steps);
                 
                 return success;
         }
@@ -210,15 +219,38 @@ namespace romi {
                 int16_t dx = (int16_t) (p1[0] - pos_steps[0]);
                 int16_t dy = (int16_t) (p1[1] - pos_steps[1]);
                 int16_t dz = (int16_t) (p1[2] - pos_steps[2]);
+
+                r_debug("Abs(%.3f,%.3f,%.3f)=(%d,%d,%d) - D(%d,%d,%d)",
+                        section->p1[0], section->p1[1], section->p1[2],
+                        p1[0], p1[1], p1[2],
+                        dx, dy, dz);
                 
                 if ((dt > 0) && (dx != 0 || dy != 0 || dz != 0)) {
-                        success = _block_controller.move(dt, dx, dy, dz);
+                        success = _controller.move(dt, dx, dy, dz);
+                        
+                        // Update the current position
+                        // pos_steps[0] = p1[0];
+                        // pos_steps[1] = p1[1];
+                        // pos_steps[2] = p1[2];
+                        
+                        // Update the current position
+                        pos_steps[0] += dx;
+                        pos_steps[1] += dy;
+                        pos_steps[2] += dz;
+
+                        {
+                                _controller.synchronize(10.0);
+                                int32_t position[3];
+                                get_position(position);
+                                r_debug("Pos(%d,%d,%d)",
+                                        position[0], position[1], position[2]);
+                        }
+                        
+                        
+                } else {
+                        r_debug("not (dt > 0) && (dx != 0 || dy != 0 || dz != 0): "
+                                "dt=%d dx=%d dy=%d dz=%d", dt, dx, dy, dz);
                 }
-                
-                // Update the current position
-                pos_steps[0] = p1[0];
-                pos_steps[1] = p1[1];
-                pos_steps[2] = p1[2];
 
                 return success;
         }
@@ -235,15 +267,43 @@ namespace romi {
                         pos_steps[0] = (int32_t) (section->p0[0] * scale[0]);
                         pos_steps[1] = (int32_t) (section->p0[1] * scale[1]);
                         pos_steps[2] = (int32_t) (section->p0[2] * scale[2]);
-                        
+
+                        r_debug("Start: Abs(%.3f,%.3f,%.3f)=(%d,%d,%d)",
+                                section->p0[0], section->p0[1], section->p0[2],
+                                pos_steps[0], pos_steps[1], pos_steps[2]);
+
+                        int count = 0;
                         for (list_t *l = script->slices; l != 0; l = list_next(l)) {
+                                r_debug("Section %d:", count);
                                 section = list_get(l, section_t);
                                 if (!execute_move(section, pos_steps)) {
                                         success = false;
                                         break;
                                 }
+                                count++;
                         }
+
+                        r_debug("End: Abs(%d,%d,%d)",
+                                pos_steps[0], pos_steps[1], pos_steps[2]);
                 }
                 return success;
+        }
+
+        void Oquam::stop_execution()
+        {
+                if (!_controller.stop_execution())
+                        throw std::runtime_error("Homing failed");
+        }
+        
+        void Oquam::continue_execution()
+        {
+                if (!_controller.continue_execution())
+                        throw std::runtime_error("Continue failed");
+        }
+        
+        void Oquam::reset()
+        {
+                if (!_controller.reset())
+                        throw std::runtime_error("Reset failed");
         }
 }

@@ -6,7 +6,7 @@
 #include "ControllerServer.h"
 #include "CNCClient.h"
 #include "Oquam.h"
-#include "OquamStepper.h"
+#include "StepperController.h"
 #include "RomiSerialClient.h"
 #include "RSerial.h"
 #include "ConfigurationFile.h"
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
                 
                 RSerial serial("/dev/ttyACM0", 115200, 1);        
                 RomiSerialClient romi_serial(&serial, &serial);
-                OquamStepper stepper(romi_serial);
+                StepperController stepper(romi_serial);
                 Oquam oquam(stepper, xmin, xmax, vm, amax, scale, 0.01, period);
                 CNCClient client(oquam);
                 ControllerServer server(&client, "oquam", "cnc");

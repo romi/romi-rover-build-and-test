@@ -40,7 +40,7 @@ using namespace std;
 
 
 RomiSerialClient::RomiSerialClient(IInputStream *in, IOutputStream *out)
-        : _in(in), _out(out), _id_request(255), _debug(false)
+        : _in(in), _out(out), _id(255), _debug(false)
 {
         _mutex = new_mutex();
         if (_in)
@@ -65,27 +65,31 @@ int RomiSerialClient::make_request(const char *command, std::string &request)
         request = "";
 
         if (command != 0 && strlen(command) > 0) {
-                if (VALID_OPCODE(command[0])) {
-                        
-                        _id_request++;
-                        request = "#";
-                        request += command;
-                        request += ":";
-                        request += hex(_id_request >> 4);
-                        request += hex(_id_request);
-                        uint8_t code = crc.compute(request.c_str(), request.length());
-                        request += hex(code >> 4);
-                        request += hex(code);
-                        request += "\r";
-                        
-                        if (request.length() > 64) 
-                                err = romiserialclient_too_long;
-
+                if (strlen(command) <= 58) {
+                        if (VALID_OPCODE(command[0])) {
+                                
+                                _id++;
+                                request = "#";
+                                request += command;
+                                request += ":";
+                                request += hex(_id >> 4);
+                                request += hex(_id);
+                                uint8_t code = crc.compute(request.c_str(),
+                                                           request.length());
+                                request += hex(code >> 4);
+                                request += hex(code);
+                                request += "\r";
+                                
+                        } else {
+                                err = romiserialclient_invalid_opcode;
+                        }
+                
                 } else {
-                        err = romiserialclient_invalid_opcode;
+                        err = romiserialclient_too_long;
                 }
+                        
         } else {
-                err = romiserialclient_empty_request;
+                err = romiserial_empty_request;
         }
         
         return err;
@@ -105,18 +109,25 @@ json_object_t RomiSerialClient::try_sending_request(std::string &request)
                         json_object_t r = read_response();
 
                         /* Check the error code. If the error relates
-                         * to the protocol layer (last_protocol_error
-                         * < error < 0) then send the message
-                         * again. Duplicate messages are intercepted
-                         * by the firmware, in which case the
-                         * romiserial_duplicate error code is
+                         * to the message envelope then send the
+                         * message again. Duplicate messages are
+                         * intercepted by the firmware, in which case
+                         * the romiserial_duplicate error code is
                          * returned.  */
                         int code = (int) json_array_getnum(r, 0);
-                        if (romiserial_last_protocol_error < code && code < 0) {
-                                if (_debug) 
-                                r_debug("RomiSerialClient::try_sending_request: ",
-                                        "re-sending request");
+                        
+                        if (code == romiserial_envelope_crc_mismatch
+                            || code == romiserial_envelope_invalid_id
+                            || code == romiserial_envelope_invalid_crc
+                            || code == romiserial_envelope_expected_end
+                            || code == romiserial_envelope_too_long) {
+                                
+                                if (_debug) {
+                                        r_debug("RomiSerialClient::try_sending_request: "
+                                                "re-sending request: %s", request.c_str());
+                                }
                                 json_unref(r);
+                                
                         } else  {
                                 response = r;
                                 break;
@@ -167,211 +178,109 @@ enum {
         romiserialclient_log_line_feed,
 };
 
-// This function doesn't return an error code is the character is
-// invalid. Use the macro VALID_HEX_CHAR() for that purpose.
-static uint8_t hex_to_int(char c)
+bool RomiSerialClient::parse_char(int c)
 {
-        if ('a' <= c && c <= 'f') {
-                return 10 + (c - 'a');
-        } else if ('0' <= c && c <= '9') {
-                return c - '0';
-        } else {
-                return 0;
-        }
+        return _parser.process((char) c);
 }
 
-void RomiSerialClient::parse_char(int c)
+json_object_t RomiSerialClient::check_error_response(json_object_t data)
 {
-        switch (_state) {
-        case romiserialclient_start_message:
-                if (c == '#') {
-                        _response = "#";
-                        _state = romiserialclient_opcode;
-                } else if (c == '!') {
-                        _log_message = "";
-                        _state = romiserialclient_log_message;
-                } else {
-                        // NOP, wait for the hashtag
-                }
-                break;
-
-        case romiserialclient_opcode:
-                if (VALID_OPCODE(c)) {
-                        _response += (char) c;
-                        _state = romiserialclient_openbracket;
-                } else {
-                        r_warn("got invalid opcode '%c'", (char) c);
-                        _error = romiserialclient_invalid_opcode;
-                }
-                break;
-
-        case romiserialclient_openbracket:
-                if (c == '[') {
-                        _response += (char) c;
-                        _state = romiserialclient_values;
-                } else {
-                        _error = romiserialclient_unexpected_char;
-                }
-                break;
-
-        case romiserialclient_values:
-                if (c == ']') {
-                        _response += (char) c;
-                        _state = romiserialclient_colon;
-                } else {
-                        _response += (char) c;
-                }
-                break;
-
-        case romiserialclient_colon:
-                if (c == ':') {
-                        _response += (char) c;
-                        _state = romiserialclient_id1;
-                } else {
-                        _error = romiserialclient_unexpected_char;
-                }
-                break;
-
-        case romiserialclient_id1:
-                if (VALID_HEX_CHAR(c)) {
-                        _id_response = hex_to_int(c);
-                        _response += (char) c;
-                        _state = romiserialclient_id2;
-                } else {
-                        _error = romiserialclient_unexpected_char;
-                }
-                break;
-
-        case romiserialclient_id2:
-                if (VALID_HEX_CHAR(c)) {
-                        _id_response = 16 * _id_response + hex_to_int(c);
-                        _response += (char) c;
-                        _state = romiserialclient_crc1;
-                } else {
-                        _error = romiserialclient_unexpected_char;
-                }
-                break;
-
-        case romiserialclient_crc1:
-                if (VALID_HEX_CHAR(c)) {
-                        _crc_response = hex_to_int(c);
-                        _state = romiserialclient_crc2;
-                } else {
-                        _error = romiserialclient_unexpected_char;
-                }
-                break;
-
-        case romiserialclient_crc2:
-                if (VALID_HEX_CHAR(c)) {
-                        CRC8 crc;                        
-                        _crc_response = 16 * _crc_response + hex_to_int(c);
-                        crc.compute(_response.c_str(), _response.length());
-                        if (_crc_response != crc.get()) 
-                                _error = romiserialclient_crc_mismatch;
-                        else
-                                _state = romiserialclient_carriage_return;
-                } else {
-                        _error = romiserialclient_unexpected_char;
-                }
-                break;
-
-        case romiserialclient_carriage_return:
-                if (c == '\r') {
-                        _state = romiserialclient_line_feed;
-                } else {
-                        _error = romiserialclient_unexpected_char;
-                }
-                break;
-
-        case romiserialclient_line_feed:
-                if (c == '\n') {
-                        _state = romiserialclient_message_complete;
-                } else {
-                        _error = romiserialclient_unexpected_char;
-                }
-                break;
-
-        case romiserialclient_log_message:
-                if (c == '\r') {
-                        _state = romiserialclient_log_line_feed;
-                } else {
-                        _log_message += (char) c;
-                }
-                break;
-                
-        case romiserialclient_log_line_feed:
-                if (c == '\n') {
-                        r_debug("Firmware says: %s", _log_message.c_str());
-                        _state = romiserialclient_start_message;
-                } else {
-                        _error = romiserialclient_unexpected_char;
-                }
-                break;
+        int code = (int) json_array_getnum(data, 0);
+        
+        if (_debug) {
+                r_debug("RomiSerialClient::parse_response: "
+                        "Firmware returned error code: %d", code);
         }
+
+        if (json_array_length(data) == 1) {
+                const char *message = get_error_message(code);
+                json_array_setstr(data, message, 1);
+                
+        } else if (json_array_length(data) == 2) {
+                json_object_t message = json_array_get(data, 1);
+                if (json_isstring(message)) {
+                        if (_debug) {
+                                r_debug("RomiSerialClient::parse_response: "
+                                        "Firmware returned error message: '%s'",
+                                        json_string_value(message));
+                        }
+                } else {
+                        r_warn("RomiSerialClient::parse_response: "
+                               "error with invalid message: '%s'",
+                               _parser.message());
+                        json_unref(data);
+                        data = make_error(romiserial_invalid_error_response);
+                }  
+
+        } else {
+                r_warn("RomiSerialClient::parse_response: "
+                       "error with invalid arguments: '%s'",
+                       _parser.message());
+                json_unref(data);
+                data = make_error(romiserial_invalid_error_response);
+        }
+        
+        return data;
 }
 
 json_object_t RomiSerialClient::parse_response()
 {
-        string value = _response.substr(2, _response.length() - 5);
+        json_object_t data = json_null();
         
-        json_object_t data = json_parse(value.c_str());
-
-        // Check that the data is valid. If not, return an error.
-        if (json_isnull(data)) {
-                data = make_error(romiserialclient_invalid_json);
-        } else if (!json_isarray(data)) {
-                r_warn("RomiSerialClient::parse_response: invalid response: %s",
-                       _response.c_str());
-                json_unref(data);
-                data = make_error(romiserialclient_invalid_json);
-        }
-
-        // If the response is an error message, make sure it is valid,
-        // too: an array of length 2, with a string as second element.
-        int code = (int) json_array_getnum(data, 0);
-        if (code != 0) {
+        if (_parser.length() > 1) {
                 
-                if (_debug) {
-                        r_debug("RomiSerialClient::parse_response: "
-                                "Firmware returned error code %d", code);
-                }
+                data = json_parse(_parser.message() + 1);
 
-                if (json_array_length(data) == 1) {
-                        const char *message = get_error_message(code);
-                        json_array_setstr(data, message, 1);
-                } else if (json_array_length(data) == 2) {
-                        json_object_t message = json_array_get(data, 1);
-                        if (!json_isstring(message)) {
-                                r_warn("RomiSerialClient::parse_response: "
-                                       "error with invalid message: %s",
-                                       _response.c_str());
-                                json_unref(data);
-                                data = make_error(romiserialclient_invalid_error);
-                        } else if (_debug) {
-                                r_debug("RomiSerialClient::parse_response: "
-                                        "Firmware returned error message %s",
-                                        json_string_value(message));
-                        }
-
-                } else {
-                        r_warn("RomiSerialClient::parse_response: "
-                               "error with invalid arguments: %s",
-                               _response.c_str());
+                // Check that the data is valid. If not, return an error.
+                if (json_isnull(data)) {
+                        data = make_error(romiserial_invalid_json);
+                        
+                } else if (!json_isarray(data)) {
+                        r_warn("RomiSerialClient::parse_response: invalid response: '%s'",
+                               _parser.message());
                         json_unref(data);
-                        data = make_error(romiserialclient_invalid_error);
+                        data = make_error(romiserial_invalid_json);
+                } else if (json_isnumber(json_array_get(data, 0))) {
+
+                        // If the response is an error message, make sure it is valid,
+                        // too: an array of length 2, with a string as second element.
+                        int code = (int) json_array_getnum(data, 0);
+                        if (code != 0) 
+                                data  = check_error_response(data);
+                        
+                } else {
+                        json_unref(data);
+                        data = make_error(romiserial_invalid_response);
                 }
+                
+        } else {
+                r_warn("RomiSerialClient::parse_response: "
+                       "invalid response: no values: '%s'", _parser.message());
+                data = make_error(romiserial_empty_response);
         }
 
         return data;
 }
 
-void RomiSerialClient::read_one_char()
+bool RomiSerialClient::filter_log_message()
 {
+        bool is_message = true;
+        const char *message = _parser.message();
+        if (_parser.length() > 1 && message[0] == '!') {
+                r_debug("RomiSerialClient: Firmware says: '%s'", message);
+                is_message = false;
+        }
+        return is_message;
+}
+
+bool RomiSerialClient::handle_one_char()
+{
+        bool has_message = false;
         int c = _in->read();
         if (c >= 0) {
 
-                parse_char(c);
-                        
+                has_message = parse_char(c);
+                
         } else {
                 // This timeout results from reading a single
                 // character. The timeout value was set in the
@@ -384,6 +293,7 @@ void RomiSerialClient::read_one_char()
                 //result = make_error(romiserialclient_connection_timeout);
                 //break;
         }
+        return has_message;
 }
 
 json_object_t RomiSerialClient::read_response()
@@ -393,27 +303,28 @@ json_object_t RomiSerialClient::read_response()
         bool has_response = false;
         
         start_time = clock_time();
-        _state = romiserialclient_start_message;
-        _error = 0;
         
         while (!has_response) {
 
                 int available = _in->available();
                 if (available > 0) {
-
                         
-                        read_one_char();
+                        bool has_message = handle_one_char();
 
-                        if (_state == romiserialclient_message_complete) {
+                        if (has_message) 
+                                has_message = filter_log_message();
+
+                        if (has_message) {
 
                                 if (_debug) {
-                                        r_debug("RomiSerialClient::read_response: %s", _response.c_str());
+                                        r_debug("RomiSerialClient::read_response: %s",
+                                                _parser.message());
                                 }
 
                                 result = parse_response();
 
                                 // Check whether we have a valid response.
-                                if (_id_response == _id_request) {
+                                if (_parser.id() == _id) {
                                         has_response = true;
                                         
                                 } else if (json_array_getnum(result, 0) != 0.0) {
@@ -433,20 +344,18 @@ json_object_t RomiSerialClient::read_response()
                                          * the next one. */
                                         r_warn("RomiSerialClient: ID mismatch: "
                                                "request(%d) != response(%d): "
-                                               "response: %s",
-                                               _id_request, _id_response, 
-                                               _response.c_str());
+                                               "response: '%s'",
+                                               _id, _parser.id(), 
+                                               _parser.message());
 
                                         // Try again
-                                        _state = romiserialclient_start_message;
-                                        _error = 0;
-                                        _response = "";
+                                        _parser.reset();
                                         json_unref(result);
                                 }
                                 
-                        } else if (_error != 0) {
-                                r_warn("invalid response: %s", _response.c_str());
-                                result = make_error(_error);
+                        } else if (_parser.error() != 0) {
+                                r_warn("invalid response: '%s'", _parser.message());
+                                result = make_error(_parser.error());
                                 has_response = true;
                         }
                 }
@@ -455,7 +364,7 @@ json_object_t RomiSerialClient::read_response()
                 // message. Return an error if the reading requires
                 // more than the ROMISERIALCLIENT_TIMEOUT seconds.
                 if (clock_time() - start_time > ROMISERIALCLIENT_TIMEOUT) {
-                        result = make_error(romiserialclient_connection_timeout);
+                        result = make_error(romiserial_connection_timeout);
                         has_response = true;
                 }
         }
@@ -509,16 +418,19 @@ const char *RomiSerialClient::get_error_message(int code)
         case romiserial_too_many_strings:
                 r = "Too many strings";
                 break;
-        case romiserial_invalid_id:
-                r = "Invalid ID in request";
+        case romiserial_envelope_invalid_id:
+                r = "Invalid ID in request envelope";
                 break;
-        case romiserial_invalid_crc:
-                r = "Invalid CRC in request";
+        case romiserial_envelope_invalid_crc:
+                r = "Invalid CRC in request envelope";
                 break;
-        case romiserial_crc_mismatch:
-                r = "CRC mismatch in request";
+        case romiserial_envelope_crc_mismatch:
+                r = "CRC mismatch in request envelope";
                 break;
-        case romiserial_too_long:
+        case romiserial_envelope_expected_end:
+                r = "Expected the end of the request envelope";
+                break;
+        case romiserial_envelope_too_long:
                 r = "Request too long";
                 break;
         case romiserial_invalid_opcode:
@@ -539,32 +451,29 @@ const char *RomiSerialClient::get_error_message(int code)
         case romiserial_bad_handler:
                 r = "Corrupt request handler";
                 break;
-        case romiserialclient_connection_failed:
-                r = "The connection failed";
-                break;
-        case romiserialclient_connection_timeout:
+        case romiserial_connection_timeout:
                 r = "The connection timed out";
-                break;
-        case romiserialclient_unexpected_char:
-                r = "Unexpected character in the response";
                 break;
         case romiserialclient_invalid_opcode:
                 r = "Invalid opcode";
                 break;
-        case romiserialclient_crc_mismatch:
-                r = "CRC mismatch in the response";
-                break;
-        case romiserialclient_invalid_json:
+        case romiserial_invalid_json:
                 r = "Invalid JSON";
                 break;
-        case romiserialclient_invalid_error:
+        case romiserial_invalid_response:
+                r = "Response is badly formed";
+                break;
+        case romiserial_invalid_error_response:
                 r = "Response contains an invalid error message";
                 break;
         case romiserialclient_too_long:
                 r = "Request too long";
                 break;
-        case romiserialclient_empty_request:
+        case romiserial_empty_request:
                 r = "Null or zero-length request";
+                break;
+        case romiserial_empty_response:
+                r = "Null or zero-length response";
                 break;
         default:
                 r = "Unknown error code";

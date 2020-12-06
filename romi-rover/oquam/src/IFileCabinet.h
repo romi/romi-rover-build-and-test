@@ -21,31 +21,23 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _OQUAM_I_BLOCK_CONTROLLER_HPP_
-#define _OQUAM_I_BLOCK_CONTROLLER_HPP_
 
-#include "script_priv.h" 
+#ifndef __ROMI_I_FILE_CABINET_H
+#define __ROMI_I_FILE_CABINET_H
+
+#include "IFolder.h"
 
 namespace romi {
-
-        class IBlockController
+        
+        class IFileCabinet
         {
         public:
-                enum { RUNNING, HOMING, ERROR };
-                        
-                virtual ~IBlockController() = default;
+                virtual ~IFileCabinet() = default;
                 
-                virtual bool get_position(int32_t *pos) = 0;
-
-                /** The homing operation sets the CNC in the home
-                 * position AND resets the origin to the location
-                 * after the homing operation. */
-                virtual bool homing() = 0;
-                virtual bool synchronize(double timeout) = 0;
-                virtual bool move(int16_t millis, int16_t steps_x,
-                                  int16_t steps_y, int16_t steps_z,
-                                  int16_t id = 0) = 0;
+                virtual IFolder &open_folder(const char *name) = 0;
+                virtual IFolder &get_current_folder() = 0;
+                virtual void close_folder() = 0;
         };
 }
 
-#endif // _OQUAM_I_BLOCK_CONTROLLER_HPP_
+#endif // __ROMI_I_FILE_CABINET_H

@@ -22,12 +22,7 @@
 
  */
 
-#define ARDUINO_DEBUG 0
-
-#if ARDUINO_DEBUG
-#include <Arduino.h>
-#endif
-
+#include "Log.h"
 #include "RomiSerial.h"
 #include "RomiSerialErrors.h"
 #include <stdio.h>
@@ -38,18 +33,15 @@ void RomiSerial::handle_input()
                 _in = get_default_input();
         
         while (_in->available()) {
+
+                log_print("!input");
+                
                 int c = _in->read();
                 if (c > 0) {
-                        bool has_message = _parser.process((char) c);
+                        bool has_message = _envelopeParser.process((char) c);
                         if (has_message) {
-                                if (_parser.has_id()) {
-#if ARDUINO_DEBUG
-                                        Serial.print("!has id: id=");
-                                        Serial.print(_parser.id());
-                                        Serial.print(", last id=");
-                                        Serial.println(_last_id);
-#endif
-                                        if (_parser.id() != _last_id) {
+                                if (_envelopeParser.has_id()) {
+                                        if (_envelopeParser.id() != _last_id) {
                                                 handle_message();
                                         } else {
                                                 send_error(romiserial_duplicate, 0);
@@ -57,8 +49,8 @@ void RomiSerial::handle_input()
                                 } else { // no id
                                         handle_message();
                                 }
-                        } else if (_parser.error() != 0) {
-                                send_error(_parser.error(), 0);
+                        } else if (_envelopeParser.error() != 0) {
+                                send_error(_envelopeParser.error(), 0);
                         }
                 }
         }
@@ -68,13 +60,22 @@ void RomiSerial::handle_message()
 {
         bool handled = false;
         _sent_response = false;
+
+        // FIXME
+        bool ok = _messageParser.parse(_envelopeParser.message(),
+                                       _envelopeParser.length());
+        if (!ok) {
+                send_error(_messageParser.error(), 0);
+                return;
+        }
+        
         for (uint8_t i = 0; i < _num_handlers; i++) {
-                if (_parser.opcode() == _handlers[i].opcode) {
-                        if (_parser.length() == _handlers[i].number_arguments) {
-                                if (_parser.has_string() == _handlers[i].requires_string) {
+                if (_messageParser.opcode() == _handlers[i].opcode) {
+                        if (_messageParser.length() == _handlers[i].number_arguments) {
+                                if (_messageParser.has_string() == _handlers[i].requires_string) {
                                         _handlers[i].callback(this,
-                                                              _parser.values(),
-                                                              _parser.string());
+                                                              _messageParser.values(),
+                                                              _messageParser.string());
                                 } else {
                                         if (_handlers[i].requires_string)
                                                 send_error(romiserial_missing_string, 0);
@@ -113,8 +114,8 @@ void RomiSerial::start_message()
 {
         _crc.start();
         append_char('#');
-        if (_parser.opcode()) 
-                append_char(_parser.opcode());
+        if (_messageParser.opcode()) 
+                append_char(_messageParser.opcode());
         else
                 append_char('_');
 }
@@ -147,7 +148,7 @@ void RomiSerial::send_ok()
         append_message("[0]");
         finalize_message();
         _sent_response = true;
-        _last_id = _parser.id();
+        _last_id = _envelopeParser.id();
 }
 
 void RomiSerial::send(const char *message)
@@ -156,7 +157,7 @@ void RomiSerial::send(const char *message)
         append_message(message);
         finalize_message();
         _sent_response = true;
-        _last_id = _parser.id();
+        _last_id = _envelopeParser.id();
 }
 
 void RomiSerial::log(const char *message)

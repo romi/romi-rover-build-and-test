@@ -116,4 +116,23 @@ namespace romi {
                 _cnc.homing();
                 return ok_status();
         }
+
+        JSON CNCClient::handle_stop(JSON cmd)
+        {
+                _cnc.stop_execution();
+                return ok_status();
+        }
+
+        JSON CNCClient::handle_continue(JSON cmd)
+        {
+                _cnc.continue_execution();
+                return ok_status();
+        }
+
+        JSON CNCClient::handle_reset(JSON cmd)
+        {
+                _cnc.reset();
+                return ok_status();
+        }
 }
+

@@ -27,43 +27,37 @@
 #include <r.h>
 #include "RomiSerialClient.h" 
 #include "RSerial.h" 
-#include "IBlockController.h" 
+#include "ICNCController.h" 
+#include "JSON.h" 
 
 namespace romi {
 
-        class OquamStepper : public IBlockController
+        class StepperController : public ICNCController
         {
         public:
         
-                OquamStepper(RomiSerialClient &romi_serial);
-                virtual ~OquamStepper();
+                StepperController(RomiSerialClient &romi_serial)
+                        : _romi_serial(romi_serial) {}
+                virtual ~StepperController() override = default;
 
                 bool get_position(int32_t *pos) override;
                 bool homing() override;
                 
                 bool move(int16_t millis, int16_t steps_x,
-                          int16_t steps_y, int16_t steps_z,
-                          int16_t id = 0) override;
+                          int16_t steps_y, int16_t steps_z) override;
                 
                 bool synchronize(double timeout) override;
-        
+
+                bool stop_execution() override;
+                bool continue_execution() override;
+                bool reset() override;
+
         protected:
 
-                int encode(block_t &block, char *buffer, int len);
                 int send_command(const char *cmd);
-                int update_status();
-
+                int is_idle();
+                
                 RomiSerialClient &_romi_serial;
-
-                int _status;
-                int _available;
-                int _block_id;
-                int _block_ms;
-                int _milliseconds;
-                int _interrupts;
-                int32_t _stepper_position[3];
-                int32_t _encoder_position[3];
-                uint32_t _millis;
         };
 }
 

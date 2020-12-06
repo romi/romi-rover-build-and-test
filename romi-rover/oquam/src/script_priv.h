@@ -49,7 +49,6 @@ struct _action_t {
                 struct {
                         double p[3];
                         double v;
-                        int id;
                 } move;
                 
         } data;
@@ -57,7 +56,7 @@ struct _action_t {
 
 action_t *new_action(int type);
 action_t *action_clone(action_t *a);
-action_t *new_move(double x, double y, double z, double v, int id);
+action_t *new_move(double x, double y, double z, double v);
 void delete_action(action_t *action);
 
 
@@ -101,15 +100,12 @@ struct _section_t {
         
         // The relative position at the end of the section, in meters.
         double d[3];
-
-        /* The id of the corresponding move action. */
-        int id;
 };
 
 section_t *new_section();
 void delete_section(section_t *section);
 
-void section_print(section_t *section, const char *prefix, int id);
+void section_print(section_t *section, const char *prefix);
 
 /**
  *   segment
@@ -157,9 +153,6 @@ struct _atdc_t {
         section_t decelerate;
         section_t curve;
         
-        /* The id of the corresponding move action. */
-        int id;
-        
         atdc_t *prev;
         atdc_t *next;
 };
@@ -184,11 +177,7 @@ enum {
  */
 typedef struct _block_t {
         uint8_t type;
-        int16_t id;
         int16_t data[4];
-        
-        /* The id of the corresponding move action. */
-        int action_id;
 } block_t;
 
 
@@ -200,13 +189,13 @@ typedef struct _script_t {
         /* The list of actions given by the user. */
         list_t *actions;
 
-        /* The list of actions reorganized into a list of distinct
-         * paths. */
-        list_t *segments;
+        /* An intermediate representation of the move actions to
+         * facilitate to computation of the ADTC below. */
+        segment_t *segments;
 
-        /* The list of paths rewitten as a list of lists of
+        /* The list of move actions rewitten as a list of lists of
          * acceleration-travel-deceleration-curve (ATDC) sections. */
-        list_t *atdc_list;
+        atdc_t *atdc;
 
         /* The list of lists of slices or short sections of constant
          * speed. */
@@ -216,7 +205,6 @@ typedef struct _script_t {
         block_t *block;
         int32_t num_blocks;
         int32_t block_length;
-        int32_t block_id;
 
 } script_t;
 

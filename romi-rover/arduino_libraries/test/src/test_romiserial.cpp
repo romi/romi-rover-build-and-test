@@ -209,7 +209,7 @@ TEST_F(romiserial_tests, romiserial_test_handler_with_crc_mismatch)
 {
         // Arrange
         initInputs("#a:1200\r");
-        expectErrorMessage('a', 0x12, romiserial_crc_mismatch);
+        expectErrorMessage('_', 0x12, romiserial_envelope_crc_mismatch);
 
         // Act
         serial.handle_input();

@@ -23,25 +23,25 @@
  */
 //#include <stdio.h>
 #include <string.h>
-#include "Parser.h"
+#include "MessageParser.h"
 #include "RomiSerialErrors.h"
+#include "Log.h"
 
 enum parser_state_t {
-        wait_start_message,
         wait_opcode,
-        wait_bracket_carriage_return_or_metadata,
+        wait_bracket_or_end,
         wait_value,
         wait_digit,
         wait_digits_or_comma_or_bracket,
-        wait_carriage_return,
+        wait_end_message,
         wait_string,
         wait_comma_or_bracket,
-        wait_carriage_return_or_metadata,
         wait_id1, wait_id2,
         wait_crc1, wait_crc2
 };
 
 #define START_MESSAGE(_c)     ((_c) == '#')
+#define END_MESSAGE(_c)       ((_c) == '\0')
 #define MINUS(_c)             ((_c) == '-')
 #define QUOTE(_c)             ((_c) == '"')
 #define DIGIT(_c)             ((_c) >= '0' && (_c) <= '9')
@@ -62,26 +62,13 @@ enum parser_state_t {
 #define VALID_HEX_CHAR(_c)    (('a' <= (_c) && (_c) <= 'f') \
                                || ('0' <= (_c) && (_c) <= '9'))
 
-void Parser::set_error(char character, char what)
+void MessageParser::set_error(char character, char what)
 {
         _error = what;
-        _state = wait_start_message;
+        _state = wait_opcode;
 }
 
-// This function doesn't return an error code is the character is
-// invalid. Use the macro VALID_HEX_CHAR() for that purpose.
-uint8_t Parser::hex_to_int(char c)
-{
-        if ('a' <= c && c <= 'f') {
-                return 10 + (c - 'a');
-        } else if ('0' <= c && c <= '9') {
-                return c - '0';
-        } else {
-                return 0;
-        }
-}
-
-void Parser::append_char(char c)
+void MessageParser::append_char(char c)
 {
         if (VALID_STRING_CHAR(c)) {
                 if (_string_length < PARSER_MAXIMUM_STRING_LENGTH) {
@@ -96,13 +83,13 @@ void Parser::append_char(char c)
         }
 }
 
-void Parser::init_value(char c, int16_t sign)
+void MessageParser::init_value(char c, int16_t sign)
 {
         _tmpval = VALUE(c);
         _sign = sign;
 }
 
-int Parser::append_value(int32_t v)
+int MessageParser::append_value(int32_t v)
 {
         int r = -1;
         if (_length < PARSER_MAXIMUM_ARGUMENTS) {
@@ -115,25 +102,27 @@ int Parser::append_value(int32_t v)
         return r;
 }
 
-int Parser::append_digit(char c)
+int MessageParser::append_digit(char c)
 {
         int r = 0;
         _tmpval = 10 * _tmpval + _sign * VALUE(c);
         if (_tmpval > 32767 || _tmpval < -32768) {
+                log_print("Out of range");
+                log_print(_tmpval);
                 set_error(c, romiserial_value_out_of_range);
                 r = -1;
         }
         return r;
 }
 
-void Parser::reset_values()
+void MessageParser::reset_values()
 {
         _length = 0;
         for (unsigned int i = 0; i < PARSER_MAXIMUM_ARGUMENTS; i++)
                 _value[i] = 0;
 }
 
-void Parser::reset_string()
+void MessageParser::reset_string()
 {
         _has_string = 0;
         _string_length = 0;
@@ -141,76 +130,58 @@ void Parser::reset_string()
                 _string[i] = 0;
 }
 
-void Parser::reset()
+void MessageParser::reset()
 {
-        _state = wait_start_message;
-        _count = 0;
+        _state = wait_opcode;
         _error = romiserial_error_none;
         _opcode = 0;
-        _id = 0;
-        _has_id = 0;
-        _crc.start();
-        _crc_metadata = 0;
         reset_values();
         reset_string();
 }
 
-bool Parser::process(char c)
+bool MessageParser::parse(const char *s, int len)
+{
+        bool success = false;
+        reset();
+        for (int i = 0; i < len-1; i++) {
+                process(s[i]);
+                if (_error != 0)
+                        break;
+        }
+        if (_error == 0)
+                success = process(s[len-1]);
+        return success;
+}
+
+bool MessageParser::process(char c)
 {
         bool has_request = false;
-        bool update_crc = true;
 
         _error = 0;
         
         switch(_state) {
-        case wait_start_message:
-                if (START_MESSAGE(c)) {
-                        reset();
-                        _state = wait_opcode;
-                } else {
-                        update_crc = false;
-                }
-                break;
-                
         case wait_opcode:
                 if (VALID_OPCODE(c)) {
                         _opcode = c;
-                        _state = wait_bracket_carriage_return_or_metadata;
+                        _state = wait_bracket_or_end;
                 } else {
                         set_error(c, romiserial_invalid_opcode);
                 }
                 break;
                 
-        case wait_bracket_carriage_return_or_metadata:
+        case wait_bracket_or_end:
                 if (OPENBRACKET(c)) {
                         _state = wait_value;
-                } else if (CARRIAGE_RETURN(c)) {
-                        _state = wait_start_message;
-                        update_crc = false;
+                } else if (END_MESSAGE(c)) {
                         has_request = true;
-                } else if (START_METADATA(c)) {
-                        _state = wait_id1;
                 } else {
                         set_error(c, romiserial_unexpected_char);
                 }
                 break;
 
-        case wait_carriage_return_or_metadata:
-                if (CARRIAGE_RETURN(c)) {
-                        _state = wait_start_message;
-                        update_crc = false;
-                        has_request = true;
-                } else if (START_METADATA(c)) {
-                        _state = wait_id1;
-                } else {
-                        set_error(c, romiserial_unexpected_char);
-                }
-                break;
-
-        case wait_carriage_return:
-                if (CARRIAGE_RETURN(c)) {
-                        _state = wait_start_message;
-                        update_crc = false;
+        case wait_end_message:
+                if (END_MESSAGE(c)) {
+                        _state = wait_opcode;
                         has_request = true;
                 } else {
                         set_error(c, romiserial_unexpected_char);
@@ -253,7 +224,7 @@ bool Parser::process(char c)
                                 _state = wait_value;
                 } else if (CLOSEBRACKET(c)) {
                         if (append_value(_tmpval) == 0)
-                                _state = wait_carriage_return_or_metadata;
+                                _state = wait_end_message;
                 } else {
                         set_error(c, romiserial_unexpected_char);
                 }
@@ -263,6 +234,8 @@ bool Parser::process(char c)
                 if (QUOTE(c)) {
                         _has_string = 1;
                         _state = wait_comma_or_bracket;                        
+                } else if (END_MESSAGE(c)) {
+                        set_error(c, romiserial_invalid_string);
                 } else {
                         append_char(c);
                 }
@@ -272,62 +245,11 @@ bool Parser::process(char c)
                 if (COMMA(c)) {
                         _state = wait_value;                        
                 } else if (CLOSEBRACKET(c)) {
-                        _state = wait_carriage_return_or_metadata;                        
+                        _state = wait_end_message;                        
                 } else {
                         set_error(c, romiserial_unexpected_char);
                 }
                 break;
-                
-        case wait_id1:
-                if (VALID_HEX_CHAR(c)) {
-                        _id = hex_to_int(c);
-                        _state = wait_id2;
-                } else {
-                        set_error(c, romiserial_invalid_id);
-                }
-                break;
-                
-        case wait_id2:
-                if (VALID_HEX_CHAR(c)) {
-                        _id = 16 * _id + hex_to_int(c);
-                        _has_id = 1;
-                        _state = wait_crc1;
-                } else {
-                        set_error(c, romiserial_invalid_id);
-                }
-                break;
-                
-        case wait_crc1:
-                if (VALID_HEX_CHAR(c)) {
-                        _crc_metadata = hex_to_int(c);
-                        _state = wait_crc2;
-                        update_crc = false;
-                } else {
-                        set_error(c, romiserial_invalid_crc);
-                }
-                break;
-                
-        case wait_crc2:
-                if (VALID_HEX_CHAR(c)) {
-                        _crc_metadata = 16 * _crc_metadata + hex_to_int(c);
-                        update_crc = false;
-                        if (_crc_metadata == _crc.finalize())
-                                _state = wait_carriage_return;
-                        else
-                                set_error(c, romiserial_crc_mismatch);                                
-                } else {
-                        set_error(c, romiserial_invalid_crc);
-                }
-                break;
-        }
-
-        if (update_crc)
-                _crc.update(c);
-        
-        if (_state != wait_start_message) {
-                _count++;
-                if (!has_request && _count > 64)
-                        set_error(c, romiserial_too_long);
         }
         
         return has_request;

@@ -38,7 +38,7 @@ void delete_script(script_t *script);
  *
  * Move to absolute position (x,y,z) in meters at a speed of v m/s.
  */
-int script_moveto(script_t *script, double x, double y, double z, double v, int id);
+int script_moveto(script_t *script, double x, double y, double z, double v);
 
 
 #ifdef __cplusplus

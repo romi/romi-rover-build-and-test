@@ -1,24 +1,44 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-set(SRCS_PARSER
+set(SRCS_ENVELOPE_PARSER
   src/tests_main.cpp
-  src/test_parser.cpp
+  src/test_envelope_parser.cpp
   ../RomiSerial/RomiSerialErrors.h
-  ../RomiSerial/IParser.h
-  ../RomiSerial/Parser.cpp
-  ../RomiSerial/Parser.h
+  ../RomiSerial/EnvelopeParser.cpp
+  ../RomiSerial/EnvelopeParser.h
   ../RomiSerial/CRC8.h)
 
-add_executable(r_unit_tests_romiserial_parser ${SRCS_PARSER})
+add_executable(r_unit_tests_romiserial_envelope_parser ${SRCS_ENVELOPE_PARSER})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
-target_link_libraries(r_unit_tests_romiserial_parser gtest gmock)
+target_link_libraries(r_unit_tests_romiserial_envelope_parser r gtest gmock)
 
 add_test(
-    NAME r_unit_tests_romiserial_parser
-    COMMAND r_unit_tests_romiserial_parser
+    NAME r_unit_tests_romiserial_envelope_parser
+    COMMAND r_unit_tests_romiserial_envelope_parser
+)
+
+
+
+
+set(SRCS_MESSAGE_PARSER
+  src/tests_main.cpp
+  src/test_message_parser.cpp
+  ../RomiSerial/RomiSerialErrors.h
+  ../RomiSerial/MessageParser.cpp
+  ../RomiSerial/MessageParser.h)
+
+add_executable(r_unit_tests_romiserial_message_parser ${SRCS_MESSAGE_PARSER})
+
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
+
+target_link_libraries(r_unit_tests_romiserial_message_parser r gtest gmock)
+
+add_test(
+    NAME r_unit_tests_romiserial_message_parser
+    COMMAND r_unit_tests_romiserial_message_parser
 )
 
 
@@ -35,15 +55,19 @@ set(SRCS_ROMISERIAL
   ../RomiSerial/IRomiSerial.h
   ../RomiSerial/RomiSerial.cpp
   ../RomiSerial/RomiSerial.h
-  ../RomiSerial/Parser.cpp
+  ../RomiSerial/IParser.h
   ../RomiSerial/Parser.h
+  ../RomiSerial/MessageParser.cpp
+  ../RomiSerial/MessageParser.h
+  ../RomiSerial/EnvelopeParser.cpp
+  ../RomiSerial/EnvelopeParser.h
   ../RomiSerial/CRC8.h)
 
 add_executable(r_unit_tests_romiserial ${SRCS_ROMISERIAL})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
-target_link_libraries(r_unit_tests_romiserial gtest gmock)
+target_link_libraries(r_unit_tests_romiserial r gtest gmock)
 
 add_test(
     NAME r_unit_tests_romiserial
@@ -64,6 +88,8 @@ set(SRCS_ROMISERIALCLIENT
   ../RomiSerial/IRomiSerialClient.h
   ../RomiSerial/RomiSerialClient.cpp
   ../RomiSerial/RomiSerialClient.h
+  ../RomiSerial/EnvelopeParser.cpp
+  ../RomiSerial/EnvelopeParser.h
   ../RomiSerial/CRC8.h)
 
 add_executable(r_unit_tests_romiserialclient ${SRCS_ROMISERIALCLIENT})
@@ -79,8 +105,7 @@ add_test(
 
 
 
-
-set(SRCS_PARSER
+set(SRCS_ROMISERIAL_ARDUINO
   src/tests_main.cpp
   src/test_romiserial_arduino.cpp
   ../RomiSerial/IInputStream.h
@@ -88,11 +113,13 @@ set(SRCS_PARSER
   ../RomiSerial/RSerial.cpp
   ../RomiSerial/RSerial.h
   ../RomiSerial/CRC8.h
+  ../RomiSerial/EnvelopeParser.cpp
+  ../RomiSerial/EnvelopeParser.h
   ../RomiSerial/RomiSerialErrors.h
   ../RomiSerial/RomiSerialClient.cpp
   ../RomiSerial/RomiSerialClient.h)
 
-add_executable(r_test_romiserial_arduino ${SRCS_PARSER})
+add_executable(r_test_romiserial_arduino ${SRCS_ROMISERIAL_ARDUINO})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 

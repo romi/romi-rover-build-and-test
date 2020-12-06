@@ -21,23 +21,22 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __IPARSER_H
-#define __IPARSER_H
 
-#include <stdint.h>
+#ifndef __LOG_H
+#define __LOG_H
 
-class IParser
-{
-public:
-        virtual ~IParser() = default;
+#if defined(ARDUINO)
+#include <Arduino.h>
+#define log_print(__x)   { Serial.print('!'); Serial.println(__x); }
 
-        virtual int16_t value(int index = 0) = 0;
-        virtual uint8_t length() = 0;
-        virtual bool has_string() = 0;
-        virtual char *string() = 0;
-        virtual uint8_t opcode() = 0;
-        virtual int8_t error() = 0;        
-        virtual bool process(char c) = 0;
-};
+#else
+#include <r.h>
+static inline void romiserial_log(char x) { r_debug("!%c", x); }
+static inline void romiserial_log(int x) { r_debug("!%d", x); }
+static inline void romiserial_log(const char *s) { r_debug("!%s", s); }
 
+#define log_print(__x)   romiserial_log(__x)
 #endif
+
+
+#endif // __LOG_H

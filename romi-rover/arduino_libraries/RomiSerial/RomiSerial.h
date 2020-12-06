@@ -27,7 +27,9 @@
 #include "IRomiSerial.h"
 #include "IInputStream.h"
 #include "IOutputStream.h"
-#include "Parser.h"
+//#include "Parser.h"
+#include "EnvelopeParser.h"
+#include "MessageParser.h"
 #include "CRC8.h"
 
 class RomiSerial;
@@ -51,7 +53,9 @@ protected:
         IOutputStream *_out;
         const MessageHandler *_handlers;
         uint8_t _num_handlers;
-        Parser _parser;
+        //Parser _parser;
+        EnvelopeParser _envelopeParser;
+        MessageParser _messageParser;
         bool _sent_response;
         CRC8 _crc;
         uint8_t _last_id;
@@ -105,7 +109,7 @@ protected:
         }
 
         void append_id() {
-                append_hex(_parser.id());
+                append_hex(_envelopeParser.id());
         }
 
         void append_crc() {

@@ -211,24 +211,15 @@ static void print_atdc_ij(plot_t *plot, atdc_t *path,
 
 static void print_atdc(plot_t *plot, atdc_t *atdc)
 {
-        print_atdc_ij(plot, atdc, 0, 1, &plot->xy);
-        print_atdc_ij(plot, atdc, 0, 2, &plot->xz);
-        print_atdc_ij(plot, atdc, 1, 2, &plot->yz);
-}
-
-static void print_atdc_list(plot_t *plot, list_t *atdc_list)
-{
         membuf_printf(plot->buffer,
                       "    <g inkscape:groupmode=\"layer\" "
                       "inkscape:label=\"atdc\" "
                       "id=\"atdc\">\n");
         
-        list_t *m = atdc_list;
-        while (m != NULL) {
-                atdc_t *atdc = list_get(m, atdc_t);
-                print_atdc(plot, atdc);
-                m = list_next(m);
-        }
+        print_atdc_ij(plot, atdc, 0, 1, &plot->xy);
+        print_atdc_ij(plot, atdc, 0, 2, &plot->xz);
+        print_atdc_ij(plot, atdc, 1, 2, &plot->yz);
+        
         membuf_printf(plot->buffer, "    </g>\n");
 }
 
@@ -256,28 +247,17 @@ static void print_path_ij(plot_t *plot, segment_t *path,
 
 static void print_path(plot_t *plot, segment_t *path)
 {
-        print_path_ij(plot, path, 0, 1, &plot->xy);
-        print_path_ij(plot, path, 0, 2, &plot->xz);        
-        print_path_ij(plot, path, 1, 2, &plot->yz);
-}
-
-static void print_path_list(plot_t *plot, list_t *paths)
-{
         membuf_printf(plot->buffer,
                       "    <g inkscape:groupmode=\"layer\" "
                       "inkscape:label=\"paths\" "
                       "id=\"paths\">\n");
         
-        list_t *l = paths;
-        while (l != NULL) {
-                segment_t *path = list_get(l, segment_t);
-                print_path(plot, path);
-                l = list_next(l);
-        }
+        print_path_ij(plot, path, 0, 1, &plot->xy);
+        print_path_ij(plot, path, 0, 2, &plot->xz);        
+        print_path_ij(plot, path, 1, 2, &plot->yz);
 
         membuf_printf(plot->buffer, "    </g>\n");
 }
-
 
 static double atdc_duration(atdc_t *atdc)
 {
@@ -289,18 +269,6 @@ static double atdc_duration(atdc_t *atdc)
                       + t0->curve.t);
         }
         return t;
-}
-
-static double atdc_list_duration(list_t *atdc_list)
-{
-        double duration = 0.0;
-        list_t *m = atdc_list;
-        while (m != NULL) {
-                atdc_t *atdc = list_get(m, atdc_t);
-                duration += atdc_duration(atdc);
-                m = list_next(m);
-        }
-        return duration;
 }
 
 static double slices_duration(list_t *list)
@@ -546,7 +514,7 @@ static void print_blocks_ij(plot_t *plot, block_t *blocks, int n, int i, int j,
         membuf_printf(plot->buffer, "    </g>\n");
 }
 
-static void print_blocks(plot_t *plot, block_t *blocks, int n, double L, double *scale)
+static void print_blocks(plot_t *plot, block_t *blocks, int n, double *scale)
 {
         membuf_printf(plot->buffer,
                       "    <g inkscape:groupmode=\"layer\" "
@@ -554,8 +522,6 @@ static void print_blocks(plot_t *plot, block_t *blocks, int n, double L, double 
                       "id=\"blocks\">\n");
         
         print_blocks_ij(plot, blocks, n, 0, 1, &plot->xy, scale);
-        /* print_blocks_ij(plot, blocks, n, 0, 2, 2 * d + L, y0, scale); */
-        /* print_blocks_ij(plot, blocks, n, 1, 2, 3 * d + 2 * L, y0, scale); */
 
         membuf_printf(plot->buffer, "    </g>\n");
 }
@@ -664,37 +630,23 @@ static void print_axes(plot_t *plot)
 }
 
 void print_to_stdout(script_t *script,
+                     double *xmin,
                      double *xmax,
                      double *vmax_,
                      double *amax,
                      double *scale)
 {
         printf("Segments:\n");
-        list_t *l = script->segments;
-        while (l != NULL) {
-                printf("* \n");
-                segment_t *path = list_get(l, segment_t);
-                segments_print(path);
-                l = list_next(l);
-                printf("\n");
-        }
+        segments_print(script->segments);
         printf("\n\n");
-
 
         printf("ATDC:\n");
-        list_t *m = script->atdc_list;
-        while (m != NULL) {
-                printf("*\n");
-                atdc_t *atdc = list_get(m, atdc_t);
-                atdc_print(atdc);
-                m = list_next(m);
-                printf("\n");
-        }
+        atdc_print(script->atdc);
         printf("\n\n");
-        
 }
 
 membuf_t *plot_to_mem(script_t *script,
+                      double *xmin,
                       double *xmax,
                       double *vmax_,
                       double *amax,
@@ -711,71 +663,48 @@ membuf_t *plot_to_mem(script_t *script,
         }
         
         plot->d = 0.1;
-        plot->L = vmax(xmax);
+
+        double dx[3];
+        vsub(dx, xmax, xmin);
+        plot->L = vmax(dx);
         
-        plot->w = 4 * plot->d + xmax[0] + xmax[0] + xmax[1];
-        plot->h = 3 * plot->d + vmax(xmax) + 0.7;
+        plot->w = (4 * plot->d
+                   + 2 * (xmax[0] - xmin[0])
+                   + (xmax[1] - xmin[1]));
+        
+        plot->h = 3 * plot->d + vmax(dx) + 0.7;
         plot->scale = 1000.0;
 
         // XY
         plot->xy.x = plot->d;
         plot->xy.y = plot->h - plot->d - plot->L;
-        plot->xy.w = xmax[0];
-        plot->xy.h = xmax[1];
-        if (xmax[0] < 0) {
-                plot->xy.x0 = xmax[0];
-                plot->xy.x1 = 0.0;
-        } else {
-                plot->xy.x0 = 0.0;
-                plot->xy.x1 = xmax[0];
-        }
-        if (xmax[1] < 0) {
-                plot->xy.y0 = xmax[1];
-                plot->xy.y1 = 0.0;
-        } else {
-                plot->xy.y0 = 0.0;
-                plot->xy.y1 = xmax[1];
-        }
+        plot->xy.w = xmax[0] - xmin[0];
+        plot->xy.h = xmax[1] - xmin[1];
+        plot->xy.x0 = xmin[0];
+        plot->xy.x1 = xmax[0];
+        plot->xy.y0 = xmin[1];
+        plot->xy.y1 = xmax[1];
         
         // XZ
         plot->xz.x = plot->xy.x + plot->xy.w + plot->d;
         plot->xz.y = plot->xy.y;
-        plot->xz.w = fabs(xmax[0]);
-        plot->xz.h = fabs(xmax[2]);
-        if (xmax[0] < 0) {
-                plot->xz.x0 = xmax[0];
-                plot->xz.x1 = 0.0;
-        } else {
-                plot->xz.x0 = 0.0;
-                plot->xz.x1 = xmax[0];
-        }
-        if (xmax[2] < 0) {
-                plot->xz.y0 = xmax[2];
-                plot->xz.y1 = 0.0;
-        } else {
-                plot->xz.y0 = 0.0;
-                plot->xz.y1 = xmax[2];
-        }
+        plot->xz.w = xmax[0] - xmin[0];
+        plot->xz.h = xmax[2] - xmin[2];
+        plot->xz.x0 = xmin[0];
+        plot->xz.x1 = xmax[0];
+        plot->xz.y0 = xmin[2];
+        plot->xz.y1 = xmax[2];
 
         // YZ        
         plot->yz.x = plot->xz.x + plot->xz.w + plot->d;
         plot->yz.y = plot->xy.y;
-        plot->yz.w = fabs(xmax[1]);
-        plot->yz.h = fabs(xmax[2]);
-        if (xmax[1] < 0) {
-                plot->yz.x0 = xmax[1];
-                plot->yz.x1 = 0.0;
-        } else {
-                plot->yz.x0 = 0.0;
-                plot->yz.x1 = xmax[1];
-        }
-        if (xmax[2] < 0) {
-                plot->yz.y0 = xmax[2];
-                plot->yz.y1 = 0.0;
-        } else {
-                plot->yz.y0 = 0.0;
-                plot->yz.y1 = xmax[2];
-        }
+        plot->yz.w = xmax[1] - xmin[1];
+        plot->yz.h = xmax[2] - xmin[2];
+        plot->yz.x0 = xmin[1];
+        plot->yz.x1 = xmax[1];
+        plot->yz.y0 = xmin[2];
+        plot->yz.y1 = xmax[2];
+
         
         plot->v[0].x = plot->d;
         plot->v[0].y = 7.5 * plot->d;
@@ -814,34 +743,28 @@ membuf_t *plot_to_mem(script_t *script,
 
         double duration = 1.0;
 
-        if (script->atdc_list)
-                duration = atdc_list_duration(script->atdc_list);
+        segment_t *segments = script->segments;
+        atdc_t *atdc = script->atdc;
+        
+        if (atdc)
+                duration = atdc_duration(atdc);
         else if (script->slices)
                 duration = slices_duration(script->slices);
 
-        if (script->segments)
-                print_path_list(plot, script->segments);
+        if (segments)
+                print_path(plot, segments);
         
-        if (script->atdc_list)
-                print_atdc_list(plot, script->atdc_list);
+        if (atdc)
+                print_atdc(plot, atdc);
 
         if (script->slices != NULL)
                 print_slices(plot, script->slices, duration, vmax_);
 
         if (script->block != NULL)
-                print_blocks(plot, script->block, script->num_blocks, xmax[0], scale);
+                print_blocks(plot, script->block, script->num_blocks, scale);
 
-        
-        list_t *l = script->segments;
-        list_t *m = script->atdc_list;
-        while (l != NULL && m != NULL) {
-                segment_t *path = list_get(l, segment_t);
-                atdc_t *atdc = list_get(m, atdc_t);
-                print_path_speeds(plot, path, atdc, duration, vmax_);
-                print_path_accelerations(plot, path, atdc, duration, amax);
-                l = list_next(l);
-                m = list_next(m);
-        }
+        print_path_speeds(plot, segments, atdc, duration, vmax_);
+        print_path_accelerations(plot, segments, atdc, duration, amax);
 
         plot_close(plot);
         delete_plot(plot);
@@ -851,12 +774,13 @@ membuf_t *plot_to_mem(script_t *script,
 
 int plot_to_file(const char *filepath,
                  script_t *script,
+                 double *xmin,
                  double *xmax,
                  double *vmax,
                  double *amax,
                  double *scale)
 {
-        membuf_t *buffer = plot_to_mem(script, xmax, vmax, amax, scale);
+        membuf_t *buffer = plot_to_mem(script, xmin, xmax, vmax, amax, scale);
         if (buffer == NULL)
                 return -1;
         

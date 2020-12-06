@@ -100,9 +100,6 @@ if __name__ == "__main__":
         test_move_and_back_x(link, 1000, 2000)
         test_move_and_back_x(link, 1000, 3000)
         test_move_and_back_x(link, 1000, 4000)
-        test_move_and_back_x(link, 1000, 5000)
-        test_move_and_back_x(link, 1000, 6000)
-        test_move_and_back_x(link, 1000, 7000)
         wait(link)
         response = input("Did the CNC move ok? [Y/n]")
         if (response == "n"):
@@ -113,9 +110,6 @@ if __name__ == "__main__":
         test_move_and_back_y(link, 1000, 2000)
         test_move_and_back_y(link, 1000, 3000)
         test_move_and_back_y(link, 1000, 4000)
-        test_move_and_back_y(link, 1000, 5000)
-        test_move_and_back_y(link, 1000, 6000)
-        test_move_and_back_y(link, 1000, 7000)
         wait(link)
         response = input("Did the CNC move ok? [Y/n]")
         if (response == "n"):

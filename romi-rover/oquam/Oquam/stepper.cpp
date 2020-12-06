@@ -40,8 +40,6 @@ volatile int32_t counter_reset_timer = 0;
 volatile block_t *current_block;
 volatile int32_t interrupts = 0;
 volatile int16_t milliseconds;
-volatile int16_t block_id = -1;
-volatile int16_t block_ms = -1;
 volatile int8_t stepper_reset = 0;
 
 
@@ -223,8 +221,6 @@ ISR(TIMER1_COMPA_vect)
          * state variables to zero and return. */
         if (stepper_reset) {
                 current_block = 0;
-                block_id = -1;
-                block_ms = 0;
                 interrupts = 0;
                 milliseconds = 0;
                 stepper_reset = 0;
@@ -238,12 +234,8 @@ ISR(TIMER1_COMPA_vect)
                 current_block = block_buffer_get_next();
 
                 if (current_block == 0) {
-                        block_id = -1;
-                        block_ms = 0;
                         return;
                 }
-                block_id = current_block->id;
-                block_ms = 0;
                 
                 /* Do the necessary initializations for the new
                  * block. */
@@ -259,12 +251,9 @@ ISR(TIMER1_COMPA_vect)
                         if (current_block->type == BLOCK_MOVE
                             && current_block->data[DT] <= 0) {
                                         current_block = 0;
-                                        block_id = -1;
                                         return;
                         }
                         
-                        block_ms = current_block->data[DT];
-                                
                         /* Check the direction and set DIR pins. */
                         uint8_t dir = 0;
                         step_dir[0] = 1;

@@ -14,9 +14,9 @@ set(SOURCES
   src/JSON.h
   src/Path.h
   src/CNCRange.h
-  src/IBlockController.h
-  src/OquamStepper.cpp
-  src/OquamStepper.h
+  src/ICNCController.h
+  src/StepperController.cpp
+  src/StepperController.h
   src/planner.c
   src/planner.h
   src/plotter.c
@@ -37,6 +37,8 @@ set(SOURCES
   ../arduino_libraries/RomiSerial/IInputStream.h
   ../arduino_libraries/RomiSerial/IOutputStream.h
   ../arduino_libraries/RomiSerial/CRC8.h
+  ../arduino_libraries/RomiSerial/EnvelopeParser.h
+  ../arduino_libraries/RomiSerial/EnvelopeParser.cpp
   ../arduino_libraries/RomiSerial/IRomiSerialClient.h
   ../arduino_libraries/RomiSerial/RomiSerialClient.h
   ../arduino_libraries/RomiSerial/RomiSerialClient.cpp
@@ -45,7 +47,7 @@ set(SOURCES
   )
 
 add_executable(oquam ${SOURCES})
-target_link_libraries(oquam r rcom)
+target_link_libraries(oquam r rcom romi)
 target_include_directories(oquam PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src")
 install(TARGETS oquam DESTINATION bin/romi)
 

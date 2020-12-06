@@ -30,6 +30,7 @@
 #include <IRomiSerialClient.h>
 #include <IInputStream.h>
 #include <IOutputStream.h>
+#include <EnvelopeParser.h>
 
 // A 2.0 second timeout to read the response messages.
 #define ROMISERIALCLIENT_TIMEOUT 2.0
@@ -40,26 +41,22 @@ protected:
         IInputStream *_in;
         IOutputStream *_out;
         mutex_t *_mutex;
-        uint8_t _id_request; 
-        uint8_t _id_response; 
-        std::string _response;
-        uint8_t _crc_response; 
-        int _error;
-        int _state;
+        uint8_t _id; 
         bool _debug;
-        std::string _log_message;
-
+        EnvelopeParser _parser;
 
         int make_request(const char *command, std::string &request);
         json_object_t try_sending_request(std::string &request);
         bool send_request(std::string &request);
         const char *get_error_message(int code);
         json_object_t make_error(int code);
-        void parse_char(int c);
+        bool handle_one_char();
+        bool parse_char(int c);
         json_object_t parse_response();
         json_object_t read_response();
-        void read_one_char();
         bool can_write();
+        bool filter_log_message();
+        json_object_t check_error_response(json_object_t data);
 
 public:
         RomiSerialClient(IInputStream *in = 0, IOutputStream *out = 0);
@@ -73,7 +70,7 @@ public:
         }
         
         uint8_t id() {
-                return _id_request;
+                return _id;
         }
         
         json_object_t send(const char *command) override;

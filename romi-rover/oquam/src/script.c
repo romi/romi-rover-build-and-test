@@ -42,7 +42,7 @@ action_t *action_clone(action_t *a)
         return action;
 }
 
-action_t *new_move(double x, double y, double z, double v, int id)
+action_t *new_move(double x, double y, double z, double v)
 {
         action_t *action = new_action(ACTION_MOVE);
         if (action == NULL)
@@ -51,7 +51,6 @@ action_t *new_move(double x, double y, double z, double v, int id)
         action->data.move.p[1] = y;
         action->data.move.p[2] = z;
         action->data.move.v = v;
-        action->data.move.id = id;
         return action;
 }
 
@@ -90,29 +89,23 @@ void delete_script(script_t *script)
 void script_clear(script_t *script)
 {
         if (script->segments) {
-                for (list_t *l = script->segments; l != NULL; l = list_next(l)) {
-                        segment_t *s = list_get(l, segment_t);
-                        while (s != NULL) {
-                                segment_t *next = s->next;
-                                delete_segment(s);
-                                s = next;
-                        }
+                segment_t *s = script->segments;
+                while (s != NULL) {
+                        segment_t *next = s->next;
+                        delete_segment(s);
+                        s = next;
                 }
-                delete_list(script->segments);
                 script->segments = NULL;
         }
-
-        if (script->atdc_list) {
-                for (list_t *l = script->atdc_list; l != NULL; l = list_next(l)) {
-                        atdc_t *atdc = list_get(l, atdc_t);
-                        while (atdc != NULL) {
-                                atdc_t *next = atdc->next;
-                                delete_atdc(atdc);
-                                atdc = next;
-                        }
+        
+        if (script->atdc) {
+                atdc_t *atdc = script->atdc;
+                while (atdc != NULL) {
+                        atdc_t *next = atdc->next;
+                        delete_atdc(atdc);
+                        atdc = next;
                 }
-                delete_list(script->atdc_list);
-                script->atdc_list = NULL;
+                script->atdc = NULL;
         }
 
         if (script->slices) {
@@ -126,10 +119,10 @@ void script_clear(script_t *script)
         
         if (script->block)
                 r_delete(script->block);
+        
         script->block = NULL;
         script->num_blocks = 0;
         script->block_length = 0;
-        script->block_id = 0;        
 }
 
 static void script_append(script_t *script, action_t *action)
@@ -137,14 +130,14 @@ static void script_append(script_t *script, action_t *action)
         script->actions = list_append(script->actions, action);
 }
 
-int script_moveto(script_t *script, double x, double y, double z, double v, int id)
+int script_moveto(script_t *script, double x, double y, double z, double v)
 {
         if (v <= 0.0f) {
                 r_warn("script_moveto: speed must be positive");
                 return -1;
         }
                 
-        action_t *action = new_move(x, y, z, v, id);
+        action_t *action = new_move(x, y, z, v);
         if (action == NULL)
                 return -1;
         

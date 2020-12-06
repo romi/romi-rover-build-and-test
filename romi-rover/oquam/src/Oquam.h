@@ -27,7 +27,8 @@
 #include <r.h>
 #include "v.h"
 #include "ICNC.h"
-#include "IBlockController.h"
+#include "ICNCController.h"
+#include "IFileCabinet.h"
 
 namespace romi {
 
@@ -48,7 +49,8 @@ namespace romi {
         {
         public:
                 CNCRange _range;
-                IBlockController &_block_controller;
+                ICNCController &_controller;
+                IFileCabinet *_file_cabinet;
                 mutex_t *_mutex;
         
                 /**
@@ -82,13 +84,14 @@ namespace romi {
                 double _path_slice_interval;
                         
         public:
-                Oquam(IBlockController &block_controller,
-                      double *xmin, double *xmax,
-                      double *vmax, double *amax,
-                      double *scale_meters_to_steps, 
+                Oquam(ICNCController &block_controller,
+                      const double *xmin, const double *xmax,
+                      const double *vmax, const double *amax,
+                      const double *scale_meters_to_steps, 
                       double path_max_deviation,
                       double path_slice_interval)
-                        : _block_controller(block_controller),
+                        : _controller(block_controller),
+                          _file_cabinet(0),
                           _path_max_deviation(path_max_deviation),
                           _path_slice_interval(path_slice_interval) {
                         vcopy(_xmin, xmin);
@@ -104,6 +107,10 @@ namespace romi {
                                 delete_mutex(_mutex);
                 }
 
+                void set_file_cabinet(IFileCabinet *cabinet) {
+                        _file_cabinet = cabinet;
+                }
+                
                 void get_range(CNCRange &range) {
                         range._x[0] = _xmin[0];
                         range._x[1] = _xmax[0];
@@ -131,9 +138,13 @@ namespace romi {
 
                 void homing() override {
                         SynchronizedMethod sync(_mutex);
-                        _block_controller.homing();
+                        _controller.homing();
                 }
 
+                void stop_execution() override;
+                void continue_execution() override;
+                void reset() override;
+                
                 /* accessors */
         
                 virtual const double *xmin() {
@@ -183,6 +194,7 @@ namespace romi {
                 bool execute_script(script_t *script);
                 bool execute_move(section_t *section, int32_t *pos_steps);
                 double script_duration(script_t *script);
+                void store_script(script_t *script);
         };
 }
 

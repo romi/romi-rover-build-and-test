@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 void print_to_stdout(script_t *script,
+                     double *xmin,
                      double *xmax,
                      double *vmax_,
                      double *amax,
@@ -39,12 +40,14 @@ void print_to_stdout(script_t *script,
 
 int plot_to_file(const char *filepath,
                  script_t *script,
+                 double *xmin,
                  double *xmax,
                  double *vmax,
                  double *amax,
                  double *scale);
 
 membuf_t *plot_to_mem(script_t *script,
+                      double *xmin,
                       double *xmax,
                       double *vmax,
                       double *amax,

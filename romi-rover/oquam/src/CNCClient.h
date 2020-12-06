@@ -41,6 +41,9 @@ namespace romi {
                 JSON handle_spindle(JSON cmd);
                 JSON handle_travel(JSON cmd);
                 JSON handle_homing(JSON cmd);
+                JSON handle_stop(JSON cmd);
+                JSON handle_continue(JSON cmd);
+                JSON handle_reset(JSON cmd);
                 JSON ok_status();
                 JSON error_status(const char *message);
 

@@ -74,12 +74,11 @@ enum {
  */
 struct block_t {
         uint8_t type;
-        uint16_t id;
         int16_t data[4];
 };
 
 /* The buffer size should be a power of two. */
-#define BLOCK_BUFFER_SIZE 32
+#define BLOCK_BUFFER_SIZE 64
 #define BLOCK_BUFFER_SIZE_MASK (BLOCK_BUFFER_SIZE - 1)
 
 /**

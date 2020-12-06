@@ -65,7 +65,7 @@ section_t *new_section()
 static section_t *new_section_init(double t, double at,
                                    double *p0, double *p1,
                                    double *v0, double *v1,
-                                   double *a, int id)
+                                   double *a)
 {
         section_t *section = new_section();
         if (section == NULL) {
@@ -80,7 +80,6 @@ static section_t *new_section_init(double t, double at,
         vcopy(section->v1, v1);
         vcopy(section->a, a);
         vsub(section->d, section->p1, section->p0);
-        section->id = id;
         
         return section;
 }
@@ -92,7 +91,7 @@ void delete_section(section_t *section)
         }
 }
 
-static list_t *section_slice(section_t *section, double period, double maxlen, int id)
+static list_t *section_slice(section_t *section, double period, double maxlen)
 {
         list_t *slices = NULL;
         double tmp[3];        
@@ -105,7 +104,7 @@ static list_t *section_slice(section_t *section, double period, double maxlen, i
 
         double t = 0.0;
 
-        r_debug("section->t=%f", section->t);
+        //r_debug("section->t=%f", section->t);
         
         while (t < section->t) {
                 double dt = section->t - t;
@@ -134,7 +133,7 @@ static list_t *section_slice(section_t *section, double period, double maxlen, i
                 
                 section_t *s = new_section_init(dt, section->at + t,
                                                 p0, p1, v0, v1,
-                                                section->a, id);
+                                                section->a);
                 if (s == NULL) {
                         r_err("section_slice: new_section_init returned NULL");
                         delete_section_list(slices);
@@ -150,13 +149,13 @@ static list_t *section_slice(section_t *section, double period, double maxlen, i
                 t += dt;
         }
         
-        r_err("section_slice: return %p", slices);
+        //r_err("section_slice: return %p", slices);
         return slices;
 }
 
-void section_print(section_t *section, const char *prefix, int id)
+void section_print(section_t *section, const char *prefix)
 {
-        printf("%s[%d]: ", prefix, id);
+        printf("%s: ", prefix);
         printf("p0(%0.3f,%0.3f,%0.3f)-p1(%0.3f,%0.3f,%0.3f); ",
                section->p0[0], section->p0[1], section->p0[2],
                section->p1[0], section->p1[1], section->p1[2]);
@@ -189,7 +188,7 @@ void segments_print(segment_t *segment)
 {
         segment_t *s = segment;
         while (s != NULL) {
-                section_print(&s->section, "S", s->section.id);
+                section_print(&s->section, "S");
                 s = s->next;
         }
 }
@@ -220,7 +219,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         /*       atdc->decelerate.t, atdc->curve.t); */
 
         if (atdc->accelerate.t > 0) {
-                list_t *slices = section_slice(&atdc->accelerate, period, maxlen, atdc->id);
+                list_t *slices = section_slice(&atdc->accelerate, period, maxlen);
                 if (slices == NULL) {
                         r_err("atdc_slice(a): section_slice returned NULL");
                         delete_section_list(list);
@@ -230,7 +229,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         }
         
         if (atdc->travel.t > 0) {
-                list_t *slices = section_slice(&atdc->travel, period, maxlen, atdc->id);
+                list_t *slices = section_slice(&atdc->travel, period, maxlen);
                 if (slices == NULL) {
                         r_err("atdc_slice(t): section_slice returned NULL");
                         delete_section_list(list);
@@ -240,7 +239,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         }
         
         if (atdc->decelerate.t > 0) {
-                list_t *slices = section_slice(&atdc->decelerate, period, maxlen, atdc->id);
+                list_t *slices = section_slice(&atdc->decelerate, period, maxlen);
                 if (slices == NULL) {
                         r_err("atdc_slice(d): section_slice returned NULL");
                         delete_section_list(list);
@@ -250,7 +249,7 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         }
         
         if (atdc->curve.t > 0) {
-                list_t *slices = section_slice(&atdc->curve, period, maxlen, atdc->id);
+                list_t *slices = section_slice(&atdc->curve, period, maxlen);
                 if (slices == NULL) {
                         r_err("atdc_slice(c): section_slice returned NULL");
                         delete_section_list(list);
@@ -263,20 +262,14 @@ static list_t *atdc_slice(atdc_t *atdc, double period, double maxlen)
         return list;
 }
 
-static list_t *atdc_list_slice(atdc_t *atdc_list, double period, double maxlen)
+static list_t *atdc_slice_all(atdc_t *atdc, double period, double maxlen)
 {
         list_t *list = NULL;
-        
-        for (atdc_t *atdc = atdc_list; atdc != NULL; atdc = atdc->next) {
-                list_t *slices = atdc_slice(atdc, period, maxlen);
-                if (slices == NULL) {
-                        r_err("atdc_list_slice: atdc_slice returned NULL");
-                        delete_section_list(list);
-                        return NULL;
-                }
-                list = list_concat(list, slices);
+        atdc_t *s = atdc;
+        while (s != NULL) {
+                list = list_concat(list, atdc_slice(s, period, maxlen));
+                s = s->next;
         }
-        
         return list;
 }
 
@@ -284,7 +277,7 @@ void segment_print(segment_t *segment)
 {
         segment_t *s = segment;
         while (s != NULL) {
-                section_print(&s->section, "S", s->section.id);
+                section_print(&s->section, "S");
                 printf("\n");
                 s = s->next;
         }
@@ -294,10 +287,10 @@ void atdc_print(atdc_t *atdc)
 {
         atdc_t *s = atdc;
         while (s != NULL) {
-                section_print(&s->accelerate, "A", s->id);
-                section_print(&s->travel, "T", s->id);
-                section_print(&s->decelerate, "D", s->id);
-                section_print(&s->curve, "C", s->id);
+                section_print(&s->accelerate, "A");
+                section_print(&s->travel, "T");
+                section_print(&s->decelerate, "D");
+                section_print(&s->curve, "C");
                 s = s->next;
                 if (s)
                         printf("-\n");
@@ -376,10 +369,13 @@ static void segment_compute_curve(segment_t *s0, atdc_t *t0, double d, double *a
         double ey[3] = { 0.0, 0.0, 0.0 };
         double wx0, wy0;
 
+        /* Test whether the two speeds w0 and w1 are collinear by
+         * checking whether the cross product is zero.  */
         double c[3];
-        vcross(c, w0, w1);
-
-        if (norm(c) < 0.001) {
+        vcross(c, w0, w1);        
+        double cww = norm(c) / (w * w);
+        
+        if (cww < 0.001) {
                 // The two speed vectors are collinear...
                 double n;
                 
@@ -723,7 +719,7 @@ static void segment_compute_accelerations(atdc_t *t0, double *v,
 
         if (len == 0.0) {
 
-                r_debug("segment_compute_accelerations: len =0");
+                //r_debug("segment_compute_accelerations: len =0");
                 
                 t0->accelerate.t = 0.0;                      // t
                 vzero(t0->accelerate.a);                     // a
@@ -801,8 +797,8 @@ static void segment_compute_accelerations(atdc_t *t0, double *v,
                 /* Travel at constant speed for the remaining lenght */
                 if (len_a + len_d < len) {
 
-                        r_debug("segment_compute_accelerations: "
-                                "accelerate/travel/decelerate");
+                        /* r_debug("segment_compute_accelerations: " */
+                        /*         "accelerate/travel/decelerate"); */
                                         
                         double len_t = len - len_a - len_d;
                         double vn = norm(v);
@@ -823,18 +819,14 @@ static void segment_compute_accelerations(atdc_t *t0, double *v,
                          * constant acceleration to change the speed from the
                          * start and end value. */
 
-                        r_debug("** constant acceleration from start to end **");
-
-//                if (t0->id == 36) {
-//                        double dummy = fabs(0.0);
-//                }
+                        /* r_debug("** constant acceleration from start to end **"); */
                 
                         vsub(dv, t0->curve.v0, t0->accelerate.v0);
                         
                         if (norm(dv) > 0.0) {
 
-                                r_debug("segment_compute_accelerations: "
-                                        "constant acceleration, no travel");
+                                /* r_debug("segment_compute_accelerations: " */
+                                /*         "constant acceleration, no travel"); */
                                 
                                 vdiv(dt, dv, amax);
                                 vabs(dt, dt);
@@ -870,8 +862,8 @@ static void segment_compute_accelerations(atdc_t *t0, double *v,
                                 // start and end. Travel at constant
                                 // speed.
 
-                                r_debug("segment_compute_accelerations: "
-                                        "constant travel, no acceleration/deceleration");
+                                /* r_debug("segment_compute_accelerations: " */
+                                /*         "constant travel, no acceleration/deceleration"); */
                                 
                                 t0->accelerate.t = 0.0;                      // t
                                 vzero(t0->accelerate.a);                     // a
@@ -1044,7 +1036,6 @@ static void compute_curves_and_speeds(segment_t *path, atdc_t *atdc,
 
 static void compute_accelerations(segment_t *path,
                                   atdc_t *atdc,
-                                  int path_count,
                                   double tmax,
                                   double *xmin, 
                                   double *xmax, 
@@ -1057,14 +1048,14 @@ static void compute_accelerations(segment_t *path,
         int atdc_count = 0;
         
         while (s0) {
-                r_debug("compute_accelerations: ==== path %d, atdc %d ===================",
-                       path_count, atdc_count);
+                /* r_debug("compute_accelerations: ==== atdc %d ===================", */
+                /*        atdc_count); */
 
                 segment_compute_accelerations(t0, s0->section.v0, amax, at);
 
                 if (!atdc_is_valid(t0, tmax, xmin, xmax, vmax, amax)) {
                         r_warn("compute_accelerations: invalid atdc: "
-                               "path %d, atdc %d", path_count, atdc_count);
+                               "atdc %d", atdc_count);
                 }
 
                 
@@ -1074,7 +1065,7 @@ static void compute_accelerations(segment_t *path,
                 atdc_count++;
         }
 
-        r_debug("compute_accelerations: ========================================");
+        /* r_debug("compute_accelerations: ========================================"); */
 }
 
 static void check_max_speeds(segment_t *path, double *vmax)
@@ -1099,15 +1090,12 @@ static atdc_t *copy_segments_to_atdc(segment_t *path)
                         atdc->prev = prev;
                 }
                 prev = atdc;
-                
-                atdc->id = segment->section.id;                
         }
 
         return first;
 }
 
 static atdc_t *segments_to_atdc(segment_t *path,
-                                int path_count,
                                 double d,                                   
                                 double tmax,
                                 double *xmin, 
@@ -1116,48 +1104,20 @@ static atdc_t *segments_to_atdc(segment_t *path,
                                 double *amax)
 {
         check_max_speeds(path, vmax);
+        
         atdc_t *atdc = copy_segments_to_atdc(path);
 
         compute_curves_and_speeds(path, atdc, d, amax);
-                
-        /* printf("Curves and speed:\n"); */
-        /* atdc_print(atdc); */
-        /* printf("\n\n"); */
         
-        compute_accelerations(path, atdc, path_count, tmax, xmin, xmax, vmax, amax);
-
-        /* printf("Accelerations:\n"); */
-        /* atdc_print(atdc); */
-        /* printf("\n\n"); */
+        compute_accelerations(path, atdc, tmax, xmin, xmax, vmax, amax);
 
         return atdc;
 }
 
-static list_t *segment_list_to_atdc_list(list_t *paths,
-                                         double d,
-                                         double tmax,
-                                         double *xmin, 
-                                         double *xmax, 
-                                         double *vmax,
-                                         double *amax)
-{
-        list_t *atdc_list = NULL;
-        int path_count = 0;
-        
-        for (list_t *l = paths; l != NULL; l = list_next(l)) {
-                segment_t *path = list_get(l, segment_t);
-                atdc_t *atdc = segments_to_atdc(path, path_count, d, tmax,
-                                                xmin, xmax, vmax, amax);
-                atdc_list = list_append(atdc_list, atdc);
-                path_count++;
-        }
-        return atdc_list;
-}
-
-static list_t *script_to_segment_list(script_t *script, double *pos)
+static segment_t *script_to_segments(script_t *script, double *pos)
 {
         list_t *actions = script->actions;
-        list_t *paths = NULL;
+        segment_t *first = NULL;
         segment_t *prev = NULL;
 
         while (actions) {
@@ -1174,14 +1134,12 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
 
                                 // chain the segment
                                 segment->prev = prev;
-                                if (prev) 
-                                        prev->next = segment;
+                                if (prev == NULL) 
+                                        first = segment;
                                 else 
-                                        paths = list_append(paths, segment);
+                                        prev->next = segment;
                         
                                 prev = segment;
-
-                                segment->section.id = action->data.move.id; 
 
                                 // p0 and p1
                                 vcopy(segment->section.p0, pos); 
@@ -1210,7 +1168,7 @@ static list_t *script_to_segment_list(script_t *script, double *pos)
                 actions = list_next(actions);
         }
         
-        return paths;
+        return first;
 }
 
 /******************************************************************/
@@ -1220,59 +1178,28 @@ int planner_convert_script(script_t *script, double *position,
                            double *vmax, double *amax,
                            double deviation)
 {
-//        int err = 0;
         double pos[3];
-        
-        /* if (controller_position(controller, pos) != 0) */
-        /*         return -1; */
-
         vcopy(pos, position);
         
-        script->segments = script_to_segment_list(script, pos);
+        script->segments = script_to_segments(script, pos);
         if (script->segments == NULL)
                 return -1;
         
-        script->atdc_list = segment_list_to_atdc_list(script->segments,
-                                                      deviation, 120.0,
-                                                      xmin, xmax, vmax, amax);
-
-        if (script->atdc_list == NULL)
+        script->atdc = segments_to_atdc(script->segments,
+                                        deviation, 120.0,
+                                        xmin, xmax, vmax, amax);
+        if (script->atdc == NULL)
                 return -1;
-
-
-        if (0) {
-                int path_count = 0;
-                list_t *atdc_list = script->atdc_list;
-                for (list_t *l = atdc_list; l != NULL; l = list_next(l), path_count++) {
-                        atdc_t *atdc = list_get(l, atdc_t);
-                        int segment_count = 0;
-                        for (atdc_t *t0 = atdc; t0; t0 = t0->next, segment_count++) {
-                                if (!atdc_is_valid(t0, 120.0, xmin, xmax, vmax, amax)) {
-                                        r_warn("planner_convert_script: invalid atdc: "
-                                               "path %d, atdc %d",
-                                               path_count,
-                                               segment_count);
-                                }
-                        }
-                }
-        }
         
         return 0;
 }
 
 int planner_slice(script_t *script, double period, double maxlen)
 {
-        list_t *list = NULL;
-        for (list_t *l = script->atdc_list; l != NULL; l = list_next(l)) {
-                atdc_t *atdc = list_get(l, atdc_t);
-                list_t *slices = atdc_list_slice(atdc, period, maxlen);
-                if (slices == NULL) {
-                        r_err("planner_slice: atdc_list_slice returned NULL");
-                        delete_section_list(list);
-                        return -1;
-                }
-                list = list_concat(list, slices);
+        script->slices = atdc_slice_all(script->atdc, period, maxlen);
+        if (script->slices == NULL) {
+                r_err("planner_slice: atdc_slice returned NULL");
+                return -1;
         }
-        script->slices = list;
         return 0;
 }
