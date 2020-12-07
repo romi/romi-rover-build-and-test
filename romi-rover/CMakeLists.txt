@@ -29,6 +29,11 @@ set(CMAKE_C_FLAGS_DEBUG "-O0")
 
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_SANITISE_FLAGS}")
 
+# Can't build for coverage without the test.
+if (BUILD_COVERAGE AND BUILD_TESTS)
+  append_coverage_compiler_flags()
+endif()
+
 ############################################################
 
 option(WITH_REALSENSE "Compile the realsense app" OFF)

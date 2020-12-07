@@ -7,21 +7,21 @@ set(SRCS_PARSER
   ../BrushMotorController/Parser.cpp
   ../BrushMotorController/Parser.h)
 
-add_executable(r_unit_tests_parser ${SRCS_PARSER})
+add_executable(romi_rover_unit_tests_parser ${SRCS_PARSER})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../BrushMotorController" )
 
-target_link_libraries(r_unit_tests_parser gtest gmock)
+target_link_libraries(romi_rover_unit_tests_parser gtest gmock)
 
 add_test(
-    NAME r_unit_tests_parser
-    COMMAND r_unit_tests_parser
+    NAME romi_rover_unit_tests_parser
+    COMMAND romi_rover_unit_tests_parser
 )
 
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
-            NAME r_unit_tests_parser_coverage
+            NAME romi_rover_unit_tests_parser_coverage
             EXECUTABLE ctest -V ${n_cores}
-            DEPENDENCIES r_unit_tests_parser)
+            DEPENDENCIES romi_rover_unit_tests_parser)
 endif()
 
