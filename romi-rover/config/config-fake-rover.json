@@ -7,81 +7,71 @@
         "encoder_steps": 7168
     },
     
+    "proxy": {
+        "html": "romi-rover/html"
+    }, 
+
     "fake_camera": {
-        "imagexx": "data/camera.jpg",
-        "image": "/home/hanappe/projects/LettuceThink/DATA/2019/Chatelain/db/2019-08-26_15-10-48/images/00000.jpg"
+        "image": "romi-rover/fake_camera/00000.jpg"
     },
     
     "weeder": {
-        "workspace": [0, 410, 103, 474, 474, 0.600, 0.600],
+        "workspace": [410, 103, 474, 474],
         "z0": -0.010,
         "invert_axes": false,
         "quincunx_threshold": 0.0
     },
     
-    "interface": {
-        "html": "interface/html",
-        "scripts": "scripts/chatelain-lite.json"
+    "script_engine": {
+        "scripts": "romi-rover/scripts/default.json"
     },
+    
+    "cnc": {
+        "range": [[0, 0.700000], [0, 0.700000], [-0.400000, 0]]
+    }, 
 
-    "control_panel": {
-        "device": "/dev/ttyACM0"
-    },
-    
-    "watchdog": {
-        "apps": ["fake_motors"]
-    },
-    
     "launch": {
         "general": {
-            "sessions-dir": "/tmp/session",
-            "user": "hanappe",
-            "TODO-groups": ["dialout", "video"]
+            "sessions-dir": "/tmp/session"
         },
          "registry": {
-            "path": "/usr/local/bin/rcregistry"
+            "path": "rcregistry"
         },
-        "nodes": [{
-            "path": "build/logger/logger"
-        }, {
-            "path": "build/configuration/configuration"
-        }, {
-            "path": "build/fsdb/fsdb"
-        }, {
-            "path": "build/fake_motors/fake_motors"
-        }, {
-            "path": "build/fake_camera/fake_camera",
-            "disabled": false
-        }, {
-            "path": "build/video4linux/video4linux",
-            "disabled": true
-        }, {
-            "path": "build/fake_cnc/fake_cnc",
-            "disabled": true
-        }, {
-            "path": "build/oquam/oquam"
-        }, {
-            "path": "build/wheel_odometry/wheel_odometry"
-        }, {
-            "path": "build/camera_recorder/camera_recorder",
-            "disabled": false
-        }, {
-            "path": "build/weeder/weeder"
-        }, {
-            "path": "build/navigation/navigation",
-            "disabled": false
-        }, {
-            "path": "build/interface/interface",
-            "disabled": false
-        }, {
-            "path": "build/watchdog/watchdog",
-            "user": "root",
-            "disabled": true
-        }, {
-            "path": "build/webproxy/webproxy",
-            "user": "root",
-            "disabled": false
-        }]
+        "nodes": [
+            {
+                "path": "configuration"
+            },
+            {
+                "path": "fsdb"
+            },
+            {
+                "path": "fake_motors"
+            },
+            {
+                "path": "fake_camera"
+            },
+            {
+                "path": "fake_cnc"
+            },
+            {
+                "path": "wheel_odometry"
+            },
+            {
+                "path": "camera_recorder"
+            },
+            {
+                "path": "weeder"
+            },
+            {
+                "path": "navigation"
+            },
+            {
+                "path": "script_engine"
+            },
+            {
+                "path": "webproxy"
+            }
+        ]
     }
 }
 
