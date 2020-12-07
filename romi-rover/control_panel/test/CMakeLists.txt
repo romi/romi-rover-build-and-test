@@ -56,56 +56,62 @@ set(SRCS_CONTROLPANEL
   ../ControlPanelLcdKeypad/ControlPanelTransitions.cpp
   )
 
-add_executable(r_unit_tests_controlpanel_parser ${SRCS_PARSER})
-add_executable(r_unit_tests_controlpanel_buttonpanel ${SRCS_BUTTONPANEL})
-add_executable(r_unit_tests_controlpanel_eventtimer ${SRCS_EVENTTIMER})
-add_executable(r_unit_tests_controlpanel_menu ${SRCS_MENU})
-add_executable(r_unit_tests_controlpanel_statemachine ${SRCS_STATE_MACHINE})
-add_executable(r_unit_tests_controlpanel_controlpanel ${SRCS_CONTROLPANEL})
+add_executable(romi_rover_unit_tests_controlpanel_parser ${SRCS_PARSER})
+add_executable(romi_rover_unit_tests_controlpanel_buttonpanel ${SRCS_BUTTONPANEL})
+add_executable(romi_rover_unit_tests_controlpanel_eventtimer ${SRCS_EVENTTIMER})
+add_executable(romi_rover_unit_tests_controlpanel_menu ${SRCS_MENU})
+add_executable(romi_rover_unit_tests_controlpanel_statemachine ${SRCS_STATE_MACHINE})
+add_executable(romi_rover_unit_tests_controlpanel_controlpanel ${SRCS_CONTROLPANEL})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../ControlPanelLcdKeypad" )
 
-target_link_libraries(r_unit_tests_controlpanel_parser gtest gmock)
-target_link_libraries(r_unit_tests_controlpanel_buttonpanel gtest gmock)
-target_link_libraries(r_unit_tests_controlpanel_eventtimer gtest gmock)
-target_link_libraries(r_unit_tests_controlpanel_menu gtest gmock)
-target_link_libraries(r_unit_tests_controlpanel_statemachine gtest gmock)
-target_link_libraries(r_unit_tests_controlpanel_controlpanel gtest gmock)
+target_link_libraries(romi_rover_unit_tests_controlpanel_parser gtest gmock)
+target_link_libraries(romi_rover_unit_tests_controlpanel_buttonpanel gtest gmock)
+target_link_libraries(romi_rover_unit_tests_controlpanel_eventtimer gtest gmock)
+target_link_libraries(romi_rover_unit_tests_controlpanel_menu gtest gmock)
+target_link_libraries(romi_rover_unit_tests_controlpanel_statemachine gtest gmock)
+target_link_libraries(romi_rover_unit_tests_controlpanel_controlpanel gtest gmock)
 
 add_test(
-    NAME r_unit_tests_controlpanel_parser
-    COMMAND r_unit_tests_controlpanel_parser
+    NAME romi_rover_unit_tests_controlpanel_parser
+    COMMAND romi_rover_unit_tests_controlpanel_parser
 )
 
 add_test(
-    NAME r_unit_tests_controlpanel_buttonpanel
-    COMMAND r_unit_tests_controlpanel_buttonpanel
+    NAME romi_rover_unit_tests_controlpanel_buttonpanel
+    COMMAND romi_rover_unit_tests_controlpanel_buttonpanel
 )
 
 add_test(
-    NAME r_unit_tests_controlpanel_eventtimer
-    COMMAND r_unit_tests_controlpanel_eventtimer
+    NAME romi_rover_unit_tests_controlpanel_eventtimer
+    COMMAND romi_rover_unit_tests_controlpanel_eventtimer
 )
 
 add_test(
-    NAME r_unit_tests_controlpanel_menu
-    COMMAND r_unit_tests_controlpanel_menu
+    NAME romi_rover_unit_tests_controlpanel_menu
+    COMMAND romi_rover_unit_tests_controlpanel_menu
 )
 
 add_test(
-    NAME r_unit_tests_controlpanel_statemachine
-    COMMAND r_unit_tests_controlpanel_statemachine
+    NAME romi_rover_unit_tests_controlpanel_statemachine
+    COMMAND romi_rover_unit_tests_controlpanel_statemachine
 )
 
 add_test(
-    NAME r_unit_tests_controlpanel_controlpanel
-    COMMAND r_unit_tests_controlpanel_controlpanel
+    NAME romi_rover_unit_tests_controlpanel_controlpanel
+    COMMAND romi_rover_unit_tests_controlpanel_controlpanel
 )
 
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
-            NAME r_unit_tests_statemachine_coverage
-            EXECUTABLE ctest -V ${n_cores}
-            DEPENDENCIES r_unit_tests_statemachine)
+            NAME romi_rover_unit_tests_coverage
+            EXECUTABLE ctest -V ${n_cores} -R "romi_rover"
+            DEPENDENCIES
+                romi_rover_unit_tests_controlpanel_parser
+                romi_rover_unit_tests_controlpanel_buttonpanel
+                romi_rover_unit_tests_controlpanel_eventtimer
+                romi_rover_unit_tests_controlpanel_menu
+                romi_rover_unit_tests_controlpanel_statemachine
+                romi_rover_unit_tests_controlpanel_controlpanel)
 endif()
 
