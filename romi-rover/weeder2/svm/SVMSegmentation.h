@@ -66,7 +66,7 @@ namespace romi {
                 }
 
                 void set_parameter(const char *name, JSON value) override;
-                void segment(IFileCabinet *session, Image &image, Image &mask) override;
+                void segment(IFolder *session, Image &image, Image &mask) override;
         };
 }
 

@@ -36,7 +36,8 @@ using namespace romi;
 
 int main(int argc, char **argv)
 {
-        DebugWeedingSession session;
+        DebugWeedingSession session(".", "elastic");
+        IFolder &folder = session.get_current_folder();
         bool print = false;
         double alpha = 0.2;
         double beta = 2.0;
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
                 if (c == -1) break;
                 switch (c) {
                 case 'd':
-                        session.open_dump();
+                        folder.open_dump();
                         break;
                 case 'p':
                         print = true;
@@ -105,7 +106,7 @@ int main(int argc, char **argv)
 
         som.init_cities(&cx[0], &cy[0]);
         som.init_path(&px[0], &py[0]);
-        som.compute_path(&session, print);
+        som.compute_path(&folder, print);
 
-        session.close_dump();
+        folder.close_dump();
 }

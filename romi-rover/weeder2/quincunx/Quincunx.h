@@ -43,7 +43,7 @@ namespace romi {
                 int set_radius_zones(json_object_t value);
                 int set_threshold(json_object_t value);
 
-                list_t *compute_positions(IFileCabinet *session,
+                list_t *compute_positions(IFolder *session,
                                           image_t *mask,
                                           double meters_to_pixels,
                                           float *confidence);
@@ -70,7 +70,7 @@ namespace romi {
                 
                 int set_parameter(const char *name, json_object_t value) override;
                 
-                bool trace_path(IFileCabinet *session,
+                bool trace_path(IFolder *session,
                                 Image &mask,
                                 double tool_diameter,
                                 double meters_to_pixels,

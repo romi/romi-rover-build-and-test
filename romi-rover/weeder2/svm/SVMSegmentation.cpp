@@ -52,7 +52,7 @@ namespace romi {
                 }
         }
 
-        void SVMSegmentation::segment(IFileCabinet *session, Image &image, Image &mask) 
+        void SVMSegmentation::segment(IFolder *session, Image &image, Image &mask) 
         {
                 if (image.type() != IMAGE_RGB)
                         throw std::runtime_error("SVMSegmentation::segment: "

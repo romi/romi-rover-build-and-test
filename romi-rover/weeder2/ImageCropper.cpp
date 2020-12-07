@@ -76,7 +76,7 @@ namespace romi {
                 return meters * meters_to_pixels;
         }
 
-        void ImageCropper::crop(IFileCabinet *session,
+        void ImageCropper::crop(IFolder *session,
                                 Image &camera,
                                 double tool_diameter,
                                 Image &out)

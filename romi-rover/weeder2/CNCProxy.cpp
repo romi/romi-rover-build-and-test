@@ -121,4 +121,23 @@ namespace romi {
                 _controller->execute(command);
         }
 
+        void CNCProxy::stop_execution()
+        {
+                JSON command = JSON::parse("{\"command\": \"stop\"}");
+                _controller->execute(command);
+        }
+
+        void CNCProxy::continue_execution()
+        {
+                JSON command = JSON::parse("{\"command\": \"continue\"}");
+                _controller->execute(command);
+        }
+
+        void CNCProxy::reset()
+        {
+                JSON command = JSON::parse("{\"command\": \"reset\"}");
+                _controller->execute(command);
+        }
+
+        
 }

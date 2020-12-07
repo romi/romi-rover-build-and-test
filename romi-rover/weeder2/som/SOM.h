@@ -49,7 +49,7 @@ namespace romi {
                 
                 int set_parameter(const char *name, json_object_t value) override;
                 
-                bool trace_path(IFileCabinet *session,
+                bool trace_path(IFolder *session,
                                 Image &mask,
                                 double tool_diameter,
                                 double meters_to_pixels,

@@ -51,6 +51,11 @@ namespace romi {
                 virtual void spindle(double speed) = 0;
                 virtual void travel(Path &path, double relative_speed = 0.1) = 0;
                 virtual void homing() = 0;
+
+                virtual void stop_execution() = 0;
+                virtual void continue_execution() = 0;
+                virtual void reset() = 0;
+                                
         };
 }
 

@@ -46,6 +46,10 @@ namespace romi {
                 void spindle(double speed) override;
                 void travel(Path &path, double relative_speed = 0.1) override;
                 void homing() override;
+                
+                void stop_execution() override;
+                void continue_execution() override;
+                void reset() override;
         };
 }
 

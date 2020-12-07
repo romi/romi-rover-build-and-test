@@ -54,7 +54,7 @@ namespace romi {
                 
                 virtual ~Pipeline() override;
                 
-                bool run(IFileCabinet *session, Image &camera,
+                bool run(IFolder *session, Image &camera,
                          double tool_diameter, Path &path) override;
         };
 }

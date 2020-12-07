@@ -56,7 +56,7 @@ namespace romi {
 
                 int set_parameter(const char *name, JSON value) override;
                         
-                void crop(IFileCabinet *session,
+                void crop(IFolder *session,
                           Image &camera_image,
                           double tool_diameter,
                           Image &cropped_image) override;

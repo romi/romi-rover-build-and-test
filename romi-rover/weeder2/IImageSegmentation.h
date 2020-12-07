@@ -25,7 +25,7 @@
 #ifndef __ROMI_I_IMAGE_SEGMENTATION_H
 #define __ROMI_I_IMAGE_SEGMENTATION_H
 
-#include "IFileCabinet.h"
+#include "IFolder.h"
 #include "JSON.h"
 
 namespace romi {
@@ -35,7 +35,7 @@ namespace romi {
         public:
                 virtual ~IImageSegmentation() = default;
                 
-                virtual void segment(IFileCabinet *session,
+                virtual void segment(IFolder *session,
                                      Image &image, Image &mask) = 0;
                 virtual void set_parameter(const char *name, JSON value) = 0;
         };

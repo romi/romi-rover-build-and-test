@@ -26,11 +26,15 @@
 #define __ROMI_DEBUG_WEEDING_SESSION_H
 
 #include <string>
+#include "IFolder.h"
 #include "IFileCabinet.h"
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace romi {
-        
-        class DebugWeedingSession : public IFileCabinet
+
+        class DebugWeedingFolder : public IFolder
         {
         protected:
                 std::string _directory;
@@ -42,8 +46,8 @@ namespace romi {
                 void dump_double(double value);
 
         public:
-                DebugWeedingSession() : _dump_fd(-1) {};
-                virtual ~DebugWeedingSession() override = default;
+                DebugWeedingFolder() : _dump_fd(-1) {};
+                virtual ~DebugWeedingFolder() override = default;
                 
                 void store(const char* name, Image &image) override;
                 void store_jpg(const char* name, Image &image);
@@ -53,6 +57,7 @@ namespace romi {
                 void store_jpg(const char* name, image_t *image) override;
                 void store_png(const char* name, image_t *image) override;
                 void store_svg(const char* name, const char *body, int len) override;
+                void store_txt(const char* name, const char *body, int len) override;
 
                 void open_dump() override;
                 void dump(const char *name, int32_t rows,
@@ -72,7 +77,51 @@ namespace romi {
                 void set_directory(const char* path) {
                         _directory = path;
                 }
+                void set_directory(std::string &path) {
+                        _directory = path;
+                }
         };
+        
+        class DebugWeedingSession : public IFileCabinet
+        {
+        protected:
+                std::string _directory;
+                DebugWeedingFolder _folder;
+                
+        public:
+                DebugWeedingSession(const char *basedir)
+                        : _directory(basedir) {}
+                
+                DebugWeedingSession(const char *basedir,
+                                    const char *name)
+                        : _directory(basedir) {
+                        open_folder(name);
+                }
+                
+                virtual ~DebugWeedingSession() override = default;
+                
+                IFolder &open_folder(const char *name) override {
+                        std::string path = _directory;
+                        path += "/";
+                        path += name;
+                        
+                        struct stat st;
+                        memset(&st, 0, sizeof(st));
+                        if (stat(path.c_str(), &st) == -1) {
+                                mkdir(path.c_str(), 0770);
+                        }
+                        
+                        _folder.set_directory(path);
+                        return _folder;
+                }
+                
+                IFolder &get_current_folder() override {
+                        return _folder;
+                }
+                
+                void close_folder() {}
+        };
+        
 }
 
 #endif // __ROMI_DEBUG_WEEDING_SESSION_H

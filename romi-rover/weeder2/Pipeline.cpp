@@ -68,7 +68,7 @@ namespace romi {
                 build_planner(weeder);
         }
         
-        bool Pipeline::run(IFileCabinet *session,
+        bool Pipeline::run(IFolder *session,
                            Image &camera,
                            double tool_diameter,
                            Path &path)

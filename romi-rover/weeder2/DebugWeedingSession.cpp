@@ -36,7 +36,7 @@
 
 namespace romi {
         
-        std::string DebugWeedingSession::make_filename(const char* name,
+        std::string DebugWeedingFolder::make_filename(const char* name,
                                                        const char *extension)
         {
                 std::string filename;
@@ -50,28 +50,28 @@ namespace romi {
                 return filename;
         }
 
-        void DebugWeedingSession::store(const char* name, Image &image)
+        void DebugWeedingFolder::store(const char* name, Image &image)
         {
                 store(name, image.ptr());
         }
 
-        void DebugWeedingSession::store_jpg(const char* name, Image &image)
+        void DebugWeedingFolder::store_jpg(const char* name, Image &image)
         {
                 store_jpg(name, image.ptr());
         }
         
-        void DebugWeedingSession::store_png(const char* name, Image &image)
+        void DebugWeedingFolder::store_png(const char* name, Image &image)
         {
                 store_png(name, image.ptr());
         }
 
-        void DebugWeedingSession::store(const char* name, image_t *image)
+        void DebugWeedingFolder::store(const char* name, image_t *image)
         {
                 if (image)
                         store_jpg(name, image);
         }
         
-        void DebugWeedingSession::store_jpg(const char* name, image_t *image)
+        void DebugWeedingFolder::store_jpg(const char* name, image_t *image)
         {
                 if (image) {
                         std::string filename = make_filename(name, "jpg");
@@ -79,7 +79,7 @@ namespace romi {
                 }
         }
         
-        void DebugWeedingSession::store_png(const char* name, image_t *image)
+        void DebugWeedingFolder::store_png(const char* name, image_t *image)
         {
                 if (image) {
                         std::string filename = make_filename(name, "png");
@@ -87,7 +87,7 @@ namespace romi {
                 }
         }
 
-        void DebugWeedingSession::store_svg(const char* name, const char *body, int len)
+        void DebugWeedingFolder::store_svg(const char* name, const char *body, int len)
         {
                 std::string filename = make_filename(name, "svg");                
                 std::ofstream file;
@@ -96,38 +96,47 @@ namespace romi {
                 file.close();
         }
 
-        void DebugWeedingSession::open_dump()
+        void DebugWeedingFolder::store_txt(const char* name, const char *body, int len)
+        {
+                std::string filename = make_filename(name, "txt");                
+                std::ofstream file;
+                file.open(filename);
+                file.write(body, len);
+                file.close();
+        }
+
+        void DebugWeedingFolder::open_dump()
         {
                 close_dump();
                 _dump_fd = ::open("dump.out",
                                   O_WRONLY | O_CREAT | O_TRUNC,
                                   S_IRUSR | S_IWUSR);
                 if (_dump_fd == -1)
-                        r_err("DebugWeedingSession::open_dump: failed to open dump.out");
+                        r_err("DebugWeedingFolder::open_dump: failed to open dump.out");
         }
 
-        void DebugWeedingSession::dump_int(int32_t value)
+        void DebugWeedingFolder::dump_int(int32_t value)
         {
                 ssize_t n = write(_dump_fd, (void *) &value, 4);
                 if (n != 4)
                         r_err("dump: write error");
         }
 
-        void DebugWeedingSession::dump_text(const char *s, ssize_t len)
+        void DebugWeedingFolder::dump_text(const char *s, ssize_t len)
         {
                 ssize_t n = write(_dump_fd, s, len);
                 if (n != len)
                         r_err("dump: write error");
         }
 
-        void DebugWeedingSession::dump_double(double value)
+        void DebugWeedingFolder::dump_double(double value)
         {
                 ssize_t n = write(_dump_fd, (void *) &value, sizeof(double));
                 if (n != sizeof(double))
                         r_err("dump: write error");
         }
         
-        void DebugWeedingSession::dump(const char *name, int32_t rows,
+        void DebugWeedingFolder::dump(const char *name, int32_t rows,
                                        int32_t cols, float *values)
         {
                 if (_dump_fd != -1) {
@@ -149,7 +158,7 @@ namespace romi {
                 }
         }
         
-        void DebugWeedingSession::dump(const char *name, int32_t rows,
+        void DebugWeedingFolder::dump(const char *name, int32_t rows,
                                        int32_t cols, double *values)
         {
                 if (_dump_fd != -1) {
@@ -171,7 +180,7 @@ namespace romi {
                 }
         }
         
-        void DebugWeedingSession::dump_interleave(const char *name, int32_t size, 
+        void DebugWeedingFolder::dump_interleave(const char *name, int32_t size, 
                                                   float *a, float *b)
         {
                 if (_dump_fd != -1) {
@@ -190,7 +199,7 @@ namespace romi {
                 }
         }
         
-        void DebugWeedingSession::dump_interleave(const char *name, int32_t size,
+        void DebugWeedingFolder::dump_interleave(const char *name, int32_t size,
                                                   double *a, double *b)
         {
                 if (_dump_fd != -1) {
@@ -209,7 +218,7 @@ namespace romi {
                 }
         }
         
-        void DebugWeedingSession::close_dump()
+        void DebugWeedingFolder::close_dump()
         {
                 if (_dump_fd != -1) {
                         ::close(_dump_fd);
@@ -217,7 +226,7 @@ namespace romi {
                 }
         }
 
-        void DebugWeedingSession::print_path(float *x, float *y, int len, int n)
+        void DebugWeedingFolder::print_path(float *x, float *y, int len, int n)
         {
                 char name[64];
                 if (n >= 0)
@@ -233,7 +242,7 @@ namespace romi {
                 file.close();
         }
         
-        void DebugWeedingSession::print_path(double *x, double *y, int len, int n)
+        void DebugWeedingFolder::print_path(double *x, double *y, int len, int n)
         {
                 char name[64];
                 if (n >= 0)
@@ -249,7 +258,7 @@ namespace romi {
                 file.close();
         }
         
-        void DebugWeedingSession::print_path(Path &path, int n)
+        void DebugWeedingFolder::print_path(Path &path, int n)
         {
                 char name[64];
                 if (n >= 0)

@@ -33,7 +33,7 @@
 
 namespace romi {
 
-        class IFileCabinet;
+        class IFolder;
         
         class IPathPlanner
         {
@@ -42,13 +42,13 @@ namespace romi {
                 
                 virtual int set_parameter(const char *name, json_object_t value) = 0;
                 
-                /* virtual bool trace_path(IFileCabinet &session, */
+                /* virtual bool trace_path(IFolder &session, */
                 /*                         image_t &mask, */
                 /*                         double tool_diameter, // in meters */
                 /*                         double meters_to_pixels, */
                 /*                         Path &path) = 0; */
 
-                virtual bool trace_path(IFileCabinet *session,
+                virtual bool trace_path(IFolder *session,
                                         Image &mask,
                                         double tool_diameter, // in meters
                                         double meters_to_pixels,

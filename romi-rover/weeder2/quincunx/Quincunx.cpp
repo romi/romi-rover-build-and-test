@@ -22,12 +22,12 @@
 
  */
 
-#include "../IFileCabinet.h"
+#include "../IFolder.h"
 #include "Quincunx.h"
 
 namespace romi {
         
-        static void store_svg(IFileCabinet *session,
+        static void store_svg(IFolder *session,
                               int w, int h,
                               const char *image,
                               list_t *path,
@@ -306,7 +306,7 @@ namespace romi {
                 return positions;
         }
         
-        list_t *Quincunx::compute_positions(IFileCabinet *session,
+        list_t *Quincunx::compute_positions(IFolder *session,
                                             image_t *mask,
                                             double meters_to_pixels,
                                             float *confidence)
@@ -342,7 +342,7 @@ namespace romi {
                 return positions;
         }
                 
-        bool Quincunx::trace_path(IFileCabinet *session,
+        bool Quincunx::trace_path(IFolder *session,
                                   Image &in,
                                   double tool_diameter,
                                   double meters_to_pixels,
@@ -1001,7 +1001,7 @@ namespace romi {
                 }
         }
 
-        static void store_svg(IFileCabinet *session,
+        static void store_svg(IFolder *session,
                               int w, int h,
                               const char *image,
                               list_t *path,

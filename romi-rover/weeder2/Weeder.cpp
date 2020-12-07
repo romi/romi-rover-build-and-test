@@ -31,23 +31,23 @@ namespace romi {
         {
                 r_debug("Weeder::move_arm_to_camera_position");
                 move_arm_up();
-                _cnc->moveto(0.0, _range._y[1], 0.0);
+                _cnc->moveto(0.0, _range._y[1], 0.0, 0.8);
         }
 
         void Weeder::move_arm_to_start_position(Waypoint p)
         {
                 r_debug("Weeder::move_arm_to_start_position");
                 move_arm_up();
-                _cnc->moveto(p.x, p.y, 0.0);
+                _cnc->moveto(p.x, p.y, 0.0, 0.8);
                 _cnc->spindle(1.0);
-                _cnc->moveto(p.x, p.y, _z0);
+                _cnc->moveto(p.x, p.y, _z0, 0.8);
         }
 
         void Weeder::move_arm_up()
         {
                 r_debug("Weeder::move_arm_up");
                 _cnc->spindle(0.0);
-                _cnc->moveto(ICNC::UNCHANGED, ICNC::UNCHANGED, 0.0);
+                _cnc->moveto(ICNC::UNCHANGED, ICNC::UNCHANGED, 0.0, 0.8);
         }
         
         bool Weeder::path_in_range(Path &path)
@@ -143,7 +143,7 @@ namespace romi {
                         r_debug("Weeder::do_hoe: move_arm_to_start_position");
                         move_arm_to_start_position(path[0]);
                         r_debug("Weeder::do_hoe: _cnc->travel");
-                        _cnc->travel(path);
+                        _cnc->travel(path, 0.4);
                         r_debug("Weeder::do_hoe: move_arm_up");
                         move_arm_up();
                                 
@@ -156,7 +156,8 @@ namespace romi {
         
         void Weeder::hoe()
         {
-                DebugWeedingSession session;        
+                DebugWeedingSession session(".", "weeder");
+                IFolder &folder = session.get_current_folder();
                 Image camera_image;
                 Path path;
                 CNCRange range;
@@ -169,7 +170,7 @@ namespace romi {
                 _camera->grab(camera_image);
 
                 r_debug("Weeder::hoe: _pipeline->run");
-                _pipeline->run(&session, camera_image, 0.05, path);
+                _pipeline->run(&folder, camera_image, 0.05, path);
 
                 //_cnc->get_range(range);
 

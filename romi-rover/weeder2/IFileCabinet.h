@@ -25,9 +25,7 @@
 #ifndef __ROMI_I_FILE_CABINET_H
 #define __ROMI_I_FILE_CABINET_H
 
-#include <romi.h>
-#include "IPathPlanner.h"
-#include "Image.h"
+#include "IFolder.h"
 
 namespace romi {
         
@@ -36,34 +34,9 @@ namespace romi {
         public:
                 virtual ~IFileCabinet() = default;
                 
-                virtual void store(const char* name, Image &image) = 0;
-                virtual void store_jpg(const char* name, Image &image) = 0;
-                virtual void store_png(const char* name, Image &image) = 0;
-
-                
-                virtual void store(const char* name, image_t *image) = 0;
-                virtual void store_jpg(const char* name, image_t *image) = 0;
-                virtual void store_png(const char* name, image_t *image) = 0;
-                
-                virtual void store_svg(const char* name, const char *body, int len) = 0;
-
-                virtual void open_dump() = 0;
-                virtual void dump(const char *name,
-                                  int32_t rows, int32_t cols,
-                                  float *values) = 0;
-                virtual void dump(const char *name,
-                                  int32_t rows, int32_t cols,
-                                  double *values) = 0;
-                virtual void dump_interleave(const char *name, int32_t size, 
-                                             float *a, float *b) = 0;
-                virtual void dump_interleave(const char *name, int32_t size,
-                                             double *a, double *b) = 0;
-                virtual void close_dump() = 0;
-
-                virtual void print_path(float *x, float *y, int len, int n = -1) = 0;
-                virtual void print_path(double *x, double *y, int len, int n = -1) = 0;
-                virtual void print_path(Path &path, int n = -1) = 0;
-                
+                virtual IFolder &open_folder(const char *name) = 0;
+                virtual IFolder &get_current_folder() = 0;
+                virtual void close_folder() = 0;
         };
 }
 

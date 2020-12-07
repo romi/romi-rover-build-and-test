@@ -26,7 +26,7 @@
 #define __ROMI_SELF_ORGANIZED_MAP_H
 
 #include <cmath>
-#include "../IFileCabinet.h"
+#include "../IFolder.h"
 #include "fixed.h"
 
 namespace romi {
@@ -196,7 +196,7 @@ namespace romi {
                                  std::vector<T> &py,
                                  double radius);
 
-                void dump_path(IFileCabinet *session) {
+                void dump_path(IFolder *session) {
                         std::vector<double> x;
                         std::vector<double> y;
                         for (int i = 0; i < _path_length; i++) {
@@ -206,7 +206,7 @@ namespace romi {
                         session->dump_interleave("path", _path_length, &x[0], &y[0]);
                 }
 
-                void print_path(IFileCabinet *session, int n) {
+                void print_path(IFolder *session, int n) {
                         std::vector<double> x;
                         std::vector<double> y;
                         for (int i = 0; i < _path_length; i++) {
@@ -216,7 +216,7 @@ namespace romi {
                         session->print_path(&x[0], &y[0], _path_length, n);
                 }
 
-                void dump_cities(IFileCabinet *session) {
+                void dump_cities(IFolder *session) {
                         std::vector<double> x;
                         std::vector<double> y;
                         for (int i = 0; i < _num_cities; i++) {
@@ -326,12 +326,12 @@ namespace romi {
                         }
                 }
                 
-                bool compute_path(IFileCabinet *session, bool print = false);
+                bool compute_path(IFolder *session, bool print = false);
         };
 
 
         template <typename T>
-        bool SelfOrganizedMap<T>::compute_path(IFileCabinet *session, bool print)
+        bool SelfOrganizedMap<T>::compute_path(IFolder *session, bool print)
         {
                 int N = 10000;
 

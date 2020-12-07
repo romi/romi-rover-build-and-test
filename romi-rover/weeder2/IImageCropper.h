@@ -25,7 +25,7 @@
 #ifndef __ROMI_I_IMAGE_CROPPER_H
 #define __ROMI_I_IMAGE_CROPPER_H
 
-#include "IFileCabinet.h"
+#include "IFolder.h"
 #include "CNCRange.h"
 #include "Image.h"
 
@@ -39,7 +39,7 @@ namespace romi {
                 virtual int set_parameter(const char *name, JSON value) = 0;
                 virtual double map_meters_to_pixels(double meters) = 0;
                 
-                virtual void crop(IFileCabinet *session,
+                virtual void crop(IFolder *session,
                                   Image &camera_image,
                                   double tool_diameter,
                                   Image &cropped_image) = 0;

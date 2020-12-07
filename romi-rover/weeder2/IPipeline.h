@@ -27,7 +27,7 @@
 
 #include "Image.h"
 #include "IPathPlanner.h"
-#include "IFileCabinet.h"
+#include "IFolder.h"
 
 namespace romi {
         
@@ -36,7 +36,7 @@ namespace romi {
         public:
                 virtual ~IPipeline() = default;
                 
-                virtual bool run(IFileCabinet *session,
+                virtual bool run(IFolder *session,
                                  Image &camera,
                                  double tool_diameter,
                                  Path &path) = 0;
