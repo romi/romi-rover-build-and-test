@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(webproxy webproxy.c webproxy_main.c)
-target_link_libraries(webproxy rcom r m)
+target_link_libraries(webproxy librcom r m)
 install(TARGETS webproxy DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(

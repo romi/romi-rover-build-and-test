@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(rclogger rclogger.c rclogger_main.c)
-target_link_libraries(rclogger rcom romi r)
+target_link_libraries(rclogger librcom romi r)
 install(TARGETS rclogger DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(

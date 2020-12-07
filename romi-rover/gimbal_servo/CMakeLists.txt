@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(gimbal_servo gimbal_servo.c gimbal_servo_main.c)
-target_link_libraries(gimbal_servo romi rcom r m)
+target_link_libraries(gimbal_servo romi librcom r m)
 install(TARGETS gimbal_servo DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(
