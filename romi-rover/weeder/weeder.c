@@ -219,8 +219,10 @@ static int init_pipeline()
         if (pipeline != NULL)
                 return 0;
 
-        float a[] = {-0.04152306,  0.0472676 , -0.00709334};
-        float b = 0.66209273;
+        /* float a[] = {-0.04152306,  0.0472676 , -0.00709334}; */
+        /* float b = 0.66209273; */
+        float a[] = {-0.08727648,  0.14512232, -0.05679426};
+        float b = -1.75098531;
         segmentation_module_t *segmentation = new_svm_module(a, b);
         /* segmentation_module_t *segmentation = new_otsu_module(); */
         double width = fabs(_range.x[1] - _range.x[0]);
