@@ -119,7 +119,7 @@ static void send_moveat_command(messagelink_t *controller,
 
 static double map_speed(double x)
 {
-        double alpha = 10.0;
+        double alpha = 3.0;
         double sign = 1.0;
         double value = x;
 
@@ -134,7 +134,7 @@ static double map_speed(double x)
 
 static double map_direction(double x)
 {
-        double alpha = 10.0;
+        double alpha = 3.0;
         double sign = 1.0;
         double value = x;
 
@@ -151,12 +151,20 @@ static void send_motor_command(messagelink_t *controller)
 {
         double speed = map_speed(_speed);
         double direction = map_direction(_direction);
+        double left, right;
+        double alpha = 0.4;
 
-        /* double left = 0.7 * speed + 0.3 * direction; */
-        /* double right = 0.7 * speed - 0.3 * direction; */
-
-        double left = speed + direction;
-        double right = speed - direction;
+        left = speed + alpha * direction;
+        right = speed - alpha * direction;
+        
+        if (left < -1.0)
+                left = -1.0;
+        else if (left > 1.0)
+                left = 1.0;
+        if (right < -1.0)
+                right = -1.0;
+        else if (right > 1.0)
+                right = 1.0;
 
         r_debug("speed=%f, direction=%f, left=%f, right=%f", _speed, _direction, left, right);
         
