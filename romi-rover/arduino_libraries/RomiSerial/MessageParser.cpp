@@ -64,6 +64,9 @@ enum parser_state_t {
 
 void MessageParser::set_error(char character, char what)
 {
+        log_print("set_error");
+        log_print((int) what);
+        log_print(character);
         _error = what;
         _state = wait_opcode;
 }
@@ -145,8 +148,10 @@ bool MessageParser::parse(const char *s, int len)
         reset();
         for (int i = 0; i < len-1; i++) {
                 process(s[i]);
-                if (_error != 0)
+                if (_error != 0) {
+                        log_print(s);
                         break;
+                }
         }
         if (_error == 0)
                 success = process(s[len-1]);

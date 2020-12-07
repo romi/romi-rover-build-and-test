@@ -10,6 +10,7 @@
 #include "RomiSerialClient.h"
 #include "RSerial.h"
 #include "ConfigurationFile.h"
+#include "DebugWeedingSession.h"
 
 using namespace romi;
 
@@ -38,7 +39,7 @@ int main(int argc, char** argv)
                 double displacement[3] = { 0.04, 0.04, -0.002 };
                 double microsteps[3] = { 8.0, 8.0, 1.0 };
                 double scale[3];
-                double period = 0.014;
+                double period = 0.020;
                 
                 // XCarve: values taken from grbl/defaults.h.  
                 // 
@@ -59,12 +60,16 @@ int main(int argc, char** argv)
                         scale[i] = gears[i] * microsteps[i] * steps[i] / displacement[i];
                 }
                 
-                RSerial serial("/dev/ttyACM0", 115200, 1);        
+                RSerial serial("/dev/ttyACM1", 115200, 1);        
                 RomiSerialClient romi_serial(&serial, &serial);
                 StepperController stepper(romi_serial);
                 Oquam oquam(stepper, xmin, xmax, vm, amax, scale, 0.01, period);
                 CNCClient client(oquam);
                 ControllerServer server(&client, "oquam", "cnc");
+
+                DebugWeedingSession debug(".");
+                oquam.set_file_cabinet(&debug);
+
                 
                 while (!app_quit())
                         clock_sleep(0.1);

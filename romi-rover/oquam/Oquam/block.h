@@ -78,7 +78,7 @@ struct block_t {
 };
 
 /* The buffer size should be a power of two. */
-#define BLOCK_BUFFER_SIZE 64
+#define BLOCK_BUFFER_SIZE 32
 #define BLOCK_BUFFER_SIZE_MASK (BLOCK_BUFFER_SIZE - 1)
 
 /**

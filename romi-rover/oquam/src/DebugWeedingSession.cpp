@@ -96,6 +96,15 @@ namespace romi {
                 file.close();
         }
 
+        void DebugWeedingFolder::store_txt(const char* name, const char *body, int len)
+        {
+                std::string filename = make_filename(name, "txt");                
+                std::ofstream file;
+                file.open(filename);
+                file.write(body, len);
+                file.close();
+        }
+
         void DebugWeedingFolder::open_dump()
         {
                 close_dump();

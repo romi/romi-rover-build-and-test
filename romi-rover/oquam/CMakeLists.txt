@@ -17,15 +17,12 @@ set(SOURCES
   src/ICNCController.h
   src/StepperController.cpp
   src/StepperController.h
-  src/planner.c
-  src/planner.h
-  src/plotter.c
-  src/plotter.h
   src/v.c
   src/v.h
   src/script.c
   src/script.h
-  src/script_priv.h
+  src/plotter.c
+  src/plotter.h
   src/ICNC.h
   src/Oquam.cpp
   src/Oquam.h
@@ -34,6 +31,10 @@ set(SOURCES
   src/CNCClient.cpp
   src/ControllerServer.h
   src/ControllerServer.cpp
+  src/IFileCabinet.h
+  src/IFolder.h
+  src/DebugWeedingSession.h
+  src/DebugWeedingSession.cpp
   ../arduino_libraries/RomiSerial/IInputStream.h
   ../arduino_libraries/RomiSerial/IOutputStream.h
   ../arduino_libraries/RomiSerial/CRC8.h

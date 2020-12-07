@@ -94,7 +94,7 @@ public:
         void send_ok() override;
         void send_error(int code, const char *message) override;
         void send(const char *message) override;
-        void log(const char *message) override;
+        /* void log(const char *message) override; */
 
 protected:
         

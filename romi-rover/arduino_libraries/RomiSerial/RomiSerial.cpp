@@ -33,8 +33,6 @@ void RomiSerial::handle_input()
                 _in = get_default_input();
         
         while (_in->available()) {
-
-                log_print("!input");
                 
                 int c = _in->read();
                 if (c > 0) {
@@ -160,12 +158,12 @@ void RomiSerial::send(const char *message)
         _last_id = _envelopeParser.id();
 }
 
-void RomiSerial::log(const char *message)
-{
-        if (_out == 0)
-                _out = get_default_output();
-        _out->write('!');
-        _out->print(message);
-        _out->write('\r');
-        _out->write('\n');
-}
+// void RomiSerial::log(const char *message)
+// {
+//         if (_out == 0)
+//                 _out = get_default_output();
+//         _out->write('!');
+//         _out->print(message);
+//         _out->write('\r');
+//         _out->write('\n');
+// }

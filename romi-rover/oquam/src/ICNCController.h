@@ -24,8 +24,6 @@
 #ifndef _OQUAM_I_CNC_CONTROLLER_HPP_
 #define _OQUAM_I_CNC_CONTROLLER_HPP_
 
-#include "script_priv.h" 
-
 namespace romi {
 
         class ICNCController

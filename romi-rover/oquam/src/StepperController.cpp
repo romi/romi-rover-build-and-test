@@ -43,30 +43,36 @@ namespace romi {
                         
                         response = _romi_serial.send(command);
 
-                        // {
-                        //         char buffer[256];
-                        //         json_tostring(response, buffer, 256);
-                        //         r_debug("StepperController::send_command: response: %s", buffer);
-                        // }
-                        
-                        r = (int) json_array_getnum(response, 0);
-                        
-                        if (r == 0) {
-                                json_unref(response);
-                                break;
+                        if (json_isarray(response)
+                            && json_isnumber(json_array_get(response, 0))) {
                                 
-                        } else if (r == 1) {
-                                // Error code 1 indicates that the
-                                // command buffer in the firmware is
-                                // full. Wait a bit and try again.
-                                json_unref(response);
-                                clock_sleep(0.1);
+                                r = (int) json_array_getnum(response, 0);
+                                
+                                        
+                                if (r == 0) {
+                                        json_unref(response);
+                                        break;
+                                
+                                } else if (r == 1) {
+                                        // Error code 1 indicates that the
+                                        // command buffer in the firmware is
+                                        // full. Wait a bit and try again.
+                                        json_unref(response);
+                                        clock_sleep(0.2);
+                                                
+                                } else {
+                                        r_err("StepperController::execute: "
+                                              "error: %s",
+                                              json_array_getstr(response, 1));
+                                        json_unref(response);
+                                        break;
+                                }
                                 
                         } else {
-                                r_err("StepperController::execute: error: %s",
-                                      json_array_getstr(response, 1));
-                                json_unref(response);
-                                break;
+                                char buffer[256];
+                                json_tostring(response, buffer, 256);
+                                r_debug("StepperController::send_command: "
+                                        "invalid response: %s", buffer);
                         }
                 }
                         
@@ -108,18 +114,18 @@ namespace romi {
                                 // report it.
                                 if (state == 'e') {
                                         // FIXME: what shall we do?
-                                        r_err("StepperController::update_position: "
+                                        r_err("StepperController::is_idle: "
                                               "Firmware in error state");
                                         idle = -1;
                                 }
                                 
                         } else {
-                                r_err("StepperController::update_position: error: "
+                                r_err("StepperController::is_idle: error: "
                                       "invalid array length");
                         }
                         
                 } else {
-                        r_err("StepperController::update_position: error: %s", s.str(1));
+                        r_err("StepperController::is_idle: error: %s", s.str(1));
                 }
                 
                 return idle;
@@ -141,12 +147,12 @@ namespace romi {
                                 pos[2] = (int32_t) s.num(3);
                                 success = true;
                         } else {
-                                r_err("StepperController::update_position: error: "
+                                r_err("StepperController::get_position: error: "
                                       "invalid array length");
                                 r = -1;
                         }
                 } else {
-                        r_err("StepperController::update_position: error: %s", s.str(1));
+                        r_err("StepperController::get_position: error: %s", s.str(1));
                 }
                 
                 return success;
@@ -167,7 +173,7 @@ namespace romi {
                         } else if (idle == -1) {
                                 break;
                         } else {
-                                clock_sleep(0.1);
+                                clock_sleep(0.2);
                         }
 
                         double now = clock_time();

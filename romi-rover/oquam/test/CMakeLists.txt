@@ -15,12 +15,9 @@ set(SRCS_OQUAMSTEPPER
   ../src/Oquam.cpp
   ../src/v.h
   ../src/v.c
-  ../src/planner.h
-  ../src/planner.c
   ../src/plotter.c
   ../src/plotter.h
   ../src/script.h
-  ../src/script_priv.h
   ../src/script.c
   ../src/IFileCabinet.h
   ../src/IFolder.h

@@ -39,7 +39,7 @@ protected:
         uint8_t _crc_metadata;
         char _message[MAX_MESSAGE_LENGTH+1];
         uint8_t _message_length;
-        
+                
         void set_error(char character, char what);
         void append_char(char c);
         void crc8_update(uint8_t c);

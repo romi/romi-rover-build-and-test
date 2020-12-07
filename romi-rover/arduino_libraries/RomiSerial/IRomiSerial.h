@@ -33,7 +33,7 @@ public:
         virtual void send_ok() = 0;
         virtual void send_error(int code, const char *message) = 0;
         virtual void send(const char *message) = 0;
-        virtual void log(const char *message) = 0;
+        /* virtual void log(const char *message) = 0; */
 };
 
 #endif

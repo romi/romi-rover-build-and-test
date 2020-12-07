@@ -6,21 +6,23 @@ import sys
 import traceback
 
 def send_command(link, s):
-    #print("Command: %s" % s)
-    link.write(s.encode('ascii'))
+    print("Command: %s" % s)
+    command = "#" + s + ":xxxx\r"
+    link.write(command.encode('ascii'))
     return assert_reply(read_reply(link))
     
 def read_reply(link):
     while True:
         s = link.readline().decode("ascii").rstrip()
         if s[0] == "#":
-            break;
-        if s[0] == "!":
-            print("Log: %s" % s)
+            if s[1] == "!":
+                print("Log: %s" % s)
+            else:
+                print("Reply: %s" % s)
+                break;
     return s
 
 def assert_reply(line):
-    #print("Reply: %s" % line)
     s = str(line)
     start = s.find("[")
     end = 1 + s.find("]")
@@ -33,16 +35,16 @@ def assert_reply(line):
     return return_values
     
 def test_homing(link):
-    send_command(link, "#H\r")
+    send_command(link, "H")
     
 def test_move_x(link, millis, steps):
-    send_command(link, "#M[%d,%d,0,0,0]\r" % (millis, steps))
+    send_command(link, "M[%d,%d,0,0]" % (millis, steps))
 
 def test_move_y(link, millis, steps):
-    send_command(link, "#M[%d,0,%d,0,0]\r" % (millis, steps))
+    send_command(link, "M[%d,0,%d,0]" % (millis, steps))
     
 def test_move_xy(link, millis, dx, dy):
-    send_command(link, "#M[%d,%d,%d,0,0]\r" % (millis, dx, dy))
+    send_command(link, "M[%d,%d,%d,0]" % (millis, dx, dy))
     
 def test_move_and_back_x(link, millis, steps):
     test_move_x(link, millis, steps)
@@ -54,8 +56,8 @@ def test_move_and_back_y(link, millis, steps):
     
 def wait(link):
     while True:
-        status = send_command(link, "#S\r")
-        if status[2] == 0 and status[3] == -1: # voodoo
+        status = send_command(link, "I")
+        if status[1] == 1:
             break
         time.sleep(1);
     

@@ -21,7 +21,6 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "planner.h"
 #include "plotter.h"
 #include "v.h"
 
@@ -471,57 +470,9 @@ static void print_slices(plot_t *plot, list_t *slices, double duration, double *
                       "id=\"slices\">\n");
 
         print_slices_ij(plot, slices, 0, 1, &plot->xy);
-        /* print_blocks_ij(plot, blocks, n, 0, 2, 2 * d + L, y0, scale); */
-        /* print_blocks_ij(plot, blocks, n, 1, 2, 3 * d + 2 * L, y0, scale); */
         print_slices_speed_i(plot, slices, 0, duration, vm);
         print_slices_speed_i(plot, slices, 1, duration, vm);
         print_slices_speed_i(plot, slices, 2, duration, vm);
-
-        membuf_printf(plot->buffer, "    </g>\n");
-}
-
-static void print_blocks_ij(plot_t *plot, block_t *blocks, int n, int i, int j,
-                            rect_t *r, double *scale)
-{
-        membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
-                      r->x, r->y);
-
-        int x = 0;
-        int y = 0;
-
-        membuf_printf(plot->buffer, "        <path d=\"");
-        print_moveto(plot, 0, 0);
-        
-        for (int k = 0; k < n; k++) {
-                switch (blocks[k].type) {
-                case BLOCK_MOVE:
-                        print_lineto(plot,
-                                     _X(r, (x + blocks[k].data[i+1]) / scale[i]),
-                                     _Y(r, (y + blocks[k].data[j+1]) / scale[j]));
-                        x += blocks[k].data[1];
-                        y += blocks[k].data[2];
-                        break;
-                default:
-                        break;
-                }
-        }
-                
-        membuf_printf(plot->buffer, "\" id=\"path\" style=\"fill:none;stroke:%s;"
-                      "stroke-width:0.001;stroke-linecap:butt;"
-                      "stroke-linejoin:miter;stroke-miterlimit:4;"
-                      "stroke-opacity:1;stroke-dasharray:none\" />\n",
-                      "#00ffff");
-        membuf_printf(plot->buffer, "    </g>\n");
-}
-
-static void print_blocks(plot_t *plot, block_t *blocks, int n, double *scale)
-{
-        membuf_printf(plot->buffer,
-                      "    <g inkscape:groupmode=\"layer\" "
-                      "inkscape:label=\"blocks\" "
-                      "id=\"blocks\">\n");
-        
-        print_blocks_ij(plot, blocks, n, 0, 1, &plot->xy, scale);
 
         membuf_printf(plot->buffer, "    </g>\n");
 }
@@ -627,22 +578,6 @@ static void print_axes(plot_t *plot)
         print_text(plot, "az", plot->a[2].x - 0.15 * plot->d, plot->a[2].y);
         
         membuf_printf(plot->buffer, "    </g>\n");
-}
-
-void print_to_stdout(script_t *script,
-                     double *xmin,
-                     double *xmax,
-                     double *vmax_,
-                     double *amax,
-                     double *scale)
-{
-        printf("Segments:\n");
-        segments_print(script->segments);
-        printf("\n\n");
-
-        printf("ATDC:\n");
-        atdc_print(script->atdc);
-        printf("\n\n");
 }
 
 membuf_t *plot_to_mem(script_t *script,
@@ -759,9 +694,6 @@ membuf_t *plot_to_mem(script_t *script,
 
         if (script->slices != NULL)
                 print_slices(plot, script->slices, duration, vmax_);
-
-        if (script->block != NULL)
-                print_blocks(plot, script->block, script->num_blocks, scale);
 
         print_path_speeds(plot, segments, atdc, duration, vmax_);
         print_path_accelerations(plot, segments, atdc, duration, amax);

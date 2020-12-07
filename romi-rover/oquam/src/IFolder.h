@@ -46,6 +46,7 @@ namespace romi {
                 virtual void store_png(const char* name, image_t *image) = 0;
                 
                 virtual void store_svg(const char* name, const char *body, int len) = 0;
+                virtual void store_txt(const char* name, const char *body, int len) = 0;
 
                 virtual void open_dump() = 0;
                 virtual void dump(const char *name,

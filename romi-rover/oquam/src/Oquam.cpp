@@ -25,7 +25,6 @@
 #include <vector>
 #include <stdexcept>
 #include "script.h"
-#include "planner.h"
 #include "plotter.h"
 #include "Oquam.h"
 
@@ -33,15 +32,22 @@ namespace romi {
 
         void Oquam::moveto_synchronized(double x, double y, double z, double rel_speed)
         {
+                r_debug("Oquam::moveto_synchronized");
+                
                 if (rel_speed > 0.0 && rel_speed <= 1.0) {
                         
                         double position[3];
                         get_position(position);
                 
-                        double dx[3];
-                        dx[0] = x - position[0];
-                        dx[1] = y - position[1];
-                        dx[2] = z - position[2];
+                        double dx[3] = {0.0, 0.0, 0.0};
+                        if (x != UNCHANGED)
+                                dx[0] = x - position[0];
+                        
+                        if (y != UNCHANGED)
+                                dx[1] = y - position[1];
+                        
+                        if (z != UNCHANGED)
+                                dx[2] = z - position[2];
                         
                         if ((dx[0] != 0.0) || (dx[1] != 0.0) || (dx[2] != 0.0)) {
                                 
@@ -65,6 +71,7 @@ namespace romi {
                                 
                         }
                 } else {
+                        r_debug("Oquam::moveto_synchronized: invalid speed: %f", rel_speed);
                         throw std::runtime_error("Invalid speed");
                 }
         }
@@ -72,7 +79,11 @@ namespace romi {
         void Oquam::store_script(script_t *script) 
         {
                 if (_file_cabinet) {
-                        IFolder &folder = _file_cabinet->get_current_folder();
+
+                        char name[64];
+                        rprintf(name, 64, "oquam-%04d", _script_count++);
+                        
+                        IFolder &folder = _file_cabinet->open_folder(name);
                         membuf_t *svg = plot_to_mem(script, _xmin, _xmax, _vmax,
                                                     _amax, _scale_meters_to_steps);
                         if (svg != 0) {
@@ -82,6 +93,20 @@ namespace romi {
                         } else {
                                 r_warn("Oquam::store_script: plot failed");
                         }
+
+                        membuf_t *text = new_membuf();
+                        segments_print(script->segments, text);
+                        folder.store_txt("segments", membuf_data(text), membuf_len(text));
+
+                        membuf_clear(text);
+                        atdc_print(script->atdc, text);
+                        folder.store_txt("atdc", membuf_data(text), membuf_len(text));
+
+                        membuf_clear(text);
+                        slices_print(script->slices, text);
+                        folder.store_txt("slices", membuf_data(text), membuf_len(text));
+                        
+                        delete_membuf(text);
                 }
         }
         
@@ -136,7 +161,6 @@ namespace romi {
         
         script_t *Oquam::build_script(Path &path, double speed) 
         {
-                r_debug("new_script");
                 script_t *script = new_script();
 
                 for (size_t i = 0; i < path.size(); i++) {
@@ -190,16 +214,13 @@ namespace romi {
                 double vmax[3];
                 smul(vmax, _vmax, relative_speed);
                 
-                r_debug("Oquam::convert_script: planner_convert_script");
-                if (planner_convert_script(script, position, _xmin, _xmax,
-                                           vmax, _amax, _path_max_deviation) == 0) {
+                r_debug("Oquam::convert_script: script_convert");
+                if (script_convert(script, position, _xmin, _xmax,
+                                   vmax, _amax, _path_max_deviation,
+                                   _path_slice_interval, 32.0) == 0) {
                         
-                        r_debug("Oquam::convert_script: planner_slice");
-                        if (planner_slice(script, _path_slice_interval, 32.0) == 0) {
-                                success = true;
-                        } else {
-                                r_err("planner_slice failed");
-                        }
+                        success = true;
+                        
                 } else {
                         r_err("planner_convert_script failed");
                 }
@@ -220,10 +241,10 @@ namespace romi {
                 int16_t dy = (int16_t) (p1[1] - pos_steps[1]);
                 int16_t dz = (int16_t) (p1[2] - pos_steps[2]);
 
-                r_debug("Abs(%.3f,%.3f,%.3f)=(%d,%d,%d) - D(%d,%d,%d)",
+                r_debug("Abs(%.3f,%.3f,%.3f)=(%d,%d,%d) - D(%d,%d,%d,%d)",
                         section->p1[0], section->p1[1], section->p1[2],
                         p1[0], p1[1], p1[2],
-                        dx, dy, dz);
+                        dt, dx, dy, dz);
                 
                 if ((dt > 0) && (dx != 0 || dy != 0 || dz != 0)) {
                         success = _controller.move(dt, dx, dy, dz);
@@ -237,9 +258,9 @@ namespace romi {
                         pos_steps[0] += dx;
                         pos_steps[1] += dy;
                         pos_steps[2] += dz;
-
-                        {
-                                _controller.synchronize(10.0);
+ 
+                        if (1) {
+                                //_controller.synchronize(10.0);
                                 int32_t position[3];
                                 get_position(position);
                                 r_debug("Pos(%d,%d,%d)",

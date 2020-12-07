@@ -29,6 +29,7 @@
 #include "ICNC.h"
 #include "ICNCController.h"
 #include "IFileCabinet.h"
+#include "script.h" 
 
 namespace romi {
 
@@ -82,6 +83,8 @@ namespace romi {
                 double _scale_meters_to_steps[3];
                 
                 double _path_slice_interval;
+
+                int _script_count;
                         
         public:
                 Oquam(ICNCController &block_controller,
@@ -100,6 +103,9 @@ namespace romi {
                         vcopy(_amax, amax);
                         vcopy(_scale_meters_to_steps, scale_meters_to_steps);
                         _mutex = new_mutex();
+                        _script_count = 0;
+
+                        homing();
                 }
                 
                 virtual ~Oquam() {

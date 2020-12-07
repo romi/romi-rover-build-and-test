@@ -28,6 +28,8 @@ namespace romi {
         JSON CNCClient::execute(JSON cmd)
         {
                 JSON retval;
+
+                r_debug("CNCClient::execute");
                 
                 try {
                         const char *command = cmd.str("command");
@@ -67,6 +69,7 @@ namespace romi {
 
         JSON CNCClient::handle_get_range(JSON cmd)
         {
+                r_debug("CNCClient::handle_get_range");
                 CNCRange range;
                 _cnc.get_range(range);
                 return JSON::construct("[[%f,%f],[%f,%f],[%f,%f]]",
@@ -77,15 +80,25 @@ namespace romi {
         
         JSON CNCClient::handle_moveto(JSON cmd)
         {
-                double x = cmd.num("x");
-                double y = cmd.num("y");
-                double z = cmd.num("z");
+                r_debug("CNCClient::handle_moveto");
+
+                char buffer[256];
+                json_tostring(cmd.ptr(), buffer, 256);
+                r_debug("CNCClient::handle_moveto: %s", buffer);
+
+                
+                double x = cmd.num("x", ICNC::UNCHANGED);
+                double y = cmd.num("y", ICNC::UNCHANGED);
+                double z = cmd.num("z", ICNC::UNCHANGED);
+                
+                r_debug("CNCClient::handle_moveto: %f, %f, %f", x, y, z);
                 _cnc.moveto(x, y, z);
                 return ok_status();
         }
         
         JSON CNCClient::handle_spindle(JSON cmd)
         {
+                r_debug("CNCClient::handle_spindle");
                 double speed = cmd.num("speed");
                 _cnc.spindle(speed);
                 return ok_status();
@@ -93,6 +106,8 @@ namespace romi {
         
         JSON CNCClient::handle_travel(JSON cmd)
         {
+                r_debug("CNCClient::handle_travel");
+                
                 Path path;
 
                 double speed = cmd.num("speed", 0.1);
@@ -113,24 +128,28 @@ namespace romi {
         
         JSON CNCClient::handle_homing(JSON cmd)
         {
+                r_debug("CNCClient::handle_homing");
                 _cnc.homing();
                 return ok_status();
         }
 
         JSON CNCClient::handle_stop(JSON cmd)
         {
+                r_debug("CNCClient::handle_stop");
                 _cnc.stop_execution();
                 return ok_status();
         }
 
         JSON CNCClient::handle_continue(JSON cmd)
         {
+                r_debug("CNCClient::handle_continue");
                 _cnc.continue_execution();
                 return ok_status();
         }
 
         JSON CNCClient::handle_reset(JSON cmd)
         {
+                r_debug("CNCClient::handle_reset");
                 _cnc.reset();
                 return ok_status();
         }

@@ -31,13 +31,6 @@
 extern "C" {
 #endif
 
-void print_to_stdout(script_t *script,
-                     double *xmin,
-                     double *xmax,
-                     double *vmax_,
-                     double *amax,
-                     double *scale);
-
 int plot_to_file(const char *filepath,
                  script_t *script,
                  double *xmin,

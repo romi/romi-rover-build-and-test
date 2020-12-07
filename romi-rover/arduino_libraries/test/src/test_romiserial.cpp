@@ -4,8 +4,6 @@
 #include <vector>
 #include <RomiSerial.h>
 #include <RomiSerialErrors.h>
-#include <Parser.h>
-#include <CRC8.h>
 #include "../mock/mock_inputstream.h"
 #include "../mock/mock_outputstream.h"
 
@@ -168,15 +166,6 @@ protected:
                 expected_message += "\n";
         }
         
-        void send_command(Parser *parser,
-                          const char *s,
-                          vector<bool> &r,
-                          vector<int8_t> &e) {
-                for (int i = 0; s[i] != 0; i++) {
-                        r.push_back(parser->process(s[i]));
-                        e.push_back(parser->error());
-                }
-        }        
 };
 
 TEST_F(romiserial_tests, romiserial_test_handler_without_args)

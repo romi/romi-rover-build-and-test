@@ -57,6 +57,7 @@ namespace romi {
                 void store_jpg(const char* name, image_t *image) override;
                 void store_png(const char* name, image_t *image) override;
                 void store_svg(const char* name, const char *body, int len) override;
+                void store_txt(const char* name, const char *body, int len) override;
 
                 void open_dump() override;
                 void dump(const char *name, int32_t rows,

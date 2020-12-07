@@ -27,13 +27,16 @@
 
 #if defined(ARDUINO)
 #include <Arduino.h>
-#define log_print(__x)   { Serial.print('!'); Serial.println(__x); }
+#define log_print(__x)   { \
+                Serial.print("#!"); \
+                Serial.print(__x); ; \
+                Serial.println(":xxxx"); }
 
 #else
 #include <r.h>
-static inline void romiserial_log(char x) { r_debug("!%c", x); }
-static inline void romiserial_log(int x) { r_debug("!%d", x); }
-static inline void romiserial_log(const char *s) { r_debug("!%s", s); }
+static inline void romiserial_log(char x) { r_debug("#!%c:xxxx", x); }
+static inline void romiserial_log(int x) { r_debug("#!%d:xxxx", x); }
+static inline void romiserial_log(const char *s) { r_debug("#!%s:xxxx", s); }
 
 #define log_print(__x)   romiserial_log(__x)
 #endif

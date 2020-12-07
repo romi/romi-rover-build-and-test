@@ -55,8 +55,6 @@ set(SRCS_ROMISERIAL
   ../RomiSerial/IRomiSerial.h
   ../RomiSerial/RomiSerial.cpp
   ../RomiSerial/RomiSerial.h
-  ../RomiSerial/IParser.h
-  ../RomiSerial/Parser.h
   ../RomiSerial/MessageParser.cpp
   ../RomiSerial/MessageParser.h
   ../RomiSerial/EnvelopeParser.cpp
