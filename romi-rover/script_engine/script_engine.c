@@ -143,7 +143,7 @@ static int move(membuf_t *message, double distance, double speed)
         return status_error("navigation", reply, message);
 }
 
-int32 _iterator(const char* key, json_object_t value, json_object_t request)
+int32_t _iterator(const char* key, json_object_t value, json_object_t request)
 {
         if (rstreq(key, "action"))
                 return 0;

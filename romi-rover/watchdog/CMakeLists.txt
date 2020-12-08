@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(watchdog watchdog.c watchdog_main.c)
-target_link_libraries(watchdog rcom r m)
+target_link_libraries(watchdog librcom r m)
 install(TARGETS watchdog DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(
