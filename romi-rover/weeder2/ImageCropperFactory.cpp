@@ -27,9 +27,9 @@
 
 namespace romi {
         
-        int32 ImageCropperFactory::set_parameter(const char* key,
-                                                 json_object_t value,
-                                                 void *data)
+        int32_t ImageCropperFactory::set_parameter(const char* key,
+                                                   json_object_t value,
+                                                   void *data)
         {
                 IImageCropper *obj = (IImageCropper *) data;
                 return obj->set_parameter(key, value);
