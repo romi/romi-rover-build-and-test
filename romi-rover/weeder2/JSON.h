@@ -279,7 +279,7 @@ namespace romi {
                         return json_string_value(_obj);
                 }
                 
-                int32 foreach(json_iterator_t func, void* data) {
+                int32_t foreach(json_iterator_t func, void* data) {
                         return json_object_foreach(_obj, func, data);
                 }
 

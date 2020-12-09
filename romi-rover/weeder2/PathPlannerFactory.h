@@ -33,9 +33,9 @@ namespace romi {
         class PathPlannerFactory
         {
         protected:
-                static int32 set_parameter(const char* key,
-                                           json_object_t value,
-                                           void *data);
+                static int32_t set_parameter(const char* key,
+                                             json_object_t value,
+                                             void *data);
                 
         public:
                 static IPathPlanner *create(const char *name, JSON params);

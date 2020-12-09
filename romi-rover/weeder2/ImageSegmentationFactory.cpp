@@ -27,9 +27,9 @@
 
 namespace romi {
         
-        int32 ImageSegmentationFactory::set_parameter(const char* key,
-                                                      json_object_t value,
-                                                      void *data)
+        int32_t ImageSegmentationFactory::set_parameter(const char* key,
+                                                        json_object_t value,
+                                                        void *data)
         {
                 IImageSegmentation *obj = (IImageSegmentation *) data;
                 obj->set_parameter(key, value);

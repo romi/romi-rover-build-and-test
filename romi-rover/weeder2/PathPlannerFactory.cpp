@@ -28,9 +28,9 @@
 
 namespace romi {
 
-        int32 PathPlannerFactory::set_parameter(const char* key,
-                                                 json_object_t value,
-                                                 void *data)
+        int32_t PathPlannerFactory::set_parameter(const char* key,
+                                                  json_object_t value,
+                                                  void *data)
         {
                 IPathPlanner *obj = (IPathPlanner *) data;
                 obj->set_parameter(key, value);
