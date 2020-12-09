@@ -48,7 +48,7 @@ int main(int argc, char** argv)
                 delete camera;
                 delete config;
                 
-        } catch (std::exception e) {
+        } catch (std::exception& e) {
                 r_err(e.what());
         }
 

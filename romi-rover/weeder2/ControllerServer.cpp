@@ -76,7 +76,7 @@ namespace romi {
                         JSON reply = execute(message);
                         messagelink_send_obj(link, reply.ptr());
                         
-                } catch (std::exception e) {
+                } catch (std::exception& e) {
 
                         r_err("ControllerServer::onmessage: caught exception: %s",
                               e.what());

@@ -147,7 +147,7 @@ namespace romi {
                         r_debug("Weeder::do_hoe: move_arm_up");
                         move_arm_up();
                                 
-                } catch (std::exception e) {
+                } catch (std::exception& e) {
                         r_debug("Weeder::do_hoe: catch");
                         move_arm_up();
                         throw e;

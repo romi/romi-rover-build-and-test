@@ -51,7 +51,7 @@ namespace romi {
                                 data = (const unsigned char *) membuf_data(body);
                                 try {
                                         image.load_from_mem(data, membuf_len(body));
-                                } catch (std::exception e) {
+                                } catch (std::exception& e) {
                                         delete_response(response);
                                         throw e;
                                 }
