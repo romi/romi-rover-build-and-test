@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(gpsd_node gpsd_node.cpp gpsd_main.cpp)
-target_link_libraries(gpsd_node -lgps romi rcom r m)
+target_link_libraries(gpsd_node -lgps romi librcom r m)
 #install(TARGETS gpsd DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(
