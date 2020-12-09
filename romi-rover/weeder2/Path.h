@@ -71,7 +71,7 @@ namespace romi {
 
         inline void path_invert_y(Path &path) {
                 for (size_t i = 0; i < path.size(); i++) {
-                        path[i].y = -path[i].y;
+                        path[i].y = 1.0 - path[i].y;
                 }
         }
 
