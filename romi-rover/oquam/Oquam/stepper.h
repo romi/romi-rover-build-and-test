@@ -64,6 +64,8 @@ void init_reset_step_pins_timer();
 #define disable_driver() set_enable_pin_high()
 #endif
 
+extern volatile uint8_t thread_state;
+
 #define enable_reset_step_pins_timer()                                  \
         {                                                               \
                 /* Initialize counter */                                \

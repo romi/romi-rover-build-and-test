@@ -21,14 +21,170 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "script_priv.h"
 
 #ifndef _OQUAM_SCRIPT_H_
 #define _OQUAM_SCRIPT_H_
 
+#include <r.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ *   action
+ */
+
+enum {
+        ACTION_MOVE,
+};
+
+typedef struct _controller_t controller_t;
+
+typedef struct _action_t action_t;
+
+struct _action_t {
+        unsigned char type;
+
+        union {
+                struct {
+                        double p[3];
+                        double v;
+                } move;
+                
+        } data;
+};
+
+action_t *new_action(int type);
+action_t *action_clone(action_t *a);
+action_t *new_move(double x, double y, double z, double v);
+void delete_action(action_t *action);
+
+
+/**
+ *   section
+ */
+
+typedef struct _section_t section_t;
+
+/**
+ *  \brief A section represents a component of the longer path that is
+ *  traveled with a constant (including zero) acceleration.
+ *
+ * The following the properties should be satisfied:
+ *    v1 = v0 + a.t
+ *    d = p1 - p0
+ *    d = v0.t + at²/2
+ */
+struct _section_t {
+        // The absolute positions at the beginning and end of the
+        // section in meters.
+        double p0[3];
+        double p1[3];
+
+        // The duration of this section, if known.
+        double t;
+        
+        // The absolute start time of this section, if known. The
+        // start time is measured from the beginning of the continuous
+        // path to which this segment belongs.
+        double at;
+
+        // The speed at the start of this section, in m/s.
+        double v0[3];
+
+        // The speed at the end of this section. 
+        double v1[3]; 
+
+        // The acceleation of this section, in m/s².
+        double a[3];
+        
+        // The relative position at the end of the section, in meters.
+        double d[3];
+};
+
+section_t *new_section();
+void delete_section(section_t *section);
+
+void section_print(section_t *section, membuf_t *text, const char *prefix);
+
+/**
+ *   segment
+ */
+
+typedef struct _segment_t  segment_t;
+
+/**
+ *  \brief A segment is a node in doubly linked list of sections.
+ *
+ * A segment is a data structure introduced for convenience. It
+ * combines a section and a doubly-linked list.
+ *
+ */
+struct _segment_t {
+        /* The section */
+        section_t section;
+
+        /* The doubly-linked list */
+        segment_t *prev;
+        segment_t *next;
+};
+
+segment_t *new_segment();
+void delete_segment(segment_t *segment);
+
+void segments_print(segment_t *segment, membuf_t *text);
+
+
+/**
+ *   atdc (acceleration-travel-deceleration-curve)
+ */
+
+typedef struct _atdc_t atdc_t;
+
+/** \brief The atdc_t structure combines four sections: 
+ *   1. a straight-line Acceleration (A), 
+ *   2. a constant-speed Travel (T), 
+ *   3. a straight-line Deceleration (D), 
+ *   4. a Curve with constant acceleration (C). 
+ */
+struct _atdc_t {
+        section_t accelerate;
+        section_t travel;
+        section_t decelerate;
+        section_t curve;
+        
+        atdc_t *prev;
+        atdc_t *next;
+};
+
+atdc_t *new_atdc();
+void delete_atdc(atdc_t *atdc);
+
+void atdc_print(atdc_t *atdc, membuf_t *text);
+
+/**
+ *   script
+ */
+
+typedef struct _script_t {
+        /* The list of actions given by the user. */
+        list_t *actions;
+
+        /* An intermediate representation of the move actions to
+         * facilitate to computation of the ADTC below. */
+        segment_t *segments;
+
+        /* The list of move actions rewitten as a list of lists of
+         * acceleration-travel-deceleration-curve (ATDC) sections. */
+        atdc_t *atdc;
+
+        /* The list of lists of slices or short sections of constant
+         * speed. */
+        list_t *slices;
+
+} script_t;
+
 
 script_t *new_script();
 void delete_script(script_t *script);
@@ -38,22 +194,17 @@ void delete_script(script_t *script);
  *
  * Move to absolute position (x,y,z) in meters at a speed of v m/s.
  */
-int script_moveto(script_t *script, double x, double y, double z, double v, int id);
+int script_moveto(script_t *script, double x, double y, double z, double v);
 
-/**
- * \brief Add a delay instruction to the current script.
- *
- * \brief Delay the execution for a given number of seconds.
- */
-int script_delay(script_t *script, double seconds);
+        
+int script_convert(script_t *script, double *position,
+                   double *xmin, double *xmax,
+                   double *vmax, double *amax,
+                   double deviation, double period, double maxlen);
 
-/**
- * \brief Add a trigger action to the current script.
- *
- * Triggers a callback.
- */
-int script_trigger(script_t *script, trigger_callback_t cb,
-                   void *userdata, int16_t arg, double delay);
+void script_clear(script_t *script);
+
+void slices_print(list_t *slices, membuf_t *text);
 
 
 #ifdef __cplusplus

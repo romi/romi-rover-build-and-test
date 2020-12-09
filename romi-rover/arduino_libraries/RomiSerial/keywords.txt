@@ -1,0 +1,7 @@
+RomiSerial      KEYWORD1
+ArduinoSerial  KEYWORD1
+MessageHandler KEYWORD1
+handle_input    KEYWORD2
+send_ok       KEYWORD2
+send_error    KEYWORD2
+send        KEYWORD2

@@ -23,9 +23,9 @@ endif()
 # For now everything is debug. Set Compile options locally to maintain independent library builds.
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter ${PROJECT_SANITISE_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter ${PROJECT_SANITISE_FLAGS}")
-set(CMAKE_C_FLAGS_DEBUG "-O0")
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_SANITISE_FLAGS}")
 
@@ -59,8 +59,9 @@ add_subdirectory(control_panel)
 add_subdirectory(gimbal_servo)
 add_subdirectory(gimbal_bldc)
 add_subdirectory(oquam)
-#add_subdirectory(gpsd_node)
+add_subdirectory(arduino_libraries)
 add_subdirectory(joystick-navigation)
+#add_subdirectory(gpsd_node)
 
 if(WITH_REALSENSE)
   add_subdirectory(realsense)

@@ -28,7 +28,6 @@
 #include "Arduino.h"
 #include "config.h"
 #include "block.h"
-#include "trigger.h"
 #include "stepper.h"
 
 volatile int32_t stepper_position[3];
@@ -41,8 +40,6 @@ volatile int32_t counter_reset_timer = 0;
 volatile block_t *current_block;
 volatile int32_t interrupts = 0;
 volatile int16_t milliseconds;
-volatile int16_t block_id = -1;
-volatile int16_t block_ms = -1;
 volatile int8_t stepper_reset = 0;
 
 
@@ -224,8 +221,6 @@ ISR(TIMER1_COMPA_vect)
          * state variables to zero and return. */
         if (stepper_reset) {
                 current_block = 0;
-                block_id = -1;
-                block_ms = 0;
                 interrupts = 0;
                 milliseconds = 0;
                 stepper_reset = 0;
@@ -239,12 +234,8 @@ ISR(TIMER1_COMPA_vect)
                 current_block = block_buffer_get_next();
 
                 if (current_block == 0) {
-                        block_id = -1;
-                        block_ms = 0;
                         return;
                 }
-                block_id = current_block->id;
-                block_ms = 0;
                 
                 /* Do the necessary initializations for the new
                  * block. */
@@ -260,12 +251,9 @@ ISR(TIMER1_COMPA_vect)
                         if (current_block->type == BLOCK_MOVE
                             && current_block->data[DT] <= 0) {
                                         current_block = 0;
-                                        block_id = -1;
                                         return;
                         }
                         
-                        block_ms = current_block->data[DT];
-                                
                         /* Check the direction and set DIR pins. */
                         uint8_t dir = 0;
                         step_dir[0] = 1;
@@ -349,15 +337,7 @@ ISR(TIMER1_COMPA_vect)
                         accumulation_error[1] = delta[1] - dt / 2;
                         accumulation_error[2] = delta[2] - dt / 2;
                         
-                } else if (current_block->type == BLOCK_DELAY) {
-                        /* Sanity check */
-                        if (current_block->data[DT] <= 0) {
-                                current_block = 0;
-                                block_id = -1;
-                                return;
-                        }
-                        block_ms = current_block->data[DT];
-                }
+                } 
                 
         }
 
@@ -422,53 +402,6 @@ ISR(TIMER1_COMPA_vect)
                         && block_buffer_available() > 0)) {
                         current_block = 0;
                 }
-                
-                return;
-        }
-
-        /* Wait block: Stop the execution of the stepper timer but
-         * don't clear the block buffer. A 'continue' command must be
-         * issued to execute the remaining blocks. */
-        if (current_block->type == BLOCK_WAIT) {
-                disable_stepper_timer();
-                current_block = 0;
-                return;
-        }
-
-        /* Delay block: Just do nothing. */
-        if (current_block->type == BLOCK_DELAY) {
-                if (milliseconds == current_block->data[DT])
-                        current_block = 0;
-                return;
-        }
-
-        /* Trigger block: Send the trigger ID to the calling
-         * program. */
-        if (current_block->type == BLOCK_TRIGGER) {
-                
-                if (current_block->data[0] >= 0) {
-                        /* This is the first time the trigger block is
-                         * handled by the interrupt handler: add the
-                         * trigger to the queue and mark it as
-                         * sent. */
-                        trigger_buffer_put(current_block->data[0]);
-                        current_block->data[0] = -1;
-
-                        /* If an "infinite" delay is requested, put
-                         * the timer to sleep and wait for a continue
-                         * command. */
-                        if (current_block->data[1] < 0) {
-                                disable_stepper_timer();
-                                current_block = 0;
-                                return;
-                        }
-                }
-
-                /* If an finite delay is requested, do the same as a
-                 * delay command: wait out the requested number of
-                 * milliseconds. */
-                if (milliseconds == current_block->data[1])
-                        current_block = 0;
                 
                 return;
         }

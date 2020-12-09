@@ -26,12 +26,12 @@
 
 #define N 3
 
-double norm(double *v)
+double norm(const double *v)
 {
        return sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
-double *vabs(double *r, double *a)
+double *vabs(double *r, const double *a)
 {
         r[0] = fabs(a[0]);
         r[1] = fabs(a[1]);
@@ -39,7 +39,7 @@ double *vabs(double *r, double *a)
         return r;
 }
 
-double *vsqrt(double *r, double *a)
+double *vsqrt(double *r, const double *a)
 {
         r[0] = sqrt(a[0]);
         r[1] = sqrt(a[1]);
@@ -47,7 +47,7 @@ double *vsqrt(double *r, double *a)
         return r;
 }
 
-double *vcopy(double *r, double *a)
+double *vcopy(double *r, const double *a)
 {
         r[0] = a[0];
         r[1] = a[1];
@@ -71,7 +71,7 @@ double *vset(double *r, double v)
         return r;
 }
 
-double *sadd(double *w, double *v, double s)
+double *sadd(double *w, const double *v, double s)
 {
         w[0] = v[0] + s;
         w[1] = v[1] + s;
@@ -79,7 +79,7 @@ double *sadd(double *w, double *v, double s)
         return w;
 }
 
-double *smul(double *w, double *v, double s)
+double *smul(double *w, const double *v, double s)
 {
         w[0] = v[0] * s;
         w[1] = v[1] * s;
@@ -87,7 +87,7 @@ double *smul(double *w, double *v, double s)
         return w;
 }
 
-double *sdiv(double *w, double *v, double s)
+double *sdiv(double *w, const double *v, double s)
 {
         w[0] = v[0] / s;
         w[1] = v[1] / s;
@@ -95,7 +95,7 @@ double *sdiv(double *w, double *v, double s)
         return w;
 }
 
-double vmax(double *a)
+double vmax(const double *a)
 {
         double r = a[0];
         if (r < a[1])
@@ -105,7 +105,7 @@ double vmax(double *a)
         return r;
 }
 
-double vmin(double *a)
+double vmin(const double *a)
 {
         double r = a[0];
         if (r > a[1])
@@ -115,7 +115,7 @@ double vmin(double *a)
         return r;
 }
 
-double *vadd(double *r, double *a, double *b)
+double *vadd(double *r, const double *a, const double *b)
 {
         r[0] = a[0] + b[0];
         r[1] = a[1] + b[1];
@@ -123,7 +123,7 @@ double *vadd(double *r, double *a, double *b)
         return r;
 }
 
-double *vsub(double *r, double *a, double *b)
+double *vsub(double *r, const double *a, const double *b)
 {
         r[0] = a[0] - b[0];
         r[1] = a[1] - b[1];
@@ -131,7 +131,7 @@ double *vsub(double *r, double *a, double *b)
         return r;
 }
 
-double *vmul(double *r, double *a, double *b)
+double *vmul(double *r, const double *a, const double *b)
 {
         r[0] = a[0] * b[0];
         r[1] = a[1] * b[1];
@@ -139,7 +139,7 @@ double *vmul(double *r, double *a, double *b)
         return r;
 }
 
-double *vdiv(double *r, double *a, double *b)
+double *vdiv(double *r, const double *a, const double *b)
 {
         r[0] = a[0] / b[0];
         r[1] = a[1] / b[1];
@@ -147,7 +147,15 @@ double *vdiv(double *r, double *a, double *b)
         return r;
 }
 
-double *normalize(double *w, double *v)
+double *vcross(double *r, const double *a, const double *b)
+{
+        r[0] =   a[1] * b[2] - a[2] * b[1];
+        r[1] = -(a[0] * b[2] - a[2] * b[0]);
+        r[2] =   a[0] * b[1] - a[1] * b[0];
+        return r;
+}
+
+double *normalize(double *w, const double *v)
 {
         double L = norm(v);
         w[0] = v[0] / L;
@@ -156,7 +164,7 @@ double *normalize(double *w, double *v)
         return w;
 }
 
-int *vaddi(int *r, int *a, int *b)
+int *vaddi(int *r, const int *a, const int *b)
 {
         r[0] = a[0] + b[0];
         r[1] = a[1] + b[1];
@@ -164,7 +172,7 @@ int *vaddi(int *r, int *a, int *b)
         return r;
 }
 
-int *vsubi(int *r, int *a, int *b)
+int *vsubi(int *r, const int *a, const int *b)
 {
         r[0] = a[0] - b[0];
         r[1] = a[1] - b[1];
@@ -172,7 +180,7 @@ int *vsubi(int *r, int *a, int *b)
         return r;
 }
 
-int *vconvfi(int *r, double *a)
+int *vconvfi(int *r, const double *a)
 {
         r[0] = (int) a[0];
         r[1] = (int) a[1];
@@ -180,10 +188,15 @@ int *vconvfi(int *r, double *a)
         return r;
 }
 
-double *vconvif(double *r, int *a)
+double *vconvif(double *r, const int *a)
 {
         r[0] = (double) a[0];
         r[1] = (double) a[1];
         r[2] = (double) a[2];
         return r;
+}
+
+int veq(const double *a, const double *b)
+{
+        return ((a[0] == b[0]) && (a[1] == b[1]) && (a[2] == b[2]));
 }
