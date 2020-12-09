@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(camera_recorder camera_recorder.c camera_recorder_main.c)
-target_link_libraries(camera_recorder rcom romi r)
+target_link_libraries(camera_recorder librcom romi r)
 install(TARGETS camera_recorder DESTINATION bin/romi)
 
 ADD_CUSTOM_COMMAND(

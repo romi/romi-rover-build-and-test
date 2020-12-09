@@ -29,19 +29,26 @@
 class StateTransition : public IStateTransition
 {
 protected:
-        int _from;
-        int _event;
-        int _to;
+        int8_t _from;
+        int16_t _event;
+        int8_t _to;
 
 public:
-        StateTransition(int from, int event, int to)
+        StateTransition(int8_t from, int16_t event, int8_t to)
                 : _from(from), _event(event), _to(to) {}
+        virtual ~StateTransition() {}
+                
+        int16_t event() override {
+                return _event;
+        }
         
-        virtual int doTransition() = 0;
-
-        int event() override;
-        int state() override;
-        int nextState() override;
+        int8_t state() override {
+                return _from;
+        }
+        
+        int8_t nextState() override {
+                return _to;
+        }
 };
 
 #endif // __STATE_TRANSITION_H

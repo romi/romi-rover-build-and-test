@@ -24,15 +24,17 @@
 #ifndef __I_STATE_TRANSITION_H
 #define __I_STATE_TRANSITION_H
 
+#include <stdint.h>
+
 class IStateTransition
 {
 public:
         virtual ~IStateTransition() {}
         
-        virtual int doTransition() = 0;
-        virtual int event() = 0;
-        virtual int state() = 0;
-        virtual int nextState() = 0;
+        virtual void doTransition(unsigned long t) = 0;
+        virtual int16_t event() = 0;
+        virtual int8_t state() = 0;
+        virtual int8_t nextState() = 0;
 };
 
 #endif // __I_STATE_TRANSITION_H

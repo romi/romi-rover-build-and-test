@@ -21,30 +21,16 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __STATE_MACHINE_TIMER_H
-#define __STATE_MACHINE_TIMER_H
 
-#include "IStateMachineTimer.h"
-#include "IArduino.h"
+#ifndef __IINPUTSTREAM_H
+#define __IINPUTSTREAM_H
 
-class StateMachineTimer : public IStateMachineTimer
+class IInputStream
 {
-protected:
-        IStateMachine *_stateMachine;
-        IArduino *_arduino;
-        int _enabled;
-        int _event;
-        unsigned long _timeout;
-
 public:
-        StateMachineTimer(IStateMachine *stateMachine,
-                          IArduino *arduino)
-                : _stateMachine(stateMachine),
-                  _arduino(arduino),
-                  _enabled(0), _event(0), _timeout(0) {}
-
-        void setTimeout(int milliseconds, int event) override;
-        void update(unsigned long t) override;
+        virtual ~IInputStream() {}        
+        virtual int available() = 0;
+        virtual int read() = 0;
 };
 
-#endif // __STATE_MACHINE_TIMER_H
+#endif // __INPUTSTREAM_H

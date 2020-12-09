@@ -43,6 +43,7 @@ static char *directory = NULL;
 static database_t *db = NULL;
 static scan_t *scan = NULL;
 static pipeline_t *pipeline = NULL;
+static cnc_range_t _range = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
 
 
 messagelink_t *get_messagelink_cnc();
@@ -123,6 +124,34 @@ static int init_workspace()
         return 0;
 }
 
+static int get_range()
+{
+        int err = 0;
+        
+        json_object_t config = client_get("configuration", "cnc");
+        if (json_isobject(config)) {
+                
+                json_object_t r = json_object_get(config, "range");
+                if (!json_isarray(r)) {
+                        r_err("Invalid range in configuration");
+                        err = -1;
+                } else {
+                        err = cnc_range_parse(&_range, r);
+                        if (err == 0) {
+                                r_info("range set to: x[%.3f,%.3f], y[%.3f,%.3f], z[%.3f,%.3f]",
+                                       _range.x[0], _range.x[1],
+                                       _range.y[0], _range.y[1],
+                                       _range.z[0], _range.z[1]);
+                        } // else: error message alreay printed by cnc_range_parse()
+                }
+        } else {
+                r_err("Couldn't find CNC configuration");
+                err = -1;
+        }
+        json_unref(config);
+        return err;
+}
+
 static void broadcast_db_message(void *userdata,
                                  database_t *db,
                                  const char *event,
@@ -189,14 +218,22 @@ static int init_pipeline()
 {
         if (pipeline != NULL)
                 return 0;
+
+        float a[] = {-0.04152306,  0.0472676 , -0.00709334};
+        float b = 0.66209273;
+        segmentation_module_t *segmentation = new_svm_module(a, b);
+        /* segmentation_module_t *segmentation = new_otsu_module(); */
+        double width = fabs(_range.x[1] - _range.x[0]);
+
+        r_debug("init_pipeline: width=%f", width);
+        r_debug("quincunx pixels/meter: %f", workspace.width / width / 3.0);
         
-        segmentation_module_t *segmentation = new_otsu_module();
         path_module_t *path = new_quincunx_module(0.3, 0.3, 0.1, 0.05, quincunx_threshold,
-                                                  workspace.width / workspace.width_meter / 3.0f); // FIXME!
+                                                  workspace.width / width / 3.0); // FIXME!
         if (segmentation == NULL || path == NULL)
                 return -1;
             
-        pipeline = new_pipeline(&workspace, segmentation, path);
+        pipeline = new_pipeline(&workspace, &_range, segmentation, path);
         if (pipeline == NULL)
                 return -1;
 
@@ -231,7 +268,9 @@ static int init()
         if (initialized)
                 return 0;
         if (init_workspace() != 0)
-                return -1;        
+                return -1;
+        if (get_range() != 0)
+                return -1;
         if (init_pipeline() != 0)
                 return -1;        
         initialized = 1;
@@ -276,7 +315,7 @@ void weeder_onmessage_cnc(void *userdata,
 
 static int move_away_arm()
 {
-        json_object_t reply;
+        json_object_t reply = json_null();
         messagelink_t *cnc = get_messagelink_cnc();
         membuf_t *message = new_membuf();
         
@@ -285,32 +324,62 @@ static int move_away_arm()
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
                 delete_membuf(message);
+                json_unref(reply);
                 return -1;
         }
+        json_unref(reply);
+        
         // move weeding tool to the end of the workspace
         reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", "
                                            "\"x\": 0, \"y\": %.4f}",
-                                           workspace.height_meter);
+                                           _range.y[1]);
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
                 delete_membuf(message);
+                json_unref(reply);
                 return -1;
         }
         delete_membuf(message);
+        json_unref(reply);
         return 0;
+}
+
+static void return_to_base()
+{
+        messagelink_t *cnc = get_messagelink_cnc();
+        json_object_t reply = json_null();
+        membuf_t *message = new_membuf();
+                
+        // stop the spindle
+        reply = messagelink_send_command_f(cnc, "{\"command\": \"spindle\", \"speed\": 0}");
+        if (status_error(reply, message)) {
+                r_err("spindle returned error: %s", membuf_data(message));
+        }
+        json_unref(reply);
+        
+        // home
+        reply = messagelink_send_command_f(cnc, "{\"command\": \"homing\"}");
+        if (status_error(reply, message)) {
+                r_err("homing returned error: %s", membuf_data(message));
+        }
+        
+        json_unref(reply);
+        delete_membuf(message);
 }
 
 static int send_path(list_t *path, double z0, membuf_t *message)
 {
         messagelink_t *cnc = get_messagelink_cnc();
-        json_object_t reply;
+        json_object_t reply = json_null();
 
         // move weeding tool up
         reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", \"z\": 0}");
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
+                json_unref(reply);
                 return -1;
         }
+        json_unref(reply);
 
         // move to the first point on the path
         point_t *p = list_get(path, point_t);
@@ -320,36 +389,89 @@ static int send_path(list_t *path, double z0, membuf_t *message)
                                            p->x, p->y);
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
+                json_unref(reply);
                 return -1;
         }
+        json_unref(reply);
 
         // start the spindle
         reply = messagelink_send_command_f(cnc, "{\"command\": \"spindle\", \"speed\": 1}");
         if (status_error(reply, message)) {
                 r_err("spindle returned error: %s", membuf_data(message));
+                json_unref(reply);
                 return -1;
         }
+        json_unref(reply);
 
         // move weeding tool down
         reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", \"z\": %.4f}",
                                            z0);
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
+                json_unref(reply);
                 return -1;
         }
+        json_unref(reply);
 
         // convert path to json
         membuf_t *buf = new_membuf();
         membuf_printf(buf, "{\"command\": \"travel\", \"path\": [");
         for (list_t *l = path; l != NULL; l = list_next(l)) {
                 point_t *p = list_get(l, point_t);
-                membuf_printf(buf, "[%.4f,%.4f,%.4f]", p->x, p->y, z0);
-                if (list_next(l)) membuf_printf(buf, ",");
+                double x = p->x;
+                double y = p->y;
+                double z = z0;
+
+                if (!cnc_range_is_valid(&_range, x, y, z)) {
+                        
+                        r_err("Point: %.3f, %.3f, %.3f: "
+                              "*** Out of range ***: (%.3f, %.3f), (%.3f, %.3f), (%.3f, %.3f)",
+                              x, y, z,
+                              _range.x[0], _range.x[1],
+                              _range.y[0], _range.y[1],
+                              _range.z[0], _range.z[1]);
+                
+                        
+                        if (cnc_range_error(&_range, x, y, z) < 0.01) {
+                                // Small error: clip
+                                // TODO: call cnc_range to do this
+                                if (x < _range.x[0])
+                                        x = _range.x[0];
+                                if (x > _range.x[1])
+                                        x = _range.x[1];
+                                if (y < _range.y[0])
+                                        y = _range.y[0];
+                                if (y > _range.y[1])
+                                        y = _range.y[1];
+                                if (z < _range.z[0])
+                                        z = _range.z[0];
+                                if (z > _range.z[1])
+                                        z = _range.z[1];
+                        } else {
+                                r_err("Computed point out of range: %.3f, %.3f, %.3f", x, y, z);
+                                delete_membuf(buf);
+                                return -1;
+                        } 
+                } else {
+                        r_err("Point: %.3f, %.3f, %.3f: "
+                              "In range: (%.3f, %.3f), (%.3f, %.3f), (%.3f, %.3f)",
+                              x, y, z,
+                              _range.x[0], _range.x[1],
+                              _range.y[0], _range.y[1],
+                              _range.z[0], _range.z[1]);
+                }
+                
+                membuf_printf(buf, "[%.4f,%.4f,%.4f]", x, y, z);
+                if (list_next(l))
+                        membuf_printf(buf, ",");
         }
         membuf_printf(buf, "]}");
         membuf_append_zero(buf);
 
-        r_debug("path: %s", membuf_data(buf));
+        /* r_debug("path 1"); */
+        /* r_debug("path: %s", membuf_data(buf)); */
+        /* printf("%s\n", membuf_data(buf)); */
+        /* r_debug("path 2"); */
         
         // send path to cnc
         messagelink_send_text(cnc, membuf_data(buf), membuf_len(buf));
@@ -358,38 +480,46 @@ static int send_path(list_t *path, double z0, membuf_t *message)
         if (status_error(reply, message)) {
                 r_err("travel returned error: %s", membuf_data(message));
                 delete_membuf(buf);
+                json_unref(reply);
                 return -1;
         }
+        json_unref(reply);
         delete_membuf(buf);
 
         // move weeding tool up
         reply = messagelink_send_command_f(cnc, "{\"command\": \"moveto\", \"z\": 0}");
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
+                json_unref(reply);
                 return -1;
         }
+        json_unref(reply);
 
         // stop spindle
         reply = messagelink_send_command_f(cnc, "{\"command\": \"spindle\", \"speed\": 0}");
         if (status_error(reply, message)) {
                 r_err("spindle returned error: %s", membuf_data(message));
+                json_unref(reply);
                 return -1;
         }
+        json_unref(reply);
 
         // move to the top-left corner
         reply = messagelink_send_command_f(cnc,
                                            "{\"command\": \"moveto\", "
                                            "\"x\": 0, \"y\": %.4f}",
-                                           workspace.height_meter);
+                                           _range.y[1]);
         if (status_error(reply, message)) {
                 r_err("moveto returned error: %s", membuf_data(message));
+                json_unref(reply);
                 return -1;
         }
 
+        json_unref(reply);
         return 0;
 }
 
-static int32 _set_param(const char* key, json_object_t value, void* data)
+static int32_t _set_param(const char* key, json_object_t value, void* data)
 {
         membuf_t *message = (membuf_t *) data;
         
@@ -472,15 +602,17 @@ static int hoe(int method, json_object_t command, membuf_t *message)
         // Execute the path
         if (json_object_has(command, "skip-execution")) {
                 r_info("Skipping execution of path)");
+                err = 0;
         } else {
                 err = send_path(path, z0, message);
         }
         
         r_info("Finished executing path");
 
-        err = 0;
-        
 cleanup:
+        if (err != 0)
+                return_to_base();
+        
         for (list_t *l = path; l != NULL; l = list_next(l)) {
                 point_t *p = list_get(l, point_t);
                 delete_point(p);

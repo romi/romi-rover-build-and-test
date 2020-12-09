@@ -22,128 +22,248 @@
 
  */
 #include "StateTransition.h"
-#include "StateMachine.h"
-#include "IStateMachineTimer.h"
-#include "IArduino.h"
+#include "States.h"
+#include "Events.h"
 
-#ifndef __STATE_MACHINE_CONTROL_PANEL_H
-#define __STATE_MACHINE_CONTROL_PANEL_H
+#ifndef __CONTROL_PANEL_TRANSITIONS_H
+#define __CONTROL_PANEL_TRANSITIONS_H
 
-enum {
-        // Both relays off.
-        STATE_OFF = 1,
-        // Power relay off and controller relay on. Waiting for
-        // controller circuit to send powerup event.
-        STATE_STARTING_UP,
-        // Power relay off and controller relay remains on for
-        // 5s. This gives the controller the time to shut down
-        // cleanly.
-        STATE_SHUTTING_DOWN,
-        // Both relays on
-        STATE_ON             
-};
+class ControlPanel;
 
-enum {
-        EVENT_READY,
-        EVENT_SELECT_HELD,
-        EVENT_POWERUP,
-        EVENT_SHUTDOWN,
-        EVENT_POWERDOWN
-};
+const char* getStateString(int state);
 
-class Ready : public StateTransition
-{
-public:
-        Ready() : StateTransition(IStateMachine::StartState,
-                                  EVENT_READY,
-                                  STATE_OFF) {}
-        
-        virtual int doTransition() { return 0; }
-};
-
-class StartUp : public StateTransition
+class ControlPanelTransition : public StateTransition
 {
 protected:
-        IArduino *_arduino;
-        
+        ControlPanel *_controlPanel;
+
+        void displayState();
+        void displayMenu();
+        void hideMenu();
+        void setTimer(unsigned long when, int event);
+
 public:
-        StartUp(IArduino *arduino) : StateTransition(STATE_OFF,
-                                                     EVENT_SELECT_HELD,
-                                                     STATE_STARTING_UP),
-                                     _arduino(arduino) {}
+        ControlPanelTransition(ControlPanel *controlPanel,
+                               int8_t from, int16_t event, int8_t to)
+                : StateTransition(from, event, to),
+                  _controlPanel(controlPanel) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class PowerUp : public StateTransition
+class Ready : public ControlPanelTransition
 {
-protected:
-        IArduino *_arduino;
-        
 public:
-        // The power down event is sent by the control software when
+        Ready(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_START,
+                                         EVENT_READY,
+                                         STATE_OFF) {}
+        
+        void doTransition(unsigned long t) override;
+};
+
+class StartUp : public ControlPanelTransition
+{
+public:
+        StartUp(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_OFF,
+                                         EVENT_ONOFF_HELD,
+                                         STATE_STARTING_UP) {}
+        
+        void doTransition(unsigned long t) override;
+};
+
+class PowerUp : public ControlPanelTransition
+{
+public:
+        // The power up event is sent by the control software when
         // the controllers are initialized and ready to go.
-        PowerUp(IArduino *arduino) : StateTransition(STATE_STARTING_UP,
-                                                     EVENT_POWERUP,
-                                                     STATE_ON),
-                                     _arduino(arduino) {}
-        
-        virtual int doTransition();
+        PowerUp(ControlPanel *controlPanel, int8_t from)
+                : ControlPanelTransition(controlPanel,
+                                         from,
+                                         EVENT_POWERUP,
+                                         STATE_ON) {}
+                
+        void doTransition(unsigned long t) override;
 };
 
-class Shutdown : public StateTransition
+class IgnorePowerUpWhenOn : public ControlPanelTransition
 {
-protected:
-        IArduino *_arduino;
-        IStateMachineTimer *_timer;
-        
 public:
-        // The shutdown event is sent by the control software when the
-        // user requested to turn of the robot trough the user
-        // interface. It powers off the motors and waits 5s before
-        // shutting down the controllers. This gives the controller
-        // the time to shut down cleanly.
-        Shutdown(IArduino *arduino, IStateMachineTimer *timer)
-                : StateTransition(STATE_ON,
-                                  EVENT_SHUTDOWN,
-                                  STATE_SHUTTING_DOWN),
-                  _arduino(arduino),
-                  _timer(timer) {}
-        
-        virtual int doTransition();
+        // Ignore the power down event if the state is already
+        // on. This may happen when the control panel node reboots
+        // when the rover is running.
+        IgnorePowerUpWhenOn(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_ON,
+                                         EVENT_POWERUP,
+                                         STATE_ON) {}
 };
 
-class SoftPowerDown : public StateTransition
+class Shutdown : public ControlPanelTransition
 {
-protected:
-        IArduino *_arduino;
+public:
+        // The shutdown event is sent by holding the on/off button or
+        // by the control software or when the user requested to turn
+        // of the robot trough the user interface. It powers off the
+        // motors and waits 5-10s before shutting down the
+        // controllers. This gives the controller the time to shut
+        // down cleanly.
+        Shutdown(ControlPanel *controlPanel, int event)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_ON,
+                                         event,
+                                         STATE_SHUTTING_DOWN) {}
         
+        void doTransition(unsigned long t) override;
+};
+
+class IgnoreShutdownWhenShuttingDown : public ControlPanelTransition
+{
+public:
+        // Ignore the shutdown event if the state is already shutting
+        // down. This may happen when the user requtes a shutdown both
+        // from the control panel and through the web interface.
+        IgnoreShutdownWhenShuttingDown(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_SHUTTING_DOWN,
+                                         EVENT_SHUTDOWN,
+                                         STATE_SHUTTING_DOWN) {}
+};
+
+class SoftPowerDown : public ControlPanelTransition
+{
 public:
         // The soft power down event is sent 5s after the shutdown
         // event.
-        SoftPowerDown(IArduino *arduino) : StateTransition(STATE_SHUTTING_DOWN,
-                                                           EVENT_POWERDOWN,
-                                                           STATE_OFF),
-                                           _arduino(arduino) {}
+        SoftPowerDown(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_SHUTTING_DOWN,
+                                         EVENT_POWERDOWN,
+                                         STATE_OFF) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-class HardPowerDown : public StateTransition
+class HardPowerDown : public ControlPanelTransition
 {
-protected:
-        IArduino *_arduino;
-        
 public:
         // The hard power down event is sent when the user presses and
         // holds the select button. It powers off the motors and the
         // controllers.
-        HardPowerDown(IArduino *arduino, int from) : StateTransition(from,
-                                                                     EVENT_SELECT_HELD,
-                                                                     STATE_OFF),
-                                                     _arduino(arduino) {}
+        HardPowerDown(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         ALL_STATES,
+                                         EVENT_ONOFF_HELD,
+                                         STATE_OFF) {}
         
-        virtual int doTransition();
+        void doTransition(unsigned long t) override;
 };
 
-#endif // __STATE_MACHINE_CONTROL_PANEL_H
+class ShowMenu : public ControlPanelTransition
+{
+public:
+        ShowMenu(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_ON,
+                                         EVENT_MENU_HELD,
+                                         STATE_MENU) {}
+        
+        void doTransition(unsigned long t) override;
+};
+
+class HideMenu : public ControlPanelTransition
+{
+public:
+        HideMenu(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_MENU,
+                                         EVENT_MENU_PRESSED,
+                                         STATE_ON) {}
+        
+        void doTransition(unsigned long t) override;
+};
+
+class NextMenuItem : public ControlPanelTransition
+{
+public:
+        NextMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_MENU,
+                                         EVENT_DOWN_PRESSED,
+                                         STATE_MENU) {}
+        
+        void doTransition(unsigned long t) override;
+};
+
+class PreviousMenuItem : public ControlPanelTransition
+{
+public:
+        PreviousMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_MENU,
+                                         EVENT_UP_PRESSED,
+                                         STATE_MENU) {}
+        
+        void doTransition(unsigned long t) override;
+};
+
+class SelectMenuItem : public ControlPanelTransition
+{
+public:
+        SelectMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_MENU,
+                                         EVENT_SELECT_PRESSED,
+                                         STATE_CONFIRM) {}
+};
+
+class SendingMenuItem : public ControlPanelTransition
+{
+public:
+        SendingMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_CONFIRM,
+                                         EVENT_SELECT_PRESSED,
+                                         STATE_SENDING) {}
+        
+        void doTransition(unsigned long t) override;
+};
+
+class CancelMenuItem : public ControlPanelTransition
+{
+public:
+        CancelMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_CONFIRM,
+                                         EVENT_MENU_PRESSED,
+                                         STATE_MENU) {}
+};
+
+class SentMenuItem : public ControlPanelTransition
+{
+public:
+        SentMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_SENDING,
+                                         EVENT_ACTION_SENT,
+                                         STATE_ON) {}
+
+        void doTransition(unsigned long t) override;
+};
+
+class TimeoutMenuItem : public ControlPanelTransition
+{
+public:
+        TimeoutMenuItem(ControlPanel *controlPanel)
+                : ControlPanelTransition(controlPanel,
+                                         STATE_SENDING,
+                                         EVENT_ACTION_TIMEOUT,
+                                         STATE_ON) {}
+        
+        void doTransition(unsigned long t) override;
+};
+
+#endif // __CONTROL_PANEL_TRANSITIONS_H

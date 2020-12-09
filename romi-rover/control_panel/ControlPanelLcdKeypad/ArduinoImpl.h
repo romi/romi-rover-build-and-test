@@ -34,7 +34,9 @@ public:
         virtual ~ArduinoImpl();
 
         unsigned long millis() override;
+        int analogRead(int pin) override;
         void digitalWrite(int pin, int high_low) override;
+        void pinMode(uint8_t pin, uint8_t mode) override;
 };
 
 #endif // __IARDUINO_H

@@ -21,16 +21,31 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __I_STATE_MACHINE_TIMER_H
-#define __I_STATE_MACHINE_TIMER_H
 
-#include "IStateMachine.h"
+#ifndef __EVENTS_H
+#define __EVENTS_H
 
-class IStateMachineTimer
-{
-public:
-        virtual void setTimeout(int milliseconds, int event) = 0;
-        virtual void update(unsigned long t) = 0;
+#include "Buttons.h"
+#include "IButtonPanel.h"
+
+enum {
+        EVENT_READY = 0,
+        EVENT_POWERUP,
+        EVENT_SHUTDOWN,
+        EVENT_POWERDOWN,
+        EVENT_ACTION_SENT,
+        EVENT_ACTION_TIMEOUT
 };
 
-#endif // __I_STATE_MACHINE_TIMER_H
+#define EVENT_BUTTON 0x1000
+
+#define ButtonEvent(_button, _state) ((int16_t) (EVENT_BUTTON | (_button << 4) | _state))
+
+#define EVENT_ONOFF_HELD ButtonEvent(BUTTON_ONOFF, BUTTON_HELD)
+#define EVENT_MENU_PRESSED ButtonEvent(BUTTON_MENU, BUTTON_PRESSED)
+#define EVENT_MENU_HELD ButtonEvent(BUTTON_MENU, BUTTON_HELD)
+#define EVENT_UP_PRESSED ButtonEvent(BUTTON_UP, BUTTON_PRESSED)
+#define EVENT_DOWN_PRESSED ButtonEvent(BUTTON_DOWN, BUTTON_PRESSED)
+#define EVENT_SELECT_PRESSED ButtonEvent(BUTTON_SELECT, BUTTON_PRESSED)
+
+#endif // __EVENTS_H

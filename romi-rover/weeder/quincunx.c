@@ -58,7 +58,8 @@ static void store_path(membuf_t *buffer, list_t *points, int h, double scale)
         
         point_t *p = list_get(points, point_t);
         x = p->x * scale;
-        y = h - p->y * scale;
+        /* y = h - p->y * scale; */
+        y = p->y * scale;
         membuf_printf(buffer, "M %f,%f L", x, y);
         points = list_next(points);
 
@@ -111,8 +112,6 @@ static void store_svg(fileset_t *fileset,
                 return;
         
         membuf_t *buffer = new_membuf();
-        if (buffer == NULL)
-                return;
         
         membuf_printf(buffer,
                       ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
@@ -130,6 +129,7 @@ static void store_svg(fileset_t *fileset,
         membuf_printf(buffer, "</svg>\n");
 
         file_import_svg(file, membuf_data(buffer), membuf_len(buffer));
+        delete_membuf(buffer);
 }
 
 static void store_quincunx_metadata(fileset_t *fileset, quincunx_module_t *module, double duration)
@@ -149,7 +149,7 @@ static void store_pattern_position(fileset_t *fileset, image_t *image,
                                    float dpx_plants, float dpx_rows,
                                    point_t ptn_pos)
 {
-        float red[3] = { 1.0f, 0.0f, 0.0f };
+        float grey[3] = { .5f, .5f, .5f };
         image_t *pattern = image_clone(image);
         for (int row = 0; row < 3; row++) {
                 int num_plants = ((row % 2) == 0)? 3 : 4;
@@ -157,7 +157,7 @@ static void store_pattern_position(fileset_t *fileset, image_t *image,
                 for (int plant = 0; plant < num_plants; plant++) {
                         float x = ptn_pos.x + row * dpx_rows;
                         float y = ptn_pos.y + dy + plant * dpx_plants;
-                        image_circle(pattern, x, y, 5.0f, red);
+                        image_circle(pattern, x, y, 15.0f, grey);
                 }
         }
 
@@ -204,14 +204,14 @@ static void store_positions_metadata(fileset_t *fileset, list_t *positions,
 static void store_adjusted_positions(fileset_t *fileset, image_t *image,
                                      list_t *positions, double meters_to_pixels)
 {
-        float red[3] = { 1.0f, 0.0f, 0.0f };
+        float grey[3] = { .5f, .5f, .5f };
         image_t *adjusted;
 
         // 1
         adjusted = image_clone(image);
         for (list_t *l = positions; l != NULL; l = list_next(l)) {
                 point_t *p = list_get(l, point_t);
-                image_circle(adjusted, p->x, p->y, 5.0f, red);
+                image_circle(adjusted, p->x, p->y, 5.0f, grey);
         }
         store_jpg(fileset, "positions", adjusted);
         delete_image(adjusted);
@@ -297,11 +297,14 @@ static image_t *compute_convolution(fileset_t *fileset, image_t *image, int w, f
                 corr_avg /= (corr->width * corr->height);
                 *avg = corr_avg;
 
-                image_t *im = image_clone(corr);
-                int len = im->width * im->height;
-                for (int i = 0; i < len; i++)
-                        im->data[i] /= corr_max;
-                store_png(fileset, "position-probability-map", im);
+                {
+                        image_t *im = image_clone(corr);
+                        int len = im->width * im->height;
+                        for (int i = 0; i < len; i++)
+                                im->data[i] /= corr_max;
+                        store_png(fileset, "position-probability-map", im);
+                        delete_image(im);
+                }
         } else {
                 corr = image_clone(image);
         }
@@ -369,7 +372,7 @@ static list_t *adjust_positions(image_t *p_map,
 {
         list_t *positions = NULL;
 
-        int num_pos = 10;
+        const int num_pos = 10;
         point_t pos[num_pos];
         float p[num_pos];
 
@@ -425,7 +428,6 @@ static list_t *compute_quincunx_positions(quincunx_module_t *module,
                                           float *confidence)
 {
         list_t *positions = NULL;
-        //double meters_to_pixels = mask->width / workspace->width_meter;
 
         // 
         int w = (int) (0.1f * module->meters_to_pixels);
@@ -464,6 +466,16 @@ static list_t *compute_quincunx_positions(quincunx_module_t *module,
         return positions;
 }
 
+enum {
+        INTERSECTS_ERROR = -1,
+        INTERSECTS_NOT = 0,
+        INTERSECTS_BORDER = 1,
+        INTERSECTS_IN_TWO_POINTS = 2,
+        INTERSECTS_FIRST_POINT_INSIDE = 3,
+        INTERSECTS_SECOND_POINT_INSIDE = 4,
+        INTERSECTS_BOTH_POINTS_INSIDE = 5
+};
+
 /*
   Returns:
 
@@ -475,9 +487,9 @@ static list_t *compute_quincunx_positions(quincunx_module_t *module,
   4: y1 is inside the circle. the segment crosses the circle at ys0
   5: no intersection, the segment is contained inside the circle
 */
-static int intersects(float x, float y0, float y1,
-                      point_t *p, float r,
-                      float *ys0p, float *ys1p)
+static int intersects_y(float x, float y0, float y1,
+                        point_t *p, float r,
+                        float *ys0p, float *ys1p)
 {
         // A small delta to ignore rounding errors. This corresponds
         // to 3 mm - IN OUR CASE. Adapt for any other situation.
@@ -486,14 +498,14 @@ static int intersects(float x, float y0, float y1,
         float d2 = dx * dx;
         float r2 = r * r;
         if (d2 + delta * delta > r2)
-                return 0;
+                return INTERSECTS_NOT;
         if (fabs(d2 - r2) < delta * delta) {
                 float ys = p->y;
                 if (p->y <= y0 || p->y >= y1)
-                        return 0;
+                        return INTERSECTS_NOT;
                 else {
                         *ys0p = ys;
-                        return 1;
+                        return INTERSECTS_BORDER;
                 }
         }
         float dy = sqrtf(r2 - d2);
@@ -514,23 +526,23 @@ static int intersects(float x, float y0, float y1,
                 y1 = ys1;
         
         if (ys1 < y0)
-                return 0;
+                return INTERSECTS_NOT;
         if (ys1 == y0)
-                return 1;
+                return INTERSECTS_BORDER;
         if (ys0 > y1)
-                return 0;
+                return INTERSECTS_NOT;
         if (ys0 == y1)
-                return 1;
-        if ((y0 <= ys0 && ys0 < y1) && (y0 < ys1 && ys1 <= y1))
-                return 2;
-        if ((ys0 < y0) && (y0 < ys1 && ys1 <= y1))
-                return 3;
-        if ((y0 <= ys0 && ys0 < y1) && ys1 > y1)
-                return 4;
+                return INTERSECTS_BORDER;
+        if ((y0 <= ys0 && y1 > ys0) && (y0 < ys1 && y1 >= ys1))
+                return INTERSECTS_IN_TWO_POINTS;
+        if ((ys0 < y0 && y0 < ys1) && (ys1 <= y1))
+                return INTERSECTS_FIRST_POINT_INSIDE;
+if ((y0 <= ys0) && (ys0 < y1 && ys1 > y1))
+                return INTERSECTS_SECOND_POINT_INSIDE;
         if (y0 > ys0 && y1 < ys1)
-                return 5;
+                return INTERSECTS_BOTH_POINTS_INSIDE;
         
-        return -1; // Shouldn't happen
+        return INTERSECTS_ERROR; // Shouldn't happen
 }
 
 /*
@@ -555,14 +567,14 @@ static int intersects_x(float y, float x0, float x1,
         float d2 = dy * dy;
         float r2 = r * r;
         if (d2 + delta * delta > r2)
-                return 0;
+                return INTERSECTS_NOT;
         if (fabs(d2 - r2) < delta * delta) {
                 float xs = p->x;
                 if (p->x <= x0 || p->x >= x1)
-                        return 0;
+                        return INTERSECTS_NOT;
                 else {
                         *xs0p = xs;
-                        return 1;
+                        return INTERSECTS_BORDER;
                 }
         }
         float dx = sqrtf(r2 - d2);
@@ -583,22 +595,23 @@ static int intersects_x(float y, float x0, float x1,
                 x1 = xs1;
         
         if (xs1 < x0)
-                return 0;
+                return INTERSECTS_NOT;
         if (xs1 == x0)
-                return 1;
+                return INTERSECTS_BORDER;
         if (xs0 > x1)
-                return 0;
+                return INTERSECTS_NOT;
         if (xs0 == x1)
-                return 1;
+                return INTERSECTS_BORDER;
         if ((x0 <= xs0 && xs0 < x1) && (x0 < xs1 && xs1 <= x1))
-                return 2;
+                return INTERSECTS_IN_TWO_POINTS;
         if ((xs0 < x0) && (x0 < xs1 && xs1 <= x1))
-                return 3;
+                return INTERSECTS_FIRST_POINT_INSIDE;
         if ((x0 <= xs0 && xs0 < x1) && xs1 > x1)
-                return 4;
+                return INTERSECTS_SECOND_POINT_INSIDE;
         if (x0 > xs0 && x1 < xs1)
-                return 5;
-        return -1; // Shouldn't happen
+                return INTERSECTS_BOTH_POINTS_INSIDE;
+        
+        return INTERSECTS_ERROR; // Shouldn't happen
 }
 
 static int largest_y_first(point_t *pa, point_t *pb)
@@ -616,6 +629,14 @@ static int smallest_x_first(point_t *pa, point_t *pb)
         return (pa->x < pb->x)? -1 : (pa->x == pb->x)? 0 : 1;
 }
 
+static list_t *path_append(list_t *path, float x, float y, float z)
+{
+        r_debug("Quincunx: (%.3f, %.3f)", x, y);        
+        return list_append(path, new_point(x, y, z));
+}
+
+// We're in pixel coordinates: X from left to right, Y from top to
+// bottom.
 static list_t *quincunx_boustrophedon(float x0, float x1, 
                                       float y0, float y1,
                                       float dx, 
@@ -630,6 +651,14 @@ static list_t *quincunx_boustrophedon(float x0, float x1,
         x = x0;
         y = y1;
 
+        /* r_debug("x0=%.3f, y1=%.3f", x0, y1); */
+        /* r_debug("x0=%.3f, y0=%.3f", x0, y0); */
+        /* path = list_append(path, new_point(x0, y1, z));  // DEBUG */
+        /* path = list_append(path, new_point(x0, y0, z));  // DEBUG */
+        
+        /* r_debug("y0=%.3f, y1=%.3f", y0, y1); */
+        /* return NULL; */
+        
         // FIXME:
         // - check that the circles don't overlap
         // - check that the tool doesn't start in an isolated corner
@@ -648,45 +677,53 @@ static list_t *quincunx_boustrophedon(float x0, float x1,
         for (list_t *l = pos; l != NULL; l = list_next(l)) {
                 float ys0, ys1;
                 point_t *p = list_get(l, point_t);
-                int deviation = intersects(x, y0, y1, p, radius, &ys0, &ys1);
+                int deviation = intersects_y(x, y0, y1, p, radius, &ys0, &ys1);
                 switch (deviation) {
-                case -1:
-                        r_warn("intersects returned -1");
+                case INTERSECTS_ERROR:
+                        r_warn("intersects returned INTERSECTS_ERROR");
                         break;
-                case 0: case 1:
+                case INTERSECTS_NOT:
+                case INTERSECTS_BORDER:
                         break;
-                case 2:
-                        if (y1 - p->y < radius + 1.0f)
-                                y = ys0;
+                case INTERSECTS_IN_TWO_POINTS:
+                        /* if (y1 - p->y < radius + 1.0f) */
+                        /*         y = ys0; */
                         break;
-                case 3:
-                        r_warn("starting point: intersects returned 3!");
+                case INTERSECTS_FIRST_POINT_INSIDE:
+                        /* y = ys1; */
                         break;
-                case 4:
+                case INTERSECTS_SECOND_POINT_INSIDE:
                         y = ys0;
+                        break;
+                case INTERSECTS_BOTH_POINTS_INSIDE:
+                        r_warn("TODO: starting point: unhandled case: both points inside!");
                         break;
                 }
         }
-        
-        path = list_append(path, new_point(x, y, z));
+
+        /* r_debug("x=%.3f, y=%.3f", x, y); */
+        path = path_append(path, x, y, z);
+
+        /* return path; // DEBUG */
         
         while (1) {
 
-                //// at the top, going down
+                //// at y1, going to y0
                 float yt = y0, xt;
                 pos = list_sort(pos, (compare_func_t) largest_y_first);
                 for (list_t *l = pos; l != NULL; l = list_next(l)) {
                         float ys0, ys1, dy, alpha0, alpha1, d_alpha;
                         int segments;
                         point_t *p = list_get(l, point_t);
-                        int deviation = intersects(x, y0, y, p, radius, &ys0, &ys1);
+                        int deviation = intersects_y(x, y0, y, p, radius, &ys0, &ys1);
                         switch (deviation) {
-                        case -1:
+                        case INTERSECTS_ERROR:
                                 r_warn("intersects returned -1");
                                 break;
-                        case 0: case 1:
+                        case INTERSECTS_NOT:
+                        case INTERSECTS_BORDER:
                                 break;
-                        case 2: 
+                        case INTERSECTS_IN_TWO_POINTS: 
                                 dy = ys1 - p->y;
                                 alpha0 = asinf(dy / radius);
                                 alpha1 = -alpha0;
@@ -711,24 +748,28 @@ static list_t *quincunx_boustrophedon(float x0, float x1,
                                         float alpha = alpha0 + i * d_alpha;
                                         float y_ = p->y + radius * sinf(alpha);
                                         float x_ = p->x + radius * cosf(alpha);
-                                        path = list_append(path, new_point(x_, y_, z));
+                                        path = path_append(path, x_, y_, z);
                                         y = y_;
                                 }
                                 break;
-                        case 3:
+                        case INTERSECTS_FIRST_POINT_INSIDE:
                                 if (x < p->x) {
                                         y = ys1;
                                         yt = y;
-                                        path = list_append(path, new_point(x, y, z));
+                                        path = path_append(path, x, y, z);
                                 } else {
                                         // move to the edge
                                         y = ys1;
-                                        path = list_append(path, new_point(x, y, z));
+                                        path = path_append(path, x, y, z);
                                         // go around
                                         dy = ys1 - p->y;
                                         alpha0 = asinf(dy / radius);
                                         alpha1 = asinf((y0 - p->y) / radius);
-                                        if (x + dx < p->x + radius) {
+                                        if (x + dx > x1) {
+                                                float alpha2 = acosf((x1 - p->x) / radius);
+                                                if (alpha2 > alpha1)
+                                                        alpha1 = alpha2;
+                                        } else if (x + dx < p->x + radius) {
                                                 float alpha2 = acosf((x + dx - p->x) / radius);
                                                 if (alpha2 > alpha1)
                                                         alpha1 = alpha2;
@@ -739,25 +780,27 @@ static list_t *quincunx_boustrophedon(float x0, float x1,
                                                 float alpha = alpha0 - i * d_alpha;
                                                 y = p->y + radius * sinf(alpha);
                                                 x = p->x + radius * cosf(alpha);
-                                                path = list_append(path, new_point(x, y, z));
+                                                path = path_append(path, x, y, z);
                                         }
                                         yt = y;
                                         
                                 }
                                 break;
-                        case 4:
-                                r_warn("intersects returned 4: should not happen here (at top, moving down)!");
+                        case INTERSECTS_SECOND_POINT_INSIDE:
+                                r_warn("intersects returned INTERSECTS_SECOND_POINT_INSIDE: should not happen here (at y1, moving to y0)!");
+                                break;
+                        case INTERSECTS_BOTH_POINTS_INSIDE:
+                                r_warn("TODO: unhandled case: both points inside (at y1, moving to y0)!");
                                 break;
                         }
                 }
                 if (y > yt) {
                         y = yt;
-                        path = list_append(path, new_point(x, y, z));
+                        path = path_append(path, x, y, z);
                 }
 
-
-
-                //// at the bottom, moving right
+                
+                //// at y0, moving right
                 xt = x0 + 2 * count * dx + dx;
                 if (xt > x1)
                         break;
@@ -770,21 +813,24 @@ static list_t *quincunx_boustrophedon(float x0, float x1,
                         point_t *p = list_get(l, point_t);
                         int deviation = intersects_x(y, x, xt, p, radius, &xs0, &xs1);
                         switch (deviation) {
-                        case -1:
+                        case INTERSECTS_ERROR:
                                 r_warn("intersects returned -1");
                                 break;
-                        case 0:
-                        case 1:
+                        case INTERSECTS_NOT:
+                        case INTERSECTS_BORDER:
                                 break;
-                        case 2:
-                        case 3:
+                        case INTERSECTS_IN_TWO_POINTS:
                                 // Should not happen
-                                r_warn("intersects returned 2 or 3: should not happen here (at bottom, moving right)!");
+                                r_warn("intersects returned INTERSECTS_IN_TWO_POINTS: should not happen here (at y0, moving right)!");
                                 break;
-                        case 4:
+                        case INTERSECTS_FIRST_POINT_INSIDE:
+                                // Should not happen
+                                r_warn("intersects returned INTERSECTS_FIRST_POINT_INSIDE: should not happen here (at y0, moving right)!");
+                                break;
+                        case INTERSECTS_SECOND_POINT_INSIDE:
                                 // move to the edge
                                 x = xs0;
-                                path = list_append(path, new_point(x, y, z));
+                                path = path_append(path, x, y, z);
                                 // go around
                                 dxp = x - p->x;
                                 alpha0 = acosf(dxp / radius);
@@ -797,32 +843,36 @@ static list_t *quincunx_boustrophedon(float x0, float x1,
                                         float alpha = alpha0 - i * d_alpha;
                                         y = p->y + radius * sinf(alpha);
                                         x = p->x + radius * cosf(alpha);;
-                                        path = list_append(path, new_point(x, y, z));
+                                        path = path_append(path, x, y, z);
                                 }
+                                break;
+                        case INTERSECTS_BOTH_POINTS_INSIDE:
+                                r_warn("TODO: unhandled case: both points inside (at y0, moving right)!");
                                 break;
                         }
                 }
                 if (x < xt) {
                         x = xt;
-                        path = list_append(path, new_point(x, y, z));
+                        path = path_append(path, x, y, z);
                 }
 
 
-                //// at the bottom, moving up
+                //// at y0, moving to y1
                 yt = y1;
                 pos = list_sort(pos, (compare_func_t) smallest_y_first);
                 for (list_t *l = pos; l != NULL; l = list_next(l)) {
                         float ys0, ys1, dy, alpha0, alpha1, d_alpha;
                         int segments;
                         point_t *p = list_get(l, point_t);
-                        int deviation = intersects(x, y, y1, p, radius, &ys0, &ys1);
+                        int deviation = intersects_y(x, y, y1, p, radius, &ys0, &ys1);
                         switch (deviation) {
-                        case -1:
+                        case INTERSECTS_ERROR:
                                 r_warn("intersects returned -1");
                                 break;
-                        case 0: case 1:
+                        case INTERSECTS_NOT:
+                        case INTERSECTS_BORDER:
                                 break;
-                        case 2:
+                        case INTERSECTS_IN_TWO_POINTS:
                                 dy = ys1 - p->y;
                                 alpha1 = asinf(dy / radius);
                                 alpha0 = -alpha1;
@@ -843,48 +893,59 @@ static list_t *quincunx_boustrophedon(float x0, float x1,
                                         float alpha = alpha0 + i * d_alpha;
                                         float y_ = p->y + radius * sinf(alpha);
                                         float x_ = p->x + radius * cosf(alpha);
-                                        path = list_append(path, new_point(x_, y_, z));
+                                        path = path_append(path, x_, y_, z);
                                         y = y_;
                                 }
                                 
                                 break;
-                        case 3:
-                                r_warn("intersects returned 3: should not happen here (at bottom, moving up)!");
+                        case INTERSECTS_FIRST_POINT_INSIDE:
+                                r_warn("intersects returned INTERSECTS_FIRST_POINT_INSIDE: should not happen here (at y0, moving to y1)!");
                                 break;
-                        case 4:
+                        case INTERSECTS_SECOND_POINT_INSIDE:
+                                r_warn("INTERSECTS_SECOND_POINT_INSIDE");
                                 if (x < p->x) {
                                         y = ys0;
                                         yt = y;
-                                        path = list_append(path, new_point(x, y, z));
+                                        path = path_append(path, x, y, z);
                                 } else {
+                                        r_warn("x >= p->x");
                                         dy = ys0 - p->y;
                                         alpha0 = asinf(dy / radius);
                                         alpha1 = asinf((y1 - p->y) / radius);
-                                        if (x + dx < p->x + radius) {
+                                        if (x + dx > x1) {
+                                                float alpha2 = -acosf((x1 - p->x) / radius);
+                                                if (alpha2 < alpha1)
+                                                        alpha1 = alpha2;
+                                        } else if (x + dx < p->x + radius) {
                                                 float alpha2 = -acosf((x + dx - p->x) / radius);
                                                 if (alpha2 < alpha1)
                                                         alpha1 = alpha2;
                                         }
                                         segments = (int) (1.0f + 6.0f * (alpha1 - alpha0) / M_PI);
+                                        r_warn("segments=%d", segments);
+
                                         d_alpha = (alpha1 - alpha0) / segments;
                                         for (int i = 0; i <= segments; i++) {
                                                 float alpha = alpha0 + i * d_alpha;
                                                 y = p->y + radius * sinf(alpha);
                                                 x = p->x + radius * cosf(alpha);
-                                                path = list_append(path, new_point(x, y, z));
+                                                path = path_append(path, x, y, z);
                                         }
                                         yt = y;
                                         
                                 }
                                 break;
+                        case INTERSECTS_BOTH_POINTS_INSIDE:
+                                r_warn("TODO: unhandled case: both points inside (at y0, moving to y1)!");
+                                break;
                         }
                 }
                 if (y < yt) {
                         y = yt;
-                        path = list_append(path, new_point(x, y, z));
+                        path = path_append(path, x, y, z);
                 }
                 
-                //// at the top, moving right
+                //// at y1, moving right
                 xt = x0 + 2 * count * dx + 2 * dx;
                 if (xt > x1)
                         break;
@@ -896,25 +957,28 @@ static list_t *quincunx_boustrophedon(float x0, float x1,
                         point_t *p = list_get(l, point_t);
                         int deviation = intersects_x(y, x, xt, p, radius, &xs0, &xs1);
                         switch (deviation) {
-                        case -1:
+                        case INTERSECTS_ERROR:
                                 r_warn("intersects returned -1");
                                 break;
-                        case 0:
-                        case 1:
+                        case INTERSECTS_NOT:
+                        case INTERSECTS_BORDER:
                                 break;
-                        case 2:
-                        case 3:
+                        case INTERSECTS_IN_TWO_POINTS:
                                 // Should not happen
-                                r_warn("intersects returned 2 or 3: should not happen here (at top, moving right)!");
+                                r_warn("intersects returned INTERSECTS_IN_TWO_POINTS: should not happen here (at y1, moving right)!");
                                 break;
-                        case 4:
+                        case INTERSECTS_FIRST_POINT_INSIDE:
+                                // Should not happen
+                                r_warn("intersects returned INTERSECTS_FIRST_POINT_INSIDE: should not happen here (at y1, moving right)!");
+                                break;
+                        case INTERSECTS_SECOND_POINT_INSIDE:
                                 // move down to pass in below of the zone
                                 //y = p->y - radius;
-                                //path = list_append(path, new_point(x, y, z));
+                                //path = path_append(path, x, y, z);
                                         
                                 // move to the edge
                                 x = xs0;
-                                path = list_append(path, new_point(x, y, z));
+                                path = path_append(path, x, y, z);
                                 // go around
                                 dxp = x - p->x;
                                 alpha0 = acosf(dxp / radius);
@@ -928,18 +992,20 @@ static list_t *quincunx_boustrophedon(float x0, float x1,
                                         float alpha = alpha0 + i * d_alpha;
                                         y = p->y + radius * sinf(alpha);
                                         x = p->x + radius * cosf(alpha);;
-                                        path = list_append(path, new_point(x, y, z));
+                                        path = path_append(path, x, y, z);
                                 }
 
                                         
+                                break;
+                        case INTERSECTS_BOTH_POINTS_INSIDE:
+                                r_warn("TODO: unhandled case: both points inside (at y1, moving right)!");
                                 break;
                         }
                 }
                 if (x < xt) {
                         x = xt;
-                        path = list_append(path, new_point(x, y, z));
+                        path = path_append(path, x, y, z);
                 }
-                
                 
                 count++;
         }
@@ -959,6 +1025,9 @@ static list_t *quincunx_module_compute(path_module_t *m,
         quincunx_module_t *module;
         float confidence = 0.0f;
         double start_time = clock_time();
+        float diameter;
+        float radius;
+        float border;
         
         module = (quincunx_module_t *) m;
 
@@ -968,10 +1037,10 @@ static list_t *quincunx_module_compute(path_module_t *m,
         if (positions == NULL)
                 goto cleanup_and_exit;
 
-        float diameter = (float) (module->meters_to_pixels * module->diameter_tool);
-        float radius = (float) (module->meters_to_pixels * module->radius_zones);
-        float border = diameter / 2.0f;
-        path = quincunx_boustrophedon(0.0f, (float) mask->width,
+        diameter = (float) (module->meters_to_pixels * module->diameter_tool);
+        radius = (float) (module->meters_to_pixels * module->radius_zones);
+        border = diameter / 2.0f;
+        path = quincunx_boustrophedon(border, (float) mask->width - border,
                                       border, (float) mask->height - border, 
                                       diameter, radius, positions);
         if (path == NULL)

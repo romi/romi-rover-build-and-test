@@ -28,8 +28,8 @@
 static int _initialized = 0;
 static char *_device = NULL;
 static mutex_t *_mutex = NULL;
+
 static serial_t *_serial = NULL;
-//static int serial_errors = 0;
 static membuf_t *_reply = NULL;
 
 static cnc_range_t _range = {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
@@ -41,6 +41,8 @@ static void broadcast_log(void *userdata, const char* s)
         if (log)
                 messagelink_send_str(log, s);
 }
+
+////////////////////////////////////////////
 
 static int open_serial(const char *dev)
 {
@@ -68,6 +70,8 @@ static void close_serial()
         mutex_unlock(_mutex);
 }
 
+////////////////////////////////////////////
+
 static int send_command_unlocked(const char *cmd, membuf_t *message)
 {
         int err = 0;
@@ -94,6 +98,19 @@ static int send_command(const char *cmd, membuf_t *message)
         err = send_command_unlocked(cmd, message);
         mutex_unlock(_mutex);
         return err;
+}
+
+////////////////////////////////////////////
+
+static int set_spindle_speed(double speed, membuf_t *message)
+{
+        const char *cmd = (speed == 0.0)? "M5" : "M3 S12000";
+        return send_command(cmd, message);
+}
+
+static int do_homing(membuf_t *message)
+{
+        return send_command("$H", message);
 }
 
 static int reset_cnc()
@@ -138,6 +155,73 @@ static int reset_cnc()
         return 0;
 }
 
+static int grbl_idle()
+{
+        int ret = -1;
+        const char *r;
+
+        r_debug("CNC: put '?'");
+        serial_lock(_serial);
+        serial_put(_serial, '?');
+        r = serial_readline(_serial, _reply);
+        serial_unlock(_serial);
+
+        if (r) r_debug("CNC status: '%s'", r);
+        else r_debug("CNC status: NULL!");
+
+        if (r == NULL)
+                ret = -1;
+        else if (r[0] != '<')
+                ret = -1;
+        else if (strlen(r) < 5)
+                ret = -1;
+        else if (strncmp(r+1, "Run", 3) == 0)
+                ret = 0;
+        else if (strncmp(r+1, "Idle", 4) == 0)
+                ret = 1;
+        else ret = 0;
+
+        return ret;
+}
+
+static void wait_cnc()
+{
+        double start_time = clock_time();
+
+        serial_lock(_serial);
+        serial_flush(_serial);
+        serial_unlock(_serial);
+
+        while (grbl_idle() != 1 && clock_time() - start_time < 600.0) {
+                r_debug("Waiting for CNC to finish");
+                clock_sleep(1);
+        }
+}
+
+static int moveto(int hasx, int hasy, int hasz,
+                  double x, double y, double z,
+                  membuf_t *message)
+{
+        int r;
+        membuf_t *buf = new_membuf();
+        membuf_printf(buf, "g0");
+        // Convert meters to millimeters
+        if (hasx)
+                membuf_printf(buf, " x%d", (int) (x * 1000.0));
+        if (hasy)
+                membuf_printf(buf, " y%d", (int) (y * 1000.0));
+        if (hasz)
+                membuf_printf(buf, " z%d", (int) (z * 1000.0));
+        membuf_append_zero(buf);
+
+        r = send_command_unlocked(membuf_data(buf), message);
+
+        delete_membuf(buf);
+        return r;
+}
+
+//////////////////////////////////////////////
+
 static int set_device(const char *dev)
 {
         close_serial();
@@ -151,38 +235,22 @@ static int set_device(const char *dev)
 
 static int get_device()
 {
- //       int err = 0;
-//        if (_device == NULL) {
-//
-//                // If device != NULL, it was given on the command
-//                // line. The command line has priority over the
-//                // configuration file.
-//
-//                const char *device = json_object_getstr(config, "device");
-//                if (device == NULL) {
-//                        r_err("Missing value 'grbl.device' in configuration");
-//                        err = -1;
-//                } else {
-//                        err = set_device(device);
-//                }
-//        }
-
         if (_device == NULL) {
-            const char *dev = NULL;
-            json_object_t port = client_get("configuration", "ports/grbl/port");
-            if (!json_isstring(port)) {
-                r_err("missing value for 'ports' in the configuration");
-                json_unref(port);
-                return -1;
-            } else {
-                dev = json_string_value(port);
-            }
+                const char *dev = NULL;
+                json_object_t port = client_get("configuration", "ports/grbl/port");
+                if (!json_isstring(port)) {
+                        r_err("missing value for 'ports' in the configuration");
+                        json_unref(port);
+                        return -1;
+                } else {
+                        dev = json_string_value(port);
+                }
 
-            if (set_device(dev) != 0) {
+                if (set_device(dev) != 0) {
+                        json_unref(port);
+                        return -1;
+                }
                 json_unref(port);
-                return -1;
-            }
-            json_unref(port);
         }
 
         return 0;
@@ -229,7 +297,7 @@ static int get_configuration()
         return err;
 }
 
-static int cnc_init()
+static int try_cnc_init()
 {
         if (_initialized)
                 return 0;
@@ -249,8 +317,24 @@ static int cnc_init()
         return 0;
 }
 
+static int cnc_init()
+{
+        int r = -1;
+        for (int i = 0; i < 10; i++) {
+                if (try_cnc_init() == 0) {
+                        r = 0;
+                        break;
+                }
+                r_err("cnc_init failed: attempt %d/10", i);
+                clock_sleep(0.5);
+        }
+        return r;
+}
+
 int grbl_init(int argc, char **argv)
 {
+        int r = 0;
+        
         r_log_set_writer(broadcast_log, NULL);
         
         _mutex = new_mutex();
@@ -259,19 +343,13 @@ int grbl_init(int argc, char **argv)
         if (argc >= 2) {
                 r_debug("using serial device given on command line: '%s'", argv[1]);
                 if (set_device(argv[1]) != 0)
-                        return -1;
-                return 0;
+                        r = -1;
         }
 
-        for (int i = 0; i < 10; i++) {
-                if (cnc_init() == 0)
-                        return 0;
-                r_err("cnc_init failed: attempt %d/10", i);
-                clock_sleep(0.2);
-        }
-
-        r_err("failed to initialize the cnc");
-        return -1;
+        if (r == 0)
+                r = cnc_init();
+        
+        return r;
 }
 
 void grbl_cleanup()
@@ -281,47 +359,15 @@ void grbl_cleanup()
         delete_membuf(_reply);
 }
 
-static int grbl_idle()
+static int cnc_move(int hasx, int hasy, int hasz,
+                    double x, double y, double z,
+                    membuf_t *message)
 {
-        int ret = -1;
-        const char *r;
-
-        r_debug("CNC: put '?'");
-        serial_lock(_serial);
-        serial_put(_serial, '?');
-        r = serial_readline(_serial, _reply);
-        serial_unlock(_serial);
-
-        if (r) r_debug("CNC status: '%s'", r);
-        else r_debug("CNC status: NULL!");
-
-        if (r == NULL)
-                ret = -1;
-        else if (r[0] != '<')
-                ret = -1;
-        else if (strlen(r) < 5)
-                ret = -1;
-        else if (strncmp(r+1, "Run", 3) == 0)
-                ret = 0;
-        else if (strncmp(r+1, "Idle", 4) == 0)
-                ret = 1;
-        else ret = 0;
-
-        return ret;
-}
-
-static void wait_cnc()
-{
-        double start_time = clock_time();
-
-        serial_lock(_serial);
-        serial_flush(_serial);
-        serial_unlock(_serial);
-
-        while (grbl_idle() != 1 && clock_time() - start_time < 600.0) {
-                r_debug("Waiting for CNC to finish");
-                clock_sleep(1);
-        }
+        int r;
+        mutex_lock(_mutex); 
+        r = moveto(hasx, hasy, hasz, x, y, z, message);
+        mutex_unlock(_mutex);
+        return r;
 }
 
 int cnc_onmoveto(void *userdata,
@@ -345,9 +391,13 @@ int cnc_onmoveto(void *userdata,
                 membuf_printf(message, "No coordinates given");
                 return -1;
         }
-        if (hasx) x = json_object_getnum(command, "x");
-        if (hasy) y = json_object_getnum(command, "y");
-        if (hasz) z = json_object_getnum(command, "z");
+        if (hasx)
+                x = json_object_getnum(command, "x");
+        if (hasy)
+                y = json_object_getnum(command, "y");
+        if (hasz)
+                z = json_object_getnum(command, "z");
+        
         if (isnan(x) || isnan(y) || isnan(z)) {
                 membuf_printf(message, "Invalid coordinates");
                 return -1;
@@ -368,22 +418,9 @@ int cnc_onmoveto(void *userdata,
                 return -1;
         }
 
-        membuf_t *buf = new_membuf();
-        membuf_printf(buf, "g0");
-        // Convert meters to millimeters
-        if (hasx) membuf_printf(buf, " x%d", (int) (x * 1000.0));
-        if (hasy) membuf_printf(buf, " y%d", (int) (y * 1000.0));
-        if (hasz) membuf_printf(buf, " z%d", (int) (z * 1000.0));
-        membuf_append_zero(buf);
-
-        mutex_lock(_mutex);
-
-        int err = send_command_unlocked(membuf_data(buf), message);
+        int err = cnc_move(hasx, hasy, hasz, x, y, z, message);
         if (err == 0)
                 wait_cnc();
-
-        mutex_unlock(_mutex);
-        delete_membuf(buf);
 
         return err;
 }
@@ -405,7 +442,12 @@ static int path_is_valid_point(json_object_t path, int i, membuf_t *message)
                 }
                 v[j] = json_number_value(n);
         }
-        return cnc_range_is_valid(&_range, v[0], v[1], v[2]);
+        
+        int valid = cnc_range_is_valid(&_range, v[0], v[1], v[2]);
+        if (!valid)
+                membuf_printf(message, "Point %d is out of range: (%.3f, %.3f, %.3f)",
+                              i, v[0], v[1], v[2]);
+        return valid;
 }
 
 static int path_is_valid(json_object_t path, membuf_t *message)
@@ -427,10 +469,8 @@ static int path_is_valid(json_object_t path, membuf_t *message)
         }
 
         for (int i = 0; i < json_array_length(path); i++) {
-                if (!path_is_valid_point(path, i, message)) {
-                        membuf_printf(message, "Point %d is out of range", i);
+                if (!path_is_valid_point(path, i, message))
                         return 0;
-                }
         }
 
         return 1;
@@ -453,7 +493,6 @@ int cnc_ontravel(void *userdata,
                 return -1;
 
         int err = 0;
-        membuf_t *buf = new_membuf();
         
         mutex_lock(_mutex);        
         
@@ -463,19 +502,16 @@ int cnc_ontravel(void *userdata,
                 double y = json_array_getnum(p, 1);
                 double z = json_array_getnum(p, 2);
                 r_debug("point %d: %d %d %d", i, (int) (x * 1000.0), (int) (y * 1000.0), (int) (z * 1000.0));
-                membuf_clear(buf);
-                membuf_printf(buf, "g0 x%d y%d z%d", (int) (x * 1000.0), (int) (y * 1000.0), (int) (z * 1000.0));
-                membuf_append_zero(buf);
-                err = send_command_unlocked(membuf_data(buf), message);
-                if (err) break;
-                clock_sleep(1.0);
+                err = moveto(1, 1, 1, x, y, z, message);
+                if (err)
+                        break;
+                clock_sleep(0.5);
         }
+        
+        mutex_unlock(_mutex);        
 
         if (err == 0)
                 wait_cnc();
-        
-        mutex_unlock(_mutex);        
-        delete_membuf(buf);
 
         return err;
 }
@@ -498,8 +534,7 @@ int cnc_onspindle(void *userdata,
                 return -1;
         }
 
-        const char *cmd = (speed == 0.0)? "M5" : "M3 S12000";
-        return send_command(cmd, message);
+        return set_spindle_speed(speed, message);
 }
 
 int cnc_onhoming(void *userdata,
@@ -513,5 +548,5 @@ int cnc_onhoming(void *userdata,
                 membuf_printf(message, "CNC not initialized");
                 return 0;
         }
-        return send_command("$H", message);
+        return do_homing(message);
 }

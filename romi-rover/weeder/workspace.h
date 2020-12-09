@@ -48,13 +48,10 @@ extern "C" {
 // workspace, measured in millimeters.
 
 typedef struct _workspace_t {
-        double theta;
         int x0;
         int y0;
         int width;
         int height;
-        double width_meter;
-        double height_meter;
 } workspace_t;
 
 int workspace_parse(workspace_t *workspace, json_object_t obj);

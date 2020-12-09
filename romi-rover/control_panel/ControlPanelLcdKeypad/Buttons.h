@@ -21,26 +21,17 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "StateMachineTimer.h"
 
-void StateMachineTimer::setTimeout(int milliseconds, int event)
-{
-        _enabled = 1;
-        _timeout = _arduino->millis() + milliseconds;
-        _event = event;
-}
+#ifndef __BUTTONS_H
+#define __BUTTONS_H
 
-void StateMachineTimer::update(unsigned long t)
-{
-        if (_enabled && t > _timeout) {
-                _stateMachine->handleEvent(_event);
-                // int r = stateMachine.handleEvent(_event);
-                // if (r == StateMachine::OK)
-                //         Serial.println("OK");
-                // else if (r == StateMachine::Ignored)
-                //         Serial.println("bad state");
-                // else 
-                //         Serial.println("failed");
-                _enabled = 0;
-        }
-}
+enum {
+        BUTTON_ONOFF = 0,
+        BUTTON_MENU,
+        BUTTON_UP,
+        BUTTON_DOWN,
+        BUTTON_SELECT,
+        BUTTON_LAST
+};
+
+#endif // __BUTTONS_H
