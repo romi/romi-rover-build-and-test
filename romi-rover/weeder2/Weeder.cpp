@@ -103,9 +103,16 @@ namespace romi {
         void Weeder::scale_to_range(Path &path)
         {
                 r_debug("Weeder::scale_to_range");
+
+                // The y-axis of the rover is inverted with respect to
+                // the image coordinates.
+                path_invert_y(path);
+
+                // The path has x,y coordinates in the range [0,1].
+                // Map these coordinates to the physical dimensions of
+                // the workspace.
                 path_scale(path, _range._x[1] - _range._x[0],
                            _range._y[1] - _range._y[0], 1.0);
-                
                 path_translate(path, _range._x[0], _range._y[0], 0.0);
                 
                 path_set_z(path, _z0);

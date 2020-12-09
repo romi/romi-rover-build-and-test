@@ -69,6 +69,12 @@ namespace romi {
                 return r;
         }
 
+        inline void path_invert_y(Path &path) {
+                for (size_t i = 0; i < path.size(); i++) {
+                        path[i].y = -path[i].y;
+                }
+        }
+
         inline void path_scale(Path &path, double ax, double ay, double az) {
                 for (size_t i = 0; i < path.size(); i++) {
                         path[i].x *= ax;
