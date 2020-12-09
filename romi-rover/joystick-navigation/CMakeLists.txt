@@ -4,12 +4,32 @@ project(joystick_navigation)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
-add_executable(joystick_navigation joystick_navigation.c joystick_navigation_main.c)
-target_link_libraries(joystick_navigation romi rcom r)
+set(SOURCES
+  DebugMotorController.h
+  EventMapper.h
+  IEventMapper.h
+  IJoystick.h
+  IMotorController.h
+  INavigation.h
+  IStateMachine.h
+  IStateTransition.h
+  Joystick.cpp
+  Joystick.h
+  JoystickStateTransitions.h
+  main.cpp
+  Navigation.h
+  rcgen.json
+  StateMachine.h
+  StateTransition.h
+  )
+
+add_executable(joystick_navigation ${SOURCES})
+
+target_link_libraries(joystick_navigation romi librcom r)
 install(TARGETS joystick_navigation DESTINATION bin/romi)
 
-ADD_CUSTOM_COMMAND(
-  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/joystick_navigation_main.c
-  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/joystick_navigation_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
-  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
-  )
+#ADD_CUSTOM_COMMAND(
+#  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/joystick_navigation_main.c
+#  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/joystick_navigation_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
+#  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
+#  )
