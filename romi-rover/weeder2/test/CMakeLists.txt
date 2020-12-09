@@ -1,0 +1,23 @@
+
+cmake_minimum_required(VERSION 3.10)
+
+set(SRCS_JSON src/tests_main.cpp src/test_json.cpp ../JSON.h)
+
+add_executable(r_unit_tests_weeder2_json ${SRCS_JSON})
+
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/.." )
+
+target_link_libraries(r_unit_tests_weeder2_json gtest gmock r)
+
+add_test(
+    NAME r_unit_tests_weeder2_json
+    COMMAND r_unit_tests_weeder2_json
+)
+
+#if(BUILD_COVERAGE)
+#    SETUP_TARGET_FOR_COVERAGE_LCOV(
+#            NAME r_unit_tests_weeder2_json
+#            EXECUTABLE ctest -V ${n_cores}
+#            DEPENDENCIES r_unit_tests_weeder2_json)
+#endif()
+

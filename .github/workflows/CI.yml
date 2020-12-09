@@ -28,7 +28,8 @@ jobs:
       - name: Install test dependencies
         run: |
           sudo apt install socat
-          sudo apt-get install libgps-dev
+          # Only needed when gpsd is added to the build.
+          # sudo apt-get install libgps-dev
 
       - name: Create Build Environment & configure CMake
         working-directory: ${{runner.workspace}}/romi-rover-build-and-test
