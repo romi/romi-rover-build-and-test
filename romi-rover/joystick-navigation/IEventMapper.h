@@ -1,7 +1,7 @@
 /*
   romi-rover
 
-  Copyright (C) 2019 Sony Computer Science Laboratories
+  Copyright (C) 2019-2020 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
   romi-rover is collection of applications for the Romi Rover.
@@ -21,9 +21,19 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include <rcom.h>
+#ifndef __ROMI_I_EVENT_MAPPER_H
+#define __ROMI_I_EVENT_MAPPER_H
 
-int joystick_init(int argc, char **argv);
-void joystick_cleanup();
-void joystick_handle_events();
+#include "IJoystick.h"
 
+namespace romi {
+
+        class IEventMapper
+        {
+        public:
+                virtual ~IEventMapper() = default;
+                virtual int16_t map(JoystickEvent &event) = 0;
+        };
+}
+
+#endif // __ROMI_I_EVENT_MAPPER_H
