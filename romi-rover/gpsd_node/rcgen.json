@@ -1,0 +1,14 @@
+{
+    "name": "gpsd_node",
+    "com": [
+        {
+            "type": "datahub",
+            "topic": "gps",
+            "onbroadcast": "gpsd_node_broadcast_position"
+        },
+        {
+            "type": "messagelink",
+            "topic": "logger"
+        }
+    ]
+}
