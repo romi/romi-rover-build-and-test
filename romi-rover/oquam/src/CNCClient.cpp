@@ -50,7 +50,7 @@ namespace romi {
                                 retval = error_status("Unknown command");
                         }
 
-                } catch (std::exception e) {
+                } catch (std::exception &e) {
                         retval = error_status(e.what());
                 }
                 
