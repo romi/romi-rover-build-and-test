@@ -60,6 +60,7 @@ add_subdirectory(gimbal_servo)
 add_subdirectory(gimbal_bldc)
 add_subdirectory(oquam)
 add_subdirectory(arduino_libraries)
+add_subdirectory(joystick-navigation)
 
 if(WITH_REALSENSE)
   add_subdirectory(realsense)
