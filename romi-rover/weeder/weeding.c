@@ -241,6 +241,16 @@ list_t *pipeline_run(pipeline_t *pipeline,
         if (path == NULL)
                 goto cleanup_and_exit;
 
+        {
+                membuf_t *path_buffer = new_membuf();
+                for (list_t *l = path; l != NULL; l = list_next(l)) {
+                        point_t *p = list_get(l, point_t);
+                        membuf_printf(path_buffer, "%0.6f %0.6f\n", 3.0f * p->x, 3.0f * p->y);
+                }                
+                store_text(fileset, "path.txt", path_buffer);
+                delete_membuf(path_buffer);
+        }
+        
         // 4. Change the coordinates from pixels to meters
         
         double ax = (pipeline->cnc_range->x[1] -  pipeline->cnc_range->x[0]) / mask->width;

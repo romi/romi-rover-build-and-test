@@ -1,24 +1,43 @@
 [
     {
         "name": "move-forward",
-        "display_name": "Forward",
+        "display_name": "Forward 60cm",
         "script": [
-            {"action": "move", "distance": 0.60}
+            {"action": "move", "distance": 0.60, "speed": 400}
         ]
     },
     {
         "name": "move-backward",
-        "display_name": "Backward",
+        "display_name": "Backward 60cm",
         "script": [
-            {"action": "move", "distance": -0.60}
+            {"action": "move", "distance": -0.60, "speed": 400}
         ]
     },
     {
         "name": "weeding",
-        "display_name": "Weeding",
+        "display_name": "Hoe salads",
         "script": [
-            {"action": "hoe", "method": "quincunx",
-             "distance-plants": 0.30, "distance-rows": 0.2}
+            {
+                "action": "hoe",
+                "method": "quincunx",
+                "rows": 3, 
+                "distance-plants": 0.30,
+                "distance-rows": 0.25
+            }
+        ]
+    },
+    {
+        "name": "start_recording",
+        "display_name": "Start recording",
+        "script": [
+            {"action": "start_recording", "minimum-displacement": 0.04}
+        ]
+    },
+    {
+        "name": "stop_recording",
+        "display_name": "Stop recording",
+        "script": [
+            {"action": "stop_recording"}
         ]
     },
     {
