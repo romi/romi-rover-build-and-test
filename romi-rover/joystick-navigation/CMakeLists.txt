@@ -18,7 +18,6 @@ set(SOURCES
   JoystickStateTransitions.h
   main.cpp
   Navigation.h
-  rcgen.json
   StateMachine.h
   StateTransition.h
   )
@@ -27,9 +26,3 @@ add_executable(joystick_navigation ${SOURCES})
 
 target_link_libraries(joystick_navigation romi librcom r)
 install(TARGETS joystick_navigation DESTINATION bin/romi)
-
-#ADD_CUSTOM_COMMAND(
-#  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/joystick_navigation_main.c
-#  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/joystick_navigation_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
-#  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
-#  )
