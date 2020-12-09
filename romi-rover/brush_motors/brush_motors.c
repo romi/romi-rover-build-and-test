@@ -144,7 +144,6 @@ static int reset_controller(serial_t *serial)
         if (reply == NULL)
                 return -1;
 
-        
         // TODO
         serial_lock(serial);        
         serial_println(serial, "X");

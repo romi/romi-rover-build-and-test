@@ -51,8 +51,8 @@ Ext. controller   Uno
 
 */
 
-#define USE_GSHIELD 0
-#define USE_RAMPS 1
+#define USE_GSHIELD 1
+#define USE_RAMPS 0
 #define USE_EXT_CONTROLLER 0
 
 #if USE_GSHIELD

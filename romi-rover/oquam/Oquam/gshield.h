@@ -133,9 +133,9 @@ void init_output_pins();
                 __mask |= (1 << __axis);                \
         }
 
-#define toggle_x_step(__mask)  toggle_step(__axis, X_STEP_BIT)
-#define toggle_y_step(__mask)  toggle_step(__axis, Y_STEP_BIT)
-#define toggle_z_step(__mask)  toggle_step(__axis, Z_STEP_BIT)
+#define toggle_x_step(__mask)  toggle_step(__mask, X_STEP_BIT)
+#define toggle_y_step(__mask)  toggle_step(__mask, Y_STEP_BIT)
+#define toggle_z_step(__mask)  toggle_step(__mask, Z_STEP_BIT)
 
 /**
  * \brief Enable the DIR pins according to mask.
