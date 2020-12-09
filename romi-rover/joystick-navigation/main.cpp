@@ -171,10 +171,10 @@ int main(int argc, char** argv)
                         }
                 }
                 
-        } catch (std::runtime_error e) {
+        } catch (std::runtime_error& e) {
                 r_err("main: std::runtime_error: %s", e.what());
                 
-        } catch (std::exception e) {
+        } catch (std::exception& e) {
                 r_err("main: std::exception: %s", e.what());
         }
 
