@@ -132,7 +132,7 @@ TEST_F(envelope_parser_tests, parser_returns_correct_crc_5)
         ASSERT_EQ(result, 0x04);
 }
 
-TEST_F(envelope_parser_tests, parser_succeeds_on_opcode_without_metadata)
+TEST_F(envelope_parser_tests, parser_fails_on_opcode_without_metadata)
 {
         // Arrange
         EnvelopeParser parser;
@@ -144,10 +144,7 @@ TEST_F(envelope_parser_tests, parser_succeeds_on_opcode_without_metadata)
         send_command(parser, s, r, e);
         
         //Assert
-        assert_success(r, e);
-        ASSERT_STREQ(parser.message(), "e");
-        ASSERT_EQ(parser.id(), 0);
-        ASSERT_EQ(parser.has_id(), false);
+        assert_failure(r, e, romiserial_envelope_missing_metadata);
 }
 
 TEST_F(envelope_parser_tests, parser_returns_correct_id)
