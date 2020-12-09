@@ -74,7 +74,7 @@ TEST_F(romiserialclient_tests, message_without_args)
 {
         // Arrange
         setExpectedOutput("#a:008e\r");
-        initInput("#a[0]:00e7\r\n");
+        initInput("#a[0]:00e7\r");
 
         // Act
         json_object_t response = client.send("a");
@@ -92,7 +92,7 @@ TEST_F(romiserialclient_tests, message_with_args)
 {
         // Arrange
         setExpectedOutput("#a[1,2,3]:00dd\r");
-        initInput("#a[0]:00e7\r\n");
+        initInput("#a[0]:00e7\r");
 
         // Act
         json_object_t response = client.send("a[1,2,3]");
@@ -110,7 +110,7 @@ TEST_F(romiserialclient_tests, error_reponse)
 {
         // Arrange
         setExpectedOutput("#a:008e\r");
-        initInput("#a[1,\"Went to bed early\"]:00f2\r\n");
+        initInput("#a[1,\"Went to bed early\"]:00f2\r");
 
         // Act
         json_object_t response = client.send("a");
@@ -130,7 +130,7 @@ TEST_F(romiserialclient_tests, error_reponse_without_message)
 {
         // Arrange
         setExpectedOutput("#a:008e\r");
-        initInput("#a[1]:0085\r\n");
+        initInput("#a[1]:0085\r");
 
         // Act
         json_object_t response = client.send("a");
@@ -145,29 +145,11 @@ TEST_F(romiserialclient_tests, error_reponse_without_message)
         json_unref(response);
 }
 
-TEST_F(romiserialclient_tests, trailing_message)
-{
-        // Arrange
-        setExpectedOutput("#a:008e\r");
-        initInput("#a[0]:ff30\r\n#a[0]:00e7\r\n");
-
-        // Act
-        json_object_t response = client.send("a");
-        
-        //Assert
-        EXPECT_EQ(expected_message, output_message);
-        EXPECT_EQ(1, json_isarray(response));
-        EXPECT_EQ(1, json_array_length(response));
-        EXPECT_EQ(0, json_array_getnum(response, 0));
-
-        json_unref(response);
-}
-
 TEST_F(romiserialclient_tests, log_message)
 {
         // Arrange
         setExpectedOutput("#a:008e\r");
-        initInput("!LOG MESSAGE\r\n#a[0]:00e7\r\n");
+        initInput("#!LOG MESSAGE:008e\r#a[0]:00e7\r");
 
         // Act
         json_object_t response = client.send("a");

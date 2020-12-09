@@ -171,7 +171,7 @@ protected:
 TEST_F(romiserial_tests, romiserial_test_handler_without_args)
 {
         // Arrange
-        initInputs("#a\r");
+        initInputs("#a:xxxx\r");
         expectOKMessage('a', 0);
 
         // Act
@@ -210,7 +210,7 @@ TEST_F(romiserial_tests, romiserial_test_handler_with_crc_mismatch)
 TEST_F(romiserial_tests, romiserial_test_bad_number_of_arguments)
 {
         // Arrange
-        initInputs("#a[1]\r");
+        initInputs("#a[1]:xxxx\r");
         expectErrorMessage('a', 0, romiserial_bad_number_of_arguments);
 
         // Act
@@ -223,7 +223,7 @@ TEST_F(romiserial_tests, romiserial_test_bad_number_of_arguments)
 TEST_F(romiserial_tests, romiserial_test_string_when_none_required)
 {
         // Arrange
-        initInputs("#a[\"Start worrying, details follow\"]\r");
+        initInputs("#a[\"Start worrying, details follow\"]:xxxx\r");
         expectErrorMessage('a', 0, romiserial_bad_string);
 
         // Act
@@ -236,7 +236,7 @@ TEST_F(romiserial_tests, romiserial_test_string_when_none_required)
 TEST_F(romiserial_tests, romiserial_test_string_too_long)
 {
         // Arrange
-        initInputs("#a[\"Start worrying. Details to follow.\"]\r");
+        initInputs("#a[\"Start worrying. Details to follow.\"]:xxxx\r");
         expectErrorMessage('a', 0, romiserial_string_too_long);
 
         // Act
@@ -249,7 +249,7 @@ TEST_F(romiserial_tests, romiserial_test_string_too_long)
 TEST_F(romiserial_tests, romiserial_test_unknown_opcode)
 {
         // Arrange
-        initInputs("#z\r");
+        initInputs("#z:xxxx\r");
         expectErrorMessage('z', 0, romiserial_unknown_opcode);
 
         // Act
@@ -262,7 +262,7 @@ TEST_F(romiserial_tests, romiserial_test_unknown_opcode)
 TEST_F(romiserial_tests, romiserial_test_handler_fails_to_send_message)
 {
         // Arrange
-        initInputs("#b\r");
+        initInputs("#b:xxxx\r");
         expectErrorMessage('b', 0, romiserial_bad_handler);
 
         // Act
@@ -275,7 +275,7 @@ TEST_F(romiserial_tests, romiserial_test_handler_fails_to_send_message)
 TEST_F(romiserial_tests, romiserial_test_handler_with_bad_number_of_arguments_1)
 {
         // Arrange
-        initInputs("#c\r");
+        initInputs("#c:xxxx\r");
         expectErrorMessage('c', 0, romiserial_bad_number_of_arguments);
 
         // Act
@@ -288,7 +288,7 @@ TEST_F(romiserial_tests, romiserial_test_handler_with_bad_number_of_arguments_1)
 TEST_F(romiserial_tests, romiserial_test_handler_with_bad_number_of_arguments_2)
 {
         // Arrange
-        initInputs("#c[1]\r");
+        initInputs("#c[1]:xxxx\r");
         expectErrorMessage('c', 0, romiserial_bad_number_of_arguments);
 
         // Act
@@ -301,7 +301,7 @@ TEST_F(romiserial_tests, romiserial_test_handler_with_bad_number_of_arguments_2)
 TEST_F(romiserial_tests, romiserial_test_handler_with_bad_number_of_arguments_3)
 {
         // Arrange
-        initInputs("#c[1,2,3]\r");
+        initInputs("#c[1,2,3]:xxxx\r");
         expectErrorMessage('c', 0, romiserial_bad_number_of_arguments);
 
         // Act
@@ -314,7 +314,7 @@ TEST_F(romiserial_tests, romiserial_test_handler_with_bad_number_of_arguments_3)
 TEST_F(romiserial_tests, romiserial_test_handler_with_two_arguments)
 {
         // Arrange
-        initInputs("#c[1,2]\r");
+        initInputs("#c[1,2]:xxxx\r");
         expectOKMessage('c', 0);
 
         // Act
@@ -327,7 +327,7 @@ TEST_F(romiserial_tests, romiserial_test_handler_with_two_arguments)
 TEST_F(romiserial_tests, romiserial_test_handler_with_string_argument)
 {
         // Arrange
-        initInputs("#d[\"Do it once, perfectly\"]\r");
+        initInputs("#d[\"Do it once, perfectly\"]:xxxx\r");
         expectOKMessage('d', 0);
 
         // Act
@@ -340,7 +340,7 @@ TEST_F(romiserial_tests, romiserial_test_handler_with_string_argument)
 TEST_F(romiserial_tests, romiserial_test_handler_with_string_and_extra_argument)
 {
         // Arrange
-        initInputs("#d[\"Do it correctly or don't do it\",1]\r");
+        initInputs("#d[\"Do it correctly or don't do it\",1]:xxxx\r");
         expectErrorMessage('d', 0, romiserial_bad_number_of_arguments);
 
         // Act
@@ -353,7 +353,7 @@ TEST_F(romiserial_tests, romiserial_test_handler_with_string_and_extra_argument)
 TEST_F(romiserial_tests, romiserial_test_handler_that_returns_values)
 {
         // Arrange
-        initInputs("#e\r");
+        initInputs("#e:xxxx\r");
         expectMessage('e', 0, "[0,1,2]");
 
         // Act

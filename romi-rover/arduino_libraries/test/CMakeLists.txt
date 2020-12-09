@@ -67,10 +67,10 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
 target_link_libraries(r_unit_tests_romiserial r gtest gmock)
 
-#add_test(
-#    NAME r_unit_tests_romiserial
-#    COMMAND r_unit_tests_romiserial
-#)
+add_test(
+    NAME r_unit_tests_romiserial
+    COMMAND r_unit_tests_romiserial
+)
 
 
 
@@ -96,10 +96,10 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
 target_link_libraries(r_unit_tests_romiserialclient r gtest gmock)
 
-#add_test(
-#    NAME r_unit_tests_romiserialclient
-#    COMMAND r_unit_tests_romiserialclient
-#)
+add_test(
+    NAME r_unit_tests_romiserialclient
+    COMMAND r_unit_tests_romiserialclient
+)
 
 
 

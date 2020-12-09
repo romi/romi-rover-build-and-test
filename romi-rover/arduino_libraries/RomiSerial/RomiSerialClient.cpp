@@ -313,6 +313,7 @@ json_object_t RomiSerialClient::read_response()
         while (!has_response) {
 
                 int available = _in->available();
+                
                 if (available > 0) {
                         
                         bool has_message = handle_one_char();
