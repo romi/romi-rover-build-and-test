@@ -48,7 +48,7 @@ set(SOURCES
   )
 
 add_executable(oquam ${SOURCES})
-target_link_libraries(oquam r librcom romi)
+target_link_libraries(oquam r rcom romi)
 target_include_directories(oquam PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src")
 install(TARGETS oquam DESTINATION bin/romi)
 
