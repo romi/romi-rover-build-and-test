@@ -53,7 +53,7 @@ add_executable(weeder2
   Weeder.cpp
   weeder_main.cpp)
 
-target_link_libraries(weeder2 librcom romi r m)
+target_link_libraries(weeder2 rcom romi r m)
 
 if(BUILD_TESTS)
     add_subdirectory(test)
