@@ -45,6 +45,7 @@ namespace romi {
                 }
 
                 JSON execute_moveat(JSON &cmd) {
+                        r_debug("RPCNavigation::navigation: execute_moveat");
                         double left = cmd.array("speed").num(0);
                         double right = cmd.array("speed").num(1);
                         if (_navigation.moveat(left, right))
@@ -54,6 +55,7 @@ namespace romi {
                 }
 
                 JSON execute_move(JSON &cmd) {
+                        r_debug("RPCNavigation::navigation: execute_move");
                         double distance = cmd.num("distance");
                         double speed = cmd.num("speed");
                         if (_navigation.move(distance, speed))
@@ -61,18 +63,29 @@ namespace romi {
                         else
                                 return error_status("move failed");
                 }
+
+                JSON execute_stop(JSON &cmd) {
+                        r_debug("RPCNavigation::navigation: execute_stop");
+                        if (_navigation.stop())
+                                return ok_status();
+                        else
+                                return error_status("stop failed");
+                }
                 
         public:
                 RPCNavigation(INavigation &navigation) : _navigation(navigation) {}
                 virtual ~RPCNavigation() override = default;
 
                 JSON execute(JSON cmd) override {
+                        r_debug("RPCNavigation::navigation: execute");
                         JSON response;
                         const char *command = cmd.str("command");
                         if (rstreq(command, "moveat")) {
                                 response = execute_moveat(cmd);
                         } else if (rstreq(command, "move")) {
                                 response = execute_move(cmd);
+                        } else if (rstreq(command, "stop")) {
+                                response = execute_stop(cmd);
                         } else {
                                 response = error_status("Unknown command");
                         }

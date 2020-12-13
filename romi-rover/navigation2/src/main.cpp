@@ -104,8 +104,6 @@ int main(int argc, char** argv)
                 RoverConfiguration rover(rover_settings);
                 
                 JSON driver_settings = navigation_settings.get("brush-motor-driver");
-
-                
                 
                 // TODO: check for serial_device in config
                 RSerial serial(options.serial_device, 115200, 1);        

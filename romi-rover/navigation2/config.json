@@ -5,20 +5,23 @@
             "wheel_diameter": 0.506,
             "wheel_base": 1.00,
             "encoder_steps": 2100,
-            "maximum_speed": 1.0,
+            "maximum_speed": 1.0
         },
         
         "motor-driver": "brush-motor-driver",
 
         "brush-motor-driver": {
-            "maximum_signal_amplitude": 90,
-            "use_pid": false,
+            "maximum_signal_amplitude": 20,
+            "use_pid": true,
             "pid": {
-                "kp": 0,
-                "ki": 0,
+                "kp": 0.7,
+                "ki": 0.03,
                 "kd": 0
             },
-            "encoder_directions": {"left": -1, "right": 1 }
+            "encoder_directions": {
+                "left": -1,
+                "right": 1
+            }
         }
     }
 }

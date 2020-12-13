@@ -42,6 +42,7 @@ namespace romi {
                 RoverConfiguration &_rover;
                 mutex_t *_mutex;
                 int _status;
+                int _stop;
 
                 bool do_move(double distance, double speed);
                 bool do_move2(double distance, double speed);
@@ -88,6 +89,16 @@ namespace romi {
                         return success;
                         
                 }
+
+                bool stop() override {
+                        // This flag should assure that we break out
+                        // the wait_travel loop.
+                        _stop = true;
+                        bool success = _driver.stop();
+                        _status = ROVER_MOVEAT_CAPABLE;
+                        return success;
+                }
+                
         };
 }
 

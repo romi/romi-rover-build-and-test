@@ -250,16 +250,16 @@ static void rover_update_pose(rover_t *r,
         //r_debug("quaternion: %f %f %f %f", dtheta.s, dtheta.v.x, dtheta.v.y, dtheta.v.z);
 }
 
-void rover_get_wheel_speeds(rover_t *r, double speed, double radius, double *left, double *right)
-{
-        if (radius == 0.0) {
-                *left = 0.0;
-                *right = 0.0;
-        } else {
-                *left = speed * (radius - 0.5 * r->wheel_base) / radius;
-                *right = speed * (radius + 0.5 * r->wheel_base) / radius;
-        }
-}
+/* void rover_get_wheel_speeds(rover_t *r, double speed, double radius, double *left, double *right) */
+/* { */
+/*         if (radius == 0.0) { */
+/*                 *left = 0.0; */
+/*                 *right = 0.0; */
+/*         } else { */
+/*                 *left = speed * (radius - 0.5 * r->wheel_base) / radius; */
+/*                 *right = speed * (radius + 0.5 * r->wheel_base) / radius; */
+/*         } */
+/* } */
 
 /* double rover_convert_distance(rover_t *r, double distance) */
 /* { */

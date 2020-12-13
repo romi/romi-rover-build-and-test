@@ -41,6 +41,9 @@ namespace romi {
                  * relative to the maximum speed, i.e. its valus
                  * should be in the range [-1,1]. */
                 virtual bool move(double distance, double speed) = 0;
+
+                /** Stops immediately. */
+                virtual bool stop() = 0;
         };
 }
 

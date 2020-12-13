@@ -86,8 +86,10 @@ namespace romi {
 
         public:
 
-                BrushMotorDriver(IRomiSerialClient &serial, JSON &config,
-                                 int encoder_steps, double max_revolutions_per_sec)
+                BrushMotorDriver(IRomiSerialClient &serial,
+                                 JSON &config,
+                                 int encoder_steps,
+                                 double max_revolutions_per_sec)
                         : _serial(serial) {
                         
                         if (!configure_controller(config, encoder_steps, max_revolutions_per_sec)

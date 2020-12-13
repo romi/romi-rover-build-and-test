@@ -30,11 +30,8 @@ namespace romi {
         {
                 double timeout = 0.0;
                 if (speed != 0.0) {
-                        if (speed < 0.0)
-                                speed = -speed;
-                        
                         double relative_speed = _rover.maximum_speed * speed;
-                        double time = distance / relative_speed;
+                        double time = distance / fabs(relative_speed);
                         timeout = 1.5 * time;
                 }
                 return timeout;
@@ -45,8 +42,10 @@ namespace romi {
                 bool success = false;
                 double left, right, timestamp;
                 double start_time = clock_time();
+
+                _stop = false;
                 
-                while (true) {
+                while (!_stop) {
                         
                         _driver.get_encoder_values(left, right, timestamp);
                         odometry.set_encoders(left, right, timestamp);
@@ -64,7 +63,7 @@ namespace romi {
                                 _driver.moveat(0, 0);
                                 clock_sleep(0.100); // FIXME
                                 success = true;
-                                break;
+                                _stop = true;
                         }
 
                         double now = clock_time();
@@ -72,7 +71,7 @@ namespace romi {
                                 r_err("Navigation::wait_travel: time out (%f s)", timeout);
                                 _driver.moveat(0, 0);
                                 success = false;
-                                break;
+                                _stop = true;
                         }
 
                         clock_sleep(0.010);
