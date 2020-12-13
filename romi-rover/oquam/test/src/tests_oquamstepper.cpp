@@ -41,24 +41,22 @@ TEST_F(oquamstepper_tests, test_homing_romiserial)
         RomiSerialClient romi_serial(&serial, &serial);
         romi_serial.set_debug(debug_romi_serial);
 
-        json_object_t reply = romi_serial.send("H");
+        JSON reply;
+        romi_serial.send("H", reply);
         
         //json_print(reply, k_json_pretty);
 
-        ASSERT_EQ(true, json_isarray(reply));
-        ASSERT_EQ(1, json_array_length(reply));
-        ASSERT_EQ(0.0, json_array_getnum(reply, 0));
-        json_unref(reply);
+        ASSERT_EQ(true, reply.isarray());
+        ASSERT_EQ(1, reply.length());
+        ASSERT_EQ(0.0, reply.num(0));
 
         while (true) {
-                reply = romi_serial.send("I");
+                romi_serial.send("I", reply);
                 //json_print(reply, k_json_pretty);
-                if (1 == (int) json_array_getnum(reply, 1)) {
-                        json_unref(reply);
+                if (1 == (int) reply.num(1)) {
                         break;
                 }
                 clock_sleep(1.0);
-                json_unref(reply);
         }
 }
 

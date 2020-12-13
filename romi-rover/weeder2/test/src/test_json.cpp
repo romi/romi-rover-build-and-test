@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "JSON.h"
+#include <romi/JSON.h>
 
 using namespace std;
 using namespace testing;

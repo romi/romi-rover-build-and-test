@@ -7,7 +7,6 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../../arduino_libraries/RomiSe
 set(SRCS_OQUAMSTEPPER
   src/tests_main.cpp
   src/tests_oquamstepper.cpp
-  ../src/JSON.h
   ../src/ICNCController.h
   ../src/StepperController.h
   ../src/StepperController.cpp

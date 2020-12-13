@@ -62,6 +62,7 @@ add_subdirectory(gimbal_bldc)
 add_subdirectory(oquam)
 add_subdirectory(arduino_libraries)
 add_subdirectory(joystick-navigation)
+add_subdirectory(navigation2)
 #add_subdirectory(gpsd_node)
 
 if(WITH_REALSENSE)

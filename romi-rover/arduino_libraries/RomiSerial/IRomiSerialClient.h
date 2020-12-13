@@ -24,7 +24,7 @@
 #ifndef __I_ROMI_SERIAL_CLIENT_H
 #define __I_ROMI_SERIAL_CLIENT_H
 
-#include <r.h>
+#include "JSON.h"
 
 class IRomiSerialClient
 {
@@ -47,7 +47,7 @@ public:
          *  first value is not zero then the second element of the
          *  array is a string with a human-readable error message.
          */
-        virtual json_object_t send(const char *request) = 0;
+        virtual void send(const char *request, JSON &response) = 0;
 };
 
 #endif

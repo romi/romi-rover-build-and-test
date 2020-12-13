@@ -46,19 +46,20 @@ protected:
         EnvelopeParser _parser;
 
         int make_request(const char *command, std::string &request);
-        json_object_t try_sending_request(std::string &request);
+        JSON try_sending_request(std::string &request);
         bool send_request(std::string &request);
         const char *get_error_message(int code);
-        json_object_t make_error(int code);
+        JSON make_error(int code);
         bool handle_one_char();
         bool parse_char(int c);
-        json_object_t parse_response();
-        json_object_t read_response();
+        JSON parse_response();
+        JSON read_response();
         bool can_write();
         bool filter_log_message();
-        json_object_t check_error_response(json_object_t data);
+        JSON check_error_response(JSON data);
 
 public:
+        
         RomiSerialClient(IInputStream *in = 0, IOutputStream *out = 0);
         virtual ~RomiSerialClient() override;
 
@@ -73,8 +74,7 @@ public:
                 return _id;
         }
         
-        json_object_t send(const char *command) override;
-
+        void send(const char *command, JSON &response) override;
         
         void set_debug(bool value) {
                 _debug = value;

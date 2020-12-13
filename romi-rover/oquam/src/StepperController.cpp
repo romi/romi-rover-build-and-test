@@ -31,7 +31,7 @@ namespace romi {
         int StepperController::send_command(const char *command)
         {
                 int r = -1;
-                json_object_t response;
+                JSON response;
 
                 /* The number of loops is a bit random but it avoids
                  * an infinite loop. The loop will take at the most 10
@@ -41,38 +41,34 @@ namespace romi {
 
                         //r_debug("StepperController::send_command: %s", command);
                         
-                        response = _romi_serial.send(command);
+                        _romi_serial.send(command, response);
 
-                        if (json_isarray(response)
-                            && json_isnumber(json_array_get(response, 0))) {
+                        if (response.isarray()
+                            && response.get(0).isnumber()) {
                                 
-                                r = (int) json_array_getnum(response, 0);
+                                r = (int) response.num(0);
                                 
                                         
                                 if (r == 0) {
-                                        json_unref(response);
                                         break;
                                 
                                 } else if (r == 1) {
                                         // Error code 1 indicates that the
                                         // command buffer in the firmware is
                                         // full. Wait a bit and try again.
-                                        json_unref(response);
                                         clock_sleep(0.2);
                                                 
                                 } else {
                                         r_err("StepperController::execute: "
-                                              "error: %s",
-                                              json_array_getstr(response, 1));
-                                        json_unref(response);
+                                              "error: %s", response.str(1));
                                         break;
                                 }
                                 
                         } else {
-                                char buffer[256];
-                                json_tostring(response, buffer, 256);
+                                std::string s;
+                                response.tostring(s);
                                 r_debug("StepperController::send_command: "
-                                        "invalid response: %s", buffer);
+                                        "invalid response: %s", s.c_str());
                         }
                 }
                         
@@ -96,9 +92,8 @@ namespace romi {
                 int idle = -1;
                 int state = '?';
                 
-                // FIXME: RomiSerial should use JSON.h!
-                json_object_t obj = _romi_serial.send("I");
-                JSON s = JSON::moveto(obj);
+                JSON s;
+                _romi_serial.send("I", s);
 
                 int r = (int) s.num(0);
                 if (r == 0) {
@@ -135,9 +130,9 @@ namespace romi {
         {
                 bool success = false;
                 
-                // FIXME: RomiSerial should use JSON.h!
-                json_object_t obj = _romi_serial.send("P");
-                JSON s = JSON::moveto(obj);
+                JSON s;
+
+                _romi_serial.send("P", s);
 
                 int r = (int) s.num(0);
                 if (r == 0) {

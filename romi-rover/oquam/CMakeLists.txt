@@ -11,7 +11,6 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../arduino_libraries/RomiSeria
 
 set(SOURCES
   src/main.cpp
-  src/JSON.h
   src/Path.h
   src/CNCRange.h
   src/ICNCController.h

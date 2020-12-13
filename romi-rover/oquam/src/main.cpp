@@ -3,7 +3,6 @@
 #include <string.h>
 #include <rcom.h>
 
-#include "ControllerServer.h"
 #include "CNCClient.h"
 #include "Oquam.h"
 #include "StepperController.h"
@@ -11,6 +10,7 @@
 #include "RSerial.h"
 #include "ConfigurationFile.h"
 #include "DebugWeedingSession.h"
+#include "ControllerServer.h"
 
 using namespace romi;
 

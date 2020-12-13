@@ -1,0 +1,256 @@
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
+#include "BrushMotorDriver.h"
+#include "JSONConfiguration.h"
+#include "../mock/mock_romiserialclient.h"
+
+using namespace std;
+using namespace testing;
+using namespace romi;
+
+class brushmotordriver_tests : public ::testing::Test
+{
+protected:
+        MockRomiSerialClient serial;
+        vector<string> expected_output;
+        vector<string> observed_output;
+        vector<string> mock_response;
+        JSONConfiguration config;
+        
+	brushmotordriver_tests() {
+                const char * config_string = "{"
+                        "'brush-motor-controller': {"
+                        "'steps_per_revolution': 123,"
+                        "'maximum_speed_revolution_per_sec': 1.7,"
+                        "'maximum_signal_amplitude': 71,"
+                        "'use_pid': false,"
+                        "'pid': {'kp': 1.1, 'ki': 2.2, 'kd': 3.3},"
+                        "'encoder_directions': {'left': -1, 'right': 1 }}}";
+                config.set(JSON::parse(config_string));
+	}
+
+	~brushmotordriver_tests() override = default;
+
+	void SetUp() override {
+	}
+
+	void TearDown() override {
+	}
+
+        void append_output(const char *s, JSON &response) {
+                size_t index = observed_output.size();
+                observed_output.push_back(s);
+                response = JSON::parse(mock_response[index].c_str());
+        }
+
+        void add_expected_output(const char *command, const char *response) {
+                expected_output.push_back(command);
+                mock_response.push_back(response);
+                EXPECT_CALL(serial, send(_,_))
+                        .WillOnce(Invoke(this, &brushmotordriver_tests::append_output))
+                        .RetiresOnSaturation();
+        }
+};
+
+TEST_F(brushmotordriver_tests, parse_config)
+{
+        BrushMotorDriverSettings settings;
+
+        settings.parse(config);
+        
+        //Assert
+        ASSERT_EQ(settings.steps, 123);
+        ASSERT_EQ(settings.max_speed, 1.7);
+        ASSERT_EQ(settings.max_signal, 71);
+        ASSERT_EQ(settings.use_pid, false);
+        ASSERT_EQ(settings.kp, 1.1);
+        ASSERT_EQ(settings.ki, 2.2);
+        ASSERT_EQ(settings.kd, 3.3);
+        ASSERT_EQ(settings.dir_left, -1);
+        ASSERT_EQ(settings.dir_right, 1);
+}
+
+TEST_F(brushmotordriver_tests, successful_config_and_enable)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+        
+        BrushMotorDriver driver(serial, config);
+
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+}
+
+TEST_F(brushmotordriver_tests, throws_exception_at_failed_config)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[1]");
+
+        try {
+                BrushMotorDriver driver(serial, config);
+                FAIL() << "Expected std::runtime_error";
+        }  catch (std::runtime_error const &e) {
+                EXPECT_STREQ(e.what(), "BrushMotorDriver: Initialization failed");
+        } catch (...) {
+                FAIL() << "Expected std::runtime_error";
+        }
+}
+
+TEST_F(brushmotordriver_tests, throws_exception_at_failed_enable)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[1]");
+
+        try {
+                BrushMotorDriver driver(serial, config);
+                FAIL() << "Expected std::runtime_error";
+        }  catch (std::runtime_error const &e) {
+                
+                EXPECT_STREQ(e.what(), "BrushMotorDriver: Initialization failed");
+                ASSERT_EQ(expected_output.size(), observed_output.size());
+                ASSERT_STREQ(observed_output[0].c_str(),
+                             expected_output[0].c_str());
+
+        } catch (...) {
+                FAIL() << "Expected std::runtime_error";
+        }
+}
+
+TEST_F(brushmotordriver_tests, returns_true_on_successful_moveat)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+        add_expected_output("V[100,200]", "[0]");
+
+        BrushMotorDriver driver(serial, config);
+        bool success = driver.moveat(0.1, 0.2);
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        ASSERT_EQ(success, true);
+}
+
+TEST_F(brushmotordriver_tests, returns_false_on_unsuccessful_moveat)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+        add_expected_output("V[100,200]", "[1,'Just fooling you']");
+        
+        BrushMotorDriver driver(serial, config);
+        bool success = driver.moveat(0.1, 0.2);
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        
+        ASSERT_EQ(success, false);
+}
+
+TEST_F(brushmotordriver_tests, returns_true_on_successful_get_encoders)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+        add_expected_output("e", "[0,100,200]");
+
+        BrushMotorDriver driver(serial, config);
+        double left, right;
+        bool success = driver.get_encoder_values(left, right);
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        ASSERT_EQ(success, true);
+        ASSERT_EQ(left, 100.0);
+        ASSERT_EQ(right, 200.0);
+}
+
+TEST_F(brushmotordriver_tests, returns_false_on_unsuccessful_get_encoders)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+        add_expected_output("e", "[1,'TEST']");
+
+        BrushMotorDriver driver(serial, config);
+        double left, right;
+        bool success = driver.get_encoder_values(left, right);
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        ASSERT_EQ(success, false);
+}
+
+TEST_F(brushmotordriver_tests, returns_false_on_invalid_speeds_1)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+
+        BrushMotorDriver driver(serial, config);
+        bool success = driver.moveat(2.0, 0.0);
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        ASSERT_EQ(success, false);
+}
+
+TEST_F(brushmotordriver_tests, returns_false_on_invalid_speeds_2)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+
+        BrushMotorDriver driver(serial, config);
+        bool success = driver.moveat(-2.0, 0.0);
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        ASSERT_EQ(success, false);
+}
+
+TEST_F(brushmotordriver_tests, returns_false_on_invalid_speeds_3)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+
+        BrushMotorDriver driver(serial, config);
+        bool success = driver.moveat(0.0, -1.1);
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        ASSERT_EQ(success, false);
+}
+
+TEST_F(brushmotordriver_tests, returns_false_on_invalid_speeds_4)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+
+        BrushMotorDriver driver(serial, config);
+        bool success = driver.moveat(0.0, 1.1);
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        ASSERT_EQ(success, false);
+}
