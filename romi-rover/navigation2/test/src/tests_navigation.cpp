@@ -295,3 +295,80 @@ TEST_F(navigation_tests, move_returns_true_on_zero_distance)
         bool success = navigation.move(0.0, 1.0);
         ASSERT_EQ(success, true);
 }
+
+TEST_F(navigation_tests, move_fails_on_bad_speed_1)
+{
+        RoverConfiguration rover(config);
+        Navigation navigation(driver, rover);
+        
+        EXPECT_CALL(driver, stop())
+                .WillOnce(Return(true))
+                .RetiresOnSaturation();
+        
+        bool success = navigation.move(3.0, 2.0);
+        ASSERT_EQ(success, false);
+}
+
+TEST_F(navigation_tests, move_fails_on_bad_speed_2)
+{
+        RoverConfiguration rover(config);
+        Navigation navigation(driver, rover);
+        
+        EXPECT_CALL(driver, stop())
+                .WillOnce(Return(true))
+                .RetiresOnSaturation();
+        
+        bool success = navigation.move(3.0, -1.1);
+        ASSERT_EQ(success, false);
+}
+
+TEST_F(navigation_tests, move_fails_on_bad_speed_3)
+{
+        RoverConfiguration rover(config);
+        Navigation navigation(driver, rover);
+        
+        EXPECT_CALL(driver, stop())
+                .WillOnce(Return(true))
+                .RetiresOnSaturation();
+        
+        bool success = navigation.move(3.0, 0);
+        ASSERT_EQ(success, false);
+}
+
+TEST_F(navigation_tests, move_return_false_on_failing_stop)
+{
+        RoverConfiguration rover(config);
+        Navigation navigation(driver, rover);
+        
+        EXPECT_CALL(driver, stop())
+                .WillOnce(Return(false))
+                .RetiresOnSaturation();
+        
+        EXPECT_CALL(driver, stop())
+                .WillOnce(Return(false))
+                .RetiresOnSaturation();
+        
+        bool success = navigation.move(3.0, 0.5);
+        ASSERT_EQ(success, false);
+}
+
+TEST_F(navigation_tests, move_return_false_on_failing_get_encoders)
+{
+        RoverConfiguration rover(config);
+        Navigation navigation(driver, rover);
+        
+        EXPECT_CALL(driver, stop())
+                .WillOnce(Return(true))
+                .RetiresOnSaturation();
+                
+        EXPECT_CALL(driver, get_encoder_values(_,_,_))
+                .WillOnce(Return(false))
+                .RetiresOnSaturation();
+        
+        EXPECT_CALL(driver, stop())
+                .WillOnce(Return(true))
+                .RetiresOnSaturation();
+        
+        bool success = navigation.move(3.0, 0.5);
+        ASSERT_EQ(success, false);
+}

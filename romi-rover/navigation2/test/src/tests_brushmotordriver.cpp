@@ -170,7 +170,7 @@ TEST_F(brushmotordriver_tests, returns_true_on_successful_get_encoders)
         ASSERT_EQ(success, true);
         ASSERT_EQ(left, 100.0);
         ASSERT_EQ(right, 200.0);
-        ASSERT_EQ(timestamp, 300.0);
+        ASSERT_EQ(timestamp, 0.300);
 }
 
 TEST_F(brushmotordriver_tests, returns_false_on_unsuccessful_get_encoders)

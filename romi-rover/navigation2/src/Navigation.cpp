@@ -135,7 +135,7 @@ namespace romi {
                                 success = do_move2(distance, speed);
                                 
                         } else {
-                                r_err("Navigation::do_move: failed to initialize");
+                                r_err("Navigation::do_move: stop failed");
                         }
                         
                 } else {
