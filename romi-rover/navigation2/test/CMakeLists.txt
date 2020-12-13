@@ -19,15 +19,15 @@ add_executable(r_unit_tests_navigation_motorcontroller ${SRCS_MOTORCONTROLLER})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(r_unit_tests_navigation_motorcontroller r rcom gtest gmock)
 
-#add_test(
-#    NAME r_unit_tests_navigation_motorcontroller
-#    COMMAND r_unit_tests_navigation_motorcontroller
-#)
+add_test(
+    NAME r_unit_tests_navigation_motorcontroller
+    COMMAND r_unit_tests_navigation_motorcontroller
+)
 
-#if(BUILD_COVERAGE)
-#    SETUP_TARGET_FOR_COVERAGE_LCOV(
-#            NAME r_unit_tests_navigation_motorcontroller
-#            EXECUTABLE ctest -V ${n_cores}
-#            DEPENDENCIES r_unit_tests_navigation_motorcontroller)
-#endif()
+if(BUILD_COVERAGE)
+    SETUP_TARGET_FOR_COVERAGE_LCOV(
+            NAME r_navigation_motorcontroller_coverage
+            EXECUTABLE ctest -V ${n_cores}
+            DEPENDENCIES r_unit_tests_navigation_motorcontroller)
+endif()
 
