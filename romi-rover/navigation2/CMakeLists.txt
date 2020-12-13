@@ -21,6 +21,7 @@ add_executable(navigation2
   src/WheelOdometry.h
   src/INavigation.h
   src/Navigation.h
+  src/Navigation.cpp
   ../arduino_libraries/RomiSerial/IInputStream.h
   ../arduino_libraries/RomiSerial/IOutputStream.h
   ../arduino_libraries/RomiSerial/CRC8.h

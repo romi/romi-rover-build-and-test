@@ -21,29 +21,25 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_I_MOTORDRIVER_H
-#define __ROMI_I_MOTORDRIVER_H
+#ifndef __R_SYNCHRONIZED_CODE_BLOCK_H
+#define __R_SYNCHRONIZED_CODE_BLOCK_H
+
+#include <r.h>
 
 namespace romi {
-        
-        class IMotorDriver
+
+        class SynchronizedCodeBlock
         {
+        protected:
+                mutex_t *_mutex;                
         public:
-                
-                virtual ~IMotorDriver() = default;
-
-                /** The left and right speed are relative speeds. They
-                 * must have a value between -1 and 1, and indicate
-                 * the fraction of the maximum allowed speed. */
-                virtual bool moveat(double left, double right) = 0;
-
-                /** Stop as quick as possible. */
-                virtual bool stop() = 0;
-
-                /** Returns the values of the encoders. The timestamp
-                 * is in seconds. */
-                virtual bool get_encoder_values(double &left, double &right, double &timestamp) = 0;
+                SynchronizedCodeBlock(mutex_t *mutex) : _mutex(mutex) {
+                        mutex_lock(_mutex);
+                }
+                ~SynchronizedCodeBlock() {
+                        mutex_unlock(_mutex);
+                }
         };
 }
 
-#endif // __ROMI_I_MOTORDRIVER_H
+#endif // __R_SYNCHRONIZED_CODE_BLOCK_H

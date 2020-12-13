@@ -115,7 +115,7 @@ int main(int argc, char** argv)
                                         rover.encoder_steps,
                                         rover.max_revolutions_per_sec);
 
-                Navigation navigation(driver);
+                Navigation navigation(driver, rover);
                 
                 RPCNavigation navigation_adaptor(navigation);
                 RPCServer server(navigation_adaptor,

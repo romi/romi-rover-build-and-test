@@ -24,8 +24,8 @@ add_test(
 set(SRCS_MOTORCONTROLLER 
   src/tests_main.cpp
   src/tests_brushmotordriver.cpp
-  ../src/BrushMotorDriver.h
   ../src/IMotorDriver.h
+  ../src/BrushMotorDriver.h
   ../../arduino_libraries/RomiSerial/MessageParser.h
   ../../arduino_libraries/RomiSerial/MessageParser.cpp
   ../../arduino_libraries/RomiSerial/EnvelopeParser.h
@@ -69,10 +69,38 @@ add_test(
 
 
 
+set(SRCS_NAVIGATION 
+  src/tests_main.cpp
+  src/tests_navigation.cpp
+  mock/mock_motordriver.h
+  ../src/INavigation.h
+  ../src/Navigation.h
+  ../src/Navigation.cpp
+  ../src/WheelOdometry.h
+  ../src/IMotorDriver.h
+  ../src/vector.h
+  ../src/vector.c
+  ../src/rover.h
+  ../src/rover.c
+  ../src/quaternion.h
+  ../src/quaternion.c
+  )
+
+add_executable(r_unit_tests_navigation_navigation ${SRCS_NAVIGATION})
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+target_link_libraries(r_unit_tests_navigation_navigation r gtest gmock)
+
+add_test(
+    NAME r_unit_tests_navigation_navigation
+    COMMAND r_unit_tests_navigation_navigation
+)
+
+
+
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
             NAME r_navigation_motorcontroller_coverage
             EXECUTABLE ctest -V ${n_cores}
-            DEPENDENCIES r_unit_tests_navigation_motorcontroller r_unit_tests_navigation_roverconfiguration r_unit_tests_navigation_wheelodometry)
+            DEPENDENCIES r_unit_tests_navigation_motorcontroller r_unit_tests_navigation_roverconfiguration r_unit_tests_navigation_wheelodometry  r_unit_tests_navigation_navigation)
 endif()
 

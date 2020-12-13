@@ -99,6 +99,17 @@ namespace romi {
                 
                 virtual ~BrushMotorDriver() override = default;
 
+                bool stop() override {
+                        JSON response;
+                        _serial.send("X", response);
+                        bool success = (response.num(0) == 0);
+                        if (!success) {
+                                r_err("BrushMotorDriver::stop: %s",
+                                      response.str(1));
+                        }
+                        return success;
+                }
+
                 bool moveat(double left, double right) override {
                         bool success = false;
                         

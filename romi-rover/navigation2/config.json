@@ -1,22 +1,25 @@
 {    
-    "brush-motor-controller": {
-        "steps_per_revolution": 2100,
-        "maximum_speed_revolution_per_sec": 1.0,
-        "maximum_signal_amplitude": 90,
-        "use_pid": false,
-        "pid": {
-            "kp": 0,
-            "ki": 0,
-            "kd": 0
+    "navigation": {
+
+        "rover": {
+            "wheel_diameter": 0.506,
+            "wheel_base": 1.00,
+            "encoder_steps": 2100,
+            "maximum_speed": 1.0,
         },
-        "encoder_directions": {"left": -1, "right": 1 }
-    },
-    "rover": {
-        "wheel_diameter": 0.506,
-        "wheel_base": 1.00,
-        "width": 1.10,
-        "length": 1.40,
-        "encoder_steps": 7168
+        
+        "motor-driver": "brush-motor-driver",
+
+        "brush-motor-driver": {
+            "maximum_signal_amplitude": 90,
+            "use_pid": false,
+            "pid": {
+                "kp": 0,
+                "ki": 0,
+                "kd": 0
+            },
+            "encoder_directions": {"left": -1, "right": 1 }
+        }
     }
 }
 

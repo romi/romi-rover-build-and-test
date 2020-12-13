@@ -26,6 +26,9 @@
 
 #include "INavigation.h" 
 #include "SynchronizedCodeBlock.h" 
+#include "RoverConfiguration.h"
+#include "IMotorDriver.h"
+#include "WheelOdometry.h" 
 
 namespace romi {
         
@@ -36,16 +39,18 @@ namespace romi {
                 enum { ROVER_MOVEAT_CAPABLE, ROVER_MOVING };
                 
                 IMotorDriver &_driver;
+                RoverConfiguration &_rover;
                 mutex_t *_mutex;
                 int _status;
 
-                bool do_move(double distance, double speed) {
-                        return false;
-                }
+                bool do_move(double distance, double speed);
+                bool do_move2(double distance, double speed);
+                bool wait_travel(WheelOdometry &odometry, double distance, double timeout);
+                double compute_timeout(double distance, double speed);
                                         
         public:
-                Navigation(IMotorDriver &driver) :
-                        _driver(driver), _status(ROVER_MOVEAT_CAPABLE) {
+                Navigation(IMotorDriver &driver, RoverConfiguration &rover) :
+                        _driver(driver), _rover(rover), _status(ROVER_MOVEAT_CAPABLE) {
                         _mutex = new_mutex();
                 }
                 
