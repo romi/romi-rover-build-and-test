@@ -12,6 +12,15 @@ add_executable(navigation2
   src/BrushMotorDriver.h
   src/IConfiguration.h
   src/ConfigurationFile.h
+  src/rover.h
+  src/rover.c
+  src/vector.h
+  src/vector.c
+  src/quaternion.h
+  src/quaternion.c
+  src/WheelOdometry.h
+  src/INavigation.h
+  src/Navigation.h
   ../arduino_libraries/RomiSerial/IInputStream.h
   ../arduino_libraries/RomiSerial/IOutputStream.h
   ../arduino_libraries/RomiSerial/CRC8.h
@@ -29,11 +38,5 @@ target_link_libraries(navigation2 rcom romi r m)
 if(BUILD_TESTS)
     add_subdirectory(test)
 endif()
-
-#ADD_CUSTOM_COMMAND(
-#  OUTPUT ${CMAKE_CURRENT_LIST_DIR}/weeder_main.cpp
-#  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/weeder_main.cpp ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
-#  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
-#  )
 
 install(TARGETS navigation2 DESTINATION bin/romi)

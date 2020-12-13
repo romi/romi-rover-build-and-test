@@ -21,26 +21,27 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_I_MOTORDRIVER_H
-#define __ROMI_I_MOTORDRIVER_H
+#ifndef __ROMI_I_NAVIGATION_H
+#define __ROMI_I_NAVIGATION_H
 
 namespace romi {
         
-        class IMotorDriver
+        class INavigation
         {
         public:
                 
-                virtual ~IMotorDriver() = default;
+                virtual ~INavigation() = default;
 
                 /** The left and right speed are relative speeds. They
                  * must have a value between -1 and 1, and indicate
                  * the fraction of the maximum allowed speed. */
                 virtual bool moveat(double left, double right) = 0;
 
-                /** Returns the values of the encoders. The timestamp
-                 * is in seconds. */
-                virtual bool get_encoder_values(double &left, double &right, double &timestamp) = 0;
+                /** Move a given distance in meters. The speed is
+                 * relative to the maximum speed, i.e. its valus
+                 * should be in the range [-1,1]. */
+                virtual bool move(double distance, double speed) = 0;
         };
 }
 
-#endif // __ROMI_I_MOTORDRIVER_H
+#endif // __ROMI_I_NAVIGATION_H

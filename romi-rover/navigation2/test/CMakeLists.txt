@@ -4,9 +4,28 @@ cmake_minimum_required(VERSION 3.10)
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../../arduino_libraries/RomiSerial" )
 
+set(SRCS_ROVERCONFIGURATION 
+  src/tests_main.cpp
+  src/tests_roverconfiguration.cpp
+  ../src/RoverConfiguration.h
+  )
+
+add_executable(r_unit_tests_navigation_roverconfiguration ${SRCS_ROVERCONFIGURATION})
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+target_link_libraries(r_unit_tests_navigation_roverconfiguration r gtest gmock)
+
+add_test(
+    NAME r_unit_tests_navigation_roverconfiguration
+    COMMAND r_unit_tests_navigation_roverconfiguration
+)
+
+
+
 set(SRCS_MOTORCONTROLLER 
   src/tests_main.cpp
   src/tests_brushmotordriver.cpp
+  ../src/BrushMotorDriver.h
+  ../src/IMotorDriver.h
   ../../arduino_libraries/RomiSerial/MessageParser.h
   ../../arduino_libraries/RomiSerial/MessageParser.cpp
   ../../arduino_libraries/RomiSerial/EnvelopeParser.h
@@ -24,10 +43,36 @@ add_test(
     COMMAND r_unit_tests_navigation_motorcontroller
 )
 
+
+
+
+set(SRCS_WHEELODOMETRY 
+  src/tests_main.cpp
+  src/tests_wheelodometry.cpp
+  ../src/WheelOdometry.h
+  ../src/vector.h
+  ../src/vector.c
+  ../src/rover.h
+  ../src/rover.c
+  ../src/quaternion.h
+  ../src/quaternion.c
+  )
+
+add_executable(r_unit_tests_navigation_wheelodometry ${SRCS_WHEELODOMETRY})
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+target_link_libraries(r_unit_tests_navigation_wheelodometry r gtest gmock)
+
+add_test(
+    NAME r_unit_tests_navigation_wheelodometry
+    COMMAND r_unit_tests_navigation_wheelodometry
+)
+
+
+
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
             NAME r_navigation_motorcontroller_coverage
             EXECUTABLE ctest -V ${n_cores}
-            DEPENDENCIES r_unit_tests_navigation_motorcontroller)
+            DEPENDENCIES r_unit_tests_navigation_motorcontroller r_unit_tests_navigation_roverconfiguration r_unit_tests_navigation_wheelodometry)
 endif()
 

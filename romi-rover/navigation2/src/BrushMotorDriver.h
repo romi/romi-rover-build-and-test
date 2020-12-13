@@ -33,18 +33,13 @@ namespace romi {
 
         struct BrushMotorDriverSettings
         {
-                int steps;
-                double max_speed;
                 int max_signal;
                 bool use_pid;
                 double kp, ki, kd;
                 int dir_left;
                 int dir_right;
 
-                void parse(IConfiguration &config) {
-                        JSON params = config.get("brush-motor-controller");
-                        steps = (int) params.num("steps_per_revolution");
-                        max_speed = params.num("maximum_speed_revolution_per_sec");
+                void parse(JSON &params) {
                         max_signal = (int) params.num("maximum_signal_amplitude");
                         use_pid = params.boolean("use_pid");
                         kp = params.get("pid").num("kp");
@@ -59,22 +54,24 @@ namespace romi {
         {
         protected:
                 IRomiSerialClient &_serial;
+                BrushMotorDriverSettings _settings;
                 
-                bool configure_controller(IConfiguration &config) {
-                        BrushMotorDriverSettings settings;
-                        settings.parse(config);
+                bool configure_controller(JSON &config, int steps,
+                                          double max_revolutions_per_sec) {
+                        
+                        _settings.parse(config);
 
                         char command[100];
                         rprintf(command, 100, "C[%d,%d,%d,%d,%d,%d,%d,%d,%d]",
-                                settings.steps,
-                                (int) (100.0 * settings.max_speed),
-                                settings.max_signal,
-                                settings.use_pid? 1 : 0,
-                                (int) (1000.0 * settings.kp),
-                                (int) (1000.0 * settings.ki),
-                                (int) (1000.0 * settings.kd),
-                                settings.dir_left,
-                                settings.dir_right);
+                                steps,
+                                (int) (100.0 * max_revolutions_per_sec),
+                                _settings.max_signal,
+                                _settings.use_pid? 1 : 0,
+                                (int) (1000.0 * _settings.kp),
+                                (int) (1000.0 * _settings.ki),
+                                (int) (1000.0 * _settings.kd),
+                                _settings.dir_left,
+                                _settings.dir_right);
                         
                         JSON response;
                         _serial.send(command, response);
@@ -89,9 +86,11 @@ namespace romi {
 
         public:
 
-                BrushMotorDriver(IRomiSerialClient &serial, IConfiguration &config)
+                BrushMotorDriver(IRomiSerialClient &serial, JSON &config,
+                                 int encoder_steps, double max_revolutions_per_sec)
                         : _serial(serial) {
-                        if (!configure_controller(config)
+                        
+                        if (!configure_controller(config, encoder_steps, max_revolutions_per_sec)
                             || !enable_controller()) {
                                 throw std::runtime_error("BrushMotorDriver: "
                                                          "Initialization failed");
@@ -124,13 +123,14 @@ namespace romi {
                         return success;
                 }
 
-                bool get_encoder_values(double &left, double &right) override {
+                bool get_encoder_values(double &left, double &right, double &timestamp) override {
                         JSON response;
                         _serial.send("e", response);
                         bool success = (response.num(0) == 0);
                         if (success) {
                                 left = response.num(1);
                                 right = response.num(2);
+                                timestamp = response.num(3) / 1000.0;
                         } else {
                                 r_err("BrushMotorDriver::get_encoder_values: %s",
                                       response.str(1));

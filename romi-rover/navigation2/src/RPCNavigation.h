@@ -21,18 +21,18 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_RPC_MOTORDRIVER_ADAPTOR_H
-#define __ROMI_RPC_MOTORDRIVER_ADAPTOR_H
+#ifndef __ROMI_RPC_NAVIGATION_H
+#define __ROMI_RPC_NAVIGATION_H
 
 #include "IRPCHandler.h"
-#include "IMotorDriver.h"
+#include "INavigation.h"
 
 namespace romi {
         
-        class RPCMotorDriverAdaptor : public rcom::IRPCHandler
+        class RPCNavigation : public rcom::IRPCHandler
         {
         protected:
-                IMotorDriver &_driver;
+                INavigation &_navigation;
 
                 JSON ok_status() {
                         return JSON::parse("{\"status\": \"ok\"}");
@@ -47,21 +47,32 @@ namespace romi {
                 JSON execute_moveat(JSON &cmd) {
                         double left = cmd.array("speed").num(0);
                         double right = cmd.array("speed").num(1);
-                        if (_driver.moveat(left, right))
+                        if (_navigation.moveat(left, right))
                                 return ok_status();
                         else
                                 return error_status("moveat failed");
                 }
+
+                JSON execute_move(JSON &cmd) {
+                        double distance = cmd.num("distance");
+                        double speed = cmd.num("speed");
+                        if (_navigation.move(distance, speed))
+                                return ok_status();
+                        else
+                                return error_status("move failed");
+                }
                 
         public:
-                RPCMotorDriverAdaptor(IMotorDriver &driver) : _driver(driver) {}
-                virtual ~RPCMotorDriverAdaptor() override = default;
+                RPCNavigation(INavigation &navigation) : _navigation(navigation) {}
+                virtual ~RPCNavigation() override = default;
 
                 JSON execute(JSON cmd) override {
                         JSON response;
                         const char *command = cmd.str("command");
                         if (rstreq(command, "moveat")) {
                                 response = execute_moveat(cmd);
+                        } else if (rstreq(command, "move")) {
+                                response = execute_move(cmd);
                         } else {
                                 response = error_status("Unknown command");
                         }
@@ -70,4 +81,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_RPC_MOTORDRIVER_ADAPTOR_H
+#endif // __ROMI_RPC_NAVIGATION_H

@@ -33,8 +33,9 @@
 #include "RomiSerialClient.h"
 #include "RSerial.h"
 #include "ConfigurationFile.h"
-#include "RPCMotorDriverAdaptor.h"
-
+#include "RPCNavigation.h"
+#include "Navigation.h"
+#include "RoverConfiguration.h"
 
 using namespace romi;
 using namespace rcom;
@@ -97,12 +98,27 @@ int main(int argc, char** argv)
                 r_debug("Weeder: Using configuration file: '%s'", options.config_file);
                 ConfigurationFile config(options.config_file);
 
+                JSON navigation_settings = config.get("navigation");
+
+                JSON rover_settings = navigation_settings.get("rover");
+                RoverConfiguration rover(rover_settings);
+                
+                JSON driver_settings = navigation_settings.get("brush-motor-driver");
+
+                
+                
                 // TODO: check for serial_device in config
                 RSerial serial(options.serial_device, 115200, 1);        
                 RomiSerialClient romi_serial(&serial, &serial);
-                BrushMotorDriver driver(romi_serial, config);
-                RPCMotorDriverAdaptor adaptor(driver);
-                RPCServer server(adaptor,
+                BrushMotorDriver driver(romi_serial,
+                                        driver_settings,
+                                        rover.encoder_steps,
+                                        rover.max_revolutions_per_sec);
+
+                Navigation navigation(driver);
+                
+                RPCNavigation navigation_adaptor(navigation);
+                RPCServer server(navigation_adaptor,
                                  options.server_name,
                                  options.server_topic);
                 
