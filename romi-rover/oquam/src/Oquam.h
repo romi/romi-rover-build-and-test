@@ -30,21 +30,9 @@
 #include "ICNCController.h"
 #include "IFileCabinet.h"
 #include "script.h" 
+#include "SynchronizedCodeBlock.h" 
 
 namespace romi {
-
-        class SynchronizedMethod
-        {
-        protected:
-                mutex_t *_mutex;                
-        public:
-                SynchronizedMethod(mutex_t *mutex) : _mutex(mutex) {
-                        mutex_lock(_mutex);
-                }
-                ~SynchronizedMethod() {
-                        mutex_unlock(_mutex);
-                }
-        };
         
         class Oquam : public ICNC
         {
@@ -129,12 +117,12 @@ namespace romi {
                 // See ICNC.h for more info
                 void moveto(double x, double y, double z,
                             double relative_speed = 0.1) override {
-                        SynchronizedMethod sync(_mutex);
+                        SynchronizedCodeBlock sync(_mutex);
                         moveto_synchronized(x, y, z, relative_speed);
                 }
                 
                 void travel(Path &path, double relative_speed = 0.1) override {
-                        SynchronizedMethod sync(_mutex);
+                        SynchronizedCodeBlock sync(_mutex);
                         travel_synchronized(path, relative_speed);
                 }
                 
@@ -143,7 +131,7 @@ namespace romi {
                 }
 
                 void homing() override {
-                        SynchronizedMethod sync(_mutex);
+                        SynchronizedCodeBlock sync(_mutex);
                         _controller.homing();
                 }
 
