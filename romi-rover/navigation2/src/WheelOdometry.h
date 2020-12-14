@@ -26,7 +26,6 @@
 
 #include "RoverConfiguration.h"
 #include "SynchronizedCodeBlock.h"
-#include "rover.h"
 
 namespace romi {
         
@@ -34,44 +33,34 @@ namespace romi {
         {
         protected:
                 mutex_t *_mutex;
-                rover_t *_rover;
                         
+                // The current location and orientation
+                double speed[2];
+                double encoder[2];
+                int initialized;
+                double last_timestamp;
+        
+                // The displacement, in meters, and the change in orientation
+                // (only tracking the change in yaw) relative to the 'current'
+                // location;
+                double displacement[2];
+                double theta;
+                
+                double wheel_circumference; 
+                double wheel_base;
+                double encoder_steps;
+                
         public:
                 WheelOdometry(RoverConfiguration &rover_config,
                               double left_encoder,
                               double right_encoder,
-                              double timestamp) {
-                        _mutex = new_mutex();
-                        _rover = new_rover(rover_config.wheel_diameter, 
-                                           rover_config.wheel_base,
-                                           rover_config.encoder_steps);
-                        rover_init_encoders(_rover, left_encoder, right_encoder, timestamp);
-                }
+                              double timestamp);
                 
-                virtual ~WheelOdometry() {
-                        if (_rover)
-                                delete_rover(_rover);
+                virtual ~WheelOdometry();
 
-                        if (_mutex)
-                                delete_mutex(_mutex);
-                }
-
-                void get_location(double &x, double &y) {
-                        SynchronizedCodeBlock sync(_mutex);
-                        vector_t location = rover_get_location(_rover);
-                        x = location.x;
-                        y = location.y;
-                }
-                
-                double get_orientation() {
-                        SynchronizedCodeBlock sync(_mutex);
-                        return rover_get_orientation_theta(_rover);
-                }
-
-                void set_encoders(double left, double right, double timestamp) {
-                        SynchronizedCodeBlock sync(_mutex);
-                        rover_set_encoders(_rover, left, right, timestamp);
-                }
+                void get_location(double &x, double &y);
+                double get_orientation();
+                void set_encoders(double left, double right, double timestamp);
         };
 }
 

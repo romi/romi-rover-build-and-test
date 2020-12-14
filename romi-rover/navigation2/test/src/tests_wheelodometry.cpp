@@ -10,6 +10,7 @@ class wheelodometry_tests : public ::testing::Test
 {
 protected:
         JSON config;
+        double epsilon;
         
 	wheelodometry_tests() {
                 const char * config_string = "{"
@@ -18,6 +19,7 @@ protected:
                         "'encoder_steps': 1000.0,"
                         "'maximum_speed': 3.0 }";
                 config = JSON::parse(config_string);
+                epsilon = 0.000001;
 	}
 
 	~wheelodometry_tests() override = default;
@@ -40,9 +42,9 @@ TEST_F(wheelodometry_tests, test_initialisation)
         odometry.get_location(x, y);
         orientation = odometry.get_orientation();
                 
-        ASSERT_EQ(x, 0.0);
-        ASSERT_EQ(y, 0.0);
-        ASSERT_EQ(orientation, 0.0);
+        ASSERT_NEAR(x, 0.0, epsilon);
+        ASSERT_NEAR(y, 0.0, epsilon);
+        ASSERT_NEAR(orientation, 0.0, epsilon);
 }
 
 TEST_F(wheelodometry_tests, test_update_encoders_displacement)
@@ -59,9 +61,9 @@ TEST_F(wheelodometry_tests, test_update_encoders_displacement)
         odometry.get_location(x, y);
         orientation = odometry.get_orientation();
                 
-        ASSERT_EQ(x, M_PI);
-        ASSERT_EQ(y, 0.0);
-        ASSERT_EQ(orientation, 0.0);
+        ASSERT_NEAR(x, M_PI, epsilon);
+        ASSERT_NEAR(y, 0.0, epsilon);
+        ASSERT_NEAR(orientation, 0.0, epsilon);
 }
 
 TEST_F(wheelodometry_tests, test_update_encoders_orientation_360degrees)
@@ -80,9 +82,9 @@ TEST_F(wheelodometry_tests, test_update_encoders_orientation_360degrees)
         odometry.get_location(x, y);
         orientation = odometry.get_orientation();
                 
-        ASSERT_EQ(x, 0);
-        ASSERT_EQ(y, 0.0);
-        ASSERT_EQ(orientation, -2.0 * M_PI);
+        ASSERT_NEAR(x, 0, epsilon);
+        ASSERT_NEAR(y, 0.0, epsilon);
+        ASSERT_NEAR(orientation, -2.0 * M_PI, epsilon);
 }
 
 TEST_F(wheelodometry_tests, test_update_encoders_orientation_90degrees)
@@ -99,9 +101,9 @@ TEST_F(wheelodometry_tests, test_update_encoders_orientation_90degrees)
         odometry.get_location(x, y);
         orientation = odometry.get_orientation();
                 
-        ASSERT_EQ(x, 0);
-        ASSERT_EQ(y, 0.0);
-        ASSERT_EQ(orientation, M_PI / 2.0);
+        ASSERT_NEAR(x, 0, epsilon);
+        ASSERT_NEAR(y, 0.0, epsilon);
+        ASSERT_NEAR(orientation, M_PI / 2.0, epsilon);
 }
 
 TEST_F(wheelodometry_tests, test_update_encoders_move_and_turn_90degrees)
@@ -118,7 +120,7 @@ TEST_F(wheelodometry_tests, test_update_encoders_move_and_turn_90degrees)
         odometry.get_location(x, y);
         orientation = odometry.get_orientation();
                 
-        ASSERT_EQ(x, M_PI);
-        ASSERT_EQ(y, 0.0);
-        ASSERT_EQ(orientation, M_PI / 2.0);
+        ASSERT_NEAR(x, M_PI, epsilon);
+        ASSERT_NEAR(y, 0.0, epsilon);
+        ASSERT_NEAR(orientation, M_PI / 2.0, epsilon);
 }

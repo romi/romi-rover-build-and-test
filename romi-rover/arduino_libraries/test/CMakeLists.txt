@@ -122,3 +122,13 @@ add_executable(r_test_romiserial_arduino ${SRCS_ROMISERIAL_ARDUINO})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
 target_link_libraries(r_test_romiserial_arduino r gtest gmock)
+
+
+
+
+if(BUILD_COVERAGE)
+    SETUP_TARGET_FOR_COVERAGE_LCOV(
+            NAME r_romiserial_coverage
+            EXECUTABLE ctest -V ${n_cores}
+            DEPENDENCIES r_unit_tests_romiserial_envelope_parser r_unit_tests_romiserial_message_parser r_unit_tests_romiserial r_unit_tests_romiserialclient)
+endif()

@@ -12,13 +12,8 @@ add_executable(navigation2
   src/BrushMotorDriver.h
   src/IConfiguration.h
   src/ConfigurationFile.h
-  src/rover.h
-  src/rover.c
-  src/vector.h
-  src/vector.c
-  src/quaternion.h
-  src/quaternion.c
   src/WheelOdometry.h
+  src/WheelOdometry.cpp
   src/INavigation.h
   src/Navigation.h
   src/Navigation.cpp

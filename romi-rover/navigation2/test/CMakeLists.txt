@@ -50,12 +50,7 @@ set(SRCS_WHEELODOMETRY
   src/tests_main.cpp
   src/tests_wheelodometry.cpp
   ../src/WheelOdometry.h
-  ../src/vector.h
-  ../src/vector.c
-  ../src/rover.h
-  ../src/rover.c
-  ../src/quaternion.h
-  ../src/quaternion.c
+  ../src/WheelOdometry.cpp
   )
 
 add_executable(r_unit_tests_navigation_wheelodometry ${SRCS_WHEELODOMETRY})
@@ -77,13 +72,8 @@ set(SRCS_NAVIGATION
   ../src/Navigation.h
   ../src/Navigation.cpp
   ../src/WheelOdometry.h
+  ../src/WheelOdometry.cpp
   ../src/IMotorDriver.h
-  ../src/vector.h
-  ../src/vector.c
-  ../src/rover.h
-  ../src/rover.c
-  ../src/quaternion.h
-  ../src/quaternion.c
   )
 
 add_executable(r_unit_tests_navigation_navigation ${SRCS_NAVIGATION})
@@ -99,7 +89,7 @@ add_test(
 
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
-            NAME r_navigation_motorcontroller_coverage
+            NAME r_navigation_coverage
             EXECUTABLE ctest -V ${n_cores}
             DEPENDENCIES r_unit_tests_navigation_motorcontroller r_unit_tests_navigation_roverconfiguration r_unit_tests_navigation_wheelodometry  r_unit_tests_navigation_navigation)
 endif()
