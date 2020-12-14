@@ -50,6 +50,7 @@ namespace romi {
                 double compute_timeout(double distance, double speed);
                                         
         public:
+                
                 Navigation(IMotorDriver &driver, RoverConfiguration &rover) :
                         _driver(driver), _rover(rover), _status(ROVER_MOVEAT_CAPABLE) {
                         _mutex = new_mutex();
@@ -60,44 +61,9 @@ namespace romi {
                                 delete_mutex(_mutex);
                 }
 
-                bool moveat(double left, double right) override {
-                        SynchronizedCodeBlock sync(_mutex);
-                        bool success = false;
-                        if (_status == ROVER_MOVEAT_CAPABLE) 
-                                success = _driver.moveat(left, right);
-                        else
-                                r_warn("Navigation::moveat: still moving");
-                        return success;
-                }
-
-                bool move(double distance, double speed) override {
-                        bool success = false;
-                        {
-                                SynchronizedCodeBlock sync(_mutex);
-                                if (_status == ROVER_MOVEAT_CAPABLE) {
-                                        _status = ROVER_MOVING;
-                                } else {
-                                        r_warn("Navigation::move: already moving");
-                                }
-                        }
-                        
-                        if (_status == ROVER_MOVING)
-                                success = do_move(distance, speed);
-                        
-                        _status = ROVER_MOVEAT_CAPABLE;
-                        
-                        return success;
-                        
-                }
-
-                bool stop() override {
-                        // This flag should assure that we break out
-                        // the wait_travel loop.
-                        _stop = true;
-                        bool success = _driver.stop();
-                        _status = ROVER_MOVEAT_CAPABLE;
-                        return success;
-                }
+                bool moveat(double left, double right) override;
+                bool move(double distance, double speed) override;
+                bool stop() override;
                 
         };
 }

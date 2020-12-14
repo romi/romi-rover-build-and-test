@@ -148,4 +148,46 @@ namespace romi {
 
                 return success;
         }
+
+
+        bool Navigation::moveat(double left, double right)
+        {
+                SynchronizedCodeBlock sync(_mutex);
+                bool success = false;
+                if (_status == ROVER_MOVEAT_CAPABLE) 
+                        success = _driver.moveat(left, right);
+                else
+                        r_warn("Navigation::moveat: still moving");
+                return success;
+        }
+        
+        bool Navigation::move(double distance, double speed)
+        {
+                bool success = false;
+                {
+                        SynchronizedCodeBlock sync(_mutex);
+                        if (_status == ROVER_MOVEAT_CAPABLE) {
+                                _status = ROVER_MOVING;
+                        } else {
+                                r_warn("Navigation::move: already moving");
+                        }
+                }
+                        
+                if (_status == ROVER_MOVING)
+                        success = do_move(distance, speed);
+                        
+                _status = ROVER_MOVEAT_CAPABLE;
+                        
+                return success;
+        }
+        
+        bool Navigation::stop()
+        {
+                // This flag should assure that we break out
+                // the wait_travel loop.
+                _stop = true;
+                bool success = _driver.stop();
+                _status = ROVER_MOVEAT_CAPABLE;
+                return success;
+        }
 }
