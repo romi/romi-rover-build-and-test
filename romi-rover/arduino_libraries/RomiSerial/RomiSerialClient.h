@@ -48,7 +48,6 @@ protected:
         int make_request(const char *command, std::string &request);
         JSON try_sending_request(std::string &request);
         bool send_request(std::string &request);
-        const char *get_error_message(int code);
         JSON make_error(int code);
         bool handle_one_char();
         bool parse_char(int c);
@@ -78,7 +77,9 @@ public:
         
         void set_debug(bool value) {
                 _debug = value;
-        }        
+        }
+        
+        static const char *get_error_message(int code);        
 };
 
 #endif

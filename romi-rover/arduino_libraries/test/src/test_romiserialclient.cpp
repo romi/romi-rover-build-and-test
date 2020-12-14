@@ -175,3 +175,20 @@ TEST_F(romiserialclient_tests, message_too_long)
         EXPECT_EQ(romiserialclient_too_long, response.num(0));
 }
 
+TEST_F(romiserialclient_tests, error_number_has_string_representation)
+{
+        // Arrange
+
+        // Act
+
+        //Assert
+        EXPECT_STREQ("No error", RomiSerialClient::get_error_message(0));
+        EXPECT_STREQ("Application error", RomiSerialClient::get_error_message(1));
+        EXPECT_STREQ("Unknown error code", RomiSerialClient::get_error_message(-99399));
+        
+        for (int i = -1; i > romiserial_last_error; i--) {
+                EXPECT_EQ(0, rstreq("Unknown error code",
+                                    RomiSerialClient::get_error_message(i)));
+        }
+}
+
