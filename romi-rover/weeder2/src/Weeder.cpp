@@ -182,14 +182,17 @@ namespace romi {
                 }
         }
         
-        JSON Weeder::execute(JSON cmd) 
+        void Weeder::execute(JSON &cmd, JSON &result)
         {
-                JSON r;
                 r_debug("Weeder::execute");
-                if (rstreq(cmd.str("command"), "hoe")) {
+                
+                const char *command = cmd.str("command");
+                if (rstreq(command, "hoe")) {
                         hoe();
-                        r = JSON::parse("{\"status\":\"ok\"}");
+                        result = JSON::parse("{\"status\":\"ok\"}");
+                } else {
+                        result = JSON::parse("{\"status\":\"error\", "
+                                             "\"message\": \"Unknown command\"}");
                 }
-                return r;
         }
 }

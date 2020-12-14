@@ -70,7 +70,7 @@ namespace romi {
                 void hoe();
 
                 // RPC interface
-                JSON execute(JSON cmd) override;
+                void execute(JSON &cmd, JSON &result) override;
         };
 }
 

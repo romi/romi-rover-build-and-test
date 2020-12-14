@@ -87,10 +87,30 @@ add_test(
 
 
 
+set(SRCS_RPCNAVIGATION 
+  src/tests_main.cpp
+  src/tests_rpcnavigation.cpp
+  mock/mock_navigation.h
+  ../src/INavigation.h
+  ../src/RPCNavigation.h
+  ../src/RPCNavigation.cpp
+  )
+
+add_executable(r_unit_tests_navigation_rpcnavigation ${SRCS_RPCNAVIGATION})
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+target_link_libraries(r_unit_tests_navigation_rpcnavigation r rcom gtest gmock)
+
+add_test(
+    NAME r_unit_tests_navigation_rpcnavigation
+    COMMAND r_unit_tests_navigation_rpcnavigation
+)
+
+
+
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
             NAME r_navigation_coverage
             EXECUTABLE ctest -V ${n_cores}
-            DEPENDENCIES r_unit_tests_navigation_motorcontroller r_unit_tests_navigation_roverconfiguration r_unit_tests_navigation_wheelodometry  r_unit_tests_navigation_navigation)
+            DEPENDENCIES r_unit_tests_navigation_motorcontroller r_unit_tests_navigation_roverconfiguration r_unit_tests_navigation_wheelodometry  r_unit_tests_navigation_navigation r_unit_tests_navigation_rpcnavigation)
 endif()
 

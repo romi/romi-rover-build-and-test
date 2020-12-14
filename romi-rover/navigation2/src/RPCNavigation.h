@@ -34,63 +34,17 @@ namespace romi {
         protected:
                 INavigation &_navigation;
 
-                JSON ok_status() {
-                        return JSON::parse("{\"status\": \"ok\"}");
-                }
-        
-                JSON error_status(const char *message) {
-                        return JSON::construct("{\"status\": \"error\", "
-                                               "\"message\": \"%s\"}",
-                                               message);
-                }
-
-                JSON execute_moveat(JSON &cmd) {
-                        r_debug("RPCNavigation::navigation: execute_moveat");
-                        double left = cmd.array("speed").num(0);
-                        double right = cmd.array("speed").num(1);
-                        if (_navigation.moveat(left, right))
-                                return ok_status();
-                        else
-                                return error_status("moveat failed");
-                }
-
-                JSON execute_move(JSON &cmd) {
-                        r_debug("RPCNavigation::navigation: execute_move");
-                        double distance = cmd.num("distance");
-                        double speed = cmd.num("speed");
-                        if (_navigation.move(distance, speed))
-                                return ok_status();
-                        else
-                                return error_status("move failed");
-                }
-
-                JSON execute_stop(JSON &cmd) {
-                        r_debug("RPCNavigation::navigation: execute_stop");
-                        if (_navigation.stop())
-                                return ok_status();
-                        else
-                                return error_status("stop failed");
-                }
+                void ok_status(JSON &result);
+                void error_status(JSON &result, const char *message);
+                void execute_moveat(JSON &cmd, JSON &result);
+                void execute_move(JSON &cmd, JSON &result);
+                void execute_stop(JSON &cmd, JSON &result);
                 
         public:
                 RPCNavigation(INavigation &navigation) : _navigation(navigation) {}
                 virtual ~RPCNavigation() override = default;
 
-                JSON execute(JSON cmd) override {
-                        r_debug("RPCNavigation::navigation: execute");
-                        JSON response;
-                        const char *command = cmd.str("command");
-                        if (rstreq(command, "moveat")) {
-                                response = execute_moveat(cmd);
-                        } else if (rstreq(command, "move")) {
-                                response = execute_move(cmd);
-                        } else if (rstreq(command, "stop")) {
-                                response = execute_stop(cmd);
-                        } else {
-                                response = error_status("Unknown command");
-                        }
-                        return response;
-                }
+                void execute(JSON &cmd, JSON &result);
         };
 }
 
