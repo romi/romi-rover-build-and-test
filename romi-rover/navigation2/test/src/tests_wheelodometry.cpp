@@ -127,3 +127,40 @@ TEST_F(wheelodometry_tests, test_update_encoders_move_and_turn_90degrees)
         ASSERT_NEAR(y, 0.0, epsilon);
         ASSERT_NEAR(orientation, M_PI / 2.0, epsilon);
 }
+
+TEST_F(wheelodometry_tests, test_update_encoders_2x90degrees)
+{
+        RoverConfiguration rover(config);
+
+        WheelOdometry odometry(rover, 0.0, 0.0, 0.0);
+        double x, y, orientation;
+
+        double wheel_base = 1.0;
+        double wheel_circumference = M_PI;
+
+        // 90° rotation around the left wheel
+        odometry.set_encoders(0.0,
+                              M_PI * 1000.0 / 2.0 / wheel_circumference,
+                              1.0);
+        
+        //Assert
+        odometry.get_location(x, y);
+        orientation = odometry.get_orientation();
+        
+        ASSERT_NEAR(x, wheel_base/2.0, epsilon);
+        ASSERT_NEAR(y, wheel_base/2.0, epsilon);
+        ASSERT_NEAR(orientation, M_PI/2.0, epsilon);
+        
+        // 90° rotation around the right wheel
+        odometry.set_encoders(M_PI * 1000.0 / 2.0 / wheel_circumference,
+                              M_PI * 1000.0 / 2.0 / wheel_circumference,
+                              2.0);
+        
+        //Assert
+        odometry.get_location(x, y);
+        orientation = odometry.get_orientation();
+        
+        ASSERT_NEAR(x, wheel_base, epsilon);
+        ASSERT_NEAR(y, wheel_base, epsilon);
+        ASSERT_NEAR(orientation, 0.0, epsilon);
+}

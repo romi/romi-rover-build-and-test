@@ -85,7 +85,7 @@ namespace romi {
                 // wheel.
                 dL = left - encoder[0];
                 dR = right - encoder[1];
-                // r_debug("dL %f, dR %f steps", dL, dR);
+                r_debug("dL %f, dR %f steps", dL, dR);
         
                 dL = wheel_circumference * dL / encoder_steps;
                 dR = wheel_circumference * dR / encoder_steps;
