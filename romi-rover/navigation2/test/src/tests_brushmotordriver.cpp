@@ -254,3 +254,37 @@ TEST_F(brushmotordriver_tests, returns_false_on_invalid_speeds_4)
         }
         ASSERT_EQ(success, false);
 }
+
+TEST_F(brushmotordriver_tests, returns_true_on_successful_stop)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+        add_expected_output("X", "[0]");
+
+        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        bool success = driver.stop();
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        ASSERT_EQ(success, true);
+}
+
+TEST_F(brushmotordriver_tests, returns_false_on_failed_stop)
+{
+        add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
+        add_expected_output("E[1]", "[0]");
+        add_expected_output("X", "[1,\"error\"]");
+
+        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        bool success = driver.stop();
+        
+        ASSERT_EQ(expected_output.size(), observed_output.size());
+        for (size_t i = 0; i < expected_output.size(); i++) {
+                ASSERT_STREQ(observed_output[i].c_str(),
+                             expected_output[i].c_str());
+        }
+        ASSERT_EQ(success, false);
+}
