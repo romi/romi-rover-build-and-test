@@ -44,7 +44,7 @@ namespace romi {
                 JSON get(const char *key) override {
                         return _obj.get(key);
                 }
-                void set(JSON obj) {
+                void set(JSON &obj) {
                         _obj = obj;
                 }
         };
