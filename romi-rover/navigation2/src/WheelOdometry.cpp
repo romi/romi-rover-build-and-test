@@ -37,6 +37,10 @@ namespace romi {
                 encoder_steps = rover_config.encoder_steps;
                 encoder[0] = left_encoder;
                 encoder[1] = right_encoder;
+                for (int i = 0; i < 2; i++) {
+                        instantaneous_speed[i] = 0;
+                        filtered_speed[i] = 0;
+                }
                 last_timestamp = timestamp;
         }
         
@@ -51,6 +55,13 @@ namespace romi {
                 SynchronizedCodeBlock sync(_mutex);
                 x = displacement[0];
                 y = displacement[1];
+        }
+
+        void WheelOdometry::get_speed(double &vx, double &vy)
+        {
+                SynchronizedCodeBlock sync(_mutex);
+                vx = filtered_speed[0];
+                vy = filtered_speed[1];
         }
                 
         double WheelOdometry::get_orientation()
@@ -115,18 +126,17 @@ namespace romi {
                 encoder[0] = left;
                 encoder[1] = right;
 
-                if (last_timestamp == 0.0) {
-                        last_timestamp = timestamp;
-                } else {
-                        double dt = timestamp - last_timestamp;
-                        if (dt != 0.0) {
-                                double vx = dx_ / dt;
-                                double vy = dy_ / dt;
-                                speed[0] = 0.8 * speed[0] + 0.2 * vx;
-                                speed[1] = 0.8 * speed[1] + 0.2 * vy;
-                                last_timestamp = timestamp;
-                        }
+                double dt = timestamp - last_timestamp;
+                if (dt != 0.0) {
+                        instantaneous_speed[0] = dx_ / dt;
+                        instantaneous_speed[1] = dy_ / dt;
+                        
+                        filtered_speed[0] = (0.8 * filtered_speed[0]
+                                             + 0.2 * instantaneous_speed[0]);
+                        filtered_speed[1] = (0.8 * filtered_speed[1]
+                                             + 0.2 * instantaneous_speed[1]);
                 }
+                last_timestamp = timestamp;
         
                 // r_debug("displacement:  %f %f - angle %f",
                 //         displacement[0], displacement[1], theta * 180.0 / M_PI);

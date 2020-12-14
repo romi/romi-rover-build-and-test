@@ -52,17 +52,20 @@ TEST_F(wheelodometry_tests, test_update_encoders_displacement)
         RoverConfiguration rover(config);
 
         WheelOdometry odometry(rover, 1000.0, 1000.0, 0.0);
-        double x, y, orientation;
+        double x, y, vx, vy, orientation;
 
         // 1000 steps = 1 revolution = 3.14 meters
         odometry.set_encoders(2000.0, 2000.0, 1.0);
         
         //Assert
         odometry.get_location(x, y);
+        odometry.get_speed(vx, vy);
         orientation = odometry.get_orientation();
                 
         ASSERT_NEAR(x, M_PI, epsilon);
         ASSERT_NEAR(y, 0.0, epsilon);
+        ASSERT_NEAR(vx, 0.2 * M_PI, epsilon);
+        ASSERT_NEAR(vy, 0.0, epsilon);
         ASSERT_NEAR(orientation, 0.0, epsilon);
 }
 

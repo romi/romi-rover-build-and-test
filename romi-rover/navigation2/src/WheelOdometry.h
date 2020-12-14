@@ -35,7 +35,8 @@ namespace romi {
                 mutex_t *_mutex;
                         
                 // The current location and orientation
-                double speed[2];
+                double instantaneous_speed[2];
+                double filtered_speed[2];
                 double encoder[2];
                 int initialized;
                 double last_timestamp;
@@ -58,9 +59,10 @@ namespace romi {
                 
                 virtual ~WheelOdometry();
 
-                void get_location(double &x, double &y);
-                double get_orientation();
                 void set_encoders(double left, double right, double timestamp);
+                void get_location(double &x, double &y);
+                void get_speed(double &vx, double &vy);
+                double get_orientation();
         };
 }
 
