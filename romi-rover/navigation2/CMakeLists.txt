@@ -10,6 +10,7 @@ add_executable(navigation2
   src/main.cpp
   src/IMotorDriver.h
   src/BrushMotorDriver.h
+  src/BrushMotorDriver.cpp
   src/IConfiguration.h
   src/ConfigurationFile.h
   src/WheelOdometry.h

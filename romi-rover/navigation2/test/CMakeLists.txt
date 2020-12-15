@@ -25,6 +25,7 @@ set(SRCS_MOTORCONTROLLER
   src/tests_main.cpp
   src/tests_brushmotordriver.cpp
   ../src/IMotorDriver.h
+  ../src/BrushMotorDriver.cpp
   ../src/BrushMotorDriver.h
   ../../arduino_libraries/RomiSerial/MessageParser.h
   ../../arduino_libraries/RomiSerial/MessageParser.cpp
