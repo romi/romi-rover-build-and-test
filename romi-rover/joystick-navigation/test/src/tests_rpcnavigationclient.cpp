@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "../mock/mock_rpchandler.h"
+#include "../mock/mock_rpcclient.h"
 #include "RPCNavigationClientAdaptor.h"
 
 using namespace std;
@@ -10,7 +10,7 @@ using namespace romi;
 class rpcnavigationclient_tests : public ::testing::Test
 {
 protected:
-        MockRPCHandler handler;
+        MockRPCClient rpc_client;
          
 	rpcnavigationclient_tests() {
 	}
@@ -26,7 +26,7 @@ protected:
 
 TEST_F(rpcnavigationclient_tests, check_stop_request)
 {
-        RPCNavigationClientAdaptor adapter(handler);
+        RPCNavigationClientAdaptor adapter(rpc_client);
         
         EXPECT_CALL(handler, exec(_,_));
 

@@ -25,19 +25,19 @@
 #define __ROMI_RPC_NAVIGATION_CLIENT_ADAPTOR_H
 
 #include "INavigation.h"
-#include "IRPCHandler.h"
+#include "IRPCClient.h"
 
 namespace romi {
         
         class RPCNavigationClientAdaptor : public INavigation
         {
         protected:
-                rcom::IRPCHandler &_client;
+                rcom::IRPCClient &_client;
                 
                 bool execute(JSON &cm);
         public:
                 
-                RPCNavigationClientAdaptor(rcom::IRPCHandler &client) : _client(client) {}
+                RPCNavigationClientAdaptor(rcom::IRPCClient &client) : _client(client) {}
                 virtual ~RPCNavigationClientAdaptor() override = default;
 
                 bool moveat(double left, double right) override;
