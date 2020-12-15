@@ -33,7 +33,12 @@ namespace romi {
 
                 try {
                         _client.execute(cmd, result);
-                        success = true;
+                        
+                        success = _client.is_status_ok(result);
+                        if (!success) {
+                                r_err("RPCNavigationClientAdaptor::execute: %s",
+                                      _client.get_error_message(result));
+                        }
                         
                 } catch (rcom::RPCError &e) {
                         r_err("RPCNavigationClientAdaptor::execute: '%s'", e.what());

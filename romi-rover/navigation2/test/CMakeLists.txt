@@ -10,13 +10,13 @@ set(SRCS_ROVERCONFIGURATION
   ../src/RoverConfiguration.h
   )
 
-add_executable(r_unit_tests_navigation_roverconfiguration ${SRCS_ROVERCONFIGURATION})
+add_executable(romi_rover_unit_tests_navigation_roverconfiguration ${SRCS_ROVERCONFIGURATION})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(r_unit_tests_navigation_roverconfiguration r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_roverconfiguration r gtest gmock)
 
 add_test(
-    NAME r_unit_tests_navigation_roverconfiguration
-    COMMAND r_unit_tests_navigation_roverconfiguration
+    NAME romi_rover_unit_tests_navigation_roverconfiguration
+    COMMAND romi_rover_unit_tests_navigation_roverconfiguration
 )
 
 
@@ -35,13 +35,13 @@ set(SRCS_MOTORCONTROLLER
   ../../arduino_libraries/RomiSerial/RomiSerialClient.cpp
   )
 
-add_executable(r_unit_tests_navigation_motorcontroller ${SRCS_MOTORCONTROLLER})
+add_executable(romi_rover_unit_tests_navigation_motorcontroller ${SRCS_MOTORCONTROLLER})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(r_unit_tests_navigation_motorcontroller r rcom gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_motorcontroller r rcom gtest gmock)
 
 add_test(
-    NAME r_unit_tests_navigation_motorcontroller
-    COMMAND r_unit_tests_navigation_motorcontroller
+    NAME romi_rover_unit_tests_navigation_motorcontroller
+    COMMAND romi_rover_unit_tests_navigation_motorcontroller
 )
 
 
@@ -54,13 +54,13 @@ set(SRCS_WHEELODOMETRY
   ../src/WheelOdometry.cpp
   )
 
-add_executable(r_unit_tests_navigation_wheelodometry ${SRCS_WHEELODOMETRY})
+add_executable(romi_rover_unit_tests_navigation_wheelodometry ${SRCS_WHEELODOMETRY})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(r_unit_tests_navigation_wheelodometry r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_wheelodometry r gtest gmock)
 
 add_test(
-    NAME r_unit_tests_navigation_wheelodometry
-    COMMAND r_unit_tests_navigation_wheelodometry
+    NAME romi_rover_unit_tests_navigation_wheelodometry
+    COMMAND romi_rover_unit_tests_navigation_wheelodometry
 )
 
 
@@ -77,13 +77,13 @@ set(SRCS_NAVIGATION
   ../src/IMotorDriver.h
   )
 
-add_executable(r_unit_tests_navigation_navigation ${SRCS_NAVIGATION})
+add_executable(romi_rover_unit_tests_navigation_navigation ${SRCS_NAVIGATION})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(r_unit_tests_navigation_navigation r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_navigation r gtest gmock)
 
 add_test(
-    NAME r_unit_tests_navigation_navigation
-    COMMAND r_unit_tests_navigation_navigation
+    NAME romi_rover_unit_tests_navigation_navigation
+    COMMAND romi_rover_unit_tests_navigation_navigation
 )
 
 
@@ -97,13 +97,13 @@ set(SRCS_RPCNAVIGATION
   ../src/RPCNavigationServerAdaptor.cpp
   )
 
-add_executable(r_unit_tests_navigation_rpcnavigation ${SRCS_RPCNAVIGATION})
+add_executable(romi_rover_unit_tests_navigation_rpcnavigation ${SRCS_RPCNAVIGATION})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(r_unit_tests_navigation_rpcnavigation r rcom gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_rpcnavigation r rcom gtest gmock)
 
 add_test(
-    NAME r_unit_tests_navigation_rpcnavigation
-    COMMAND r_unit_tests_navigation_rpcnavigation
+    NAME romi_rover_unit_tests_navigation_rpcnavigation
+    COMMAND romi_rover_unit_tests_navigation_rpcnavigation
 )
 
 
@@ -115,21 +115,21 @@ set(SRCS_CONFIGURATION
   ../src/ConfigurationFile.h
   )
 
-add_executable(r_unit_tests_navigation_configuration ${SRCS_CONFIGURATION})
+add_executable(romi_rover_unit_tests_navigation_configuration ${SRCS_CONFIGURATION})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(r_unit_tests_navigation_configuration r rcom gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_configuration r rcom gtest gmock)
 
 add_test(
-    NAME r_unit_tests_navigation_configuration
-    COMMAND r_unit_tests_navigation_configuration
+    NAME romi_rover_unit_tests_navigation_configuration
+    COMMAND romi_rover_unit_tests_navigation_configuration
 )
 
 
 
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
-            NAME r_navigation_coverage
+            NAME romi_rover_navigation_coverage
             EXECUTABLE ctest -V ${n_cores}
-            DEPENDENCIES r_unit_tests_navigation_motorcontroller r_unit_tests_navigation_roverconfiguration r_unit_tests_navigation_wheelodometry  r_unit_tests_navigation_navigation r_unit_tests_navigation_rpcnavigation r_unit_tests_navigation_configuration)
+            DEPENDENCIES romi_rover_unit_tests_navigation_motorcontroller romi_rover_unit_tests_navigation_roverconfiguration romi_rover_unit_tests_navigation_wheelodometry  romi_rover_unit_tests_navigation_navigation romi_rover_unit_tests_navigation_rpcnavigation romi_rover_unit_tests_navigation_configuration)
 endif()
 

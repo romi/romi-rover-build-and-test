@@ -12,7 +12,7 @@
 
         "brush-motor-driver": {
             "maximum_signal_amplitude": 20,
-            "use_pid": true,
+            "use_pid": false,
             "pid": {
                 "kp": 0.4,
                 "ki": 0,
