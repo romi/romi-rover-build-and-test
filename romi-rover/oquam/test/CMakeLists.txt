@@ -34,6 +34,6 @@ set(SRCS_OQUAMSTEPPER
   ../../arduino_libraries/RomiSerial/RomiSerialClient.cpp
   )
 
-add_executable(r_unit_tests_oquam_stepper ${SRCS_OQUAMSTEPPER})
-target_link_libraries(r_unit_tests_oquam_stepper r romi gtest gmock)
+add_executable(romi_rover_unit_tests_oquam_stepper ${SRCS_OQUAMSTEPPER})
+target_link_libraries(romi_rover_unit_tests_oquam_stepper r romi gtest gmock)
 

@@ -8,12 +8,12 @@ cmake_minimum_required(VERSION 3.10)
 
 
 set(SRCS_JSON som/elastic.cpp som/elastic.cpp som/test.c ../src/DebugWeedingSession.cpp ../src/som/fixed.c)
-add_executable(r_regression_test_som ${SRCS_JSON})
+add_executable(romi_rover_regression_test_som ${SRCS_JSON})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(r_regression_test_som r romi)
+target_link_libraries(romi_rover_regression_test_som r romi)
 
 
-add_executable(r_regression_test_som_compare som/compare.c)
+add_executable(romi_rover_regression_test_som_compare som/compare.c)
 
 
 #add_test(
