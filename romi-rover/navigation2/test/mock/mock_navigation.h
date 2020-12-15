@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "IMotorDriver.h"
+#include "INavigation.h"
 
 class MockNavigation : public romi::INavigation
 {
