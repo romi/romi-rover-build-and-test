@@ -37,7 +37,8 @@ namespace romi {
                 return timeout;
         }
 
-        bool Navigation::wait_travel(WheelOdometry &odometry, double distance, double timeout)
+        bool Navigation::wait_travel(WheelOdometry &odometry, double distance,
+                                     double timeout)
         {
                 bool success = false;
                 double left, right, timestamp;

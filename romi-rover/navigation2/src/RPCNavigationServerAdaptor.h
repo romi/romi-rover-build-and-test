@@ -21,15 +21,15 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_RPC_NAVIGATION_H
-#define __ROMI_RPC_NAVIGATION_H
+#ifndef __ROMI_RPC_NAVIGATION_SERVER_ADAPTOR_H
+#define __ROMI_RPC_NAVIGATION_SERVER_ADAPTOR_H
 
 #include "IRPCHandler.h"
 #include "INavigation.h"
 
 namespace romi {
         
-        class RPCNavigation : public rcom::IRPCHandler
+        class RPCNavigationServerAdaptor : public rcom::IRPCHandler
         {
         protected:
                 INavigation &_navigation;
@@ -41,11 +41,12 @@ namespace romi {
                 void execute_stop(JSON &cmd, JSON &result);
                 
         public:
-                RPCNavigation(INavigation &navigation) : _navigation(navigation) {}
-                virtual ~RPCNavigation() override = default;
+                RPCNavigationServerAdaptor(INavigation &navigation)
+                        : _navigation(navigation) {}
+                virtual ~RPCNavigationServerAdaptor() override = default;
 
                 void execute(JSON &cmd, JSON &result);
         };
 }
 
-#endif // __ROMI_RPC_NAVIGATION_H
+#endif // __ROMI_RPC_NAVIGATION_SERVER_ADAPTOR_H

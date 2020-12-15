@@ -84,7 +84,9 @@ namespace romi {
         bool BrushMotorDriver::moveat(double left, double right)
         {
                 bool success = false;
-                        
+
+                r_debug("BrushMotorDriver::moveat: %f, %f", left, right);
+
                 if (left >= -1.0 && left <= 1.0
                     && right >= -1.0 && right <= 1.0) {
                                 
@@ -97,10 +99,14 @@ namespace romi {
                         JSON response;
                         _serial.send(command, response);
                         success = (response.num(0) == 0);
+                        
                         if (!success) {
                                 r_err("BrushMotorDriver::moveat: %s",
                                       response.str(1));
                         }
+                } else {
+                        r_warn("BrushMotorDriver::moveat: invalid speeds: %f, %f",
+                               left, right);
                 }
 
                 return success;

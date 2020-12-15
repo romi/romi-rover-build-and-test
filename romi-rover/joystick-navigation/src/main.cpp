@@ -30,6 +30,8 @@
 #include "StateMachine.h"
 #include "StateTransition.h"
 #include "DebugNavigation.h"
+#include "RPCNavigationClientAdaptor.h"
+#include "RPCClient.h"
 #include "SpeedController.h"
 #include "JoystickStateTransitions.h"
 #include "EventMapper.h"
@@ -46,7 +48,10 @@ int main(int argc, char** argv)
                 Joystick joystick("/dev/input/js0");
                 //joystick.set_debug(true);
 
-                DebugNavigation navigation;
+                //DebugNavigation navigation;
+                rcom::RPCClient rpc("navigation", "navigation");
+                RPCNavigationClientAdaptor navigation(rpc);
+                        
                 SpeedController speed_controller(navigation);
                 
                 EventMapper eventMapper(joystick);

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "RPCNavigation.h"
+#include "RPCNavigationServerAdaptor.h"
 #include "../mock/mock_navigation.h"
 
 using namespace std;
@@ -26,12 +26,12 @@ protected:
 
 TEST_F(rpcnavigation_tests, test_execute_invalid_command_returns_error)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -39,12 +39,12 @@ TEST_F(rpcnavigation_tests, test_execute_invalid_command_returns_error)
 
 TEST_F(rpcnavigation_tests, test_execute_unknown_command_returns_error)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'foo'}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -54,7 +54,7 @@ TEST_F(rpcnavigation_tests, test_execute_unknown_command_returns_error)
 
 TEST_F(rpcnavigation_tests, test_move_command_returns_ok)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'move','distance':1,'speed':0.1}");
         JSON reply;
@@ -62,19 +62,19 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_ok)
         EXPECT_CALL(navigation, move(1.0, 0.1))
                 .WillOnce(Return(true));
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("ok", reply.str("status"));
 }
 
 TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_missing_parameters_1)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'move'}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -82,12 +82,12 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_missing_parameter
 
 TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_missing_parameters_2)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'move','distance':0}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -95,12 +95,12 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_missing_parameter
 
 TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_invalid_parameters_1)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'move','distance':'foo'}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -108,12 +108,12 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_invalid_parameter
 
 TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_invalid_parameters_2)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'move','distance':10,'speed':'foo'}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -121,7 +121,7 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_invalid_parameter
 
 TEST_F(rpcnavigation_tests, test_move_returns_error_when_move_fails)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'move','distance':1,'speed':0.1}");
         JSON reply;
@@ -129,7 +129,7 @@ TEST_F(rpcnavigation_tests, test_move_returns_error_when_move_fails)
         EXPECT_CALL(navigation, move(1.0, 0.1))
                 .WillOnce(Return(false));
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -141,7 +141,7 @@ TEST_F(rpcnavigation_tests, test_move_returns_error_when_move_fails)
 
 TEST_F(rpcnavigation_tests, test_moveat_returns_ok)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'moveat','speed':[0.1,0.2]}");
         JSON reply;
@@ -149,19 +149,19 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_ok)
         EXPECT_CALL(navigation, moveat(0.1, 0.2))
                 .WillOnce(Return(true));
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("ok", reply.str("status"));
 }
 
 TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_missing_parameters_1)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'moveat'}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -169,12 +169,12 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_missing_parameters_1)
 
 TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_1)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'moveat','speed':'foo'}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -182,12 +182,12 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_1)
 
 TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_2)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'moveat','speed':['foo','bar']}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -195,12 +195,12 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_2)
 
 TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_3)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'moveat','speed':[0.1,'bar']}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -208,12 +208,12 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_3)
 
 TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_4)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'moveat','speed':['foo',0.2]}");
         JSON reply;
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -221,7 +221,7 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_4)
 
 TEST_F(rpcnavigation_tests, test_moveat_returns_error_when_moveat_fails)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'moveat','speed':[0.1,0.2]}");
         JSON reply;
@@ -229,7 +229,7 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_when_moveat_fails)
         EXPECT_CALL(navigation, moveat(0.1, 0.2))
                 .WillOnce(Return(false));
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);
@@ -239,7 +239,7 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_when_moveat_fails)
 
 TEST_F(rpcnavigation_tests, test_stop_returns_ok)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'stop'}");
         JSON reply;
@@ -247,14 +247,14 @@ TEST_F(rpcnavigation_tests, test_stop_returns_ok)
         EXPECT_CALL(navigation, stop())
                 .WillOnce(Return(true));
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("ok", reply.str("status"));
 }
 
 TEST_F(rpcnavigation_tests, test_stop_returns_error_when_stop_fails)
 {
-        RPCNavigation navigation_adaptor(navigation);
+        RPCNavigationServerAdaptor adaptor(navigation);
 
         JSON request = JSON::parse("{'command':'stop'}");
         JSON reply;
@@ -262,7 +262,7 @@ TEST_F(rpcnavigation_tests, test_stop_returns_error_when_stop_fails)
         EXPECT_CALL(navigation, stop())
                 .WillOnce(Return(false));
 
-        navigation_adaptor.execute(request, reply);
+        adaptor.execute(request, reply);
 
         ASSERT_STREQ("error", reply.str("status"));
         ASSERT_EQ(true, reply.str("message") != 0);

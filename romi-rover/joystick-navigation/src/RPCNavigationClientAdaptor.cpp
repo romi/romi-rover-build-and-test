@@ -21,30 +21,45 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "RPCNavigation.h"
+#include "RPCNavigationClientAdaptor.h"
+#include "RPCError.h"
 
 namespace romi {
 
-        bool RPCNavigation::moveat(double left, double right)
-        {
-        }
-
-        bool RPCNavigation::move(double distance, double speed)
-        {
-        }
-        
-        bool RPCNavigation::stop()
+        bool RPCNavigationClientAdaptor::execute(JSON &cmd)
         {
                 bool success = false;
-                JSON cmd("{'command':'stop'}");
                 JSON result;
 
                 try {
                         _client.execute(cmd, result);
                         success = true;
                         
-                } catch (RPCError &e) {
-                        r_err("RPCNavigation::stop: '%s'", e.what());
+                } catch (rcom::RPCError &e) {
+                        r_err("RPCNavigationClientAdaptor::execute: '%s'", e.what());
                 }
+
+                return success;
+        }
+
+        bool RPCNavigationClientAdaptor::moveat(double left, double right)
+        {
+                JSON cmd = JSON::construct("{'command':'moveat',"
+                                           "'speed':[%0.3f,%0.3f]}",
+                                           left, right);
+                return execute(cmd);
+        }
+
+        bool RPCNavigationClientAdaptor::move(double distance, double speed)
+        {
+                JSON cmd = JSON::construct("{'command':'move','distance':%0.3f,"
+                                         "'speed':%0.3f}", distance, speed);
+                return execute(cmd);
+        }
+        
+        bool RPCNavigationClientAdaptor::stop()
+        {
+                JSON cmd("{'command':'stop'}");
+                return execute(cmd);
         }
 }

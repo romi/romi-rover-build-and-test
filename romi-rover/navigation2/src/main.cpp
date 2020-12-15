@@ -33,7 +33,7 @@
 #include "RomiSerialClient.h"
 #include "RSerial.h"
 #include "ConfigurationFile.h"
-#include "RPCNavigation.h"
+#include "RPCNavigationServerAdaptor.h"
 #include "Navigation.h"
 #include "RoverConfiguration.h"
 
@@ -108,6 +108,8 @@ int main(int argc, char** argv)
                 // TODO: check for serial_device in config
                 RSerial serial(options.serial_device, 115200, 1);        
                 RomiSerialClient romi_serial(&serial, &serial);
+                romi_serial.set_debug(true);
+                
                 BrushMotorDriver driver(romi_serial,
                                         driver_settings,
                                         rover.encoder_steps,
@@ -115,8 +117,8 @@ int main(int argc, char** argv)
 
                 Navigation navigation(driver, rover);
                 
-                RPCNavigation navigation_adaptor(navigation);
-                RPCServer server(navigation_adaptor,
+                RPCNavigationServerAdaptor adaptor(navigation);
+                RPCServer server(adaptor,
                                  options.server_name,
                                  options.server_topic);
                 

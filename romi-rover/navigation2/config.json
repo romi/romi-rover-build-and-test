@@ -14,8 +14,8 @@
             "maximum_signal_amplitude": 20,
             "use_pid": true,
             "pid": {
-                "kp": 0.7,
-                "ki": 0.03,
+                "kp": 0.4,
+                "ki": 0,
                 "kd": 0
             },
             "encoder_directions": {

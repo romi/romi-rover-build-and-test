@@ -22,13 +22,13 @@
 
  */
 #include <r.h>
-#include "RPCNavigation.h"
+#include "RPCNavigationServerAdaptor.h"
 
 namespace romi {
         
-        void RPCNavigation::execute(JSON &cmd, JSON &result)
+        void RPCNavigationServerAdaptor::execute(JSON &cmd, JSON &result)
         {
-                r_debug("RPCNavigation::navigation: execute");
+                r_debug("RPCNavigationServerAdaptor::navigation: execute");
 
                 if (cmd.has("command")) {
                         
@@ -48,21 +48,21 @@ namespace romi {
                 }
         }
         
-        void RPCNavigation::ok_status(JSON &result)
+        void RPCNavigationServerAdaptor::ok_status(JSON &result)
         {
                 result = JSON::parse("{\"status\": \"ok\"}");
         }
         
-        void RPCNavigation::error_status(JSON &result, const char *message)
+        void RPCNavigationServerAdaptor::error_status(JSON &result, const char *message)
         {
                 result = JSON::construct("{\"status\": \"error\", "
                                         "\"message\": \"%s\"}",
                                         message);
         }
 
-        void RPCNavigation::execute_moveat(JSON &cmd, JSON &result)
+        void RPCNavigationServerAdaptor::execute_moveat(JSON &cmd, JSON &result)
         {
-                r_debug("RPCNavigation::execute_moveat");
+                r_debug("RPCNavigationServerAdaptor::execute_moveat");
                 try {
                         double left = cmd.array("speed").num(0);
                         double right = cmd.array("speed").num(1);
@@ -73,14 +73,15 @@ namespace romi {
                                 error_status(result, "moveat failed");
                         
                 } catch (JSONError &je) {
-                        r_debug("RPCNavigation::execute_moveat: %s", je.what());
+                        r_debug("RPCNavigationServerAdaptor::execute_moveat: %s",
+                                je.what());
                         error_status(result, je.what());
                 }
         }
 
-        void RPCNavigation::execute_move(JSON &cmd, JSON &result)
+        void RPCNavigationServerAdaptor::execute_move(JSON &cmd, JSON &result)
         {
-                r_debug("RPCNavigation::execute_move");
+                r_debug("RPCNavigationServerAdaptor::execute_move");
                 
                 try {
                         double distance = cmd.num("distance");
@@ -92,14 +93,14 @@ namespace romi {
                                 error_status(result, "move failed");
                         
                 } catch (JSONError &je) {
-                        r_debug("RPCNavigation::execute_move: %s", je.what());
+                        r_debug("RPCNavigationServerAdaptor::execute_move: %s", je.what());
                         error_status(result, je.what());
                 }
         }
 
-        void RPCNavigation::execute_stop(JSON &cmd, JSON &result)
+        void RPCNavigationServerAdaptor::execute_stop(JSON &cmd, JSON &result)
         {
-                r_debug("RPCNavigation::execute_stop");
+                r_debug("RPCNavigationServerAdaptor::execute_stop");
                 if (_navigation.stop())
                         ok_status(result);
                 else

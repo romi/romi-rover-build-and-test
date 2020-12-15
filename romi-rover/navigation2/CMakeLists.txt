@@ -18,8 +18,8 @@ add_executable(navigation2
   src/INavigation.h
   src/Navigation.h
   src/Navigation.cpp
-  src/RPCNavigation.h
-  src/RPCNavigation.cpp
+  src/RPCNavigationServerAdaptor.h
+  src/RPCNavigationServerAdaptor.cpp
   ../arduino_libraries/RomiSerial/IInputStream.h
   ../arduino_libraries/RomiSerial/IOutputStream.h
   ../arduino_libraries/RomiSerial/CRC8.h

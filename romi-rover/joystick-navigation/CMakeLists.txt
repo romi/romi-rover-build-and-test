@@ -20,6 +20,8 @@ set(SOURCES
   src/JoystickStateTransitions.h
   src/JoystickStateTransitions.cpp
   src/main.cpp
+  src/RPCNavigationClientAdaptor.h
+  src/RPCNavigationClientAdaptor.cpp
   src/SpeedController.h
   src/SpeedController.cpp
   src/StateMachine.h

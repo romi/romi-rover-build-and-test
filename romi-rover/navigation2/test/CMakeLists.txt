@@ -93,8 +93,8 @@ set(SRCS_RPCNAVIGATION
   src/tests_rpcnavigation.cpp
   mock/mock_navigation.h
   ../src/INavigation.h
-  ../src/RPCNavigation.h
-  ../src/RPCNavigation.cpp
+  ../src/RPCNavigationServerAdaptor.h
+  ../src/RPCNavigationServerAdaptor.cpp
   )
 
 add_executable(r_unit_tests_navigation_rpcnavigation ${SRCS_RPCNAVIGATION})
