@@ -21,24 +21,35 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_DEBUG_MOTORCONTROLLER_H
-#define __ROMI_DEBUG_MOTORCONTROLLER_H
+#ifndef __ROMI_DEBUG_NAVIGATION_H
+#define __ROMI_DEBUG_NAVIGATION_H
 
 #include <r.h>
-#include "IMotorController.h"
+#include "INavigation.h"
 
 namespace romi {
 
-        class DebugMotorController : public IMotorController
+        class DebugNavigation : public INavigation
         {
         public:
-                DebugMotorController() {}
-                virtual ~DebugMotorController() override = default;
+                DebugNavigation() {}
+                virtual ~DebugNavigation() override = default;
                 
-                void moveat(double left, double right) override {
+                bool moveat(double left, double right) override {
                         r_debug("moveat(left=%0.3f, right=%0.3f)", left, right);
+                        return true;
+                }
+
+                bool move(double distance, double speed) override {
+                        r_debug("move(distance=%0.3f, speed=%0.3f)", distance, speed);
+                        return true;
+                }
+
+                bool stop() override {
+                        r_debug("stop()");
+                        return true;
                 }
         };
 }
 
-#endif // __ROMI_DEBUG_MOTORCONTROLLER_H
+#endif // __ROMI_DEBUG_NAVIGATION_H

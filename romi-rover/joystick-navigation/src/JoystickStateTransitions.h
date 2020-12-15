@@ -24,26 +24,30 @@
 #ifndef __ROMI_JOYSTICK_STATE_TRANSITION_H
 #define __ROMI_JOYSTICK_STATE_TRANSITION_H
 
+#include <r.h>
 #include "IJoystick.h"
-#include "INavigation.h"
+#include "ISpeedController.h"
 #include "StateTransition.h"
-#include "EventMapper.h"
-#include "NavigationEvents.h"
+#include "EventsAndStates.h"
+#include "StateMachine.h"
 
 namespace romi {
- 
+
+        void init_state_transitions(StateMachine &state_machine);
+        
+        
         class NavigationReady : public StateTransitionHandler
         {
         protected:
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                NavigationReady(INavigation &navigation)
-                        : _navigation(navigation) {}
+                NavigationReady(ISpeedController &controller)
+                        : _controller(controller) {}
                 
                 void doTransition(unsigned long t) override {
                         r_debug("NavigationReady");
-                        _navigation.stop();
+                        _controller.stop();
                 }
         };
         
@@ -51,11 +55,11 @@ namespace romi {
         {
         protected:
                 IJoystick &_joystick;
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                StartDrivingForward(IJoystick &joystick, INavigation &navigation)
-                        : _joystick(joystick), _navigation(navigation)
+                StartDrivingForward(IJoystick &joystick, ISpeedController &controller)
+                        : _joystick(joystick), _controller(controller)
                         {}
                 
                 void doTransition(unsigned long t) override {
@@ -67,20 +71,20 @@ namespace romi {
         {
         protected:
                 IJoystick &_joystick;
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                DriveForward(IJoystick &joystick, INavigation &navigation)
-                        : _joystick(joystick), _navigation(navigation)
+                DriveForward(IJoystick &joystick, ISpeedController &controller)
+                        : _joystick(joystick), _controller(controller)
                         {}
                 
                 void doTransition(unsigned long t) override {
                         r_debug("update forward speed and direction");
-                        double speed = _joystick.get_axis(EventMapper::AxisForwardSpeed);
-                        double direction = _joystick.get_axis(EventMapper::AxisDirection);
+                        double speed = _joystick.get_axis(axis_forward_speed);
+                        double direction = _joystick.get_axis(axis_direction);
                         if (speed < 0.0)
                                 speed = 0.0;
-                        _navigation.drive_at(speed, direction);
+                        _controller.drive_at(speed, direction);
                 }
         };
 
@@ -88,11 +92,11 @@ namespace romi {
         {
         protected:
                 IJoystick &_joystick;
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                StartDrivingBackward(IJoystick &joystick, INavigation &navigation)
-                        : _joystick(joystick), _navigation(navigation)
+                StartDrivingBackward(IJoystick &joystick, ISpeedController &controller)
+                        : _joystick(joystick), _controller(controller)
                         {}
                 
                 void doTransition(unsigned long t) override {
@@ -104,34 +108,34 @@ namespace romi {
         {
         protected:
                 IJoystick &_joystick;
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                DriveBackward(IJoystick &joystick, INavigation &navigation)
-                        : _joystick(joystick), _navigation(navigation)
+                DriveBackward(IJoystick &joystick, ISpeedController &controller)
+                        : _joystick(joystick), _controller(controller)
                         {}
                 
                 void doTransition(unsigned long t) override {
                         r_debug("update backward speed and direction");
-                        double speed = _joystick.get_axis(EventMapper::AxisBackwardSpeed);
-                        double direction = _joystick.get_axis(EventMapper::AxisDirection);
+                        double speed = _joystick.get_axis(axis_backward_speed);
+                        double direction = _joystick.get_axis(axis_direction);
                         if (speed < 0.0)
                                 speed = 0.0;
-                        _navigation.drive_at(-speed, direction);
+                        _controller.drive_at(-speed, direction);
                 }
         };
 
         class StopDriving : public StateTransitionHandler
         {
         protected:
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                StopDriving(INavigation &navigation) : _navigation(navigation) {}
+                StopDriving(ISpeedController &controller) : _controller(controller) {}
                 
                 void doTransition(unsigned long t) override {
                         r_debug("stop");
-                        _navigation.stop();
+                        _controller.stop();
                 }
         };
         
@@ -139,11 +143,12 @@ namespace romi {
         {
         protected:
                 IJoystick &_joystick;
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                StartDrivingForwardAccurately(IJoystick &joystick, INavigation &navigation)
-                        : _joystick(joystick), _navigation(navigation)
+                StartDrivingForwardAccurately(IJoystick &joystick,
+                                              ISpeedController &controller)
+                        : _joystick(joystick), _controller(controller)
                         {}
                 
                 void doTransition(unsigned long t) override {
@@ -155,20 +160,20 @@ namespace romi {
         {
         protected:
                 IJoystick &_joystick;
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                DriveForwardAccurately(IJoystick &joystick, INavigation &navigation)
-                        : _joystick(joystick), _navigation(navigation)
+                DriveForwardAccurately(IJoystick &joystick, ISpeedController &controller)
+                        : _joystick(joystick), _controller(controller)
                         {}
                 
                 void doTransition(unsigned long t) override {
                         r_debug("update accurate forward speed and direction");
-                        double speed = _joystick.get_axis(EventMapper::AxisForwardSpeed);
-                        double direction = _joystick.get_axis(EventMapper::AxisDirection);
+                        double speed = _joystick.get_axis(axis_forward_speed);
+                        double direction = _joystick.get_axis(axis_direction);
                         if (speed < 0.0)
                                 speed = 0.0;
-                        _navigation.drive_accurately_at(speed, direction);
+                        _controller.drive_accurately_at(speed, direction);
                 }
         };
                 
@@ -177,11 +182,12 @@ namespace romi {
         {
         protected:
                 IJoystick &_joystick;
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                StartDrivingBackwardAccurately(IJoystick &joystick, INavigation &navigation)
-                        : _joystick(joystick), _navigation(navigation)
+                StartDrivingBackwardAccurately(IJoystick &joystick,
+                                               ISpeedController &controller)
+                        : _joystick(joystick), _controller(controller)
                         {}
                 
                 void doTransition(unsigned long t) override {
@@ -193,20 +199,20 @@ namespace romi {
         {
         protected:
                 IJoystick &_joystick;
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                DriveBackwardAccurately(IJoystick &joystick, INavigation &navigation)
-                        : _joystick(joystick), _navigation(navigation)
+                DriveBackwardAccurately(IJoystick &joystick, ISpeedController &controller)
+                        : _joystick(joystick), _controller(controller)
                         {}
                 
                 void doTransition(unsigned long t) override {
                         r_debug("update accurate backward speed and direction");
-                        double speed = _joystick.get_axis(EventMapper::AxisBackwardSpeed);
-                        double direction = _joystick.get_axis(EventMapper::AxisDirection);
+                        double speed = _joystick.get_axis(axis_backward_speed);
+                        double direction = _joystick.get_axis(axis_direction);
                         if (speed < 0.0)
                                 speed = 0.0;
-                        _navigation.drive_accurately_at(-speed, direction);
+                        _controller.drive_accurately_at(-speed, direction);
                 }
         };
                 
@@ -220,20 +226,20 @@ namespace romi {
                 }
         };
                         
-        class Spinning : public StateTransitionHandler
+        class Spin : public StateTransitionHandler
         {
         protected:
                 IJoystick &_joystick;
-                INavigation &_navigation;
+                ISpeedController &_controller;
                 
         public:
-                Spinning(IJoystick &joystick, INavigation &navigation)
-                        : _joystick(joystick), _navigation(navigation)
+                Spin(IJoystick &joystick, ISpeedController &controller)
+                        : _joystick(joystick), _controller(controller)
                         {}
                 
                 void doTransition(unsigned long t) override {
                         r_debug("spinning");
-                        _navigation.spin(_joystick.get_axis(EventMapper::AxisDirection));
+                        _controller.spin(_joystick.get_axis(axis_direction));
                 }
         };
 

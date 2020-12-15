@@ -21,19 +21,21 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_I_EVENT_MAPPER_H
-#define __ROMI_I_EVENT_MAPPER_H
-
-#include "IJoystick.h"
+#ifndef __ROMI_I_SPEEDCONTROLLER_H
+#define __ROMI_I_SPEEDCONTROLLER_H
 
 namespace romi {
 
-        class IEventMapper
+        class ISpeedController
         {
         public:
-                virtual ~IEventMapper() = default;
-                virtual int16_t map(JoystickEvent &event) = 0;
+                virtual ~ISpeedController() = default;
+                
+                virtual void stop() = 0;
+                virtual void drive_at(double speed, double direction) = 0;
+                virtual void drive_accurately_at(double speed, double direction) = 0;
+                virtual void spin(double speed) = 0;
         };
 }
 
-#endif // __ROMI_I_EVENT_MAPPER_H
+#endif // __ROMI_I_SPEEDCONTROLLER_H

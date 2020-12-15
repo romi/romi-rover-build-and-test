@@ -1,7 +1,7 @@
 /*
   romi-rover
 
-  Copyright (C) 2019-2020 Sony Computer Science Laboratories
+  Copyright (C) 2019 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
   romi-rover is collection of applications for the Romi Rover.
@@ -25,16 +25,25 @@
 #define __ROMI_I_NAVIGATION_H
 
 namespace romi {
-
+        
         class INavigation
         {
         public:
-                virtual ~INavigation() = default;
                 
-                virtual void stop() = 0;
-                virtual void drive_at(double speed, double direction) = 0;
-                virtual void drive_accurately_at(double speed, double direction) = 0;
-                virtual void spin(double speed) = 0;
+                virtual ~INavigation() = default;
+
+                /** The left and right speed are relative speeds. They
+                 * must have a value between -1 and 1, and indicate
+                 * the fraction of the maximum allowed speed. */
+                virtual bool moveat(double left, double right) = 0;
+
+                /** Move a given distance in meters. The speed is
+                 * relative to the maximum speed, i.e. its valus
+                 * should be in the range [-1,1]. */
+                virtual bool move(double distance, double speed) = 0;
+
+                /** Stops immediately. */
+                virtual bool stop() = 0;
         };
 }
 
