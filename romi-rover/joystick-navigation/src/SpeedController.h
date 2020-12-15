@@ -27,36 +27,66 @@
 #include <math.h>
 #include "ISpeedController.h"
 #include "INavigation.h"
+#include "JSON.h"
 
 namespace romi {
+        
+        struct SpeedControllerSettings
+        {
+                bool use_speed_curve;
+                bool use_direction_curve;
+                double speed_curve_exponent;     // range (0.0, 10.0]
+                double direction_curve_exponent; // range (0.0, 10.0]
+                double speed_multiplier;         // range [0.1, 1.0]
+                double direction_multiplier;     // range [0.1, 1.0]
 
+                void parse(JSON &config) {
+                        use_speed_curve = config.boolean("use-speed-curve");
+                        speed_curve_exponent = config.boolean("direction-curve-exponent");
+                        use_direction_curve = config.num("use-direction-curve");
+                        direction_curve_exponent = config.num("direction-curve-exponent");
+                        speed_multiplier = config.num("speed-multiplier");
+                        direction_multiplier = config.num("direction-multiplier");
+                }
+
+                bool valid() {
+                        return (speed_curve_exponent > 0.0
+                                && speed_curve_exponent <= 10.0
+                                && direction_curve_exponent > 0.0
+                                && direction_curve_exponent <= 10.0
+                                && speed_multiplier >= 0.1
+                                && speed_multiplier <= 1.0
+                                && direction_multiplier >= 0.1
+                                && direction_multiplier <= 1.0);
+                }
+        };
+        
         class SpeedController : public ISpeedController
         {
         protected:
                 INavigation &_navigation;
-                bool _map_speed_exponential;
-                bool _map_direction_exponential;
-                double _alpha_speed;
-                double _alpha_direction;
-                double _speed_coeff;
-                double _direction_coeff;
-                double _speed_coeff_accurate;
-                double _direction_coeff_accurate;
+                SpeedControllerSettings _fast;
+                SpeedControllerSettings _accurate;
                 
                 double map_exponential(double x, double alpha);
-                double map_speed(double speed);
-                double map_direction(double direction);
-                void send_moveat(double left, double right);
+                double map_speed(SpeedControllerSettings &settings, double speed);
+                double map_direction(SpeedControllerSettings &settings, double direction);
+                bool send_moveat(double left, double right);
+                bool do_drive_at(SpeedControllerSettings &settings,
+                                 double speed, double direction);
                 
         public:
                 
-                SpeedController(INavigation &navigation);
+                SpeedController(INavigation &navigation, JSON &config);
+                SpeedController(INavigation &navigation,
+                                SpeedControllerSettings &fast,
+                                SpeedControllerSettings &accurate);
                 virtual ~SpeedController() override = default;
                 
-                void stop() override;
-                void drive_at(double speed, double direction) override;
-                void drive_accurately_at(double speed, double direction) override;
-                void spin(double direction) override;
+                bool stop() override;
+                bool drive_at(double speed, double direction) override;
+                bool drive_accurately_at(double speed, double direction) override;
+                bool spin(double direction) override;
         };
 }
 

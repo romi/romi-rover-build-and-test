@@ -1,7 +1,7 @@
 /*
   romi-rover
 
-  Copyright (C) 2019-2020 Sony Computer Science Laboratories
+  Copyright (C) 2019 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
   romi-rover is collection of applications for the Romi Rover.
@@ -21,21 +21,33 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_I_SPEEDCONTROLLER_H
-#define __ROMI_I_SPEEDCONTROLLER_H
+#ifndef __ROMI_CONFIGURATION_FILE_H
+#define __ROMI_CONFIGURATION_FILE_H
+
+#include "IConfiguration.h"
 
 namespace romi {
-
-        class ISpeedController
+        
+        class ConfigurationFile : public IConfiguration
         {
-        public:
-                virtual ~ISpeedController() = default;
+        protected:
+                JSON _config;
                 
-                virtual bool stop() = 0;
-                virtual bool drive_at(double speed, double direction) = 0;
-                virtual bool drive_accurately_at(double speed, double direction) = 0;
-                virtual bool spin(double speed) = 0;
+        public:
+                ConfigurationFile(const char *path) {
+                        _config = JSON::load(path);
+                }
+                
+                virtual ~ConfigurationFile() override = default;
+                
+                JSON get() override {
+                        return _config;
+                }
+                
+                JSON get(const char *key) override {
+                        return _config.get(key);
+                }
         };
 }
 
-#endif // __ROMI_I_SPEEDCONTROLLER_H
+#endif // __ROMI_CONFIGURATION_FILE_H

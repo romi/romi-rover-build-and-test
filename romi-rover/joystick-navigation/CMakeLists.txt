@@ -30,6 +30,11 @@ set(SOURCES
   )
 
 add_executable(joystick_navigation ${SOURCES})
-
 target_link_libraries(joystick_navigation romi rcom r)
+
+
+if(BUILD_TESTS)
+    add_subdirectory(test)
+endif()
+
 install(TARGETS joystick_navigation DESTINATION bin/romi)

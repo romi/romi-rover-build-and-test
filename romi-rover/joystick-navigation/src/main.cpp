@@ -24,6 +24,7 @@
 #include <exception>
 #include <stdexcept>
 #include <string.h>
+#include <getopt.h>
 #include <rcom.h>
 
 #include "Joystick.h"
@@ -35,24 +36,75 @@
 #include "SpeedController.h"
 #include "JoystickStateTransitions.h"
 #include "EventMapper.h"
+#include "ConfigurationFile.h"
 
 using namespace romi;
+
+struct Options {
+        
+        const char *config_file;
+        const char *joystick_device;
+        const char *navigation_server_name;
+
+        Options() {
+                config_file = "config.json";
+                joystick_device = "/dev/input/js0";
+                navigation_server_name = "navigation";
+        }
+
+        void parse(int argc, char** argv) {
+                int option_index;
+                static const char *optchars = "C:N:T:D:";
+                static struct option long_options[] = {
+                        {"config", required_argument, 0, 'C'},
+                        {"device", required_argument, 0, 'D'},
+                        {"navigation-server-name", required_argument, 0, 'N'},
+                        {0, 0, 0, 0}
+                };
+        
+                while (1) {
+                        int c = getopt_long(argc, argv, optchars,
+                                            long_options, &option_index);
+                        if (c == -1) break;
+                        switch (c) {
+                        case 'C':
+                                config_file = optarg;
+                                break;
+                        case 'N':
+                                navigation_server_name = optarg;
+                                break;
+                        case 'D':
+                                joystick_device = optarg;
+                                break;
+                        }
+                }
+        }
+};
         
 int main(int argc, char** argv)
 {
+        Options options;
+        options.parse(argc, argv);
+        
         app_init(&argc, argv);
         app_set_name("oquam");
         
         try {
+                r_debug("UserInterface: Using configuration file: '%s'",
+                        options.config_file);
+                ConfigurationFile config(options.config_file);
+                
                 JoystickEvent event;
-                Joystick joystick("/dev/input/js0");
+                Joystick joystick(options.joystick_device);
                 //joystick.set_debug(true);
 
                 //DebugNavigation navigation;
-                rcom::RPCClient rpc("navigation", "navigation");
+                rcom::RPCClient rpc(options.navigation_server_name, "navigation");
                 RPCNavigationClientAdaptor navigation(rpc);
                         
-                SpeedController speed_controller(navigation);
+                JSON ui_config = config.get("user-interface");
+                SpeedController speed_controller(navigation, ui_config);
+                // SpeedController speed_controller(navigation, config.get("user-interface"));
                 
                 EventMapper eventMapper(joystick);
                 

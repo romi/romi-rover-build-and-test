@@ -21,31 +21,33 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_RPC_NAVIGATION_CLIENT_ADAPTOR_H
-#define __ROMI_RPC_NAVIGATION_CLIENT_ADAPTOR_H
+#ifndef __ROMI_JSON_CONFIGURATION_H
+#define __ROMI_JSON_CONFIGURATION_H
 
-#include "INavigation.h"
-#include "IRPCHandler.h"
+#include "IConfiguration.h"
 
 namespace romi {
         
-        class RPCNavigationClientAdaptor : public INavigation
+        class JSONConfiguration : public IConfiguration
         {
         protected:
-                rcom::IRPCHandler &_client;
+                JSON _obj;
                 
-                bool execute(JSON &cm);
         public:
+                JSONConfiguration() {}
+                JSONConfiguration(JSON obj) : _obj(obj) {}                
+                 ~JSONConfiguration() override = default;
                 
-                RPCNavigationClientAdaptor(rcom::IRPCHandler &client) : _client(client) {}
-                virtual ~RPCNavigationClientAdaptor() override = default;
-
-                bool moveat(double left, double right) override;
-
-                bool move(double distance, double speed) override;
-
-                bool stop() override;
+                JSON get() override {
+                        return _obj;
+                }
+                JSON get(const char *key) override {
+                        return _obj.get(key);
+                }
+                void set(JSON &obj) {
+                        _obj = obj;
+                }
         };
 }
 
-#endif // __ROMI_RPC_NAVIGATION_CLIENT_ADAPTOR_H
+#endif // __ROMI_JSON_CONFIGURATION_H

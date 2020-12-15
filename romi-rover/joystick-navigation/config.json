@@ -1,0 +1,23 @@
+{
+    "user-interface": {
+        
+        "speed-controller": {
+            "fast" {
+                "use-speed-curve": true,
+                "speed-curve-exponent": 2.0,
+                "use-direction-curve": true,
+                "direction-curve-exponent": 2.0,
+                "speed-multiplier": 1.0,
+                "direction-multiplier": 0.4,
+            },
+            "accurate" {
+                "use-speed-curve": true,
+                "speed-curve-exponent": 1.0,
+                "use-direction-curve": true,
+                "direction-curve-exponent": 1.0,
+                "speed-multiplier": 0.3,
+                "direction-multiplier": 0.15
+            }
+        }
+    }
+}

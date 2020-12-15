@@ -23,106 +23,122 @@
  */
 
 #include <r.h>
+#include <algorithm>
 #include "SpeedController.h"
+#include <stdexcept>
 
 namespace romi {
         
-        SpeedController::SpeedController(INavigation &navigation)
+        SpeedController::SpeedController(INavigation &navigation, JSON &config)
                 : _navigation(navigation)
         {
-                _map_speed_exponential = true;
-                _map_direction_exponential = true;
-                        
-                _alpha_speed = 3.0;
-                _alpha_direction = 3.0;
-                        
-                _speed_coeff = 1.0;
-                _direction_coeff = 0.4;
-                        
-                _speed_coeff_accurate = 0.3;
-                _direction_coeff_accurate = 0.15;
-        }
+                JSON fast_config = config.get("speed-controller").get("fast");
+                JSON accurate_config = config.get("speed-controller").get("accurate");
                 
+                _fast.parse(fast_config);
+                if (!_fast.valid()) 
+                        throw std::range_error("Invalid settings for "
+                                               "fast speed controller");
+                
+                _accurate.parse(accurate_config);
+                if (!_accurate.valid()) 
+                        throw std::range_error("Invalid settings for "
+                                               "accurate speed controller");                
+        }
+
+        SpeedController::SpeedController(INavigation &navigation,
+                                         SpeedControllerSettings &fast,
+                                         SpeedControllerSettings &accurate)
+                : _navigation(navigation)
+        {
+                _fast = fast;
+                if (!_fast.valid()) 
+                        throw std::range_error("Invalid settings for "
+                                               "fast speed controller");
+                
+                _accurate = accurate;
+                if (!_accurate.valid()) 
+                        throw std::range_error("Invalid settings for "
+                                               "accurate speed controller");
+        }
+
         double SpeedController::map_exponential(double x, double alpha)
         {
                 return ((exp(alpha * x) - 1.0) / (exp(alpha) - 1.0));
         }
                 
-        double SpeedController::map_speed(double speed)
+        double SpeedController::map_speed(SpeedControllerSettings &settings,
+                                          double speed)
         {
                 double retval = speed;
-                if (_map_speed_exponential) {
+                if (settings.use_speed_curve) {
                         double sign = (speed >= 0.0)? 1.0 : -1.0;
                         double x = fabs(speed);
-                        double y = map_exponential(x, _alpha_speed);
+                        double y = map_exponential(x, settings.speed_curve_exponent);
                         retval = sign * y;
                 }
                 return retval;
         }
 
-        double SpeedController::map_direction(double direction)
+        double SpeedController::map_direction(SpeedControllerSettings &settings,
+                                              double direction)
         {
                 double retval = direction;
-                if (_map_direction_exponential) {
+                if (settings.use_direction_curve) {
                         double sign = (direction >= 0.0)? 1.0 : -1.0;
                         double x = fabs(direction);
-                        double y = map_exponential(x, _alpha_direction);
+                        double y = map_exponential(x, settings.direction_curve_exponent);
                         retval = sign * y;
                 }
                 return retval;
         }
 
-        void SpeedController::send_moveat(double left, double right)
+        bool SpeedController::send_moveat(double left, double right)
         {
-                if (left < -1.0)
-                        left = -1.0;
-                else if (left > 1.0)
-                        left = 1.0;
-                if (right < -1.0)
-                        right = -1.0;
-                else if (right > 1.0)
-                        right = 1.0;
-                _navigation.moveat(left, right);
+                // r_debug("SpeedController::moveat(left=%.3f,right=%.3f)", left, right); 
+                left = std::clamp(left, -1.0, 1.0); 
+                right = std::clamp(right, -1.0, 1.0);
+                return _navigation.moveat(left, right);
         }
                 
-        void SpeedController::stop()
+        bool SpeedController::stop()
         {
-                _navigation.moveat(0.0, 0.0);
+                return _navigation.stop();
+        }
+        
+        bool SpeedController::do_drive_at(SpeedControllerSettings &settings,
+                                          double speed, double direction)
+        {
+                // r_debug("SpeedController::do_drive_at(speed=%0.3f, direction=%0.3f)",
+                //         speed, direction);
+                
+                speed = std::clamp(speed, -1.0, 1.0); 
+                direction = std::clamp(direction, -1.0, 1.0);
+                
+                speed = map_speed(settings, speed);
+                direction = map_direction(settings, direction);
+                
+                double left = (settings.speed_multiplier * speed
+                               + settings.direction_multiplier * direction);
+                
+                double right = (settings.speed_multiplier * speed
+                                - settings.direction_multiplier * direction);
+                
+                return send_moveat(left, right);
         }
                 
-        void SpeedController::drive_at(double speed, double direction)
+        bool SpeedController::drive_at(double speed, double direction)
         {
-                r_debug("SpeedController::drive_at(speed=%0.3f, direction=%0.3f)",
-                        speed, direction);
-                double v = map_speed(speed);
-                double d = map_direction(direction);
-                double left = (_speed_coeff * v
-                               + _direction_coeff * d);
-                double right = (_speed_coeff * v
-                                - _direction_coeff * d);
-                send_moveat(left, right);
+                return do_drive_at(_fast, speed, direction);
         }
                 
-        void SpeedController::drive_accurately_at(double speed, double direction)
+        bool SpeedController::drive_accurately_at(double speed, double direction)
         {
-                r_debug("SpeedController::drive_accurately_at"
-                        "(speed=%0.3f, direction=%0.3f)",
-                        speed, direction);
-                double v = map_speed(speed);
-                double d = map_direction(direction);
-                double left = (_speed_coeff_accurate * v
-                               + _direction_coeff_accurate * d);
-                double right = (_speed_coeff_accurate * v
-                                - _direction_coeff_accurate * d);
-                send_moveat(left, right);
+                return do_drive_at(_accurate, speed, direction);
         }
 
-        void SpeedController::spin(double direction)
+        bool SpeedController::spin(double direction)
         {
-                r_debug("SpeedController::spin(direction=%0.3f)", direction);
-                double d = map_direction(direction);
-                double left = _direction_coeff * d;
-                double right = -left;
-                send_moveat(left, right);
+                return do_drive_at(_accurate, 0.0, direction);
         }        
 }
