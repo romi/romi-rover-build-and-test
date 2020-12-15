@@ -33,7 +33,7 @@ set(SRCS_RPCNAVIGATIONADAPTER
 
 add_executable(romi_rover_unit_tests_userinterface_rpcnavigationclientadaptor ${SRCS_RPCNAVIGATIONADAPTER})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_userinterface_rpcnavigationclientadaptor r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_userinterface_rpcnavigationclientadaptor rcom gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_userinterface_rpcnavigationclientadaptor

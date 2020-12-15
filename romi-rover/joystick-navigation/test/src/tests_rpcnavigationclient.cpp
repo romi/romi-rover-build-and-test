@@ -24,11 +24,32 @@ protected:
 	}
 };
 
-TEST_F(rpcnavigationclient_tests, check_stop_request)
+TEST_F(rpcnavigationclient_tests, stop_returns_true_when_request_succeeds)
 {
         RPCNavigationClientAdaptor adapter(rpc_client);
         
-        EXPECT_CALL(handler, exec(_,_));
+        EXPECT_CALL(rpc_client, execute(_,_))
+                .Times(1);
+        EXPECT_CALL(rpc_client, is_status_ok(_))
+                .WillOnce(Return(true));
 
-        adapter.stop();
+        bool success = adapter.stop();
+
+        ASSERT_EQ(success, true);
+}
+
+TEST_F(rpcnavigationclient_tests, stop_returns_false_when_request_fails)
+{
+        RPCNavigationClientAdaptor adapter(rpc_client);
+        
+        EXPECT_CALL(rpc_client, execute(_,_))
+                .Times(1);
+        EXPECT_CALL(rpc_client, is_status_ok(_))
+                .WillOnce(Return(false));
+        EXPECT_CALL(rpc_client, get_error_message(_))
+                .WillOnce(Return("TEST"));
+
+        bool success = adapter.stop();
+
+        ASSERT_EQ(success, false);
 }
