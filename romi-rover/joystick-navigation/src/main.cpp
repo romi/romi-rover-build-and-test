@@ -90,6 +90,8 @@ int main(int argc, char** argv)
         app_set_name("oquam");
         
         try {
+
+                
                 r_debug("UserInterface: Using configuration file: '%s'",
                         options.config_file);
                 ConfigurationFile config(options.config_file);
@@ -111,11 +113,29 @@ int main(int argc, char** argv)
                 StateMachine state_machine;
 
                 NavigationReady navigation_ready(speed_controller);
-                
+                        
                 state_machine.add(STATE_START,
                                   event_start,
                                   state_stopped,
                                   navigation_ready);
+                
+                
+                ////////////////////////
+
+                std::vector<StateTransition> state_transitions; 
+
+                state_transitions.push_back(StateTransition(STATE_START,
+                                                            event_start,
+                                                            state_stopped,
+                                                            navigation_ready);
+                
+                state_transitions.push_back(StateTransition(STATE_START,
+                                                            event_start,
+                                                            state_stopped,
+                                                            NavigationReady(speed_controller)));
+                
+
+                ////////////////////////
                 
                 StartDrivingForward start_driving_forward(joystick, speed_controller);
                 
