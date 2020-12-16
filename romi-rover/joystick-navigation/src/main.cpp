@@ -113,7 +113,18 @@ int main(int argc, char** argv)
                 StateMachine state_machine;
 
                 NavigationReady navigation_ready(speed_controller);
-                        
+                StartDrivingForward start_driving_forward(joystick, speed_controller);
+                DriveForward drive_forward(joystick, speed_controller);
+                StopDriving stop_driving(speed_controller);
+                StartDrivingForwardAccurately start_driving_forward_accurately(joystick,
+                                                                               speed_controller);
+                DriveForwardAccurately drive_forward_accurately(joystick, speed_controller);
+                StartDrivingBackward start_driving_backward(joystick, speed_controller);
+                
+                DriveBackward drive_backward(joystick, speed_controller);
+                
+
+                
                 state_machine.add(STATE_START,
                                   event_start,
                                   state_stopped,
@@ -137,7 +148,6 @@ int main(int argc, char** argv)
 
                 ////////////////////////
                 
-                StartDrivingForward start_driving_forward(joystick, speed_controller);
                 
                 state_machine.add(state_stopped,
                                   event_forward_start,
@@ -145,7 +155,6 @@ int main(int argc, char** argv)
                                   start_driving_forward);
                 
                 
-                DriveForward drive_forward(joystick, speed_controller);
                 
                 state_machine.add(state_moving_forward,
                                   event_forward_speed,
@@ -157,23 +166,18 @@ int main(int argc, char** argv)
                                   state_moving_forward,
                                   drive_forward);
 
-                StopDriving stop_driving(speed_controller);
                 
                 state_machine.add(state_moving_forward,
                                   event_forward_stop,
                                   state_stopped,
                                   stop_driving);
                 
-                StartDrivingForwardAccurately start_driving_forward_accurately(joystick,
-                                                                               speed_controller);
 
                 state_machine.add(state_stopped,
                                   event_accurate_forward_start,
                                   state_moving_forward_accurately,
                                   start_driving_forward_accurately);
                 
-                DriveForwardAccurately drive_forward_accurately(joystick, speed_controller);
-
 
                 state_machine.add(state_moving_forward_accurately,
                                   event_forward_speed,
@@ -190,15 +194,11 @@ int main(int argc, char** argv)
                                   state_stopped,
                                   stop_driving);
                 
-                StartDrivingBackward start_driving_backward(joystick, speed_controller);
-                
                 state_machine.add(state_stopped,
                                   event_backward_start,
                                   state_moving_backward,
                                   start_driving_backward);
                 
-                
-                DriveBackward drive_backward(joystick, speed_controller);
                 
                 state_machine.add(state_moving_backward,
                                   event_backward_speed,
