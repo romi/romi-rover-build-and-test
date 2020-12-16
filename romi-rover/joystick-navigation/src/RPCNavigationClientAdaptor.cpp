@@ -26,45 +26,53 @@
 
 namespace romi {
 
-        bool RPCNavigationClientAdaptor::execute(JSON &cmd)
+        void RPCNavigationClientAdaptor::execute(const char *method,
+                                                 JSON &params,
+                                                 rcom::RPCError &error)
         {
-                bool success = false;
-                JSON result;
+                JSON result; // Not returned to callers. 
 
                 try {
-                        _client.execute(cmd, result);
-                        
-                        success = _client.is_status_ok(result);
-                        if (!success) {
+                        _client.execute(method, params, result, error);
+
+                        if (error.code != 0) {
                                 r_err("RPCNavigationClientAdaptor::execute: %s",
-                                      _client.get_error_message(result));
+                                      error.message.c_str());
                         }
                         
-                } catch (rcom::RPCError &e) {
+                } catch (std::exception &e) {
                         r_err("RPCNavigationClientAdaptor::execute: '%s'", e.what());
+                        error.code = 1;
+                        error.message = e.what();
                 }
-
-                return success;
         }
 
         bool RPCNavigationClientAdaptor::moveat(double left, double right)
         {
-                JSON cmd = JSON::construct("{'command':'moveat',"
-                                           "'speed':[%0.3f,%0.3f]}",
-                                           left, right);
-                return execute(cmd);
+                rcom::RPCError error;
+                JSON params = JSON::construct("{'speed':[%0.3f,%0.3f]}",
+                                              left, right);
+                execute("moveat", params, error);
+
+                return (error.code == 0);
         }
 
         bool RPCNavigationClientAdaptor::move(double distance, double speed)
         {
-                JSON cmd = JSON::construct("{'command':'move','distance':%0.3f,"
-                                         "'speed':%0.3f}", distance, speed);
-                return execute(cmd);
+                rcom::RPCError error;
+                JSON params = JSON::construct("{'distance':%0.3f,"
+                                              "'speed':%0.3f}",
+                                              distance, speed);
+                execute("move", params, error);
+                
+                return (error.code == 0);
         }
         
         bool RPCNavigationClientAdaptor::stop()
         {
-                JSON cmd("{'command':'stop'}");
-                return execute(cmd);
+                rcom::RPCError error;
+                JSON params; // = No params
+                execute("stop", params, error);
+                return (error.code == 0);
         }
 }

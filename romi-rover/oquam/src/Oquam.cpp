@@ -30,9 +30,10 @@
 
 namespace romi {
 
-        void Oquam::moveto_synchronized(double x, double y, double z, double rel_speed)
+        bool Oquam::moveto_synchronized(double x, double y, double z, double rel_speed)
         {
                 r_debug("Oquam::moveto_synchronized");
+                bool success = false;
                 
                 if (rel_speed > 0.0 && rel_speed <= 1.0) {
                         
@@ -66,14 +67,20 @@ namespace romi {
                                 int16_t step_y = (int16_t) (dx[1] * scale[1]);
                                 int16_t step_z = (int16_t) (dx[2] * scale[2]);
                                 
-                                _controller.move(millis, step_x, step_y, step_z);
-                                _controller.synchronize(2.0 * duration);
-                                
+                                if (_controller.move(millis, step_x, step_y, step_z)) {
+                                        if (_controller.synchronize(2.0 * duration)) {
+                                                success = true;
+                                        } else {
+                                                r_err("Oquam::moveto_synchronized: synchronize failed");
+                                        }
+                                } else {
+                                        r_err("Oquam::moveto_synchronized: moveto failed");
+                                }
                         }
                 } else {
-                        r_debug("Oquam::moveto_synchronized: invalid speed: %f", rel_speed);
-                        throw std::runtime_error("Invalid speed");
+                        r_err("Oquam::moveto_synchronized: invalid speed: %f", rel_speed);
                 }
+                return success;
         }
 
         void Oquam::store_script(script_t *script) 
@@ -110,52 +117,62 @@ namespace romi {
                 }
         }
         
-        void Oquam::travel_synchronized(Path &path, double relative_speed) 
+        bool Oquam::travel_synchronized(Path &path, double relative_speed) 
         {
                 r_debug("Oquam::travel_synchronized");
                 
-                if (relative_speed <= 0.0 || relative_speed > 1.0)
-                        throw std::runtime_error("Invalid speed");
+                bool success = false;
                 
-                double position[3];
-                get_position(position);
+                if (relative_speed > 0.0 && relative_speed <= 1.0) {
                 
-                // FIXME
-                double v[3];
-                smul(v, _vmax, relative_speed);
-                double speed_ms = ::vmax(v);
+                        double position[3];
+                        get_position(position);
                 
-                script_t *script = build_script(path, speed_ms);
+                        // FIXME
+                        double v[3];
+                        smul(v, _vmax, relative_speed);
+                        double speed_ms = ::vmax(v);
+                
+                        script_t *script = build_script(path, speed_ms);
                         
-                if (script != 0) {
+                        if (script != 0) {
                                 
-                        if (convert_script(script, position, relative_speed)) {
+                                if (convert_script(script, position, relative_speed)) {
 
-                                store_script(script);
+                                        store_script(script);
                                 
-                                if (execute_script(script)) {
+                                        if (execute_script(script)) {
                                                 
-                                        double duration = script_duration(script);
-                                        double timeout = 60.0 + 1.5 * duration;
+                                                double duration = script_duration(script);
+                                                double timeout = 60.0 + 1.5 * duration;
                                                 
-                                        delete_script(script);
+                                                delete_script(script);
                                         
-                                        if (!_controller.synchronize(timeout)) 
-                                                throw std::runtime_error("Time out");
+                                                if (_controller.synchronize(timeout)) {
+                                                        success = true;
+                                                        
+                                                } else {
+                                                        r_err("Oquam::travel_synchronized: Time out");
+                                                }
                                                 
+                                        } else {
+                                                delete_script(script);
+                                                r_err("Oquam::travel_synchronized: execute_script failed");
+                                        }
+
                                 } else {
                                         delete_script(script);
-                                        throw std::runtime_error("execute_script failed");
+                                        r_err("Oquam::travel_synchronized: convert_script failed");
                                 }
-
-                        } else {
-                                delete_script(script);
-                                throw std::runtime_error("convert_script failed");
-                        }
                                 
+                        } else {
+                                r_err("Oquam::travel_synchronized: build_script failed");
+                        }
                 } else {
-                        throw std::runtime_error("build_script failed");
+                        r_err("Oquam::travel_synchronized: Invalid speed");
                 }
+                
+                return success;
         }
 
         
@@ -181,20 +198,20 @@ namespace romi {
                 return script;
         }
         
-        void Oquam::get_position(int32_t *position) 
+        bool Oquam::get_position(int32_t *position) 
         {
-                if (!_controller.get_position(position)) {
-                        r_err("controller.get_position failed");
-                        throw std::runtime_error("controller.get_position failed");
-                }
+                return _controller.get_position(position);
         }
         
-        void Oquam::get_position(double *position) 
+        bool Oquam::get_position(double *position) 
         {
                 int32_t p[3];
-                get_position(p); 
-                for (int i = 0; i < 3; i++)
-                        position[i] = (double) p[i] / _scale_meters_to_steps[i];
+                bool success = get_position(p);
+                if (success) {
+                        for (int i = 0; i < 3; i++)
+                                position[i] = (double) p[i] / _scale_meters_to_steps[i];
+                }
+                return success;
         }
 
         double Oquam::script_duration(script_t *script)
@@ -310,21 +327,18 @@ namespace romi {
                 return success;
         }
 
-        void Oquam::stop_execution()
+        bool Oquam::stop_execution()
         {
-                if (!_controller.stop_execution())
-                        throw std::runtime_error("Homing failed");
+                return _controller.stop_execution();
         }
         
-        void Oquam::continue_execution()
+        bool Oquam::continue_execution()
         {
-                if (!_controller.continue_execution())
-                        throw std::runtime_error("Continue failed");
+                return _controller.continue_execution();
         }
         
-        void Oquam::reset()
+        bool Oquam::reset()
         {
-                if (!_controller.reset())
-                        throw std::runtime_error("Reset failed");
+                return _controller.reset();
         }
 }

@@ -41,19 +41,39 @@ namespace romi {
                 
                 virtual ~FakeCNC() override = default;
                 
-                void get_range(CNCRange &range) override {
+                bool get_range(CNCRange &range) override {
                         range = _range;
+                        return true;
                 }
                 
-                void moveto(double x, double y, double z,
-                            double relative_speed = 0.1) override {}
+                bool moveto(double x, double y, double z,
+                            double relative_speed = 0.1) override {
+                        return true;
+                }
                 
-                void spindle(double speed) override {}
-                void travel(Path &path, double relative_speed = 0.1) override {}
-                void homing() {}
-                void stop_execution() override {}
-                void continue_execution() override {}
-                void reset() override {}
+                bool spindle(double speed) override {
+                        return true;
+                }
+                
+                bool travel(Path &path, double relative_speed = 0.1) override {
+                        return true;
+                }
+                
+                bool homing() {
+                        return true;
+                }
+                
+                bool stop_execution() override {
+                        return true;
+                }
+                
+                bool continue_execution() override {
+                        return true;
+                }
+                
+                bool reset() override {
+                        return true;
+                }
         };
 }
 

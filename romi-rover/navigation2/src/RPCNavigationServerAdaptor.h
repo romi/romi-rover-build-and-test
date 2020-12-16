@@ -33,19 +33,17 @@ namespace romi {
         {
         protected:
                 INavigation &_navigation;
-
-                void ok_status(JSON &result);
-                void error_status(JSON &result, const char *message);
-                void execute_moveat(JSON &cmd, JSON &result);
-                void execute_move(JSON &cmd, JSON &result);
-                void execute_stop(JSON &cmd, JSON &result);
+                
+                void execute_moveat(JSON &params, JSON &result, rcom::RPCError &error);
+                void execute_move(JSON &params, JSON &result, rcom::RPCError &error);
+                void execute_stop(JSON &params, JSON &result, rcom::RPCError &error);
                 
         public:
                 RPCNavigationServerAdaptor(INavigation &navigation)
                         : _navigation(navigation) {}
                 virtual ~RPCNavigationServerAdaptor() override = default;
 
-                void execute(JSON &cmd, JSON &result);
+                void execute(const char *method, JSON &params, JSON &result, rcom::RPCError &error);
         };
 }
 

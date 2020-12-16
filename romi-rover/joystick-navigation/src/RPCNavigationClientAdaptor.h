@@ -32,12 +32,13 @@ namespace romi {
         class RPCNavigationClientAdaptor : public INavigation
         {
         protected:
-                rcom::IRPCClient &_client;
+                rcom::IRPCHandler &_client;
                 
-                bool execute(JSON &cm);
+                void execute(const char *method, JSON &params, rcom::RPCError &error);
+                
         public:
                 
-                RPCNavigationClientAdaptor(rcom::IRPCClient &client) : _client(client) {}
+                RPCNavigationClientAdaptor(rcom::IRPCHandler &client) : _client(client) {}
                 virtual ~RPCNavigationClientAdaptor() override = default;
 
                 bool moveat(double left, double right) override;

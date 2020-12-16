@@ -4,5 +4,5 @@
 class MockRPCHandler : public rcom::IRPCHandler
 {
 public:
-        MOCK_METHOD(void, execute, (JSON &command, JSON &result), (override));
-}
+        MOCK_METHOD(void, execute, (const char *method, JSON &params, JSON &result, rcom::RPCError &error), (override));
+};

@@ -27,27 +27,52 @@
 
 namespace romi {
 
-        void Weeder::move_arm_to_camera_position()
+        bool Weeder::move_arm_to_camera_position()
         {
-                r_debug("Weeder::move_arm_to_camera_position");
-                move_arm_up();
-                _cnc->moveto(0.0, _range._y[1], 0.0, 0.8);
+                bool success = false;
+                if (stop_spindle_and_move_arm_up()) {
+                        if (_cnc->moveto(0.0, _range._y[1], 0.0, 0.8)) {
+                                success = true;
+                        } else {
+                                r_warn("Weeder::move_arm_to_camera_position: moveto failed");
+                        }
+                } else {
+                        r_warn("Weeder::move_arm_to_camera_position: stop_spindle_and_move_arm_up failed");
+                }        
+                return success;
         }
 
-        void Weeder::move_arm_to_start_position(Waypoint p)
+        bool Weeder::move_arm_to_start_position(Waypoint p)
         {
+                bool success = false;
                 r_debug("Weeder::move_arm_to_start_position");
-                move_arm_up();
-                _cnc->moveto(p.x, p.y, 0.0, 0.8);
-                _cnc->spindle(1.0);
-                _cnc->moveto(p.x, p.y, _z0, 0.8);
+                success = (stop_spindle_and_move_arm_up()
+                           && _cnc->moveto(p.x, p.y, 0.0, 0.8)
+                           && _cnc->spindle(1.0)
+                           && _cnc->moveto(p.x, p.y, _z0, 0.8));
+                if (!success) {
+                        r_warn("Weeder::move_arm_to_start_position: stop_spindle_and_move_arm_up, "
+                               "moveto or spindle failed");
+                } 
+                return success;
         }
 
-        void Weeder::move_arm_up()
+        bool Weeder::stop_spindle_and_move_arm_up()
         {
-                r_debug("Weeder::move_arm_up");
-                _cnc->spindle(0.0);
-                _cnc->moveto(ICNC::UNCHANGED, ICNC::UNCHANGED, 0.0, 0.8);
+                bool success = false;
+                r_debug("Weeder::stop_spindle_and_move_arm_up");
+                if (_cnc->spindle(0.0)) {
+                        if (_cnc->moveto(ICNC::UNCHANGED,
+                                         ICNC::UNCHANGED,
+                                         0.0, 0.8)) {
+                                success = true;
+                        } else {
+                                r_warn("Weeder::stop_spindle_and_move_arm_up: moveto failed");
+                        }
+                } else {
+                        r_warn("Weeder::stop_spindle_and_move_arm_up: spindle failed");
+                }
+                return success;
         }
         
         bool Weeder::path_in_range(Path &path)
@@ -139,60 +164,90 @@ namespace romi {
                 }
         }
         
-        void Weeder::do_hoe(Path &som_path)
+        bool Weeder::do_hoe(Path &som_path)
         {
                 Path path;
+                bool success = false;
                 
                 r_debug("Weeder::do_hoe");
+                
                 adjust_path(som_path, path);
        
                 try {
                         r_debug("Weeder::do_hoe: move_arm_to_start_position");
-                        move_arm_to_start_position(path[0]);
-                        r_debug("Weeder::do_hoe: _cnc->travel");
-                        _cnc->travel(path, 0.4);
-                        r_debug("Weeder::do_hoe: move_arm_up");
-                        move_arm_up();
-                                
+                        success = move_arm_to_start_position(path[0]);
+                        
+                        if (success) {
+                                r_debug("Weeder::do_hoe: _cnc->travel"); 
+                                success = _cnc->travel(path, 0.4);
+                        }
+                        
+                        if (success) {
+                                r_debug("Weeder::do_hoe: stop_spindle_and_move_arm_up");
+                                success = stop_spindle_and_move_arm_up();
+                        }
+                        
                 } catch (std::exception& e) {
+
+                        // Whatever happens, make sure the spindle
+                        // stops and the arm goes back up
+                        
                         r_debug("Weeder::do_hoe: catch");
-                        move_arm_up();
+                        stop_spindle_and_move_arm_up();
                         throw e;
                 }
+                
+                return success;
         }
         
-        void Weeder::hoe()
+        bool Weeder::hoe()
         {
                 IFolder &folder = _filecabinet.start_new_folder();
                 Image camera_image;
                 Path path;
+                bool success = false;
                 
                 r_debug("Weeder::hoe");
                 
-                move_arm_to_camera_position();
-                
-                r_debug("Weeder::hoe: _camera->grab");
-                _camera->grab(camera_image);
+                success = move_arm_to_camera_position();
 
-                r_debug("Weeder::hoe: _pipeline->run");
-                _pipeline->run(folder, camera_image, 0.05, path);
-
-                if (path.size()) {
-                        do_hoe(path);
+                if (success) {
+                        r_debug("Weeder::hoe: _camera->grab");
+                        success = _camera->grab(camera_image);
                 }
+
+                if (success) {
+                        r_debug("Weeder::hoe: _pipeline->run");
+                        success = _pipeline->run(folder, camera_image, 0.05, path);
+                }
+                
+                if (path.size()) {
+                        success = do_hoe(path);
+                }
+                
+                return success;
         }
         
-        void Weeder::execute(JSON &cmd, JSON &result)
+        void Weeder::execute(const char *method, JSON &params,
+                             JSON &result, rcom::RPCError &error)
         {
                 r_debug("Weeder::execute");
                 
-                const char *command = cmd.str("command");
-                if (rstreq(command, "hoe")) {
-                        hoe();
-                        result = JSON::parse("{\"status\":\"ok\"}");
+                if (rstreq(method, "hoe")) {
+                        
+                        try {
+                                hoe();
+                                error.code = 0;
+                                
+                        } catch (std::exception& e) {
+                                r_debug("Weeder::exception: catched exception: %s", e.what());
+                                error.code = 0;
+                                error.message = e.what();
+                        }
+                        
                 } else {
-                        result = JSON::parse("{\"status\":\"error\", "
-                                             "\"message\": \"Unknown command\"}");
+                        error.code = rcom::RPCError::MethodNotFound;
+                        error.message = "Unknown method";
                 }
         }
 }

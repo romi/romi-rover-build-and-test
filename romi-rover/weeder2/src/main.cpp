@@ -27,7 +27,6 @@
 
 #include <RPCServer.h>
 
-#include "CNCProxy.h"
 #include "FakeCNC.h"
 #include "ConfigurationFile.h"
 #include "CameraFactory.h"

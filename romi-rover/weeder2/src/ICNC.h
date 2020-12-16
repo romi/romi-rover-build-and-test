@@ -38,23 +38,23 @@ namespace romi {
                 
                 virtual ~ICNC() = default;
 
-                virtual void get_range(CNCRange &range) = 0;
+                virtual bool get_range(CNCRange &range) = 0;
 
                 // The positions are given in meters. The speed is
                 // given as a fraction of the maximum speed. A value
                 // of 1.0 means maximum speed. The actual speed will
                 // depend on the direction of the (x,y,z) vector and
                 // the allowed maximum speeds on each of the axes.
-                virtual void moveto(double x, double y, double z,
+                virtual bool moveto(double x, double y, double z,
                                     double relative_speed = 0.1) = 0;
                 
-                virtual void spindle(double speed) = 0;
-                virtual void travel(Path &path, double relative_speed = 0.1) = 0;
-                virtual void homing() = 0;
+                virtual bool spindle(double speed) = 0;
+                virtual bool travel(Path &path, double relative_speed = 0.1) = 0;
+                virtual bool homing() = 0;
 
-                virtual void stop_execution() = 0;
-                virtual void continue_execution() = 0;
-                virtual void reset() = 0;
+                virtual bool stop_execution() = 0;
+                virtual bool continue_execution() = 0;
+                virtual bool reset() = 0;
                                 
         };
 }

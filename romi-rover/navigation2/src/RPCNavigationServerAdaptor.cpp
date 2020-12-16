@@ -26,84 +26,81 @@
 
 namespace romi {
         
-        void RPCNavigationServerAdaptor::execute(JSON &cmd, JSON &result)
+        void RPCNavigationServerAdaptor::execute(const char *method, JSON &params,
+                                                 JSON &result, rcom::RPCError &error)
         {
-                r_debug("RPCNavigationServerAdaptor::navigation: execute");
+                r_debug("RPCNavigationServerAdaptor::execute");
 
-                if (cmd.has("command")) {
-                        
-                        const char *command = cmd.str("command");
+                error.code = 0;
                 
-                        if (rstreq(command, "moveat")) {
-                                execute_moveat(cmd, result);
-                        } else if (rstreq(command, "move")) {
-                                execute_move(cmd, result);
-                        } else if (rstreq(command, "stop")) {
-                                execute_stop(cmd, result);
+                try {
+                        
+                        if (rstreq(method, "moveat")) {
+                                execute_moveat(params, result, error);
+                        } else if (rstreq(method, "move")) {
+                                execute_move(params, result, error);
+                        } else if (rstreq(method, "stop")) {
+                                execute_stop(params, result, error);
                         } else {
-                                error_status(result, "Unknown command");
+                                error.code = rcom::RPCError::MethodNotFound;
+                                error.message = "Unknown command";
                         }
-                } else {
-                        error_status(result, "Missing command");
+                        
+                } catch (std::exception &e) {
+                        r_err("RPCNavigationServerAdaptor::execute: caught exception: %s",
+                              e.what());
+                        error.code = rcom::RPCError::InternalError;
+                        error.message = e.what();
                 }
         }
-        
-        void RPCNavigationServerAdaptor::ok_status(JSON &result)
-        {
-                result = JSON::parse("{\"status\": \"ok\"}");
-        }
-        
-        void RPCNavigationServerAdaptor::error_status(JSON &result, const char *message)
-        {
-                result = JSON::construct("{\"status\": \"error\", "
-                                        "\"message\": \"%s\"}",
-                                        message);
-        }
 
-        void RPCNavigationServerAdaptor::execute_moveat(JSON &cmd, JSON &result)
+        void RPCNavigationServerAdaptor::execute_moveat(JSON &params, JSON &result, rcom::RPCError &error)
         {
                 r_debug("RPCNavigationServerAdaptor::execute_moveat");
                 try {
-                        double left = cmd.array("speed").num(0);
-                        double right = cmd.array("speed").num(1);
+                        double left = params.array("speed").num(0);
+                        double right = params.array("speed").num(1);
                 
-                        if (_navigation.moveat(left, right))
-                                ok_status(result);
-                        else
-                                error_status(result, "moveat failed");
+                        if (!_navigation.moveat(left, right)) {
+                                error.code = 1;
+                                error.message = "moveat failed";
+                        }
                         
                 } catch (JSONError &je) {
                         r_debug("RPCNavigationServerAdaptor::execute_moveat: %s",
                                 je.what());
-                        error_status(result, je.what());
+                        error.code = rcom::RPCError::ParseError;
+                        error.message = "Invalid json";
                 }
         }
 
-        void RPCNavigationServerAdaptor::execute_move(JSON &cmd, JSON &result)
+        void RPCNavigationServerAdaptor::execute_move(JSON &params, JSON &result, rcom::RPCError &error)
         {
                 r_debug("RPCNavigationServerAdaptor::execute_move");
                 
                 try {
-                        double distance = cmd.num("distance");
-                        double speed = cmd.num("speed");
+                        double distance = params.num("distance");
+                        double speed = params.num("speed");
                 
-                        if (_navigation.move(distance, speed))
-                                ok_status(result);
-                        else
-                                error_status(result, "move failed");
+                        if (!_navigation.move(distance, speed)) {
+                                error.code = 1;
+                                error.message = "move failed";
+                        }
                         
                 } catch (JSONError &je) {
                         r_debug("RPCNavigationServerAdaptor::execute_move: %s", je.what());
-                        error_status(result, je.what());
+                        error.code = rcom::RPCError::ParseError;
+                        error.message = "Invalid json";
                 }
         }
 
-        void RPCNavigationServerAdaptor::execute_stop(JSON &cmd, JSON &result)
+        void RPCNavigationServerAdaptor::execute_stop(JSON &params, JSON &result, rcom::RPCError &error)
         {
                 r_debug("RPCNavigationServerAdaptor::execute_stop");
-                if (_navigation.stop())
-                        ok_status(result);
-                else
-                        error_status(result, "stop failed");
+                
+                if (!_navigation.stop()) {
+                        error.code = 1;
+                        error.message = "stop failed"; // Good luck with that!
+                }
         }
 }

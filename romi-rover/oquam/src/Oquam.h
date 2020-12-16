@@ -105,39 +105,42 @@ namespace romi {
                         _file_cabinet = cabinet;
                 }
                 
-                void get_range(CNCRange &range) {
+                bool get_range(CNCRange &range) {
                         range._x[0] = _xmin[0];
                         range._x[1] = _xmax[0];
                         range._y[0] = _xmin[1];
                         range._y[1] = _xmax[1];
                         range._z[0] = _xmin[2];
                         range._z[1] = _xmax[2];
+                        return true;
                 }
 
                 // See ICNC.h for more info
-                void moveto(double x, double y, double z,
+                bool moveto(double x, double y, double z,
                             double relative_speed = 0.1) override {
                         SynchronizedCodeBlock sync(_mutex);
-                        moveto_synchronized(x, y, z, relative_speed);
+                        return moveto_synchronized(x, y, z, relative_speed);
                 }
                 
-                void travel(Path &path, double relative_speed = 0.1) override {
+                bool travel(Path &path, double relative_speed = 0.1) override {
                         SynchronizedCodeBlock sync(_mutex);
-                        travel_synchronized(path, relative_speed);
+                        return travel_synchronized(path, relative_speed);
                 }
                 
-                void spindle(double speed) override {
+                bool spindle(double speed) override {
                         // TODO
+                        r_err("Oquam::spindle NOT IMPLEMENTED YET!");
+                        return true;
                 }
 
-                void homing() override {
+                bool homing() override {
                         SynchronizedCodeBlock sync(_mutex);
-                        _controller.homing();
+                        return _controller.homing();
                 }
 
-                void stop_execution() override;
-                void continue_execution() override;
-                void reset() override;
+                bool stop_execution() override;
+                bool continue_execution() override;
+                bool reset() override;
                 
                 /* accessors */
         
@@ -178,11 +181,11 @@ namespace romi {
                 }
 
         protected:
-                void moveto_synchronized(double x, double y, double z, double rel_speed);
-                void travel_synchronized(Path &path, double relative_speed);
+                bool moveto_synchronized(double x, double y, double z, double rel_speed);
+                bool travel_synchronized(Path &path, double relative_speed);
 
-                void get_position(double *position); 
-                void get_position(int32_t *position); 
+                bool get_position(double *position); 
+                bool get_position(int32_t *position); 
                 script_t *build_script(Path &path, double speed); 
                 bool convert_script(script_t *script, double *position, double rel_speed); 
                 bool execute_script(script_t *script);

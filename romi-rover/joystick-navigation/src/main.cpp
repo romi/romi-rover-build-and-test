@@ -129,25 +129,7 @@ int main(int argc, char** argv)
                                   event_start,
                                   state_stopped,
                                   navigation_ready);
-                
-                
-                ////////////////////////
 
-                std::vector<StateTransition> state_transitions; 
-
-                state_transitions.push_back(StateTransition(STATE_START,
-                                                            event_start,
-                                                            state_stopped,
-                                                            navigation_ready);
-                
-                state_transitions.push_back(StateTransition(STATE_START,
-                                                            event_start,
-                                                            state_stopped,
-                                                            NavigationReady(speed_controller)));
-                
-
-                ////////////////////////
-                
                 
                 state_machine.add(state_stopped,
                                   event_forward_start,
