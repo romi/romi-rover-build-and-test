@@ -96,7 +96,7 @@ namespace romi {
                 int idle = -1;
                 int state = '?';
                 
-                // FIXME: RomiSerial should use JSON.h!
+                // FIXME: RomiSerial should use JsonCpp.h!
                 json_object_t obj = _romi_serial.send("I");
                 JSON s = JSON::moveto(obj);
 
@@ -135,7 +135,7 @@ namespace romi {
         {
                 bool success = false;
                 
-                // FIXME: RomiSerial should use JSON.h!
+                // FIXME: RomiSerial should use JsonCpp.h!
                 json_object_t obj = _romi_serial.send("P");
                 JSON s = JSON::moveto(obj);
 

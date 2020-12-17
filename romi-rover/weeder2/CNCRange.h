@@ -25,7 +25,7 @@
 #ifndef __ROMI_CNC_RANGE_H
 #define __ROMI_CNC_RANGE_H
 
-#include "JSON.h"
+#include "JsonCpp.h"
 
 namespace romi {
         
@@ -42,7 +42,7 @@ namespace romi {
                         }
                 }
                 
-                void init(JSON range) {
+                void init(JsonCpp range) {
                         for (int i = 0; i < 2; i++) {
                                 _x[i] = range.array(0).num(i);
                                 _y[i] = range.array(1).num(i);

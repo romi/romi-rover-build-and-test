@@ -5,7 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 add_executable(weeder2
-  JSON.h
   Image.h
   Path.h
   CNCRange.h
@@ -53,7 +52,7 @@ add_executable(weeder2
   Weeder.cpp
   weeder_main.cpp)
 
-target_link_libraries(weeder2 rcom romi)
+target_link_libraries(weeder2 rcompp romi)
 
 if(BUILD_TESTS)
     add_subdirectory(test)

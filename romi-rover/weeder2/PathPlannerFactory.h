@@ -26,7 +26,7 @@
 #define __ROMI_PATH_PLANNER_FACTORY_H
 
 #include "IPathPlanner.h"
-#include "JSON.h"
+#include "JsonCpp.h"
 
 namespace romi {
 
@@ -38,7 +38,7 @@ namespace romi {
                                              void *data);
                 
         public:
-                static IPathPlanner *create(const char *name, JSON params);
+                static IPathPlanner *create(const char *name, JsonCpp params);
         };
 }
 

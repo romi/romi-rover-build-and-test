@@ -186,13 +186,13 @@ namespace romi {
                 }
         }
         
-        JSON Weeder::execute(JSON cmd)
+        JsonCpp Weeder::execute(JsonCpp cmd)
         {
-                JSON r;
+                JsonCpp r;
                 r_debug("Weeder::execute");
                 if (rstreq(cmd.str("command"), "hoe")) {
                         hoe();
-                        r = JSON::parse("{\"status\":\"ok\"}");
+                        r = JsonCpp::parse("{\"status\":\"ok\"}");
                 }
                 return r;
         }

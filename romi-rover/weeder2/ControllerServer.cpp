@@ -73,7 +73,7 @@ namespace romi {
                 
                 try {
                         
-                        JSON reply = execute(message);
+                        JsonCpp reply = execute(message);
                         messagelink_send_obj(link, reply.ptr());
                         
                 } catch (std::exception& e) {
@@ -81,14 +81,14 @@ namespace romi {
                         r_err("ControllerServer::onmessage: caught exception: %s",
                               e.what());
                         
-                        JSON err = JSON::construct("{\"status\": \"error\", "
+                        JsonCpp err = JsonCpp::construct("{\"status\": \"error\", "
                                                    "\"message\": \"%s\"}",
                                                    e.what());
                         messagelink_send_obj(link, err.ptr());
                 }
         }
 
-        JSON ControllerServer::execute(JSON cmd)
+        JsonCpp ControllerServer::execute(JsonCpp cmd)
         {
                 return _controller->execute(cmd);
         }
