@@ -24,6 +24,7 @@
 #ifndef __ROMI_RPC_CNC_CLIENT_ADAPTOR_H
 #define __ROMI_RPC_CNC_CLIENT_ADAPTOR_H
 
+#include <stdexcept>
 #include "IRPCHandler.h"
 #include "ICNC.h"
 
@@ -37,10 +38,15 @@ namespace romi {
                 bool execute(const char *method, JSON &params, JSON &result);
                 bool execute_with_params(const char *method, JSON &params);
                 bool execute_with_result(const char *method, JSON &result);
-                void execute_simple_request(const char *method);
+                bool execute_simple_request(const char *method);
 
         public:
-                RPCCNCClientAdaptor(rcom::IRPCHandler *rpc_handler) : _client(rpc_handler) {}
+                RPCCNCClientAdaptor(rcom::IRPCHandler *rpc_handler)
+                        : _client(rpc_handler) {
+                        if (_client == 0) {
+                                throw std::runtime_error("RPCCNCClientAdaptor: client=0");
+                        }
+                }
                 virtual ~RPCCNCClientAdaptor() = default;
 
                 bool get_range(CNCRange &range) override;

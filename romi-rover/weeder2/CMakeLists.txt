@@ -15,6 +15,8 @@ add_executable(weeder2
   src/ImageSegmentationFactory.cpp
   src/CNCRange.h
   src/CNCRange.cpp
+  src/RPCCNCClientAdaptor.h
+  src/RPCCNCClientAdaptor.cpp
   src/svm/SVMSegmentation.h
   src/svm/SVMSegmentation.cpp
   src/quincunx/Quincunx.h
@@ -54,6 +56,8 @@ add_executable(weeder2_eval
   src/ImageSegmentationFactory.cpp
   src/CNCRange.h
   src/CNCRange.cpp
+  src/RPCCNCClientAdaptor.h
+  src/RPCCNCClientAdaptor.cpp
   src/svm/SVMSegmentation.h
   src/svm/SVMSegmentation.cpp
   src/quincunx/Quincunx.h

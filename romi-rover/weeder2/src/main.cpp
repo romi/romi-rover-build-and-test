@@ -34,8 +34,11 @@
 #include "Weeder.h"
 #include "Pipeline.h"
 #include "DebugWeedingSession.h"
+#include "RPCClient.h"
+#include "RPCCNCClientAdaptor.h"
 
 using namespace romi;
+using namespace rcom;
 
 struct Options {
         
@@ -44,6 +47,9 @@ struct Options {
         const char *camera_topic;
         const char *weeder_topic;
         const char *output_directory;
+        const char *cnc_class;
+        const char *cnc_name;
+        const char *camera_class;
 
         Options() {
                 config_file = "config.json";
@@ -51,6 +57,9 @@ struct Options {
                 camera_topic = "topcam";
                 weeder_topic = "weeder";
                 output_directory = ".";
+                cnc_class = 0;
+                cnc_name = "oquam";
+                camera_class = 0;
         }
 
         void parse(int argc, char** argv) {
@@ -62,6 +71,9 @@ struct Options {
                         {"camera-topic", required_argument, 0, 'T'},
                         {"weeder-topic", required_argument, 0, 'W'},
                         {"output-directory", required_argument, 0, 'd'},
+                        {"cnc-class", required_argument, 0, 'c'},
+                        {"cnc-name", required_argument, 0, 'n'},
+                        {"camera", required_argument, 0, 'a'},
                         {0, 0, 0, 0}
                 };
         
@@ -85,11 +97,100 @@ struct Options {
                         case 'd':
                                 output_directory = optarg;
                                 break;
+                        case 'c':
+                                cnc_class = optarg;
+                                break;
+                        case 'n':
+                                cnc_name = optarg;
+                                break;
+                        case 'a':
+                                camera_class = optarg;
+                                break;
                         }
                 }
         }
 };
+
+static ICNC *cnc = 0;
+static RPCClient *rpc_client = 0;
+static ICamera *camera = 0;
+
+ICamera *create_camera(Options &options, IConfiguration &config)
+{
+        const char *camera_class = options.camera_class;
+        if (camera_class == 0) {
+                try {
+                        camera_class = config.get("weeder").str("camera");
+                } catch (JSONError &je) {
+                        r_warn("Failed to get the value for weeder.camera: %s", je.what());
+                }
+        }
+        if (camera_class != 0)
+                throw std::runtime_error("No camera class was defined in the options "
+                                         "or in the configuration file.");
         
+        JSON camera_config;
+        if (config.get().has("weeder") && config.get("weeder").has(camera_class))
+                camera_config = config.get("weeder").get(camera_class);
+        else 
+                r_warn("Configuration does not have a '%s' camera section",
+                       camera_class);  
+        
+        return CameraFactory::create(camera_class, camera_config);
+}
+
+ICNC *create_cnc(Options &options, IConfiguration &config)
+{
+        const char *cnc_class = options.cnc_class;
+        if (cnc_class == 0) {
+                try {
+                        cnc_class = config.get("weeder").str("cnc");
+                } catch (JSONError &je) {
+                        r_warn("Failed to get the value for weeder.cnc: %s", je.what());
+                }
+        }
+        if (cnc_class != 0)
+                throw std::runtime_error("No CNC class was defined in the options "
+                                         "or in the configuration file.");
+        
+        ICNC *cnc = 0;
+        
+        if (rstreq(cnc_class, "fake")) {
+                try {
+                        cnc = new FakeCNC(config);
+                } catch (JSONError &je) {
+                        r_warn("Failed to configure FakeCNC: %s", je.what());
+                }
+        } else if (rstreq(cnc_class, "rpc")) {
+                const char *name = options.cnc_name;
+                if (name == 0)
+                        name = "oquam";
+                rpc_client = new RPCClient(name, "cnc");
+                cnc = new RPCCNCClientAdaptor(rpc_client);
+        }
+
+        return cnc;
+}
+
+void init_cnc_range(ICNC *cnc, CNCRange &range)
+{
+        bool success = false;
+        for (int attempt = 1; attempt <= 10; attempt++) {
+                if (cnc->get_range(range)) {
+                        r_debug("init_cnc_range: [%f, %f],[%f, %f],[%f, %f]",
+                                range._x[0], range._x[1],
+                                range._y[0], range._y[1],
+                                range._z[0], range._z[1]);
+                        success = true;
+                        break; 
+                }
+                clock_sleep(1.0);
+        }
+        if (!success) {
+                throw std::runtime_error("Failed to obtain the CNC range.");
+        }
+}
+
 int main(int argc, char** argv)
 {
         Options options;
@@ -102,51 +203,42 @@ int main(int argc, char** argv)
                 ConfigurationFile config(options.config_file);
 
                 // Instantiate the camera
-                const char *camera_class = config.get("weeder").str("camera");
-                JSON camera_config = config.get("weeder").get(camera_class);
-                ICamera *camera = CameraFactory::create(camera_class, camera_config);
+                ICamera *camera = create_camera(options, config);
+                
+                // Instantiate the CNC
+                ICNC *cnc = create_cnc(options, config);
+
+                CNCRange range;
+                init_cnc_range(cnc, range);
+                               
+                Pipeline pipeline(range, config.get());
+                
+                DebugWeedingSession session(options.output_directory, "weeder");
+                
+                Weeder weeder(&config, camera, &pipeline, cnc, range, session);
+                
+                RPCServer weeder_server(weeder,
+                                        options.server_name,
+                                        options.weeder_topic);
                 
                 // Make the camera accessible over HTTP 
                 CameraServer camera_server(*camera, options.server_name,
                                            options.camera_topic);
-                
-                ICNC *cnc = 0;
-#if 0
-                IController *controller = new ControllerClient("weeder", "cnc");
-                cnc = new CNCProxy(controller);
-#else
-                cnc = new FakeCNC(config);
-#endif
-                
-                CNCRange range;
-                cnc->get_range(range);
-                
-                r_debug("main: range: %f, %f", range._x[0], range._x[1]);
-                               
-                IPipeline *pipeline = new Pipeline(range, config.get());
-                
-                DebugWeedingSession session(options.output_directory, "weeder");
-                
-                Weeder weeder(&config, camera, pipeline, cnc, range, session);
-                
-                rcom::RPCServer weeder_server(weeder,
-                                              options.server_name,
-                                              options.weeder_topic);
-                
                 while (!app_quit())
                         clock_sleep(0.1);
 
-                delete cnc;
-                delete pipeline;
-#if 0
-                delete controller;
-#endif
-                delete camera;
-                
         } catch (std::exception& e) {
                 r_err(e.what());
         }
 
+        if (cnc)
+                delete cnc;
+        if (rpc_client)
+                delete rpc_client;
+        if (camera)
+                delete camera;
+                
+        
         return 0;
 }
 

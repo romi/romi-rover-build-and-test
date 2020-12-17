@@ -32,7 +32,7 @@ namespace romi {
                 rcom::RPCError error;
                 
                 try {
-                        _client.execute(method, params, result, error);
+                        _client->execute(method, params, result, error);
 
                         if (error.code != 0) {
                                 r_err("RPCCNCClientAdaptor::execute: %s",
@@ -83,8 +83,6 @@ namespace romi {
                         
                 } catch (JSONError &je) {
                         r_err("RPCCNCClientAdaptor::get_range failed: %s", je.what());
-                        error.code = 1;
-                        error.message = je.what();
                 }
 
                 return success;
@@ -106,7 +104,7 @@ namespace romi {
                 if (z != UNCHANGED)
                         json_object_setnum(p, "z", z);
                 
-                json_object_setnum(p, "speed", speed);
+                json_object_setnum(p, "speed", v);
                 
                 JSON params(p);
                 json_unref(p);
@@ -127,8 +125,8 @@ namespace romi {
 
                 return execute_with_params("spindle", params);
         }
-
-        void RPCCNCClientAdaptor::travel(Path &path, double relative_speed)
+        
+        bool RPCCNCClientAdaptor::travel(Path &path, double relative_speed)
         {
                 r_debug("RPCCNCClientAdaptor::travel");
 
@@ -155,25 +153,25 @@ namespace romi {
                 return execute_with_params("travel", params);
         }
 
-        void RPCCNCClientAdaptor::homing()
+        bool RPCCNCClientAdaptor::homing()
         {
                 r_debug("RPCCNCClientAdaptor::homing");
                 return execute_simple_request("homing");
         }
 
-        void RPCCNCClientAdaptor::stop_execution()
+        bool RPCCNCClientAdaptor::stop_execution()
         {
                 r_debug("RPCCNCClientAdaptor::stop_execution");
                 return execute_simple_request("stop");
         }
 
-        void RPCCNCClientAdaptor::continue_execution()
+        bool RPCCNCClientAdaptor::continue_execution()
         {
                 r_debug("RPCCNCClientAdaptor::continue_execution");
                 return execute_simple_request("continue");
         }
 
-        void RPCCNCClientAdaptor::reset()
+        bool RPCCNCClientAdaptor::reset()
         {
                 r_debug("RPCCNCClientAdaptor::reset");
                 return execute_simple_request("reset");
