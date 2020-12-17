@@ -27,8 +27,8 @@ namespace romi {
         
         void CNCProxy::get_range(CNCRange &range)
         {
-                JSON command = JSON::parse("{\"command\": \"get-range\"}");
-                JSON reply = _controller->execute(command);
+                JsonCpp command = JsonCpp::parse("{\"command\": \"get-range\"}");
+                JsonCpp reply = _controller->execute(command);
                 range.init(reply.get("range"));
         }
         
@@ -46,7 +46,7 @@ namespace romi {
                 membuf_printf(buf, ", \"speed\": %.2f }", v);
                 membuf_append_zero(buf);
                 
-                JSON command = JSON::parse(membuf_data(buf));
+                JsonCpp command = JsonCpp::parse(membuf_data(buf));
 
                 delete_membuf(buf);
                 
@@ -55,7 +55,7 @@ namespace romi {
 
         void CNCProxy::spindle(double speed)
         {
-                JSON command = JSON::construct("{\"command\": \"spindle\", "
+                JsonCpp command = JsonCpp::construct("{\"command\": \"spindle\", "
                                                "\"speed\": %.2f}", speed);
                 _controller->execute(command);
         }
@@ -103,7 +103,7 @@ namespace romi {
                 
                 //r_debug("CNCProxy::travel: command=%s", membuf_data(buf));
                 
-                JSON command = JSON::parse(membuf_data(buf));
+                JsonCpp command = JsonCpp::parse(membuf_data(buf));
 
                 r_debug("CNCProxy::travel @8");
 
@@ -117,25 +117,25 @@ namespace romi {
 
         void CNCProxy::homing()
         {
-                JSON command = JSON::parse("{\"command\": \"homing\"}");
+                JsonCpp command = JsonCpp::parse("{\"command\": \"homing\"}");
                 _controller->execute(command);
         }
 
         void CNCProxy::stop_execution()
         {
-                JSON command = JSON::parse("{\"command\": \"stop\"}");
+                JsonCpp command = JsonCpp::parse("{\"command\": \"stop\"}");
                 _controller->execute(command);
         }
 
         void CNCProxy::continue_execution()
         {
-                JSON command = JSON::parse("{\"command\": \"continue\"}");
+                JsonCpp command = JsonCpp::parse("{\"command\": \"continue\"}");
                 _controller->execute(command);
         }
 
         void CNCProxy::reset()
         {
-                JSON command = JSON::parse("{\"command\": \"reset\"}");
+                JsonCpp command = JsonCpp::parse("{\"command\": \"reset\"}");
                 _controller->execute(command);
         }
 

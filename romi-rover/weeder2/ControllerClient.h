@@ -33,13 +33,13 @@ namespace romi {
         protected:
                 messagelink_t *_link;
 
-                void assure_ok(JSON reply);
+                void assure_ok(JsonCpp reply);
                 
         public:
                 ControllerClient(const char *name, const char *topic);
                 virtual ~ControllerClient();
 
-                JSON execute(JSON cmd) override;
+                JsonCpp execute(JsonCpp cmd) override;
         };
 }
 

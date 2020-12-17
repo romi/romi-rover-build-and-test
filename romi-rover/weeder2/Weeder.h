@@ -66,7 +66,7 @@ namespace romi {
                 virtual ~Weeder() override = default;
                 
                 void hoe();
-                JSON execute(JSON cmd) override;
+                JsonCpp execute(JsonCpp cmd) override;
         };
 }
 

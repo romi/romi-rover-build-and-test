@@ -24,5 +24,5 @@ set(SOURCES
 
 add_executable(joystick_navigation ${SOURCES})
 
-target_link_libraries(joystick_navigation romi rcom r)
+target_link_libraries(joystick_navigation romi rcom)
 install(TARGETS joystick_navigation DESTINATION bin/romi)

@@ -26,7 +26,7 @@
 
 #include <string>
 #include <rcom.h>
-#include "JSON.h"
+#include "JsonCpp.h"
 
 namespace romi {
         
@@ -34,7 +34,7 @@ namespace romi {
         {
         public:
                 virtual ~IController() = default;
-                virtual JSON execute(JSON cmd) = 0;
+                virtual JsonCpp execute(JsonCpp cmd) = 0;
         };
 }
 

@@ -40,7 +40,7 @@ namespace romi {
                         registry_close_messagelink(_link);
         }
 
-        void ControllerClient::assure_ok(JSON reply)
+        void ControllerClient::assure_ok(JsonCpp reply)
         {
                 r_debug("ControllerClient::assure_ok");
                 const char *status = reply.str("status");
@@ -51,10 +51,10 @@ namespace romi {
                 }
         }
 
-        JSON ControllerClient::execute(JSON cmd)
+        JsonCpp ControllerClient::execute(JsonCpp cmd)
         {
                 r_debug("ControllerClient::execute");
-                JSON reply = messagelink_send_command(_link, cmd.ptr());
+                JsonCpp reply = messagelink_send_command(_link, cmd.ptr());
                 assure_ok(reply);
                 return reply;
         }

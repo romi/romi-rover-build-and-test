@@ -46,7 +46,7 @@ namespace romi {
                                  const char *name, const char *topic);
                 virtual ~ControllerServer();
                 
-                JSON execute(JSON cmd) override;
+                JsonCpp execute(JsonCpp cmd) override;
         };
 }
 
