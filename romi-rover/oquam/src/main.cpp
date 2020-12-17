@@ -27,13 +27,13 @@ struct Options {
         const char *config_file;
         const char *serial_device;
         const char *server_name;
-        const char *cnc_classname;
+        const char *cnc_controller;
 
         Options() {
                 config_file = "config.json";
                 serial_device = "/dev/ttyACM0";
                 server_name = "oquam";
-                cnc_classname = "oquam";
+                cnc_controller = "oquam";
         }
 
         void parse(int argc, char** argv) {
@@ -43,7 +43,7 @@ struct Options {
                         {"config", required_argument, 0, 'C'},
                         {"device", required_argument, 0, 'D'},
                         {"navigation-server-name", required_argument, 0, 'N'},
-                        {"cnc-classname", required_argument, 0, 'c'},
+                        {"cnc-controller", required_argument, 0, 'c'},
                         {0, 0, 0, 0}
                 };
         
@@ -62,7 +62,7 @@ struct Options {
                                 serial_device = optarg;
                                 break;
                         case 'c':
-                                cnc_classname = optarg;
+                                cnc_controller = optarg;
                                 break;
                         }
                 }
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
                         scale[i] = gears[i] * microsteps[i] * steps[i] / displacement[i];
                 }
                 
-                if (rstreq(options.cnc_classname, "fake")) {
+                if (rstreq(options.cnc_controller, "fake")) {
                         cnc_controller = new FakeCNCController();
                 } else {
                         RSerial serial(options.serial_device, 115200, 1);        
