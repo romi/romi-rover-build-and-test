@@ -36,7 +36,7 @@ namespace romi {
         public:
                 virtual ~IImageCropper() = default; 
                 virtual void set_range(CNCRange &range) = 0;
-                virtual int set_parameter(const char *name, JSON value) = 0;
+                virtual int set_parameter(const char *name, JsonCpp value) = 0;
                 virtual double map_meters_to_pixels(double meters) = 0;
                 
                 virtual void crop(IFolder &session,

@@ -28,8 +28,8 @@ TEST_F(rpcnavigation_tests, test_execute_invalid_command_returns_error)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params;
-        JSON result;
+        JsonCpp params;
+        JsonCpp result;
         rcom::RPCError error;
         
         adaptor.execute(0, params, result, error);
@@ -42,8 +42,8 @@ TEST_F(rpcnavigation_tests, test_execute_unknown_command_returns_error)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params;
-        JSON result;
+        JsonCpp params;
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("dummy", params, result, error);
@@ -56,8 +56,8 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_ok)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'distance':1,'speed':0.1}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'distance':1,'speed':0.1}");
+        JsonCpp result;
         rcom::RPCError error;
 
         EXPECT_CALL(navigation, move(1.0, 0.1))
@@ -72,8 +72,8 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_missing_parameter
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'move'}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'move'}");
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("move", params, result, error);
@@ -86,8 +86,8 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_missing_parameter
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'move','distance':0}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'move','distance':0}");
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("move", params, result, error);
@@ -100,8 +100,8 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_invalid_parameter
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'move','distance':'foo'}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'move','distance':'foo'}");
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("move", params, result, error);
@@ -114,8 +114,8 @@ TEST_F(rpcnavigation_tests, test_move_command_returns_error_on_invalid_parameter
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'move','distance':10,'speed':'foo'}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'move','distance':10,'speed':'foo'}");
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("move", params, result, error);
@@ -128,8 +128,8 @@ TEST_F(rpcnavigation_tests, test_move_returns_error_when_move_fails)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'move','distance':1,'speed':0.1}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'move','distance':1,'speed':0.1}");
+        JsonCpp result;
         rcom::RPCError error;
 
         EXPECT_CALL(navigation, move(1.0, 0.1))
@@ -149,8 +149,8 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_ok)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'moveat','speed':[0.1,0.2]}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'moveat','speed':[0.1,0.2]}");
+        JsonCpp result;
         rcom::RPCError error;
 
         EXPECT_CALL(navigation, moveat(0.1, 0.2))
@@ -165,8 +165,8 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_missing_parameters_1)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'moveat'}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'moveat'}");
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("moveat", params, result, error);
@@ -179,8 +179,8 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_1)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'moveat','speed':'foo'}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'moveat','speed':'foo'}");
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("moveat", params, result, error);
@@ -193,8 +193,8 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_2)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'moveat','speed':['foo','bar']}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'moveat','speed':['foo','bar']}");
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("moveat", params, result, error);
@@ -207,8 +207,8 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_3)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'moveat','speed':[0.1,'bar']}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'moveat','speed':[0.1,'bar']}");
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("moveat", params, result, error);
@@ -221,8 +221,8 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_on_invalid_parameters_4)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'moveat','speed':['foo',0.2]}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'moveat','speed':['foo',0.2]}");
+        JsonCpp result;
         rcom::RPCError error;
 
         adaptor.execute("moveat", params, result, error);
@@ -235,8 +235,8 @@ TEST_F(rpcnavigation_tests, test_moveat_returns_error_when_moveat_fails)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'moveat','speed':[0.1,0.2]}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'moveat','speed':[0.1,0.2]}");
+        JsonCpp result;
         rcom::RPCError error;
 
         EXPECT_CALL(navigation, moveat(0.1, 0.2))
@@ -254,8 +254,8 @@ TEST_F(rpcnavigation_tests, test_stop_returns_ok)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'stop'}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'stop'}");
+        JsonCpp result;
         rcom::RPCError error;
 
         EXPECT_CALL(navigation, stop())
@@ -270,8 +270,8 @@ TEST_F(rpcnavigation_tests, test_stop_returns_error_when_stop_fails)
 {
         RPCNavigationServerAdaptor adaptor(navigation);
 
-        JSON params = JSON::parse("{'command':'stop'}");
-        JSON result;
+        JsonCpp params = JsonCpp::parse("{'command':'stop'}");
+        JsonCpp result;
         rcom::RPCError error;
 
         EXPECT_CALL(navigation, stop())

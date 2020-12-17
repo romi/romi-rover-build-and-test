@@ -34,7 +34,7 @@ namespace romi {
         protected:
                 rcom::IRPCHandler &_client;
                 
-                void execute(const char *method, JSON &params, rcom::RPCError &error);
+                void execute(const char *method, JsonCpp& params, rcom::RPCError& error);
                 
         public:
                 

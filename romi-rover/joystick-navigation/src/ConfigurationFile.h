@@ -25,26 +25,27 @@
 #define __ROMI_CONFIGURATION_FILE_H
 
 #include "IConfiguration.h"
+#include "JsonCpp.h"
 
 namespace romi {
         
         class ConfigurationFile : public IConfiguration
         {
         protected:
-                JSON _config;
+                JsonCpp _config;
                 
         public:
                 ConfigurationFile(const char *path) {
-                        _config = JSON::load(path);
+                        _config = JsonCpp::load(path);
                 }
                 
                 virtual ~ConfigurationFile() override = default;
                 
-                JSON get() override {
+                JsonCpp get() override {
                         return _config;
                 }
                 
-                JSON get(const char *key) override {
+                JsonCpp get(const char *key) override {
                         return _config.get(key);
                 }
         };

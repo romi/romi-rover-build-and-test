@@ -38,7 +38,7 @@ namespace romi {
                 
         public:
                 static IImageSegmentation *create(const char *name,
-                                                  JSON params);
+                                                  JsonCpp params);
         };
 }
 

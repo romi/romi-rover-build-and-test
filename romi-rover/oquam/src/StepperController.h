@@ -28,7 +28,6 @@
 #include "RomiSerialClient.h" 
 #include "RSerial.h" 
 #include "ICNCController.h" 
-#include "JSON.h" 
 
 namespace romi {
 

@@ -26,14 +26,14 @@
 #define __ROMI_I_CAMERA_H
 
 #include "Image.h"
-#include "JSON.h"
+#include "JsonCpp.h"
 
 namespace romi {
 
         class ICamera {
         public:
                 virtual ~ICamera() = default;
-                virtual int set_parameter(const char *name, JSON value) = 0;
+                virtual int set_parameter(const char *name, JsonCpp value) = 0;
                 virtual bool open() = 0;
                 virtual bool grab(Image &image) = 0;
         };

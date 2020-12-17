@@ -71,8 +71,8 @@ namespace romi {
                 bool hoe();
 
                 // RPC interface
-                void execute(const char *method, JSON &params,
-                             JSON &result, rcom::RPCError &error) override;
+                void execute(const char *method, JsonCpp& params,
+                             JsonCpp& result, rcom::RPCError &error) override;
         };
 }
 

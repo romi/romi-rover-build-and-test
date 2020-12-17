@@ -25,7 +25,7 @@
 #ifndef __ROMI_CNC_RANGE_H
 #define __ROMI_CNC_RANGE_H
 
-#include "JSON.h"
+#include "JsonCpp.h"
 
 namespace romi {
         
@@ -36,7 +36,7 @@ namespace romi {
                 
                 CNCRange();
                 
-                void init(JSON &range);
+                void init(JsonCpp &range);
 
                 // Returns true if the point lies in the range
                 bool is_valid(double x, double y, double z);

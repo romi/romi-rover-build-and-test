@@ -39,30 +39,30 @@ namespace romi {
                         delete _planner;
         }
         
-        void Pipeline::build_cropper(CNCRange &range, JSON weeder)
+        void Pipeline::build_cropper(CNCRange &range, JsonCpp weeder)
         {
                 const char *name = weeder.str("cropper");
-                JSON properties = weeder.get(name);                
+                JsonCpp properties = weeder.get(name);                
                 _cropper = ImageCropperFactory::create(name, range, properties);
         }
         
-        void Pipeline::build_segmentation(JSON weeder)
+        void Pipeline::build_segmentation(JsonCpp weeder)
         {
                 const char *name = weeder.str("segmentation");
-                JSON properties = weeder.get(name);                
+                JsonCpp properties = weeder.get(name);                
                 _segmentation = ImageSegmentationFactory::create(name, properties);
         }
         
-        void Pipeline::build_planner(JSON weeder)
+        void Pipeline::build_planner(JsonCpp weeder)
         {
                 const char *name = weeder.str("path");
-                JSON properties = weeder.get(name);                
+                JsonCpp properties = weeder.get(name);                
                 _planner = PathPlannerFactory::create(name, properties);
         }
         
-        void Pipeline::build(CNCRange &range, JSON config)
+        void Pipeline::build(CNCRange &range, JsonCpp config)
         {
-                JSON weeder = config.get("weeder");
+                JsonCpp weeder = config.get("weeder");
                 build_cropper(range, weeder);
                 build_segmentation(weeder);
                 build_planner(weeder);

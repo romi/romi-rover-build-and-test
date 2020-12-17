@@ -25,11 +25,11 @@ protected:
 
 TEST_F(configuration_tests, test_json_configuration_get)
 {
-        JSONConfiguration config(JSON::parse("{'foo':'bar'}"));
+        JSONConfiguration config(JsonCpp::parse("{'foo':'bar'}"));
 
         ASSERT_STREQ("bar", config.get("foo").str());
         
-        JSON obj = config.get();
+        JsonCpp obj = config.get();
         ASSERT_EQ(true, obj.has("foo"));
         ASSERT_STREQ("bar", obj.get("foo").str());
 }
@@ -38,12 +38,12 @@ TEST_F(configuration_tests, test_json_configuration_set)
 {
         JSONConfiguration config;
 
-        JSON o = JSON::parse("{'foo':'bar'}");
+        JsonCpp o = JsonCpp::parse("{'foo':'bar'}");
         config.set(o);
         
         ASSERT_STREQ("bar", config.get("foo").str());
         
-        JSON obj = config.get();
+        JsonCpp obj = config.get();
         ASSERT_EQ(true, obj.has("foo"));
         ASSERT_STREQ("bar", obj.get("foo").str());
 }

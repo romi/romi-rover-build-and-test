@@ -23,8 +23,8 @@ add_executable(romi_rover_regression_test_som_compare som/compare.c)
 
 #if(BUILD_COVERAGE)
 #    SETUP_TARGET_FOR_COVERAGE_LCOV(
-#            NAME r_unit_tests_weeder2_json
+#            NAME romi_rover_unit_tests_weeder2_json
 #            EXECUTABLE ctest -V ${n_cores}
-#            DEPENDENCIES r_unit_tests_weeder2_json)
+#            DEPENDENCIES romi_rover_unit_tests_weeder2_json)
 #endif()
 

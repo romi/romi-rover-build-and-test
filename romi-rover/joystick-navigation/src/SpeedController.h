@@ -27,7 +27,7 @@
 #include <math.h>
 #include "ISpeedController.h"
 #include "INavigation.h"
-#include "JSON.h"
+#include "JsonCpp.h"
 
 namespace romi {
         
@@ -40,7 +40,7 @@ namespace romi {
                 double speed_multiplier;         // range [0.1, 1.0]
                 double direction_multiplier;     // range [0.1, 1.0]
 
-                void parse(JSON &config) {
+                void parse(JsonCpp& config) {
                         use_speed_curve = config.boolean("use-speed-curve");
                         speed_curve_exponent = config.boolean("direction-curve-exponent");
                         use_direction_curve = config.num("use-direction-curve");
@@ -77,7 +77,7 @@ namespace romi {
                 
         public:
                 
-                SpeedController(INavigation &navigation, JSON &config);
+                SpeedController(INavigation &navigation, JsonCpp& config);
                 SpeedController(INavigation &navigation,
                                 SpeedControllerSettings &fast,
                                 SpeedControllerSettings &accurate);

@@ -15,7 +15,7 @@ protected:
         vector<string> expected_output;
         vector<string> observed_output;
         vector<string> mock_response;
-        JSON driver_config;
+        JsonCpp driver_config;
         int encoder_steps;
         double maximum_revolutions_per_second;
         
@@ -25,7 +25,7 @@ protected:
                         "'use_pid': false,"
                         "'pid': {'kp': 1.1, 'ki': 2.2, 'kd': 3.3},"
                         "'encoder_directions': {'left': -1, 'right': 1 }}";
-                driver_config = JSON::parse(config_string);
+                driver_config = JsonCpp::parse(config_string);
                 encoder_steps = 123;
                 maximum_revolutions_per_second = 1.7;
 	}
@@ -38,10 +38,10 @@ protected:
 	void TearDown() override {
 	}
 
-        void append_output(const char *s, JSON &response) {
+        void append_output(const char *s, JsonCpp& response) {
                 size_t index = observed_output.size();
                 observed_output.push_back(s);
-                response = JSON::parse(mock_response[index].c_str());
+                response = JsonCpp::parse(mock_response[index].c_str());
         }
 
         void add_expected_output(const char *command, const char *response) {

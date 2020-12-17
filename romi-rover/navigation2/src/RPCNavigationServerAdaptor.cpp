@@ -26,8 +26,8 @@
 
 namespace romi {
         
-        void RPCNavigationServerAdaptor::execute(const char *method, JSON &params,
-                                                 JSON &result, rcom::RPCError &error)
+        void RPCNavigationServerAdaptor::execute(const char *method, JsonCpp &params,
+                                                 JsonCpp &result, rcom::RPCError &error)
         {
                 r_debug("RPCNavigationServerAdaptor::execute");
 
@@ -54,7 +54,7 @@ namespace romi {
                 }
         }
 
-        void RPCNavigationServerAdaptor::execute_moveat(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCNavigationServerAdaptor::execute_moveat(JsonCpp &params, JsonCpp &result, rcom::RPCError &error)
         {
                 r_debug("RPCNavigationServerAdaptor::execute_moveat");
                 try {
@@ -74,7 +74,7 @@ namespace romi {
                 }
         }
 
-        void RPCNavigationServerAdaptor::execute_move(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCNavigationServerAdaptor::execute_move(JsonCpp &params, JsonCpp &result, rcom::RPCError &error)
         {
                 r_debug("RPCNavigationServerAdaptor::execute_move");
                 
@@ -94,7 +94,7 @@ namespace romi {
                 }
         }
 
-        void RPCNavigationServerAdaptor::execute_stop(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCNavigationServerAdaptor::execute_stop(JsonCpp &params, JsonCpp &result, rcom::RPCError &error)
         {
                 r_debug("RPCNavigationServerAdaptor::execute_stop");
                 

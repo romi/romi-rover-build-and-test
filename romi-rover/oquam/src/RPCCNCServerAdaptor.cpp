@@ -25,8 +25,8 @@
 
 namespace romi {
 
-        void RPCCNCServerAdaptor::execute(const char *method, JSON &params,
-                                          JSON &result, rcom::RPCError &error)
+        void RPCCNCServerAdaptor::execute(const char *method, JsonCpp& params,
+                                          JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RPCCNCServerAdaptor::execute");
 
@@ -64,15 +64,15 @@ namespace romi {
                 }
         }
 
-        void RPCCNCServerAdaptor::handle_get_range(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCCNCServerAdaptor::handle_get_range(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RPCCNCServerAdaptor::handle_get_range");
                 CNCRange range;
                 if (_cnc.get_range(range)) {
-                        result = JSON::construct("[[%f,%f],[%f,%f],[%f,%f]]",
-                                                 range._x[0], range._x[1],
-                                                 range._y[0], range._y[1],
-                                                 range._z[0], range._z[1]);
+                        result = JsonCpp::construct("[[%f,%f],[%f,%f],[%f,%f]]",
+                                                    range._x[0], range._x[1],
+                                                    range._y[0], range._y[1],
+                                                    range._z[0], range._z[1]);
                 } else {
                         r_err("RPCCNCServerAdaptor::handle_get_range failed");
                         error.code = 1;
@@ -80,7 +80,7 @@ namespace romi {
                 }
         }
         
-        void RPCCNCServerAdaptor::handle_moveto(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCCNCServerAdaptor::handle_moveto(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RPCCNCServerAdaptor::handle_moveto");
 
@@ -106,7 +106,7 @@ namespace romi {
                 }
         }
         
-        void RPCCNCServerAdaptor::handle_spindle(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCCNCServerAdaptor::handle_spindle(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RPCCNCServerAdaptor::handle_spindle");
                 
@@ -124,17 +124,17 @@ namespace romi {
                 }
         }
         
-        void RPCCNCServerAdaptor::handle_travel(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCCNCServerAdaptor::handle_travel(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RPCCNCServerAdaptor::handle_travel");
                 
                 try {
                         Path path;
                         double speed = params.num("speed", 0.1);
-                        JSON p = params.array("path");
+                        JsonCpp p = params.array("path");
                         for (int i = 0; i < p.length(); i++) {
                                 Waypoint w;
-                                JSON c = p.array(i);
+                                JsonCpp c = p.array(i);
                                 w.x = c.num(0);
                                 w.y = c.num(1);
                                 w.z = c.num(2);
@@ -153,7 +153,7 @@ namespace romi {
                 }
         }
         
-        void RPCCNCServerAdaptor::handle_homing(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCCNCServerAdaptor::handle_homing(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RPCCNCServerAdaptor::handle_homing");
                 
@@ -163,7 +163,7 @@ namespace romi {
                 }
         }
 
-        void RPCCNCServerAdaptor::handle_stop(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCCNCServerAdaptor::handle_stop(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RPCCNCServerAdaptor::handle_stop");
                 if (!_cnc.stop_execution()) {
@@ -172,7 +172,7 @@ namespace romi {
                 }
         }
 
-        void RPCCNCServerAdaptor::handle_continue(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCCNCServerAdaptor::handle_continue(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RPCCNCServerAdaptor::handle_continue");
                 if (!_cnc.continue_execution()) {
@@ -181,7 +181,7 @@ namespace romi {
                 }
         }
 
-        void RPCCNCServerAdaptor::handle_reset(JSON &params, JSON &result, rcom::RPCError &error)
+        void RPCCNCServerAdaptor::handle_reset(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RPCCNCServerAdaptor::handle_reset");
                 if (!_cnc.reset()) {

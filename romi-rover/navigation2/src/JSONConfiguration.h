@@ -31,20 +31,20 @@ namespace romi {
         class JSONConfiguration : public IConfiguration
         {
         protected:
-                JSON _obj;
+                JsonCpp _obj;
                 
         public:
                 JSONConfiguration() {}
-                JSONConfiguration(JSON obj) : _obj(obj) {}                
+                JSONConfiguration(JsonCpp obj) : _obj(obj) {}                
                  ~JSONConfiguration() override = default;
                 
-                JSON get() override {
+                JsonCpp get() override {
                         return _obj;
                 }
-                JSON get(const char *key) override {
+                JsonCpp get(const char *key) override {
                         return _obj.get(key);
                 }
-                void set(JSON &obj) {
+                void set(JsonCpp &obj) {
                         _obj = obj;
                 }
         };

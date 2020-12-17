@@ -77,7 +77,7 @@ TEST_F(romiserialclient_tests, message_without_args)
         initInput("#a[0]:00e7\r");
 
         // Act
-        JSON response;
+        JsonCpp response;
         client.send("a", response);
         
         //Assert
@@ -94,7 +94,7 @@ TEST_F(romiserialclient_tests, message_with_args)
         initInput("#a[0]:00e7\r");
 
         // Act
-        JSON response;
+        JsonCpp response;
         client.send("a[1,2,3]", response);
         
         //Assert
@@ -111,7 +111,7 @@ TEST_F(romiserialclient_tests, error_reponse)
         initInput("#a[1,\"Went to bed early\"]:00f2\r");
 
         // Act
-        JSON response;
+        JsonCpp response;
         client.send("a", response);
         
         //Assert
@@ -130,7 +130,7 @@ TEST_F(romiserialclient_tests, error_reponse_without_message)
         initInput("#a[1]:0085\r");
 
         // Act
-        JSON response;
+        JsonCpp response;
         client.send("a", response);
         
         //Assert
@@ -148,7 +148,7 @@ TEST_F(romiserialclient_tests, log_message)
         initInput("#!LOG MESSAGE:008e\r#a[0]:00e7\r");
 
         // Act
-        JSON response;
+        JsonCpp response;
         client.send("a", response);
         
         //Assert
@@ -163,7 +163,7 @@ TEST_F(romiserialclient_tests, message_too_long)
         // Arrange
 
         // Act
-        JSON response;
+        JsonCpp response;
 
         client.send("a[\"0123456789012345678901234567890123456789"
                     "012345678901234567890123456789\"]",

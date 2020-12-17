@@ -98,12 +98,12 @@ int main(int argc, char** argv)
                 r_debug("Weeder: Using configuration file: '%s'", options.config_file);
                 ConfigurationFile config(options.config_file);
 
-                JSON navigation_settings = config.get("navigation");
+                JsonCpp navigation_settings = config.get("navigation");
 
-                JSON rover_settings = navigation_settings.get("rover");
+                JsonCpp rover_settings = navigation_settings.get("rover");
                 RoverConfiguration rover(rover_settings);
                 
-                JSON driver_settings = navigation_settings.get("brush-motor-driver");
+                JsonCpp driver_settings = navigation_settings.get("brush-motor-driver");
                 
                 // TODO: check for serial_device in config
                 RSerial serial(options.serial_device, 115200, 1);        

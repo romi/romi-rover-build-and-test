@@ -37,7 +37,7 @@ namespace romi {
                 return 0;
         }
         
-        IPathPlanner *PathPlannerFactory::create(const char *name, JSON params)
+        IPathPlanner *PathPlannerFactory::create(const char *name, JsonCpp params)
         {
                 IPathPlanner *obj = 0;
                 

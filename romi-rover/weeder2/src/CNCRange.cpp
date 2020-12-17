@@ -35,7 +35,7 @@ namespace romi {
                 }
         }
                 
-        void CNCRange::init(JSON &range)
+        void CNCRange::init(JsonCpp& range)
         {
                 for (int i = 0; i < 2; i++) {
                         _x[i] = range.array(0).num(i);

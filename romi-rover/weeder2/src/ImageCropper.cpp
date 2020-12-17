@@ -27,7 +27,7 @@
 
 namespace romi {
 
-        int ImageCropper::set_workspace(JSON w)
+        int ImageCropper::set_workspace(JsonCpp w)
         {
                 int r = -1;
                 double x0 = w.num(0);
@@ -57,7 +57,7 @@ namespace romi {
                 return r;
         }
 
-        int ImageCropper::set_parameter(const char *name, JSON value)
+        int ImageCropper::set_parameter(const char *name, JsonCpp value)
         {
                 int r = -1;
                 if (rstreq(name, "workspace")) {

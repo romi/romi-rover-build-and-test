@@ -26,7 +26,7 @@
 namespace romi {
         
         BrushMotorDriver::BrushMotorDriver(IRomiSerialClient &serial,
-                                           JSON &config,
+                                           JsonCpp &config,
                                            int encoder_steps,
                                            double max_revolutions_per_sec)
                 : _serial(serial)
@@ -39,7 +39,7 @@ namespace romi {
                 }
         }
                 
-        bool BrushMotorDriver::configure_controller(JSON &config, int steps,
+        bool BrushMotorDriver::configure_controller(JsonCpp &config, int steps,
                                                     double max_revolutions_per_sec)
         {
                         
@@ -57,21 +57,21 @@ namespace romi {
                         _settings.dir_left,
                         _settings.dir_right);
                         
-                JSON response;
+                JsonCpp response;
                 _serial.send(command, response);
                 return (response.num(0) == 0);
         }
 
         bool BrushMotorDriver::enable_controller()
         {
-                JSON response;
+                JsonCpp response;
                 _serial.send("E[1]", response);
                 return (response.num(0) == 0);
         }
 
         bool BrushMotorDriver::stop()
         {
-                JSON response;
+                JsonCpp response;
                 _serial.send("X", response);
                 bool success = (response.num(0) == 0);
                 if (!success) {
@@ -96,7 +96,7 @@ namespace romi {
                         char command[64];
                         rprintf(command, 64, "V[%d,%d]", ileft, iright);
                                 
-                        JSON response;
+                        JsonCpp response;
                         _serial.send(command, response);
                         success = (response.num(0) == 0);
                         
@@ -116,7 +116,7 @@ namespace romi {
                                                   double &right,
                                                   double &timestamp)
         {
-                JSON response;
+                JsonCpp response;
                 _serial.send("e", response);
                 bool success = (response.num(0) == 0);
                 if (success) {

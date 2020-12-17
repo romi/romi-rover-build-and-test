@@ -38,7 +38,7 @@ namespace romi {
                 int _width;
                 int _height;
 
-                int set_workspace(JSON value);
+                int set_workspace(JsonCpp value);
 
         public:
                 ImageCropper() : _x0(0), _y0(0), _width(0), _height(0) {} 
@@ -53,7 +53,7 @@ namespace romi {
 
                 double map_meters_to_pixels(double meters) override;
 
-                int set_parameter(const char *name, JSON value) override;
+                int set_parameter(const char *name, JsonCpp value) override;
                         
                 void crop(IFolder &session,
                           Image &camera_image,

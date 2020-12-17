@@ -40,7 +40,7 @@ namespace romi {
                 CameraProxy() {}
                 virtual ~CameraProxy() override = default;
                 
-                int set_parameter(const char *name, JSON value) override {
+                int set_parameter(const char *name, JsonCpp value) override {
                         int r = 0;
                         if (rstreq(name, "name")) {
                                 _name = value.str();

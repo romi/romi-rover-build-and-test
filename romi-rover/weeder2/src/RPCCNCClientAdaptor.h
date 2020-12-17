@@ -35,9 +35,9 @@ namespace romi {
         protected:
                 rcom::IRPCHandler *_client;
 
-                bool execute(const char *method, JSON &params, JSON &result);
-                bool execute_with_params(const char *method, JSON &params);
-                bool execute_with_result(const char *method, JSON &result);
+                bool execute(const char *method, JsonCpp& params, JsonCpp& result);
+                bool execute_with_params(const char *method, JsonCpp& params);
+                bool execute_with_result(const char *method, JsonCpp& result);
                 bool execute_simple_request(const char *method);
 
         public:

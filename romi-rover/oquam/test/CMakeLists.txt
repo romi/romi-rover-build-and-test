@@ -37,5 +37,5 @@ set(SRCS_OQUAMSTEPPER
   )
 
 add_executable(romi_rover_unit_tests_oquam_stepper ${SRCS_OQUAMSTEPPER})
-target_link_libraries(romi_rover_unit_tests_oquam_stepper r romi gtest gmock)
+target_link_libraries(romi_rover_unit_tests_oquam_stepper rpp romi gtest gmock)
 

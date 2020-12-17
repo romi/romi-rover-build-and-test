@@ -31,6 +31,7 @@
 #include <IInputStream.h>
 #include <IOutputStream.h>
 #include <EnvelopeParser.h>
+#include <r.h>
 
 // A 2.0 second timeout to read the response messages.
 #define ROMISERIALCLIENT_TIMEOUT 2.0
@@ -46,16 +47,16 @@ protected:
         EnvelopeParser _parser;
 
         int make_request(const char *command, std::string &request);
-        JSON try_sending_request(std::string &request);
+        JsonCpp try_sending_request(std::string &request);
         bool send_request(std::string &request);
-        JSON make_error(int code);
+        JsonCpp make_error(int code);
         bool handle_one_char();
         bool parse_char(int c);
-        JSON parse_response();
-        JSON read_response();
+        JsonCpp parse_response();
+        JsonCpp read_response();
         bool can_write();
         bool filter_log_message();
-        JSON check_error_response(JSON data);
+        JsonCpp check_error_response(JsonCpp& data);
 
 public:
         
@@ -73,7 +74,7 @@ public:
                 return _id;
         }
         
-        void send(const char *command, JSON &response) override;
+        void send(const char *command, JsonCpp& response) override;
         
         void set_debug(bool value) {
                 _debug = value;

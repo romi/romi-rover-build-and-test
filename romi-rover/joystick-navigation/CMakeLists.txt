@@ -30,7 +30,7 @@ set(SOURCES
   )
 
 add_executable(joystick_navigation ${SOURCES})
-target_link_libraries(joystick_navigation romi rcom r)
+target_link_libraries(joystick_navigation romi rcompp rpp)
 
 
 if(BUILD_TESTS)

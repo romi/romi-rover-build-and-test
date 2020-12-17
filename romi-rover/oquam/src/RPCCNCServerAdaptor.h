@@ -34,21 +34,21 @@ namespace romi {
         protected:
                 ICNC &_cnc;
                 
-                void handle_get_range(JSON &params, JSON &result, rcom::RPCError &error);
-                void handle_moveto(JSON &params, JSON &result, rcom::RPCError &error);
-                void handle_spindle(JSON &params, JSON &result, rcom::RPCError &error);
-                void handle_travel(JSON &params, JSON &result, rcom::RPCError &error);
-                void handle_homing(JSON &params, JSON &result, rcom::RPCError &error);
-                void handle_stop(JSON &params, JSON &result, rcom::RPCError &error);
-                void handle_continue(JSON &params, JSON &result, rcom::RPCError &error);
-                void handle_reset(JSON &params, JSON &result, rcom::RPCError &error);
+                void handle_get_range(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
+                void handle_moveto(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
+                void handle_spindle(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
+                void handle_travel(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
+                void handle_homing(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
+                void handle_stop(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
+                void handle_continue(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
+                void handle_reset(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
 
         public:
                 RPCCNCServerAdaptor(ICNC &cnc) : _cnc(cnc) {}
                 virtual ~RPCCNCServerAdaptor() override = default;
                 
-                void execute(const char *method, JSON &params,
-                             JSON &result, rcom::RPCError &error) override;
+                void execute(const char *method, JsonCpp& params,
+                             JsonCpp& result, rcom::RPCError &error) override;
         };
 }
 

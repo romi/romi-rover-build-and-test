@@ -37,7 +37,7 @@ namespace romi {
                                              void *data);
                 
         public:
-                static ICamera *create(const char *name, JSON config);
+                static ICamera *create(const char *name, JsonCpp config);
         };
 }
 

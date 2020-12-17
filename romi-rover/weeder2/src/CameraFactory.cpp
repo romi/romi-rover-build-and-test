@@ -37,7 +37,7 @@ namespace romi {
                 return obj->set_parameter(key, value);
         }
 
-        ICamera *CameraFactory::create(const char *name, JSON config)
+        ICamera *CameraFactory::create(const char *name, JsonCpp config)
         {
                 ICamera *camera = 0;
                 if (rstreq(name, "camera-file")) {

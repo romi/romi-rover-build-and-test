@@ -24,7 +24,7 @@
 #ifndef __I_ROMI_SERIAL_CLIENT_H
 #define __I_ROMI_SERIAL_CLIENT_H
 
-#include "JSON.h"
+#include "JsonCpp.h"
 
 class IRomiSerialClient
 {
@@ -37,7 +37,7 @@ public:
          *
          *  command: the string representation of the request.
          *
-         *  Returns: An JSON array. The first element of the array is
+         *  Returns: An Json array. The first element of the array is
          *  a number that indicates whether the request was
          *  successfully handled or not. A value of zero means
          *  success. If the first value is zero then the remaining
@@ -47,7 +47,7 @@ public:
          *  first value is not zero then the second element of the
          *  array is a string with a human-readable error message.
          */
-        virtual void send(const char *request, JSON &response) = 0;
+        virtual void send(const char *request, JsonCpp& response) = 0;
 };
 
 #endif

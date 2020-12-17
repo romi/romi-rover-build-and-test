@@ -37,7 +37,7 @@ namespace romi {
 
         IImageCropper *ImageCropperFactory::create(const char *name,
                                                    CNCRange &range,
-                                                   JSON params)
+                                                   JsonCpp params)
         {
                 IImageCropper *obj = 0;
                 if (rstreq(name, "imagecropper")) {

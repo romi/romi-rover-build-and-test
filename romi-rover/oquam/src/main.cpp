@@ -84,7 +84,7 @@ int main(int argc, char** argv)
                 ConfigurationFile config(options.config_file);
                 
                 CNCRange range;
-                JSON r = config.get("cnc").get("range");
+                JsonCpp r = config.get("cnc").get("range");
                 range.init(r);
                 
                 double xmin[3];

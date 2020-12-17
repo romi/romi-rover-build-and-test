@@ -25,7 +25,7 @@
 #ifndef __ROMI_PIPELINE_H
 #define __ROMI_PIPELINE_H
 
-#include "JSON.h"
+#include "JsonCpp.h"
 #include "CNCRange.h"
 #include "IPipeline.h"
 #include "IPathPlanner.h"
@@ -41,13 +41,13 @@ namespace romi {
                 IImageSegmentation* _segmentation;
                 IPathPlanner* _planner;
 
-                void build_cropper(CNCRange &range, JSON weeder);
-                void build_segmentation(JSON weeder);
-                void build_planner(JSON weeder);
-                void build(CNCRange &range, JSON weeder);
+                void build_cropper(CNCRange &range, JsonCpp weeder);
+                void build_segmentation(JsonCpp weeder);
+                void build_planner(JsonCpp weeder);
+                void build(CNCRange &range, JsonCpp weeder);
                 
         public:
-                 Pipeline(CNCRange &range, JSON config)
+                 Pipeline(CNCRange &range, JsonCpp config)
                         : _cropper(0), _segmentation(0), _planner(0) {
                         build(range, config);
                 }

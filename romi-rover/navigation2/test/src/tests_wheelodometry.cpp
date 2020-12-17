@@ -9,7 +9,7 @@ using namespace romi;
 class wheelodometry_tests : public ::testing::Test
 {
 protected:
-        JSON config;
+        JsonCpp config;
         double epsilon;
         
 	wheelodometry_tests() {
@@ -18,7 +18,7 @@ protected:
                         "'wheel_base': 1.0,"
                         "'encoder_steps': 1000.0,"
                         "'maximum_speed': 3.0 }";
-                config = JSON::parse(config_string);
+                config = JsonCpp::parse(config_string);
                 epsilon = 0.000001;
 	}
 

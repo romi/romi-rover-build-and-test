@@ -41,7 +41,7 @@ TEST_F(oquamstepper_tests, test_homing_romiserial)
         RomiSerialClient romi_serial(&serial, &serial);
         romi_serial.set_debug(debug_romi_serial);
 
-        JSON reply;
+        JsonCpp reply;
         romi_serial.send("H", reply);
         
         //json_print(reply, k_json_pretty);

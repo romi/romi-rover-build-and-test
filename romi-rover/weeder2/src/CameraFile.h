@@ -44,7 +44,7 @@ namespace romi {
                 
                 virtual ~CameraFile() override = default;
                 
-                int set_parameter(const char *name, JSON value) override {
+                int set_parameter(const char *name, JsonCpp value) override {
                         int r = 0;
                         if (rstreq(name, "file"))
                                 _filename = value.str();

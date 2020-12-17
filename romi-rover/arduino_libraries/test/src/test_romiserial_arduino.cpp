@@ -27,7 +27,7 @@ protected:
 
 TEST_F(romiserial_arduino_tests, test_success_of_simple_command)
 {
-        JSON response;
+        JsonCpp response;
         romiserial.send("a", response);
         int code = (int) response.num(0);
         
@@ -36,7 +36,7 @@ TEST_F(romiserial_arduino_tests, test_success_of_simple_command)
 
 TEST_F(romiserial_arduino_tests, test_failure_bad_number_of_arguments)
 {
-        JSON response;
+        JsonCpp response;
         romiserial.send("b", response);
         int code = (int) response.num(0);
         
@@ -45,7 +45,7 @@ TEST_F(romiserial_arduino_tests, test_failure_bad_number_of_arguments)
 
 TEST_F(romiserial_arduino_tests, test_success_two_arguments)
 {
-        JSON response;
+        JsonCpp response;
         romiserial.send("b[1,2]", response);
         int code = (int) response.num(0);
         
@@ -54,7 +54,7 @@ TEST_F(romiserial_arduino_tests, test_success_two_arguments)
 
 TEST_F(romiserial_arduino_tests, test_success_string_argument)
 {
-        JSON response;
+        JsonCpp response;
         romiserial.send("c[1,\"Dinner's ready\"]", response);
         int code = (int) response.num(0);
         
@@ -63,7 +63,7 @@ TEST_F(romiserial_arduino_tests, test_success_string_argument)
 
 TEST_F(romiserial_arduino_tests, test_success_two_arguments_returning_value)
 {
-        JSON response;
+        JsonCpp response;
         romiserial.send("d[1,1]", response);
         int code = (int) response.num(0);
         int result = (int) response.num(1);
@@ -74,7 +74,7 @@ TEST_F(romiserial_arduino_tests, test_success_two_arguments_returning_value)
 
 TEST_F(romiserial_arduino_tests, test_success_string_argument_returning_string)
 {
-        JSON response;
+        JsonCpp response;
         romiserial.send("e[\"he's resting\"]", response);
         int code = (int) response.num(0);
         const char *result = response.str(1);

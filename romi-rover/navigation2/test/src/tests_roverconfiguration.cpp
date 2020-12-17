@@ -9,7 +9,7 @@ using namespace romi;
 class roverconfiguration_tests : public ::testing::Test
 {
 protected:
-        JSON config;
+        JsonCpp config;
         
 	roverconfiguration_tests() {
                 const char * config_string = "{"
@@ -17,7 +17,7 @@ protected:
                         "'wheel_base': 2.0,"
                         "'encoder_steps': 1000.0,"
                         "'maximum_speed': 3.0 }";
-                config = JSON::parse(config_string);
+                config = JsonCpp::parse(config_string);
 	}
 
 	~roverconfiguration_tests() override = default;

@@ -10,7 +10,7 @@ using namespace romi;
 class navigation_tests : public ::testing::Test
 {
 protected:
-        JSON config;
+        JsonCpp config;
         MockMotorDriver driver;
         
 	navigation_tests() {
@@ -19,7 +19,7 @@ protected:
                         "'wheel_base': 1.0,"
                         "'encoder_steps': 1000.0,"
                         "'maximum_speed': 3.0 }";
-                config = JSON::parse(config_string);
+                config = JsonCpp::parse(config_string);
 	}
 
 	~navigation_tests() override = default;

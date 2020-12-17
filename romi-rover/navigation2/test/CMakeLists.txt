@@ -12,7 +12,7 @@ set(SRCS_ROVERCONFIGURATION
 
 add_executable(romi_rover_unit_tests_navigation_roverconfiguration ${SRCS_ROVERCONFIGURATION})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_navigation_roverconfiguration r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_roverconfiguration rpp gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_navigation_roverconfiguration
@@ -37,7 +37,7 @@ set(SRCS_MOTORCONTROLLER
 
 add_executable(romi_rover_unit_tests_navigation_motorcontroller ${SRCS_MOTORCONTROLLER})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_navigation_motorcontroller r rcom gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_motorcontroller rpp rcompp gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_navigation_motorcontroller
@@ -56,7 +56,7 @@ set(SRCS_WHEELODOMETRY
 
 add_executable(romi_rover_unit_tests_navigation_wheelodometry ${SRCS_WHEELODOMETRY})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_navigation_wheelodometry r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_wheelodometry rpp gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_navigation_wheelodometry
@@ -79,7 +79,7 @@ set(SRCS_NAVIGATION
 
 add_executable(romi_rover_unit_tests_navigation_navigation ${SRCS_NAVIGATION})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_navigation_navigation r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_navigation rpp gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_navigation_navigation
@@ -99,7 +99,7 @@ set(SRCS_RPCNAVIGATION
 
 add_executable(romi_rover_unit_tests_navigation_rpcnavigation ${SRCS_RPCNAVIGATION})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_navigation_rpcnavigation r rcom gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_rpcnavigation rpp rcompp gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_navigation_rpcnavigation
@@ -117,7 +117,7 @@ set(SRCS_CONFIGURATION
 
 add_executable(romi_rover_unit_tests_navigation_configuration ${SRCS_CONFIGURATION})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_navigation_configuration r rcom gtest gmock)
+target_link_libraries(romi_rover_unit_tests_navigation_configuration rpp rcompp gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_navigation_configuration

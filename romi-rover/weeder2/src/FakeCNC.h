@@ -37,7 +37,7 @@ namespace romi {
         public:
                 FakeCNC(IConfiguration &config) {
                         //_range.init(config.get("cnc").get("range"));
-                        JSON range = config.get("cnc").get("range");
+                        JsonCpp range = config.get("cnc").get("range");
                         _range.init(range);
                 }
                 

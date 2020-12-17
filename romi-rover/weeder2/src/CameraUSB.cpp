@@ -39,7 +39,7 @@ namespace romi {
                 return success;
         }
 
-        int CameraUSB::set_parameter(const char *name, JSON value)
+        int CameraUSB::set_parameter(const char *name, JsonCpp value)
         {
                 if (_camera != 0) {
                         throw std::runtime_error("CameraUSB::set_parameter called AFTER open");

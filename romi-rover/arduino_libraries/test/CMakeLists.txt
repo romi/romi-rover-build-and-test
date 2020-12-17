@@ -9,15 +9,15 @@ set(SRCS_ENVELOPE_PARSER
   ../RomiSerial/EnvelopeParser.h
   ../RomiSerial/CRC8.h)
 
-add_executable(r_unit_tests_romiserial_envelope_parser ${SRCS_ENVELOPE_PARSER})
+add_executable(romi_rover_unit_tests_romiserial_envelope_parser ${SRCS_ENVELOPE_PARSER})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
-target_link_libraries(r_unit_tests_romiserial_envelope_parser r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_romiserial_envelope_parser rpp gtest gmock)
 
 add_test(
-    NAME r_unit_tests_romiserial_envelope_parser
-    COMMAND r_unit_tests_romiserial_envelope_parser
+    NAME romi_rover_unit_tests_romiserial_envelope_parser
+    COMMAND romi_rover_unit_tests_romiserial_envelope_parser
 )
 
 
@@ -30,15 +30,15 @@ set(SRCS_MESSAGE_PARSER
   ../RomiSerial/MessageParser.cpp
   ../RomiSerial/MessageParser.h)
 
-add_executable(r_unit_tests_romiserial_message_parser ${SRCS_MESSAGE_PARSER})
+add_executable(romi_rover_unit_tests_romiserial_message_parser ${SRCS_MESSAGE_PARSER})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
-target_link_libraries(r_unit_tests_romiserial_message_parser r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_romiserial_message_parser rpp gtest gmock)
 
 add_test(
-    NAME r_unit_tests_romiserial_message_parser
-    COMMAND r_unit_tests_romiserial_message_parser
+    NAME romi_rover_unit_tests_romiserial_message_parser
+    COMMAND romi_rover_unit_tests_romiserial_message_parser
 )
 
 
@@ -61,15 +61,15 @@ set(SRCS_ROMISERIAL
   ../RomiSerial/EnvelopeParser.h
   ../RomiSerial/CRC8.h)
 
-add_executable(r_unit_tests_romiserial ${SRCS_ROMISERIAL})
+add_executable(romi_rover_unit_tests_romiserial ${SRCS_ROMISERIAL})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
-target_link_libraries(r_unit_tests_romiserial r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_romiserial rpp gtest gmock)
 
 add_test(
-    NAME r_unit_tests_romiserial
-    COMMAND r_unit_tests_romiserial
+    NAME romi_rover_unit_tests_romiserial
+    COMMAND romi_rover_unit_tests_romiserial
 )
 
 
@@ -90,15 +90,15 @@ set(SRCS_ROMISERIALCLIENT
   ../RomiSerial/EnvelopeParser.h
   ../RomiSerial/CRC8.h)
 
-add_executable(r_unit_tests_romiserialclient ${SRCS_ROMISERIALCLIENT})
+add_executable(romi_rover_unit_tests_romiserialclient ${SRCS_ROMISERIALCLIENT})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
-target_link_libraries(r_unit_tests_romiserialclient r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_romiserialclient rpp gtest gmock)
 
 add_test(
-    NAME r_unit_tests_romiserialclient
-    COMMAND r_unit_tests_romiserialclient
+    NAME romi_rover_unit_tests_romiserialclient
+    COMMAND romi_rover_unit_tests_romiserialclient
 )
 
 
@@ -121,7 +121,7 @@ add_executable(r_test_romiserial_arduino ${SRCS_ROMISERIAL_ARDUINO})
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../RomiSerial" )
 
-target_link_libraries(r_test_romiserial_arduino r gtest gmock)
+target_link_libraries(r_test_romiserial_arduino rpp gtest gmock)
 
 
 

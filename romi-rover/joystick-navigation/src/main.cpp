@@ -104,7 +104,7 @@ int main(int argc, char** argv)
                 rcom::RPCClient rpc(options.navigation_server_name, "navigation");
                 RPCNavigationClientAdaptor navigation(rpc);
                         
-                JSON ui_config = config.get("user-interface");
+                JsonCpp ui_config = config.get("user-interface");
                 SpeedController speed_controller(navigation, ui_config);
                 // SpeedController speed_controller(navigation, config.get("user-interface"));
                 

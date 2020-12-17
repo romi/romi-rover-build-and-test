@@ -42,7 +42,7 @@ add_executable(weeder2
   src/camera_v4l.c
   src/main.cpp)
 
-target_link_libraries(weeder2 rcom romi r m)
+target_link_libraries(weeder2 rcompp rpp romi)
 
 
 add_executable(weeder2_eval
@@ -83,7 +83,7 @@ add_executable(weeder2_eval
   src/camera_v4l.c
   src/eval.cpp)
 
-target_link_libraries(weeder2_eval rcom romi r m)
+target_link_libraries(weeder2_eval rcompp romi rpp m)
 
 if(BUILD_TESTS)
     add_subdirectory(test)

@@ -25,7 +25,7 @@
 #define __ROMI_ROVER_CONFIGURATION_H
 
 #include <math.h>
-#include <JSON.h>
+#include <JsonCpp.h>
 
 namespace romi {
         
@@ -39,7 +39,7 @@ namespace romi {
                 double wheel_circumference;
                 double max_revolutions_per_sec;
 
-                RoverConfiguration(JSON &config) {
+                RoverConfiguration(JsonCpp &config) {
                         encoder_steps = config.num("encoder_steps");
                         wheel_diameter = config.num("wheel_diameter");
                         maximum_speed = config.num("maximum_speed");

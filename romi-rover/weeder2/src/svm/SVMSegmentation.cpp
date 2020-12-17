@@ -27,7 +27,7 @@
 
 namespace romi {
 
-        void SVMSegmentation::set_parameter_a(JSON value)
+        void SVMSegmentation::set_parameter_a(JsonCpp value)
         {
                 float a[3];
                 a[0] = (float) value.num(0);
@@ -36,12 +36,12 @@ namespace romi {
                 set_coefficients(a);
         }
         
-        void SVMSegmentation::set_parameter_b(JSON value)
+        void SVMSegmentation::set_parameter_b(JsonCpp value)
         {
                 set_intercept((float) value.num());
         }
 
-        void SVMSegmentation::set_parameter(const char *name, JSON value)
+        void SVMSegmentation::set_parameter(const char *name, JsonCpp value)
         {
                 if (rstreq(name, "a")) {
                         set_parameter_a(value);

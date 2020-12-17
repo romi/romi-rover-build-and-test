@@ -32,7 +32,7 @@ add_executable(navigation2
   ../arduino_libraries/RomiSerial/RSerial.cpp
   )
 
-target_link_libraries(navigation2 rcom romi r m)
+target_link_libraries(navigation2 rcompp rpp m)
 
 if(BUILD_TESTS)
     add_subdirectory(test)

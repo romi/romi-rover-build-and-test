@@ -15,7 +15,7 @@ set(SRCS_SPEEDCONTROLLER
 
 add_executable(romi_rover_unit_tests_userinterface_speedcontroller ${SRCS_SPEEDCONTROLLER})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_userinterface_speedcontroller r gtest gmock)
+target_link_libraries(romi_rover_unit_tests_userinterface_speedcontroller rpp gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_userinterface_speedcontroller
@@ -32,7 +32,7 @@ set(SRCS_RPCNAVIGATIONADAPTER
 
 add_executable(romi_rover_unit_tests_userinterface_rpcnavigationclientadaptor ${SRCS_RPCNAVIGATIONADAPTER})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_userinterface_rpcnavigationclientadaptor rcom gtest gmock)
+target_link_libraries(romi_rover_unit_tests_userinterface_rpcnavigationclientadaptor rcompp gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_userinterface_rpcnavigationclientadaptor

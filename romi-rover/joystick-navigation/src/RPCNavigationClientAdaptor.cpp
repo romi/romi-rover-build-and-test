@@ -27,10 +27,10 @@
 namespace romi {
 
         void RPCNavigationClientAdaptor::execute(const char *method,
-                                                 JSON &params,
+                                                 JsonCpp& params,
                                                  rcom::RPCError &error)
         {
-                JSON result; // Not returned to callers. 
+                JsonCpp result; // Not returned to callers. 
 
                 try {
                         _client.execute(method, params, result, error);
@@ -50,7 +50,7 @@ namespace romi {
         bool RPCNavigationClientAdaptor::moveat(double left, double right)
         {
                 rcom::RPCError error;
-                JSON params = JSON::construct("{'speed':[%0.3f,%0.3f]}",
+                JsonCpp params = JsonCpp::construct("{'speed':[%0.3f,%0.3f]}",
                                               left, right);
                 execute("moveat", params, error);
 
@@ -60,7 +60,7 @@ namespace romi {
         bool RPCNavigationClientAdaptor::move(double distance, double speed)
         {
                 rcom::RPCError error;
-                JSON params = JSON::construct("{'distance':%0.3f,"
+                JsonCpp params = JsonCpp::construct("{'distance':%0.3f,"
                                               "'speed':%0.3f}",
                                               distance, speed);
                 execute("move", params, error);
@@ -71,7 +71,7 @@ namespace romi {
         bool RPCNavigationClientAdaptor::stop()
         {
                 rcom::RPCError error;
-                JSON params; // = No params
+                JsonCpp params; // = No params
                 execute("stop", params, error);
                 return (error.code == 0);
         }

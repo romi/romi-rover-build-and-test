@@ -96,9 +96,9 @@ int RomiSerialClient::make_request(const char *command, std::string &request)
         return err;
 }
 
-JSON RomiSerialClient::try_sending_request(std::string &request)
+JsonCpp RomiSerialClient::try_sending_request(std::string &request)
 {
-        JSON response;
+        JsonCpp response;
 
         if (_debug) {
                 r_debug("RomiSerialClient::try_sending_request: %s", request.c_str());
@@ -146,7 +146,7 @@ bool RomiSerialClient::send_request(std::string &request)
         return n == request.length();
 }
 
-JSON RomiSerialClient::make_error(int code)
+JsonCpp RomiSerialClient::make_error(int code)
 {
         const char *message = get_error_message(code);
 
@@ -154,7 +154,7 @@ JSON RomiSerialClient::make_error(int code)
                 r_debug("RomiSerialClient::make_error: %d, %s", code, message);
         }
 
-        return JSON::construct("[%d,'%s']", code, message);
+        return JsonCpp::construct("[%d,'%s']", code, message);
 }
 
 enum {
@@ -180,7 +180,7 @@ bool RomiSerialClient::parse_char(int c)
         return _parser.process((char) c);
 }
 
-JSON RomiSerialClient::check_error_response(JSON data)
+JsonCpp RomiSerialClient::check_error_response(JsonCpp &data)
 {
         int code = (int) data.num(0);
         
@@ -218,13 +218,13 @@ JSON RomiSerialClient::check_error_response(JSON data)
         return data;
 }
 
-JSON RomiSerialClient::parse_response()
+JsonCpp RomiSerialClient::parse_response()
 {
-        JSON data;
+        JsonCpp data;
         
         if (_parser.length() > 1) {
                 
-                data = JSON::parse(_parser.message() + 1);
+                data = JsonCpp::parse(_parser.message() + 1);
 
                 // Check that the data is valid. If not, return an error.
                 if (data.isarray()
@@ -293,9 +293,9 @@ bool RomiSerialClient::handle_one_char()
         return has_message;
 }
 
-JSON RomiSerialClient::read_response()
+JsonCpp RomiSerialClient::read_response()
 {
-        JSON result;
+        JsonCpp result;
         double start_time;
         bool has_response = false;
         
@@ -376,7 +376,7 @@ JSON RomiSerialClient::read_response()
         return result;
 }
 
-void RomiSerialClient::send(const char *command, JSON &response)
+void RomiSerialClient::send(const char *command, JsonCpp& response)
 {
         std::string request;
 

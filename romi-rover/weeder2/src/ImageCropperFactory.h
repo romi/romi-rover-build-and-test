@@ -39,7 +39,7 @@ namespace romi {
         public:
                 static IImageCropper *create(const char *name,
                                              CNCRange &range,
-                                             JSON params);
+                                             JsonCpp params);
         };
 }
 

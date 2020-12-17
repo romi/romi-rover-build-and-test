@@ -26,8 +26,8 @@
 namespace romi {
 
         bool RPCCNCClientAdaptor::execute(const char *method,
-                                          JSON &params,
-                                          JSON &result)
+                                          JsonCpp& params,
+                                          JsonCpp& result)
         {
                 rcom::RPCError error;
                 
@@ -49,22 +49,22 @@ namespace romi {
                 return (error.code == 0);
         }
 
-        bool RPCCNCClientAdaptor::execute_with_result(const char *method, JSON &result)
+        bool RPCCNCClientAdaptor::execute_with_result(const char *method, JsonCpp& result)
         {
-                JSON params;
+                JsonCpp params;
                 return execute(method, params, result);
         }
 
-        bool RPCCNCClientAdaptor::execute_with_params(const char *method, JSON &params)
+        bool RPCCNCClientAdaptor::execute_with_params(const char *method, JsonCpp& params)
         {
-                JSON result;
+                JsonCpp result;
                 return execute(method, params, result);
         }
 
         bool RPCCNCClientAdaptor::execute_simple_request(const char *method)
         {
-                JSON params;
-                JSON result;
+                JsonCpp params;
+                JsonCpp result;
                 return execute(method, params, result);
         }
 
@@ -73,7 +73,7 @@ namespace romi {
                 r_debug("RPCCNCClientAdaptor::get_range");
 
                 bool success = false;
-                JSON result;
+                JsonCpp result;
 
                 try {
                         if (execute_with_result("get-range", result)) {
@@ -106,7 +106,7 @@ namespace romi {
                 
                 json_object_setnum(p, "speed", v);
                 
-                JSON params(p);
+                JsonCpp params(p);
                 json_unref(p);
                 
 
@@ -120,7 +120,7 @@ namespace romi {
                 // TODO: use JSON C++ API
                 json_object_t p = json_object_create();                
                 json_object_setnum(p, "speed", speed);
-                JSON params(p);
+                JsonCpp params(p);
                 json_unref(p);
 
                 return execute_with_params("spindle", params);
@@ -147,7 +147,7 @@ namespace romi {
                 
                 json_object_setnum(parameters, "speed", relative_speed);
 
-                JSON params(parameters);
+                JsonCpp params(parameters);
                 json_unref(parameters);
 
                 return execute_with_params("travel", params);

@@ -39,7 +39,7 @@ namespace romi {
                 int dir_left;
                 int dir_right;
 
-                void parse(JSON &params) {
+                void parse(JsonCpp &params) {
                         max_signal = (int) params.num("maximum_signal_amplitude");
                         use_pid = params.boolean("use_pid");
                         kp = params.get("pid").num("kp");
@@ -56,7 +56,7 @@ namespace romi {
                 IRomiSerialClient &_serial;
                 BrushMotorDriverSettings _settings;
                 
-                bool configure_controller(JSON &config, int steps,
+                bool configure_controller(JsonCpp &config, int steps,
                                           double max_revolutions_per_sec);
                         
                 bool enable_controller();
@@ -64,7 +64,7 @@ namespace romi {
         public:
 
                 BrushMotorDriver(IRomiSerialClient &serial,
-                                 JSON &config,
+                                 JsonCpp &config,
                                  int encoder_steps,
                                  double max_revolutions_per_sec);
                 

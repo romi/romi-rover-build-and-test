@@ -22,7 +22,7 @@
 
  */
 #include <stdexcept>
-#include "JSON.h" 
+#include "JsonCpp.h" 
 #include "StepperController.h" 
 #include "RomiSerialErrors.h" 
 
@@ -31,7 +31,7 @@ namespace romi {
         int StepperController::send_command(const char *command)
         {
                 int r = -1;
-                JSON response;
+                JsonCpp response;
 
                 /* The number of loops is a bit random but it avoids
                  * an infinite loop. The loop will take at the most 10
@@ -92,7 +92,7 @@ namespace romi {
                 int idle = -1;
                 int state = '?';
                 
-                JSON s;
+                JsonCpp s;
                 _romi_serial.send("I", s);
 
                 int r = (int) s.num(0);
@@ -130,8 +130,7 @@ namespace romi {
         {
                 bool success = false;
                 
-                JSON s;
-
+                JsonCpp s;
                 _romi_serial.send("P", s);
 
                 int r = (int) s.num(0);

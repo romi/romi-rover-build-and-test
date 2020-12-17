@@ -129,7 +129,7 @@ ICamera *create_camera(Options &options, IConfiguration &config)
                 throw std::runtime_error("No camera class was defined in the options "
                                          "or in the configuration file.");
         
-        JSON camera_config;
+        JsonCpp camera_config;
         if (config.get().has("weeder") && config.get("weeder").has(camera_class))
                 camera_config = config.get("weeder").get(camera_class);
         else 

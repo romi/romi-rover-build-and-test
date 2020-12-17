@@ -29,11 +29,11 @@
 
 namespace romi {
         
-        SpeedController::SpeedController(INavigation &navigation, JSON &config)
+        SpeedController::SpeedController(INavigation &navigation, JsonCpp& config)
                 : _navigation(navigation)
         {
-                JSON fast_config = config.get("speed-controller").get("fast");
-                JSON accurate_config = config.get("speed-controller").get("accurate");
+                JsonCpp fast_config = config.get("speed-controller").get("fast");
+                JsonCpp accurate_config = config.get("speed-controller").get("accurate");
                 
                 _fast.parse(fast_config);
                 if (!_fast.valid()) 

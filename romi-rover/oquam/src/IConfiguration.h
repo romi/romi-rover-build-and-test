@@ -25,7 +25,7 @@
 #define __ROMI_I_CONFIGURATION_H
 
 #include <r.h>
-#include "JSON.h"
+#include "JsonCpp.h"
 
 namespace romi {
         
@@ -33,8 +33,8 @@ namespace romi {
         {
         public:
                 virtual ~IConfiguration() = default;
-                virtual JSON get() = 0;
-                virtual JSON get(const char *key) = 0;
+                virtual JsonCpp get() = 0;
+                virtual JsonCpp get(const char *key) = 0;
         };
 }
 

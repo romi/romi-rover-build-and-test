@@ -35,8 +35,8 @@ namespace romi {
                 float _a[3];
                 float _b;
 
-                void set_parameter_a(JSON value);
-                void set_parameter_b(JSON value);
+                void set_parameter_a(JsonCpp value);
+                void set_parameter_b(JsonCpp value);
 
         public:
                 SVMSegmentation() {}
@@ -65,7 +65,7 @@ namespace romi {
                         return _b;
                 }
 
-                void set_parameter(const char *name, JSON value) override;
+                void set_parameter(const char *name, JsonCpp value) override;
                 void segment(IFolder &session, Image &image, Image &mask) override;
         };
 }

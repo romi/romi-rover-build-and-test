@@ -37,7 +37,7 @@ namespace romi {
         }
 
         IImageSegmentation *ImageSegmentationFactory::create(const char *name,
-                                                             JSON params)
+                                                             JsonCpp params)
         {
                 IImageSegmentation *obj = 0;
                 if (rstreq(name, "svm")) {

@@ -4,5 +4,5 @@
 class MockRomiSerialClient : public IRomiSerialClient
 {
 public:
-        MOCK_METHOD(void, send, (const char *request, JSON &response), (override));
+        MOCK_METHOD(void, send, (const char *request, JsonCpp& response), (override));
 };

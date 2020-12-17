@@ -29,7 +29,7 @@
 #include <r.h>
 #include "ICamera.h"
 #include "Image.h"
-#include "JSON.h"
+#include "JsonCpp.h"
 
 #include "camera_v4l.h"
 
@@ -78,7 +78,7 @@ namespace romi {
                                 delete_mutex(_mutex);
                }
                 
-                int set_parameter(const char *name, JSON value) override;
+                int set_parameter(const char *name, JsonCpp value) override;
                 bool open() override;
                 bool grab(Image &image) override;
         };
