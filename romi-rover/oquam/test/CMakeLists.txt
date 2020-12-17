@@ -12,6 +12,8 @@ set(SRCS_OQUAMSTEPPER
   ../src/StepperController.cpp
   ../src/Oquam.h
   ../src/Oquam.cpp
+  ../src/CNCRange.h
+  ../src/CNCRange.cpp
   ../src/v.h
   ../src/v.c
   ../src/plotter.c

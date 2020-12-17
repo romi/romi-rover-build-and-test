@@ -21,47 +21,44 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_FAKE_CNC_H
-#define __ROMI_FAKE_CNC_H
-
-#include "IConfiguration.h"
-#include "ICNC.h"
+#ifndef _OQUAM_FAKE_CNC_CONTROLLER_HPP_
+#define _OQUAM_FAKE_CNC_CONTROLLER_HPP_
 
 namespace romi {
-        
-        class FakeCNC : public ICNC
+
+        class FakeCNCController : public ICNCController
         {
         protected:
-                CNCRange _range;
+                int32_t _pos[3];
                 
         public:
-                FakeCNC(IConfiguration &config) {
-                        //_range.init(config.get("cnc").get("range"));
-                        JSON range = config.get("cnc").get("range");
-                        _range.init(range);
+                FakeCNCController() {
+                        homing();
                 }
+                        
+                virtual ~FakeCNCController() override = default;
                 
-                virtual ~FakeCNC() override = default;
-                
-                bool get_range(CNCRange &range) override {
-                        range = _range;
+                bool get_position(int32_t *pos) override {
+                        for (int i = 0; i < 3; i++)
+                                pos[i] = _pos[i];
+                        return true;
+                }
+
+                bool homing() override {
+                        for (int i = 0; i < 3; i++)
+                                _pos[i] = 0;
                         return true;
                 }
                 
-                bool moveto(double x, double y, double z,
-                            double relative_speed = 0.1) override {
+                bool synchronize(double timeout) {
                         return true;
                 }
                 
-                bool spindle(double speed) override {
-                        return true;
-                }
-                
-                bool travel(Path &path, double relative_speed = 0.1) override {
-                        return true;
-                }
-                
-                bool homing() {
+                bool move(int16_t millis, int16_t steps_x,
+                          int16_t steps_y, int16_t steps_z) override {
+                        _pos[0] += steps_x;
+                        _pos[1] += steps_y;
+                        _pos[2] += steps_z;
                         return true;
                 }
                 
@@ -74,9 +71,9 @@ namespace romi {
                 }
                 
                 bool reset() override {
-                        return true;
+                        return homing();
                 }
         };
 }
 
-#endif // __ROMI_FAKE_CNC_H
+#endif // _OQUAM_FAKE_CNC_CONTROLLER_HPP_

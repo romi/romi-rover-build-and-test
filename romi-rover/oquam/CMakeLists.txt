@@ -13,6 +13,7 @@ set(SOURCES
   src/main.cpp
   src/Path.h
   src/CNCRange.h
+  src/CNCRange.cpp
   src/ICNCController.h
   src/StepperController.cpp
   src/StepperController.h
@@ -25,11 +26,8 @@ set(SOURCES
   src/ICNC.h
   src/Oquam.cpp
   src/Oquam.h
-  src/IController.h
-  src/CNCClient.h
-  src/CNCClient.cpp
-  src/ControllerServer.h
-  src/ControllerServer.cpp
+  src/RPCCNCServerAdaptor.h
+  src/RPCCNCServerAdaptor.cpp
   src/IFileCabinet.h
   src/IFolder.h
   src/DebugWeedingSession.h

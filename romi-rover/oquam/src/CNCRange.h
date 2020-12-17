@@ -34,48 +34,16 @@ namespace romi {
                 double _y[2];
                 double _z[2];
                 
-                CNCRange() {
-                        for (int i = 0; i < 2; i++) {
-                                _x[i] = 0.0;
-                                _y[i] = 0.0;
-                                _z[i] = 0.0;
-                        }
-                }
+                CNCRange();
                 
-                void init(JSON range) {
-                        for (int i = 0; i < 2; i++) {
-                                _x[i] = range.array(0).num(i);
-                                _y[i] = range.array(1).num(i);
-                                _z[i] = range.array(2).num(i);
-                        }
-                }
+                void init(JSON &range);
 
-                bool is_valid(double x, double y, double z) {
-                        return ((x >= _x[0]) && (x <= _x[1])
-                                && (y >= _y[0]) && (y <= _y[1])
-                                && (z >= _z[0]) && (z <= _z[1]));
-                }
-
-                double error(double x, double y, double z) {
-                        double dx = 0.0;
-                        double dy = 0.0;
-                        double dz = 0.0;
-        
-                        if (x < _x[0])
-                                dx = _x[0] - x;
-                        if (x > _x[1])
-                                dx = x - _x[1];
-                        if (y < _y[0])
-                                dy = _y[0] - y;
-                        if (y > _y[1])
-                                dy = y - _y[1];
-                        if (z < _z[0])
-                                dz = _z[0] - z;
-                        if (z > _z[1])
-                                dz = z - _z[1];
-        
-                        return std::sqrt(dx * dx + dy * dy + dz * dz);
-                }
+                // Returns true if the point lies in the range
+                bool is_valid(double x, double y, double z);
+                
+                // Computes the distance of a point that lies outside
+                // the range to the border of the range.
+                double error(double x, double y, double z);
         };
 }
 

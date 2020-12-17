@@ -26,7 +26,6 @@ add_test(
 set(SRCS_RPCNAVIGATIONADAPTER 
   src/tests_main.cpp
   src/tests_rpcnavigationclient.cpp
-  mock/mock_rpcclient.h
   ../src/RPCNavigationClientAdaptor.h
   ../src/RPCNavigationClientAdaptor.cpp
   )

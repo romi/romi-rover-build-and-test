@@ -13,6 +13,8 @@ add_executable(weeder2
   src/IImageSegmentation.h
   src/ImageSegmentationFactory.h
   src/ImageSegmentationFactory.cpp
+  src/CNCRange.h
+  src/CNCRange.cpp
   src/svm/SVMSegmentation.h
   src/svm/SVMSegmentation.cpp
   src/quincunx/Quincunx.h
@@ -50,6 +52,8 @@ add_executable(weeder2_eval
   src/IImageSegmentation.h
   src/ImageSegmentationFactory.h
   src/ImageSegmentationFactory.cpp
+  src/CNCRange.h
+  src/CNCRange.cpp
   src/svm/SVMSegmentation.h
   src/svm/SVMSegmentation.cpp
   src/quincunx/Quincunx.h

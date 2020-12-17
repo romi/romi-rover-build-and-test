@@ -24,7 +24,6 @@
 #ifndef __ROMI_I_CNC_H
 #define __ROMI_I_CNC_H
 
-#include "IConfiguration.h"
 #include "Path.h"
 #include "CNCRange.h"
 

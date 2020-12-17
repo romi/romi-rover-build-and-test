@@ -67,8 +67,8 @@ namespace romi {
                                 int16_t step_y = (int16_t) (dx[1] * scale[1]);
                                 int16_t step_z = (int16_t) (dx[2] * scale[2]);
                                 
-                                if (_controller.move(millis, step_x, step_y, step_z)) {
-                                        if (_controller.synchronize(2.0 * duration)) {
+                                if (_controller->move(millis, step_x, step_y, step_z)) {
+                                        if (_controller->synchronize(2.0 * duration)) {
                                                 success = true;
                                         } else {
                                                 r_err("Oquam::moveto_synchronized: synchronize failed");
@@ -148,7 +148,7 @@ namespace romi {
                                                 
                                                 delete_script(script);
                                         
-                                                if (_controller.synchronize(timeout)) {
+                                                if (_controller->synchronize(timeout)) {
                                                         success = true;
                                                         
                                                 } else {
@@ -200,7 +200,7 @@ namespace romi {
         
         bool Oquam::get_position(int32_t *position) 
         {
-                return _controller.get_position(position);
+                return _controller->get_position(position);
         }
         
         bool Oquam::get_position(double *position) 
@@ -264,7 +264,7 @@ namespace romi {
                         dt, dx, dy, dz);
                 
                 if ((dt > 0) && (dx != 0 || dy != 0 || dz != 0)) {
-                        success = _controller.move(dt, dx, dy, dz);
+                        success = _controller->move(dt, dx, dy, dz);
                         
                         // Update the current position
                         // pos_steps[0] = p1[0];
@@ -277,7 +277,7 @@ namespace romi {
                         pos_steps[2] += dz;
  
                         if (1) {
-                                //_controller.synchronize(10.0);
+                                //_controller->synchronize(10.0);
                                 int32_t position[3];
                                 get_position(position);
                                 r_debug("Pos(%d,%d,%d)",
@@ -329,16 +329,16 @@ namespace romi {
 
         bool Oquam::stop_execution()
         {
-                return _controller.stop_execution();
+                return _controller->stop_execution();
         }
         
         bool Oquam::continue_execution()
         {
-                return _controller.continue_execution();
+                return _controller->continue_execution();
         }
         
         bool Oquam::reset()
         {
-                return _controller.reset();
+                return _controller->reset();
         }
 }

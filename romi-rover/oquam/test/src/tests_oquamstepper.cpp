@@ -122,7 +122,7 @@ TEST_F(oquamstepper_tests, test_oquam_homing)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.01, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.01, slice_interval);
 
         oquam.homing();
 }
@@ -135,7 +135,7 @@ TEST_F(oquamstepper_tests, test_oquam_moveto)
 
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.01, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.01, slice_interval);
 
         oquam.homing();
         oquam.moveto(0.1, 0.0, 0.0, 0.3);
@@ -153,7 +153,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_square)
 
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.03, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.03, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -179,7 +179,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_square_fast)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.03, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.03, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -205,7 +205,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_snake)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -232,7 +232,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_round_trip)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -253,7 +253,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_collinear)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -275,7 +275,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_large_displacement)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -299,7 +299,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_small_displacement)
         romi_serial.set_debug(debug_romi_serial);
         romi_serial.set_debug(false);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -326,7 +326,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_tiny_displacement)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -349,7 +349,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_zigzag)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -395,7 +395,7 @@ TEST_F(oquamstepper_tests, test_oquam_stop_and_continue)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         oquam.homing();
@@ -424,7 +424,7 @@ TEST_F(oquamstepper_tests, test_oquam_stop_and_reset)
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         oquam.homing();

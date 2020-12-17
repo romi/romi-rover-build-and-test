@@ -28,6 +28,7 @@
 #include <string>
 #include <IRPCHandler.h>
 #include "ICamera.h"
+#include "IConfiguration.h"
 #include "ICNC.h"
 #include "IPipeline.h"
 #include "IFileCabinet.h"

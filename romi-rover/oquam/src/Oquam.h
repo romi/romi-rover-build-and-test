@@ -38,7 +38,7 @@ namespace romi {
         {
         public:
                 CNCRange _range;
-                ICNCController &_controller;
+                ICNCController *_controller;
                 IFileCabinet *_file_cabinet;
                 mutex_t *_mutex;
         
@@ -75,16 +75,20 @@ namespace romi {
                 int _script_count;
                         
         public:
-                Oquam(ICNCController &block_controller,
+                Oquam(ICNCController *controller,
                       const double *xmin, const double *xmax,
                       const double *vmax, const double *amax,
                       const double *scale_meters_to_steps, 
                       double path_max_deviation,
                       double path_slice_interval)
-                        : _controller(block_controller),
+                        : _controller(controller),
                           _file_cabinet(0),
                           _path_max_deviation(path_max_deviation),
                           _path_slice_interval(path_slice_interval) {
+
+                        if (_controller == 0)
+                                throw std::runtime_error("Oquam: invalid CNC controller");
+                        
                         vcopy(_xmin, xmin);
                         vcopy(_xmax, xmax);
                         vcopy(_vmax, vmax);
@@ -135,7 +139,7 @@ namespace romi {
 
                 bool homing() override {
                         SynchronizedCodeBlock sync(_mutex);
-                        return _controller.homing();
+                        return _controller->homing();
                 }
 
                 bool stop_execution() override;
