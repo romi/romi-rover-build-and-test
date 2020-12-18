@@ -124,7 +124,7 @@ int main(int argc, char** argv)
                         scale[i] = gears[i] * microsteps[i] * steps[i] / displacement[i];
                 }
                 
-                if (rstreq(options.cnc_controller, "fake")) {
+                if (rstreq(options.cnc_controller, FakeCNCController::ClassName)) {
                         cnc_controller = new FakeCNCController();
                 } else {
                         RSerial serial(options.serial_device, 115200, 1);        

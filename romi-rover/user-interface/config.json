@@ -1,5 +1,8 @@
 {
     "user-interface": {
+
+        "display": "crystal-display",
+        "navigation": "rpc-navigation",
         
         "speed-controller": {
             "fast": {

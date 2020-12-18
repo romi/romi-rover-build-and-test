@@ -25,6 +25,7 @@
 #define __ROMI_I_STATE_TRANSITION_H
 
 #include <stdint.h>
+#include "UserInterface.h"
 
 namespace romi {
 
@@ -33,9 +34,10 @@ namespace romi {
         public:
                 virtual ~IStateTransition() = default;
         
-                virtual int8_t doTransition(unsigned long t) = 0;
+                virtual void doTransition(UserInterface& ui, unsigned long t) = 0;
                 virtual int16_t event() = 0;
                 virtual int8_t state() = 0;
+                virtual int8_t next_state() = 0;
         };
 }
 

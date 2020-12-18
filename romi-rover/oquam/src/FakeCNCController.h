@@ -28,6 +28,9 @@ namespace romi {
 
         class FakeCNCController : public ICNCController
         {
+        public:
+                static constexpr const char *ClassName = "fake-cnc-controller";
+                
         protected:
                 int32_t _pos[3];
                 

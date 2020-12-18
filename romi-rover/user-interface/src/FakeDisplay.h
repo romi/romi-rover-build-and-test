@@ -32,13 +32,15 @@ namespace romi {
         class FakeDisplay : public IDisplay
         {
         public:
+                static constexpr const char *ClassName = "fake-display";
+                
                 std::string _line[2];
                 
         public:
                 FakeDisplay() {}
                 virtual ~FakeDisplay() = default;
 
-                bool show(int line, const char* s) {
+                bool show(int line, const char* s) override {
                         bool success = false;
                         if (line >= 0 && line < count_lines()) {
                                 _line[line] = s;
@@ -47,7 +49,7 @@ namespace romi {
                         return success;
                 }
                 
-                bool clear(int line) {
+                bool clear(int line) override {
                         bool success = false;
                         if (line >= 0 && line < count_lines()) {
                                 _line[line].clear();
@@ -56,7 +58,7 @@ namespace romi {
                         return success;
                 }
                 
-                int count_lines() {
+                int count_lines() override {
                         return 2;
                 }
         };

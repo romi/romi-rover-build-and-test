@@ -32,7 +32,10 @@ namespace romi {
 
         class RPCCNCClientAdaptor : public ICNC
         {
-        protected:
+        public:
+                static constexpr const char *ClassName = "rpc-cnc";
+                
+        protected:                
                 rcom::IRPCHandler *_client;
 
                 bool execute(const char *method, JsonCpp& params, JsonCpp& result);

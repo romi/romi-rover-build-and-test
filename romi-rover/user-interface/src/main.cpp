@@ -30,42 +30,55 @@
 #include "Joystick.h"
 #include "StateMachine.h"
 #include "StateTransition.h"
-#include "DebugNavigation.h"
+#include "FakeNavigation.h"
 #include "RPCNavigationClientAdaptor.h"
 #include "RPCClient.h"
 #include "SpeedController.h"
-#include "JoystickStateTransitions.h"
+#include "UIStateTransitions.h"
 #include "EventMapper.h"
 #include "ConfigurationFile.h"
 #include "FakeDisplay.h"
 #include "CrystalDisplay.h"
 #include "RomiSerialClient.h"
 #include "RSerial.h"
+#include "UserInterface.h"
 
 using namespace romi;
+
+static RSerial *serial = 0;
+static RomiSerialClient *romi_serial = 0;
+static IDisplay *display = 0;
+static rcom::RPCClient *rpc_client = 0; 
+static INavigation *navigation = 0;
 
 struct Options {
         
         const char *config_file;
         const char *joystick_device;
+        const char *navigation_class;
         const char *navigation_server_name;
         const char *display_device;
+        const char *display_type;
 
         Options() {
                 config_file = "config.json";
+                display_type = 0;
                 display_device = "/dev/ttyACM0";
                 joystick_device = "/dev/input/js0";
+                navigation_class = 0;
                 navigation_server_name = "navigation";
         }
 
         void parse(int argc, char** argv) {
                 int option_index;
-                static const char *optchars = "C:N:T:D:";
+                static const char *optchars = "C:N:T:D:n:T:";
                 static struct option long_options[] = {
                         {"config", required_argument, 0, 'C'},
                         {"joystick-device", required_argument, 0, 'J'},
+                        {"navigation-class", required_argument, 0, 'n'},
                         {"navigation-server-name", required_argument, 0, 'N'},
                         {"display-device", required_argument, 0, 'D'},
+                        {"display-type", required_argument, 0, 'T'},
                         {0, 0, 0, 0}
                 };
         
@@ -77,6 +90,9 @@ struct Options {
                         case 'C':
                                 config_file = optarg;
                                 break;
+                        case 'n':
+                                navigation_class = optarg;
+                                break;
                         case 'N':
                                 navigation_server_name = optarg;
                                 break;
@@ -86,11 +102,94 @@ struct Options {
                         case 'D':
                                 display_device = optarg;
                                 break;
+                        case 'T':
+                                display_type = optarg;
+                                break;
                         }
                 }
         }
 };
+
+const char *get_display_type(Options &options, IConfiguration &config)
+{
+        const char *display_type = options.display_type;
+        if (display_type == 0) {
+                try {
+                        display_type = config.get("user-interface").str("display");
+                } catch (JSONError &je) {
+                        r_warn("Failed to get the value for user-interface.display: %s", je.what());
+                }
+        }
+        return display_type;
+}
+
+IDisplay *create_display(Options &options, IConfiguration &config)
+{
+        const char *display_type = get_display_type(options, config);
+        if (display_type == 0)
+                throw std::runtime_error("No display type was defined in the options "
+                                         "or in the configuration file.");
+
+        IDisplay *display = 0;
         
+        if (rstreq(display_type, FakeDisplay::ClassName)) {
+                display = new FakeDisplay();
+
+        } else if (rstreq(display_type, CrystalDisplay::ClassName)) {
+                serial = new RSerial(options.display_device, 115200, 1);
+                romi_serial = new RomiSerialClient(serial, serial);
+
+                romi_serial->set_debug(true);
+                
+                display = new CrystalDisplay(*romi_serial);
+        }
+
+        if (display == 0) {
+                r_err("Failed to create the '%s' display", display_type);
+                throw std::runtime_error("Failed to create the display");
+        }
+        
+        return display;
+}
+
+const char *get_navigation_class(Options &options, IConfiguration &config)
+{
+        const char *navigation_class = options.navigation_class;
+        if (navigation_class == 0) {
+                try {
+                        navigation_class = config.get("user-interface").str("navigation");
+                } catch (JSONError &je) {
+                        r_warn("Failed to get the value for user-interface.navigation: %s", je.what());
+                }
+        }
+        return navigation_class;
+}
+
+INavigation *create_navigation(Options &options, IConfiguration &config)
+{
+        const char *navigation_class = get_navigation_class(options, config);
+        if (navigation_class == 0)
+                throw std::runtime_error("No navigation type was defined in the options "
+                                         "or in the configuration file.");
+
+        INavigation *navigation = 0;
+        
+        if (rstreq(navigation_class, FakeNavigation::ClassName)) {
+                navigation = new FakeNavigation();
+
+        } else if (rstreq(navigation_class, RPCNavigationClientAdaptor::ClassName)) {
+                rpc_client = new rcom::RPCClient(options.navigation_server_name, "navigation");
+                navigation = new RPCNavigationClientAdaptor(*rpc_client);
+        }
+
+        if (navigation == 0) {
+                r_err("Failed to create an instance of '%s' ", navigation_class);
+                throw std::runtime_error("Failed to create the navigation module");
+        }
+        
+        return navigation;
+}
+
 int main(int argc, char** argv)
 {
         int retval = 1;
@@ -98,171 +197,34 @@ int main(int argc, char** argv)
         options.parse(argc, argv);
         
         app_init(&argc, argv);
-        app_set_name("oquam");
+        app_set_name("user-interface");
+
+        r_debug("UserInterface: Using configuration file: '%s'",
+                options.config_file);
+
         
         try {
-
-                
-                r_debug("UserInterface: Using configuration file: '%s'",
-                        options.config_file);
                 ConfigurationFile config(options.config_file);
-                
-                //FakeDisplay display;
  
-                RSerial serial(options.display_device, 115200, 1);        
-                RomiSerialClient romi_serial(&serial, &serial);
-                romi_serial.set_debug(true);
-                CrystalDisplay display;
-                
                 JoystickEvent event;
                 Joystick joystick(options.joystick_device);
-                //joystick.set_debug(true);
 
-                //DebugNavigation navigation;
-                rcom::RPCClient rpc(options.navigation_server_name, "navigation");
-                RPCNavigationClientAdaptor navigation(rpc);
+                display = create_display(options, config);
+                
+                navigation = create_navigation(options, config);
                         
                 JsonCpp ui_config = config.get("user-interface");
-                SpeedController speed_controller(navigation, ui_config);
+                SpeedController speed_controller(*navigation, ui_config);
+
+                UserInterface user_interface(joystick, *display, speed_controller);
+                
+                StateMachine state_machine(user_interface);
+
+                init_state_transitions(state_machine);
+                state_machine.handleEvent(event_start, 0);
+
                 
                 EventMapper eventMapper(joystick);
-                
-                StateMachine state_machine;
-
-                NavigationReady navigation_ready(speed_controller, display);
-                StartDrivingForward start_driving_forward(joystick, speed_controller);
-                DriveForward drive_forward(joystick, speed_controller);
-                StopDriving stop_driving(speed_controller);
-                StartDrivingForwardAccurately start_driving_forward_accurately(joystick,
-                                                                               speed_controller);
-                DriveForwardAccurately drive_forward_accurately(joystick, speed_controller);
-                StartDrivingBackward start_driving_backward(joystick, speed_controller);
-                
-                DriveBackward drive_backward(joystick, speed_controller);
-                
-
-                
-                state_machine.add(STATE_START,
-                                  event_start,
-                                  state_stopped,
-                                  navigation_ready);
-
-                
-                state_machine.add(state_stopped,
-                                  event_forward_start,
-                                  state_moving_forward,
-                                  start_driving_forward);
-                
-                
-                
-                state_machine.add(state_moving_forward,
-                                  event_forward_speed,
-                                  state_moving_forward,
-                                  drive_forward);
-                
-                state_machine.add(state_moving_forward,
-                                  event_direction,
-                                  state_moving_forward,
-                                  drive_forward);
-
-                
-                state_machine.add(state_moving_forward,
-                                  event_forward_stop,
-                                  state_stopped,
-                                  stop_driving);
-                
-
-                state_machine.add(state_stopped,
-                                  event_accurate_forward_start,
-                                  state_moving_forward_accurately,
-                                  start_driving_forward_accurately);
-                
-
-                state_machine.add(state_moving_forward_accurately,
-                                  event_forward_speed,
-                                  state_moving_forward_accurately,
-                                  drive_forward_accurately);
-                
-                state_machine.add(state_moving_forward_accurately,
-                                  event_direction,
-                                  state_moving_forward_accurately,
-                                  drive_forward_accurately);
-
-                state_machine.add(state_moving_forward_accurately,
-                                  event_accurate_forward_stop,
-                                  state_stopped,
-                                  stop_driving);
-                
-                state_machine.add(state_stopped,
-                                  event_backward_start,
-                                  state_moving_backward,
-                                  start_driving_backward);
-                
-                
-                state_machine.add(state_moving_backward,
-                                  event_backward_speed,
-                                  state_moving_backward,
-                                  drive_backward);
-                
-                state_machine.add(state_moving_backward,
-                                  event_direction,
-                                  state_moving_backward,
-                                  drive_backward);
-                
-                state_machine.add(state_moving_backward,
-                                  event_backward_stop,
-                                  state_stopped,
-                                  stop_driving);
-
-                StartDrivingBackwardAccurately start_driving_backward_accurately(joystick,
-                                                                                 speed_controller);
-
-                state_machine.add(state_stopped,
-                                  event_accurate_backward_start,
-                                  state_moving_backward_accurately,
-                                  start_driving_backward_accurately);
-                
-                DriveBackwardAccurately drive_backward_accurately(joystick,
-                                                                  speed_controller);
-
-
-                state_machine.add(state_moving_backward_accurately,
-                                  event_backward_speed,
-                                  state_moving_backward_accurately,
-                                  drive_backward_accurately);
-                
-                state_machine.add(state_moving_backward_accurately,
-                                  event_direction,
-                                  state_moving_backward_accurately,
-                                  drive_backward_accurately);
-
-                state_machine.add(state_moving_backward_accurately,
-                                  event_accurate_backward_stop,
-                                  state_stopped,
-                                  stop_driving);
-                
-                
-                StartSpinning start_spinning;
-                Spin spin(joystick, speed_controller);
-                
-                state_machine.add(state_stopped,
-                                  event_spinning_start,
-                                  state_spinning,
-                                  start_spinning);
-                 
-                state_machine.add(state_spinning,
-                                  event_direction,
-                                  state_spinning,
-                                  spin);
-
-                state_machine.add(state_spinning,
-                                  event_spinning_stop,
-                                  state_stopped,
-                                  stop_driving);
-
-                  
-                state_machine.handleEvent(event_start, 0);
-                  
 
                 while (!app_quit()) {
                         
@@ -289,18 +251,31 @@ int main(int argc, char** argv)
                         //                 state_machine.handle_event(event_ready);
                         //         }
                         // }
-                        
 
                 }
 
                 retval = 0;
-                
-        } catch (std::runtime_error& e) {
-                r_err("main: std::runtime_error: %s", e.what());
+
                 
         } catch (std::exception& e) {
                 r_err("main: std::exception: %s", e.what());
         }
 
+        
+        if (navigation)
+                delete navigation;
+        
+        if (rpc_client)
+                delete rpc_client;
+        
+        if (display)
+                delete display;
+        
+        if (romi_serial)
+                delete romi_serial;
+        
+        if (serial)
+                delete serial;
+        
         return retval;
 }

@@ -31,6 +31,9 @@ namespace romi {
         
         class RPCNavigationClientAdaptor : public INavigation
         {
+        public:
+                static constexpr const char *ClassName = "rpc-navigation";
+                
         protected:
                 rcom::IRPCHandler &_client;
                 

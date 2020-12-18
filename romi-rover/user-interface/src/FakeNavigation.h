@@ -21,36 +21,37 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#ifndef __ROMI_DEBUG_NAVIGATION_H
+#define __ROMI_DEBUG_NAVIGATION_H
 
-#ifndef __ROMI_CRYSTAL_DISPLAY_H
-#define __ROMI_CRYSTAL_DISPLAY_H
-
-#include "IDisplay.h"
-#include "IRomiSerialClient.h"
+#include <r.h>
+#include "INavigation.h"
 
 namespace romi {
-        
-        class CrystalDisplay : public IDisplay
+
+        class FakeNavigation : public INavigation
         {
         public:
-                static constexpr const char *ClassName = "crystal-display";
-
-        protected:
-                IRomiSerialClient &_serial;
+                static constexpr const char *ClassName = "fake-navigation";
                 
-        public:
-                CrystalDisplay(IRomiSerialClient &serial)
-                        : _serial(serial) {
+                FakeNavigation() {}
+                virtual ~FakeNavigation() override = default;
+                
+                bool moveat(double left, double right) override {
+                        r_debug("moveat(left=%0.3f, right=%0.3f)", left, right);
+                        return true;
                 }
-                
-                virtual ~CrystalDisplay() override = default;
 
-                bool show(int line, const char* s) override;
-                bool clear(int line) override;
-                
-                int count_lines() {
-                        return 2;
+                bool move(double distance, double speed) override {
+                        r_debug("move(distance=%0.3f, speed=%0.3f)", distance, speed);
+                        return true;
+                }
+
+                bool stop() override {
+                        r_debug("stop()");
+                        return true;
                 }
         };
 }
-#endif // __ROMI_CRYSTAL_DISPLAY_H
+
+#endif // __ROMI_DEBUG_NAVIGATION_H

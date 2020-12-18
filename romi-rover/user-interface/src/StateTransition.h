@@ -25,27 +25,23 @@
 #define __ROMI_STATE_TRANSITION_H
 
 #include "IStateTransition.h"
+#include "UserInterface.h"
 
 namespace romi {
 
-        class StateTransitionHandler
-        {
-        public:
-                virtual ~StateTransitionHandler() = default;
-                virtual void doTransition(unsigned long t) = 0;
-        };
-                
+        using StateTransitionHandler = void (*)(UserInterface& ui, unsigned long t);
+        
         class StateTransition : public IStateTransition
         {
         protected:
                 int8_t _from;
                 int16_t _event;
                 int8_t _to;
-                StateTransitionHandler &_handler;
+                StateTransitionHandler _handler;
                 
         public:
                 StateTransition(int8_t from, int16_t event, int8_t to,
-                        StateTransitionHandler &handler)
+                        StateTransitionHandler handler)
                         : _from(from), _event(event), _to(to),
                           _handler(handler) {}
                 
@@ -59,8 +55,11 @@ namespace romi {
                         return _from;
                 }
                 
-                int8_t doTransition(unsigned long t) {
-                        _handler.doTransition(t);
+                void doTransition(UserInterface& ui, unsigned long t) override {
+                        _handler(ui, t);
+                }
+        
+                int8_t next_state() override {
                         return _to;
                 }
         };

@@ -64,7 +64,7 @@ struct Options {
 
         void parse(int argc, char** argv) {
                 int option_index;
-                static const char *optchars = "C:N:W:T:d:";
+                static const char *optchars = "C:N:W:T:d:c:n:a:";
                 static struct option long_options[] = {
                         {"config", required_argument, 0, 'C'},
                         {"server-name", required_argument, 0, 'N'},
@@ -115,7 +115,7 @@ static ICNC *cnc = 0;
 static RPCClient *rpc_client = 0;
 static ICamera *camera = 0;
 
-ICamera *create_camera(Options &options, IConfiguration &config)
+const char *get_camera_class(Options &options, IConfiguration &config)
 {
         const char *camera_class = options.camera_class;
         if (camera_class == 0) {
@@ -125,21 +125,38 @@ ICamera *create_camera(Options &options, IConfiguration &config)
                         r_warn("Failed to get the value for weeder.camera: %s", je.what());
                 }
         }
-        if (camera_class != 0)
-                throw std::runtime_error("No camera class was defined in the options "
-                                         "or in the configuration file.");
-        
-        JsonCpp camera_config;
-        if (config.get().has("weeder") && config.get("weeder").has(camera_class))
+        return camera_class;
+}
+
+void get_camera_config(const char *camera_class, IConfiguration &config, JsonCpp &camera_config)
+{
+        if (config.get().has("weeder")
+            && config.get("weeder").has(camera_class))
                 camera_config = config.get("weeder").get(camera_class);
         else 
                 r_warn("Configuration does not have a '%s' camera section",
                        camera_class);  
-        
-        return CameraFactory::create(camera_class, camera_config);
 }
 
-ICNC *create_cnc(Options &options, IConfiguration &config)
+ICamera *create_camera(Options &options, IConfiguration &config)
+{
+        const char *camera_class = get_camera_class(options, config);
+        if (camera_class == 0)
+                throw std::runtime_error("No camera class was defined in the options "
+                                         "or in the configuration file.");
+        
+        JsonCpp camera_config;
+        get_camera_config(camera_class, config, camera_config);
+        
+        ICamera *camera = CameraFactory::create(camera_class, camera_config);
+        if (camera == 0) {
+                r_err("Failed to create the camera '%s'", camera_class);
+                throw std::runtime_error("Failed to create the camera");
+        }
+        return camera;
+}
+
+const char *get_cnc_class(Options &options, IConfiguration &config)
 {
         const char *cnc_class = options.cnc_class;
         if (cnc_class == 0) {
@@ -149,19 +166,26 @@ ICNC *create_cnc(Options &options, IConfiguration &config)
                         r_warn("Failed to get the value for weeder.cnc: %s", je.what());
                 }
         }
-        if (cnc_class != 0)
+        return cnc_class;
+}
+
+ICNC *create_cnc(Options &options, IConfiguration &config)
+{
+        const char *cnc_class = get_cnc_class(options, config);
+        if (cnc_class == 0)
                 throw std::runtime_error("No CNC class was defined in the options "
                                          "or in the configuration file.");
         
         ICNC *cnc = 0;
         
-        if (rstreq(cnc_class, "fake")) {
+        if (rstreq(cnc_class, FakeCNC::ClassName)) {
                 try {
                         cnc = new FakeCNC(config);
                 } catch (JSONError &je) {
                         r_warn("Failed to configure FakeCNC: %s", je.what());
                 }
-        } else if (rstreq(cnc_class, "rpc")) {
+                
+        } else if (rstreq(cnc_class, RPCCNCClientAdaptor::ClassName)) {
                 const char *name = options.cnc_name;
                 if (name == 0)
                         name = "oquam";
@@ -169,6 +193,11 @@ ICNC *create_cnc(Options &options, IConfiguration &config)
                 cnc = new RPCCNCClientAdaptor(rpc_client);
         }
 
+        if (cnc == 0) {
+                r_err("Failed to create the CNC '%s'", cnc_class);
+                throw std::runtime_error("Failed to create the CNC");
+        }
+        
         return cnc;
 }
 
@@ -187,6 +216,7 @@ void init_cnc_range(ICNC *cnc, CNCRange &range)
                 clock_sleep(1.0);
         }
         if (!success) {
+                r_err("Failed to obtain the CNC range.");
                 throw std::runtime_error("Failed to obtain the CNC range.");
         }
 }

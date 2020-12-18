@@ -27,7 +27,8 @@ namespace romi {
 
         int StateMachine::doTransition(IStateTransition &transition, unsigned long t)
         {
-                _currentState = transition.doTransition(t);
+                transition.doTransition(_interface, t);
+                _currentState = transition.next_state();
                 //r_debug("new-state=%d", _currentState);
                 return OK;
         }
@@ -72,7 +73,7 @@ namespace romi {
         }
 
         void StateMachine::add(int from, int event, int to,
-                               StateTransitionHandler &handler)
+                               StateTransitionHandler handler)
         {
                 _transitions.push_back(StateTransition(from, event, to, handler));
         }

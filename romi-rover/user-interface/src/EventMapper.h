@@ -26,7 +26,6 @@
 
 #include "IEventMapper.h"
 #include "IJoystick.h"
-#include "JoystickStateTransitions.h"
 #include "EventsAndStates.h"
 
 namespace romi {

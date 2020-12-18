@@ -31,6 +31,9 @@ namespace romi {
         
         class FakeCNC : public ICNC
         {
+        public:
+                static constexpr const char *ClassName = "fake-cnc";
+
         protected:
                 CNCRange _range;
                 

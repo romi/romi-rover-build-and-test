@@ -27,12 +27,14 @@
 #include <vector>
 #include "IStateMachine.h"
 #include "StateTransition.h"
+#include "UserInterface.h"
 
 namespace romi {
 
         class StateMachine : public IStateMachine
         {
         protected:
+                UserInterface& _interface;
                 int _currentState;
                 std::vector<StateTransition> _transitions;
 
@@ -42,13 +44,14 @@ namespace romi {
         
         public:
                 
-                StateMachine() : _currentState(STATE_START) {}
+                StateMachine(UserInterface& interface)
+                        : _interface(interface), _currentState(STATE_START) {}
                 virtual ~StateMachine() {}
 
                 int getState() override;
                 int handleEvent(int16_t event, unsigned long t) override;
                 
-                void add(int from, int event, int to, StateTransitionHandler &handler);
+                void add(int from, int event, int to, StateTransitionHandler handler);
         };
 }
 

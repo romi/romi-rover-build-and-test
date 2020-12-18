@@ -21,35 +21,32 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_DEBUG_NAVIGATION_H
-#define __ROMI_DEBUG_NAVIGATION_H
 
-#include <r.h>
-#include "INavigation.h"
+#ifndef __ROMI_USER_INTERFACE_H
+#define __ROMI_USER_INTERFACE_H
+
+#include "IJoystick.h"
+#include "IDisplay.h"
+#include "SpeedController.h"
 
 namespace romi {
-
-        class DebugNavigation : public INavigation
+        
+        class UserInterface
         {
         public:
-                DebugNavigation() {}
-                virtual ~DebugNavigation() override = default;
+                IJoystick &joystick;
+                IDisplay &display;
+                SpeedController &speed_controller;
                 
-                bool moveat(double left, double right) override {
-                        r_debug("moveat(left=%0.3f, right=%0.3f)", left, right);
-                        return true;
-                }
-
-                bool move(double distance, double speed) override {
-                        r_debug("move(distance=%0.3f, speed=%0.3f)", distance, speed);
-                        return true;
-                }
-
-                bool stop() override {
-                        r_debug("stop()");
-                        return true;
-                }
+                UserInterface(IJoystick &joystick_,
+                              IDisplay &display_,
+                              SpeedController &speed_controller_)
+                        : joystick(joystick_),
+                          display(display_),
+                          speed_controller(speed_controller_)
+                        {}
+                
+                virtual ~UserInterface() = default;
         };
 }
-
-#endif // __ROMI_DEBUG_NAVIGATION_H
+#endif // __ROMI_USER_INTERFACE_H
