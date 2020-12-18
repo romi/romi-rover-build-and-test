@@ -38,6 +38,9 @@
 #include "EventMapper.h"
 #include "ConfigurationFile.h"
 #include "FakeDisplay.h"
+#include "CrystalDisplay.h"
+#include "RomiSerialClient.h"
+#include "RSerial.h"
 
 using namespace romi;
 
@@ -99,6 +102,12 @@ int main(int argc, char** argv)
                 ConfigurationFile config(options.config_file);
                 
                 FakeDisplay display;
+ 
+                RSerial serial(options.serial_device, 115200, 1);        
+                RomiSerialClient romi_serial(&serial, &serial);
+                romi_serial.set_debug(true);
+                FakeDisplay display;
+                
                 JoystickEvent event;
                 Joystick joystick(options.joystick_device);
                 //joystick.set_debug(true);
@@ -114,7 +123,7 @@ int main(int argc, char** argv)
                 
                 StateMachine state_machine;
 
-                NavigationReady navigation_ready(speed_controller);
+                NavigationReady navigation_ready(speed_controller, display);
                 StartDrivingForward start_driving_forward(joystick, speed_controller);
                 DriveForward drive_forward(joystick, speed_controller);
                 StopDriving stop_driving(speed_controller);

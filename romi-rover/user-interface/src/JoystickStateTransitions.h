@@ -30,6 +30,7 @@
 #include "StateTransition.h"
 #include "EventsAndStates.h"
 #include "StateMachine.h"
+#include "IDisplay.h"
 
 namespace romi {
 
@@ -40,14 +41,16 @@ namespace romi {
         {
         protected:
                 ISpeedController &_controller;
+                IDisplay &_display;
                 
         public:
-                NavigationReady(ISpeedController &controller)
-                        : _controller(controller) {}
+                NavigationReady(ISpeedController &controller, IDisplay &display)
+                        : _controller(controller), _display(display) {}
                 
                 void doTransition(unsigned long t) override {
                         r_debug("NavigationReady");
                         _controller.stop();
+                        _display.show(0, "Ready");
                 }
         };
         
