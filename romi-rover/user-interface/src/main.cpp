@@ -49,9 +49,11 @@ struct Options {
         const char *config_file;
         const char *joystick_device;
         const char *navigation_server_name;
+        const char *display_device;
 
         Options() {
                 config_file = "config.json";
+                display_device = "/dev/ttyACM0";
                 joystick_device = "/dev/input/js0";
                 navigation_server_name = "navigation";
         }
@@ -61,8 +63,9 @@ struct Options {
                 static const char *optchars = "C:N:T:D:";
                 static struct option long_options[] = {
                         {"config", required_argument, 0, 'C'},
-                        {"device", required_argument, 0, 'D'},
+                        {"joystick-device", required_argument, 0, 'J'},
                         {"navigation-server-name", required_argument, 0, 'N'},
+                        {"display-device", required_argument, 0, 'D'},
                         {0, 0, 0, 0}
                 };
         
@@ -77,8 +80,11 @@ struct Options {
                         case 'N':
                                 navigation_server_name = optarg;
                                 break;
-                        case 'D':
+                        case 'J':
                                 joystick_device = optarg;
+                                break;
+                        case 'D':
+                                display_device = optarg;
                                 break;
                         }
                 }
@@ -101,12 +107,12 @@ int main(int argc, char** argv)
                         options.config_file);
                 ConfigurationFile config(options.config_file);
                 
-                FakeDisplay display;
+                //FakeDisplay display;
  
-                RSerial serial(options.serial_device, 115200, 1);        
+                RSerial serial(options.display_device, 115200, 1);        
                 RomiSerialClient romi_serial(&serial, &serial);
                 romi_serial.set_debug(true);
-                FakeDisplay display;
+                CrystalDisplay display;
                 
                 JoystickEvent event;
                 Joystick joystick(options.joystick_device);
@@ -268,22 +274,22 @@ int main(int argc, char** argv)
                                 clock_sleep(0.010);
                         }
                         
-                        /*
-                        Status status;
                         
-                        navigation.get_status(status);
+                        // Status status;
                         
-                        if (status.code == Status::Error) {
-                                state_machine.handle_event(event_error);
-                        } else {
-                                weeder.get_status(status);
-                                if (status.code == Status::Error) {
-                                        state_machine.handle_event(event_error);
-                                } else {
-                                        state_machine.handle_event(event_ready);
-                                }
-                        }
-                        */
+                        // navigation.get_status(status);
+                        
+                        // if (status.code == Status::Error) {
+                        //         state_machine.handle_event(event_error);
+                        // } else {
+                        //         weeder.get_status(status);
+                        //         if (status.code == Status::Error) {
+                        //                 state_machine.handle_event(event_error);
+                        //         } else {
+                        //                 state_machine.handle_event(event_ready);
+                        //         }
+                        // }
+                        
 
                 }
 

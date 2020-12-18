@@ -28,13 +28,15 @@
 namespace romi {
 
         struct Status {
-                enum {
+                
+                enum StatusCode {
+                        Initializing,
                         Ready,
                         Busy,
                         Error
                 };
                 
-                int code;
+                StatusCode code;
                 std::string message;
                 double progress;
         }
