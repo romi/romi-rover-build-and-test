@@ -37,6 +37,7 @@
 #include "JoystickStateTransitions.h"
 #include "EventMapper.h"
 #include "ConfigurationFile.h"
+#include "FakeDisplay.h"
 
 using namespace romi;
 
@@ -97,6 +98,7 @@ int main(int argc, char** argv)
                         options.config_file);
                 ConfigurationFile config(options.config_file);
                 
+                FakeDisplay display;
                 JoystickEvent event;
                 Joystick joystick(options.joystick_device);
                 //joystick.set_debug(true);
