@@ -20,19 +20,9 @@ add_executable(navigation2
   src/Navigation.cpp
   src/RPCNavigationServerAdaptor.h
   src/RPCNavigationServerAdaptor.cpp
-  ../arduino_libraries/RomiSerial/IInputStream.h
-  ../arduino_libraries/RomiSerial/IOutputStream.h
-  ../arduino_libraries/RomiSerial/CRC8.h
-  ../arduino_libraries/RomiSerial/EnvelopeParser.h
-  ../arduino_libraries/RomiSerial/EnvelopeParser.cpp
-  ../arduino_libraries/RomiSerial/IRomiSerialClient.h
-  ../arduino_libraries/RomiSerial/RomiSerialClient.h
-  ../arduino_libraries/RomiSerial/RomiSerialClient.cpp
-  ../arduino_libraries/RomiSerial/RSerial.h
-  ../arduino_libraries/RomiSerial/RSerial.cpp
   )
 
-target_link_libraries(navigation2 rcompp rpp m)
+target_link_libraries(navigation2 rcompp rpp romiserial m)
 
 if(BUILD_TESTS)
     add_subdirectory(test)

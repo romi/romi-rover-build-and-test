@@ -24,20 +24,10 @@ set(SOURCES
   src/Oquam.h
   src/RPCCNCServerAdaptor.h
   src/RPCCNCServerAdaptor.cpp
-  ../arduino_libraries/RomiSerial/IInputStream.h
-  ../arduino_libraries/RomiSerial/IOutputStream.h
-  ../arduino_libraries/RomiSerial/CRC8.h
-  ../arduino_libraries/RomiSerial/EnvelopeParser.h
-  ../arduino_libraries/RomiSerial/EnvelopeParser.cpp
-  ../arduino_libraries/RomiSerial/IRomiSerialClient.h
-  ../arduino_libraries/RomiSerial/RomiSerialClient.h
-  ../arduino_libraries/RomiSerial/RomiSerialClient.cpp
-  ../arduino_libraries/RomiSerial/RSerial.h
-  ../arduino_libraries/RomiSerial/RSerial.cpp
   )
 
 add_executable(oquam ${SOURCES})
-target_link_libraries(oquam rcompp romirover)
+target_link_libraries(oquam rcompp romirover romiserial)
 target_include_directories(oquam PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src")
 install(TARGETS oquam DESTINATION bin/romi)
 
