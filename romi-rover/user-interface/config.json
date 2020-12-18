@@ -2,15 +2,15 @@
     "user-interface": {
         
         "speed-controller": {
-            "fast" {
+            "fast": {
                 "use-speed-curve": true,
                 "speed-curve-exponent": 2.0,
                 "use-direction-curve": true,
                 "direction-curve-exponent": 2.0,
                 "speed-multiplier": 1.0,
-                "direction-multiplier": 0.4,
+                "direction-multiplier": 0.4
             },
-            "accurate" {
+            "accurate": {
                 "use-speed-curve": true,
                 "speed-curve-exponent": 1.0,
                 "use-direction-curve": true,

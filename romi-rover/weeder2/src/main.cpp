@@ -193,6 +193,7 @@ void init_cnc_range(ICNC *cnc, CNCRange &range)
 
 int main(int argc, char** argv)
 {
+        int retval = 1;
         Options options;
         options.parse(argc, argv);
         
@@ -227,6 +228,8 @@ int main(int argc, char** argv)
                 while (!app_quit())
                         clock_sleep(0.1);
 
+                retval = 0;
+                
         } catch (std::exception& e) {
                 r_err(e.what());
         }
@@ -239,6 +242,6 @@ int main(int argc, char** argv)
                 delete camera;
                 
         
-        return 0;
+        return retval;
 }
 

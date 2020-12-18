@@ -32,18 +32,25 @@ namespace romi {
         SpeedController::SpeedController(INavigation &navigation, JsonCpp& config)
                 : _navigation(navigation)
         {
-                JsonCpp fast_config = config.get("speed-controller").get("fast");
-                JsonCpp accurate_config = config.get("speed-controller").get("accurate");
+                try {
+                        JsonCpp fast_config = config.get("speed-controller").get("fast");
+                        JsonCpp accurate_config = config.get("speed-controller").get("accurate");
                 
-                _fast.parse(fast_config);
-                if (!_fast.valid()) 
-                        throw std::range_error("Invalid settings for "
-                                               "fast speed controller");
+                        _fast.parse(fast_config);
+                        _accurate.parse(accurate_config);
+                        
+                } catch (JSONError &je) {
+                        r_err("SpeedController::SpeedController: failed to "
+                              "parse the configuration");
+                        throw je;
+                }
                 
-                _accurate.parse(accurate_config);
                 if (!_accurate.valid()) 
                         throw std::range_error("Invalid settings for "
-                                               "accurate speed controller");                
+                                               "accurate speed controller");
+                if (!_fast.valid())
+                        throw std::range_error("Invalid settings for "
+                                               "fast speed controller");
         }
 
         SpeedController::SpeedController(INavigation &navigation,

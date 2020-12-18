@@ -83,6 +83,7 @@ struct Options {
         
 int main(int argc, char** argv)
 {
+        int retval = 1;
         Options options;
         options.parse(argc, argv);
         
@@ -106,7 +107,6 @@ int main(int argc, char** argv)
                         
                 JsonCpp ui_config = config.get("user-interface");
                 SpeedController speed_controller(navigation, ui_config);
-                // SpeedController speed_controller(navigation, config.get("user-interface"));
                 
                 EventMapper eventMapper(joystick);
                 
@@ -275,6 +275,8 @@ int main(int argc, char** argv)
                         */
 
                 }
+
+                retval = 0;
                 
         } catch (std::runtime_error& e) {
                 r_err("main: std::runtime_error: %s", e.what());
@@ -283,5 +285,5 @@ int main(int argc, char** argv)
                 r_err("main: std::exception: %s", e.what());
         }
 
-        return 0;
+        return retval;
 }

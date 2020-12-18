@@ -41,6 +41,21 @@ protected:
 	}
 };
 
+TEST_F(speedcontroller_tests, constructor_throws_error_on_bad_json)
+{
+
+        try {
+                JsonCpp config = JsonCpp::parse("{}");
+                SpeedController controller(navigation, config);
+                FAIL() << "Expected JSONError";
+                
+        } catch (JSONError &e) {
+                        // NOP
+        } catch (...) {
+                FAIL() << "Expected JSONError";
+        }
+}
+
 TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_1)
 {
         fast.speed_curve_exponent = 0.0;

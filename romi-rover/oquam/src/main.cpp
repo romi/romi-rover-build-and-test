@@ -78,6 +78,7 @@ struct Options {
 
 int main(int argc, char** argv)
 {
+        int retval = 1;
         Options options;
         options.parse(argc, argv);
         
@@ -142,6 +143,8 @@ int main(int argc, char** argv)
                 
                 while (!app_quit())
                         clock_sleep(0.1);
+
+                retval = 0;
                 
         } catch (std::exception &e) {
                 r_err("main: std::exception: %s", e.what());
@@ -150,6 +153,6 @@ int main(int argc, char** argv)
         if (cnc_controller)
                 delete cnc_controller;
 
-        return 0;
+        return retval;
 }
 

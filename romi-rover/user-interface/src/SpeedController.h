@@ -42,8 +42,8 @@ namespace romi {
 
                 void parse(JsonCpp& config) {
                         use_speed_curve = config.boolean("use-speed-curve");
-                        speed_curve_exponent = config.boolean("direction-curve-exponent");
-                        use_direction_curve = config.num("use-direction-curve");
+                        speed_curve_exponent = config.num("speed-curve-exponent");
+                        use_direction_curve = config.boolean("use-direction-curve");
                         direction_curve_exponent = config.num("direction-curve-exponent");
                         speed_multiplier = config.num("speed-multiplier");
                         direction_multiplier = config.num("direction-multiplier");

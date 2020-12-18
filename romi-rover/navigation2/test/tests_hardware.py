@@ -87,6 +87,10 @@ if __name__ == "__main__":
                  
     try:
         
+        response = input("Ready to start the tests? [Y/n]")
+        if (response == "n"):
+            sys.exit("Quitting")
+                 
         print("Testing the directions of motors.")
         
         print("Testing left motor (forward)")
