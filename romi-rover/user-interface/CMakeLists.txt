@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(joystick_navigation)
+project(user-interface)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
@@ -28,12 +28,12 @@ set(SOURCES
   src/StateTransition.h
   )
 
-add_executable(joystick_navigation ${SOURCES})
-target_link_libraries(joystick_navigation romirover rcompp rpp)
+add_executable(user-interface ${SOURCES})
+target_link_libraries(user-interface romirover rcompp rpp)
 
 
 if(BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
-install(TARGETS joystick_navigation DESTINATION bin/romi)
+install(TARGETS user-interface DESTINATION bin/romi)
