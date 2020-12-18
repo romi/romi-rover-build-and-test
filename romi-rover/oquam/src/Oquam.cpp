@@ -90,7 +90,7 @@ namespace romi {
                         char name[64];
                         rprintf(name, 64, "oquam-%04d", _script_count++);
                         
-                        IFolder &folder = _file_cabinet->open_folder(name);
+                        IFolder &folder = _file_cabinet->start_new_folder();
                         membuf_t *svg = plot_to_mem(script, _xmin, _xmax, _vmax,
                                                     _amax, _scale_meters_to_steps);
                         if (svg != 0) {

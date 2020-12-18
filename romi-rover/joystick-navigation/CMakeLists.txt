@@ -11,7 +11,6 @@ set(SOURCES
   src/EventMapper.cpp
   src/IEventMapper.h
   src/IJoystick.h
-  src/INavigation.h
   src/ISpeedController.h
   src/IStateMachine.h
   src/IStateTransition.h
@@ -30,7 +29,7 @@ set(SOURCES
   )
 
 add_executable(joystick_navigation ${SOURCES})
-target_link_libraries(joystick_navigation romi rcompp rpp)
+target_link_libraries(joystick_navigation romirover rcompp rpp)
 
 
 if(BUILD_TESTS)

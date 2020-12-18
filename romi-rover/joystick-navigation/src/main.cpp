@@ -246,7 +246,9 @@ int main(int argc, char** argv)
                   
                 state_machine.handleEvent(event_start, 0);
                   
+
                 while (!app_quit()) {
+                        
                         if (joystick.update(event)) {
                                 int16_t state_event = eventMapper.map(event);
                                 if (state_event > 0)
@@ -254,6 +256,24 @@ int main(int argc, char** argv)
                         } else {
                                 clock_sleep(0.010);
                         }
+                        
+                        /*
+                        Status status;
+                        
+                        navigation.get_status(status);
+                        
+                        if (status.code == Status::Error) {
+                                state_machine.handle_event(event_error);
+                        } else {
+                                weeder.get_status(status);
+                                if (status.code == Status::Error) {
+                                        state_machine.handle_event(event_error);
+                                } else {
+                                        state_machine.handle_event(event_ready);
+                                }
+                        }
+                        */
+
                 }
                 
         } catch (std::runtime_error& e) {

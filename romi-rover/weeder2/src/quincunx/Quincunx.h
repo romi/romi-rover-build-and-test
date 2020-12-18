@@ -25,7 +25,7 @@
 #ifndef __ROMI_QUINCUNX_H
 #define __ROMI_QUINCUNX_H
 
-#include "../IPathPlanner.h"
+#include "IPathPlanner.h"
 #include "point.h"
 
 namespace romi {

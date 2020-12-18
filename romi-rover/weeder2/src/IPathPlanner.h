@@ -27,7 +27,6 @@
 
 #include <vector>
 #include "r.h"
-#include "romi.h"
 #include "Path.h"
 #include "Image.h"
 

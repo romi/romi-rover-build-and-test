@@ -26,7 +26,7 @@
 #define __ROMI_SELF_ORGANIZED_MAP_H
 
 #include <cmath>
-#include "../IFolder.h"
+#include "IFolder.h"
 #include "fixed.h"
 
 namespace romi {

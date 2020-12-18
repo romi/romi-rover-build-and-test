@@ -28,12 +28,14 @@ struct Options {
         const char *serial_device;
         const char *server_name;
         const char *cnc_controller;
+        const char *output_directory;
 
         Options() {
                 config_file = "config.json";
                 serial_device = "/dev/ttyACM0";
                 server_name = "oquam";
                 cnc_controller = "oquam";
+                output_directory = ".";
         }
 
         void parse(int argc, char** argv) {
@@ -44,6 +46,7 @@ struct Options {
                         {"device", required_argument, 0, 'D'},
                         {"navigation-server-name", required_argument, 0, 'N'},
                         {"cnc-controller", required_argument, 0, 'c'},
+                        {"output-directory", required_argument, 0, 'd'},
                         {0, 0, 0, 0}
                 };
         
@@ -63,6 +66,9 @@ struct Options {
                                 break;
                         case 'c':
                                 cnc_controller = optarg;
+                                break;
+                        case 'd':
+                                output_directory = optarg;
                                 break;
                         }
                 }
@@ -127,7 +133,7 @@ int main(int argc, char** argv)
 
                 Oquam oquam(cnc_controller, xmin, xmax, vm, amax, scale, 0.01, period);
 
-                DebugWeedingSession debug(".");
+                DebugWeedingSession debug(options.output_directory, "oquam");
                 oquam.set_file_cabinet(&debug);
                 
                 RPCCNCServerAdaptor adaptor(oquam);

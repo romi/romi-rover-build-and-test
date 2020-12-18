@@ -22,7 +22,7 @@
 
  */
 
-#include "../IFolder.h"
+#include "IFolder.h"
 #include "Quincunx.h"
 
 namespace romi {

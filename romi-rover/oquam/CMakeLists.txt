@@ -11,9 +11,6 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../arduino_libraries/RomiSeria
 
 set(SOURCES
   src/main.cpp
-  src/Path.h
-  src/CNCRange.h
-  src/CNCRange.cpp
   src/ICNCController.h
   src/StepperController.cpp
   src/StepperController.h
@@ -23,15 +20,10 @@ set(SOURCES
   src/script.h
   src/plotter.c
   src/plotter.h
-  src/ICNC.h
   src/Oquam.cpp
   src/Oquam.h
   src/RPCCNCServerAdaptor.h
   src/RPCCNCServerAdaptor.cpp
-  src/IFileCabinet.h
-  src/IFolder.h
-  src/DebugWeedingSession.h
-  src/DebugWeedingSession.cpp
   ../arduino_libraries/RomiSerial/IInputStream.h
   ../arduino_libraries/RomiSerial/IOutputStream.h
   ../arduino_libraries/RomiSerial/CRC8.h
@@ -45,7 +37,7 @@ set(SOURCES
   )
 
 add_executable(oquam ${SOURCES})
-target_link_libraries(oquam rcompp romi)
+target_link_libraries(oquam rcompp romirover)
 target_include_directories(oquam PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src")
 install(TARGETS oquam DESTINATION bin/romi)
 

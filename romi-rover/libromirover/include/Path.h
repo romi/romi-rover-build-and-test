@@ -53,19 +53,13 @@ namespace romi {
                 int r = -1;
                 if (path.size() > 0) {
                         r = 0;
-                        
-                        double dx = path[0].x - x;
-                        double dy = path[0].y - y;
-                        double dz = path[0].z - z;
-                        double dmin = (dx * dx + dy * dy + dz * dz);
-                        
+                        double dmin = (path[0].x * path[0].x
+                                       + path[0].y * path[0].y
+                                       + path[0].z * path[0].z);
                         for (size_t i = 1; i < path.size(); i++) {
-                                
-                                dx = path[i].x - x;
-                                dy = path[i].y - y;
-                                dz = path[i].z - z;
-                                double d = (dx * dx + dy * dy + dz * dz);
-                                
+                                double d = (path[i].x * path[i].x
+                                            + path[i].y * path[i].y
+                                            + path[i].z * path[i].z);
                                 if (d < dmin) {
                                         r = i;
                                         dmin = d;

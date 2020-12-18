@@ -26,7 +26,7 @@
 #define __ROMI_IMAGE_H
 
 #include <stdexcept>
-#include <romi.h>
+#include "image_impl.h"
 
 namespace romi {
         
@@ -98,6 +98,31 @@ namespace romi {
                                 throw std::runtime_error("Failed to load the image");
                 }
 
+                bool import_rgb(uint8_t* rgb, int width, int height) {
+                        bool success = false;
+                        if (_image == 0) {
+                                _image = convert_to_image(rgb, width, height);
+                                success = (_image != 0);
+                        } else if (width != image_width(_image)
+                                   || height != image_height(_image)
+                                   || IMAGE_RGB != _image->type) {
+                                delete_image(_image);
+                                _image = convert_to_image(rgb, width, height);
+                                success = (_image != 0);
+                        } else {
+                                image_import(_image, rgb);
+                                success = true;
+                        }
+                        return success;
+                }
+
+                bool to_jpeg(membuf_t *out) {
+                        bool success = false;
+                        if (_image) 
+                                success = (image_store_to_mem(_image, out, "jpg") == 0);
+                        return success;
+                }
+                
                 void crop(int x0, int y0, int width, int height, Image &out) {
                         image_t *cropped = FIXME_image_crop(_image, x0, y0, width, height);
                         if (cropped == 0)

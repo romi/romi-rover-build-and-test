@@ -12,18 +12,12 @@ set(SRCS_OQUAMSTEPPER
   ../src/StepperController.cpp
   ../src/Oquam.h
   ../src/Oquam.cpp
-  ../src/CNCRange.h
-  ../src/CNCRange.cpp
   ../src/v.h
   ../src/v.c
   ../src/plotter.c
   ../src/plotter.h
   ../src/script.h
   ../src/script.c
-  ../src/IFileCabinet.h
-  ../src/IFolder.h
-  ../src/DebugWeedingSession.h
-  ../src/DebugWeedingSession.cpp
   ../src/Oquam.cpp
   ../../arduino_libraries/RomiSerial/IInputStream.h
   ../../arduino_libraries/RomiSerial/IOutputStream.h
@@ -37,5 +31,5 @@ set(SRCS_OQUAMSTEPPER
   )
 
 add_executable(romi_rover_unit_tests_oquam_stepper ${SRCS_OQUAMSTEPPER})
-target_link_libraries(romi_rover_unit_tests_oquam_stepper rpp romi gtest gmock)
+target_link_libraries(romi_rover_unit_tests_oquam_stepper rpp romirover romi gtest gmock)
 

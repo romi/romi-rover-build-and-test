@@ -25,9 +25,9 @@
 #ifndef __ROMI_I_FOLDER_H
 #define __ROMI_I_FOLDER_H
 
-#include <romi.h>
 #include "Path.h"
 #include "Image.h"
+#include "image_impl.h"
 
 namespace romi {
         
