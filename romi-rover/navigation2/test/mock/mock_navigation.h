@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
-#include "INavigation.h"
+#include "Navigation.h"
 
-class MockNavigation : public romi::INavigation
+class MockNavigation : public romi::Navigation
 {
 public:
         MOCK_METHOD(bool, moveat, (double left, double right), (override));

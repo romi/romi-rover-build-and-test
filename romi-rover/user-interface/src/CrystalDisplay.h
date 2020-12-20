@@ -25,12 +25,12 @@
 #ifndef __ROMI_CRYSTAL_DISPLAY_H
 #define __ROMI_CRYSTAL_DISPLAY_H
 
-#include "IDisplay.h"
+#include "Display.h"
 #include "IRomiSerialClient.h"
 
 namespace romi {
         
-        class CrystalDisplay : public IDisplay
+        class CrystalDisplay : public Display
         {
         public:
                 static constexpr const char *ClassName = "crystal-display";

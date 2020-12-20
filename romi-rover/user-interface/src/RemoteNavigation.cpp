@@ -21,12 +21,12 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "RPCNavigationClientAdaptor.h"
+#include "RemoteNavigation.h"
 #include "RPCError.h"
 
 namespace romi {
 
-        void RPCNavigationClientAdaptor::execute(const char *method,
+        void RemoteNavigation::execute(const char *method,
                                                  JsonCpp& params,
                                                  rcom::RPCError &error)
         {
@@ -36,18 +36,18 @@ namespace romi {
                         _client.execute(method, params, result, error);
 
                         if (error.code != 0) {
-                                r_err("RPCNavigationClientAdaptor::execute: %s",
+                                r_err("RemoteNavigation::execute: %s",
                                       error.message.c_str());
                         }
                         
                 } catch (std::exception &e) {
-                        r_err("RPCNavigationClientAdaptor::execute: '%s'", e.what());
+                        r_err("RemoteNavigation::execute: '%s'", e.what());
                         error.code = 1;
                         error.message = e.what();
                 }
         }
 
-        bool RPCNavigationClientAdaptor::moveat(double left, double right)
+        bool RemoteNavigation::moveat(double left, double right)
         {
                 rcom::RPCError error;
                 JsonCpp params = JsonCpp::construct("{'speed':[%0.3f,%0.3f]}",
@@ -57,7 +57,7 @@ namespace romi {
                 return (error.code == 0);
         }
 
-        bool RPCNavigationClientAdaptor::move(double distance, double speed)
+        bool RemoteNavigation::move(double distance, double speed)
         {
                 rcom::RPCError error;
                 JsonCpp params = JsonCpp::construct("{'distance':%0.3f,"
@@ -68,7 +68,7 @@ namespace romi {
                 return (error.code == 0);
         }
         
-        bool RPCNavigationClientAdaptor::stop()
+        bool RemoteNavigation::stop()
         {
                 rcom::RPCError error;
                 JsonCpp params; // = No params

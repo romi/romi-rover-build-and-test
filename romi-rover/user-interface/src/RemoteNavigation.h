@@ -21,30 +21,35 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_I_NAVIGATION_H
-#define __ROMI_I_NAVIGATION_H
+#ifndef __ROMI_REMOTE_NAVIGATION_H
+#define __ROMI_REMOTE_NAVIGATION_H
+
+#include "Navigation.h"
+#include "IRPCClient.h"
 
 namespace romi {
         
-        class INavigation
+        class RemoteNavigation : public Navigation
         {
         public:
+                static constexpr const char *ClassName = "remote-navigation";
                 
-                virtual ~INavigation() = default;
+        protected:
+                rcom::IRPCHandler &_client;
+                
+                void execute(const char *method, JsonCpp& params, rcom::RPCError& error);
+                
+        public:
+                
+                RemoteNavigation(rcom::IRPCHandler &client) : _client(client) {}
+                virtual ~RemoteNavigation() override = default;
 
-                /** The left and right speed are relative speeds. They
-                 * must have a value between -1 and 1, and indicate
-                 * the fraction of the maximum allowed speed. */
-                virtual bool moveat(double left, double right) = 0;
+                bool moveat(double left, double right) override;
 
-                /** Move a given distance in meters. The speed is
-                 * relative to the maximum speed, i.e. its valus
-                 * should be in the range [-1,1]. */
-                virtual bool move(double distance, double speed) = 0;
+                bool move(double distance, double speed) override;
 
-                /** Stops immediately. */
-                virtual bool stop() = 0;
+                bool stop() override;
         };
 }
 
-#endif // __ROMI_I_NAVIGATION_H
+#endif // __ROMI_REMOTE_NAVIGATION_H

@@ -15,14 +15,13 @@ add_executable(navigation2
   src/ConfigurationFile.h
   src/WheelOdometry.h
   src/WheelOdometry.cpp
-  src/INavigation.h
-  src/Navigation.h
-  src/Navigation.cpp
+  src/RoverNavigation.h
+  src/RoverNavigation.cpp
   src/RPCNavigationServerAdaptor.h
   src/RPCNavigationServerAdaptor.cpp
   )
 
-target_link_libraries(navigation2 rcompp rpp romiserial m)
+target_link_libraries(navigation2 romirover romiserial rcompp rpp m)
 
 if(BUILD_TESTS)
     add_subdirectory(test)

@@ -21,20 +21,20 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_I_EVENT_MAPPER_H
-#define __ROMI_I_EVENT_MAPPER_H
 
-#include <stdint.h>
-#include "IJoystick.h"
+#ifndef __ROMI_DISPLAY_H
+#define __ROMI_DISPLAY_H
 
 namespace romi {
-
-        class IEventMapper
+        class Display
         {
         public:
-                virtual ~IEventMapper() = default;
-                virtual int16_t map(JoystickEvent &event) = 0;
+                virtual ~Display() = default;
+
+                virtual bool show(int line, const char* s) = 0;
+                virtual bool clear(int line) = 0;
+                virtual int count_lines() = 0;
         };
 }
 
-#endif // __ROMI_I_EVENT_MAPPER_H
+#endif // __ROMI_DISPLAY_H

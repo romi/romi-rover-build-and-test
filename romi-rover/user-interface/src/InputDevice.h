@@ -21,30 +21,21 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _ROMI_I_JOYSTICK_H_
-#define _ROMI_I_JOYSTICK_H_
+#ifndef _ROMI_INPUT_DEVICE_H
+#define _ROMI_INPUT_DEVICE_H
 
 namespace romi {
-
-        struct JoystickEvent
-        {
-                enum { Button, Axis };
-                enum { Released = 0, Pressed = 1 };
-                int type;
-                int number;
-        };
         
-        class IJoystick
+        class InputDevice
         {
         public:
-                virtual ~IJoystick() = default;
-
-                virtual bool update(JoystickEvent &e) = 0;
-                virtual int num_axes() = 0;
-                virtual double get_axis(int i) = 0;
-                virtual int num_buttons() = 0;
-                virtual bool get_button(int i) = 0;
+                virtual ~InputDevice() = default;
+                
+                virtual int get_next_event() = 0;
+                virtual double get_forward_speed() = 0;
+                virtual double get_backward_speed() = 0;
+                virtual double get_direction() = 0;
         };
 }
 
-#endif // _ROMI_I_JOYSTICK_H_
+#endif // _ROMI_INPUT_DEVICE_H

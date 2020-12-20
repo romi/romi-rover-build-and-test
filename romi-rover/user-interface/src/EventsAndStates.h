@@ -41,6 +41,8 @@ namespace romi {
 
         // the navigation events
         enum {
+                event_none = 0,
+                
                 event_start = 1,
                 
                 event_direction,

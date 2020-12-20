@@ -34,7 +34,7 @@
 #include "RSerial.h"
 #include "ConfigurationFile.h"
 #include "RPCNavigationServerAdaptor.h"
-#include "Navigation.h"
+#include "RoverNavigation.h"
 #include "RoverConfiguration.h"
 
 using namespace romi;
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
                                         rover.encoder_steps,
                                         rover.max_revolutions_per_sec);
 
-                Navigation navigation(driver, rover);
+                RoverNavigation navigation(driver, rover);
                 
                 RPCNavigationServerAdaptor adaptor(navigation);
                 RPCServer server(adaptor,

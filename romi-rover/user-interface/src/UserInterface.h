@@ -25,28 +25,43 @@
 #ifndef __ROMI_USER_INTERFACE_H
 #define __ROMI_USER_INTERFACE_H
 
-#include "IJoystick.h"
-#include "IDisplay.h"
+#include "InputDevice.h"
+#include "Display.h"
 #include "SpeedController.h"
+#include "UIStateMachine.h"
 
 namespace romi {
         
         class UserInterface
         {
+        protected:
+
+                void init_state_machine();
+                void init_start_transition();
+                void init_navigation_transitions();
+                void init_navigation_mode_transition();
+                void init_forward_driving_transitions();
+                void init_accurate_forward_driving_transitions();
+                void init_backward_driving_transitions();
+                void init_accurate_backward_driving_transitions();
+                void init_spinning_transitions();
+
+                void handle_input_events();
+
         public:
-                IJoystick &joystick;
-                IDisplay &display;
+                InputDevice &input_device;
+                Display &display;
                 SpeedController &speed_controller;
                 
-                UserInterface(IJoystick &joystick_,
-                              IDisplay &display_,
-                              SpeedController &speed_controller_)
-                        : joystick(joystick_),
-                          display(display_),
-                          speed_controller(speed_controller_)
-                        {}
+                UIStateMachine state_machine;
+                
+                UserInterface(InputDevice &input_device_,
+                              Display &display_,
+                              SpeedController &speed_controller_);
                 
                 virtual ~UserInterface() = default;
+
+                void handle_events();
         };
 }
 #endif // __ROMI_USER_INTERFACE_H

@@ -22,11 +22,11 @@
 
  */
 
-#include "Navigation.h" 
+#include "RoverNavigation.h" 
 
 namespace romi {
 
-        double Navigation::compute_timeout(double distance, double speed)
+        double RoverNavigation::compute_timeout(double distance, double speed)
         {
                 double timeout = 0.0;
                 if (speed != 0.0) {
@@ -37,7 +37,7 @@ namespace romi {
                 return timeout;
         }
 
-        bool Navigation::wait_travel(WheelOdometry &odometry, double distance,
+        bool RoverNavigation::wait_travel(WheelOdometry &odometry, double distance,
                                      double timeout)
         {
                 bool success = false;
@@ -69,7 +69,7 @@ namespace romi {
 
                         double now = clock_time();
                         if (now - start_time >= timestamp) {
-                                r_err("Navigation::wait_travel: time out (%f s)", timeout);
+                                r_err("RoverNavigation::wait_travel: time out (%f s)", timeout);
                                 _driver.moveat(0, 0);
                                 success = false;
                                 _stop = true;
@@ -81,7 +81,7 @@ namespace romi {
                 return success;
         }
         
-        bool Navigation::do_move2(double distance, double speed)
+        bool RoverNavigation::do_move2(double distance, double speed)
         {
                 bool success = false;
                 double left, right, timestamp;
@@ -98,16 +98,16 @@ namespace romi {
                                                         compute_timeout(distance, speed));
                                 
                         } else {
-                                r_err("Navigation::do_move2: moveat failed");
+                                r_err("RoverNavigation::do_move2: moveat failed");
                         }
                 } else {
-                        r_err("Navigation::do_move2: get_encoder_values failed");
+                        r_err("RoverNavigation::do_move2: get_encoder_values failed");
                 }
                                         
                 return success;
         }
         
-        bool Navigation::do_move(double distance, double speed)
+        bool RoverNavigation::do_move(double distance, double speed)
         {
                 bool success = false;
                 
@@ -135,11 +135,11 @@ namespace romi {
                                 success = do_move2(distance, speed);
                                 
                         } else {
-                                r_err("Navigation::do_move: stop failed");
+                                r_err("RoverNavigation::do_move: stop failed");
                         }
                         
                 } else {
-                        r_err("Navigation::do_move: invalid speed or distance: "
+                        r_err("RoverNavigation::do_move: invalid speed or distance: "
                               "speed=%f, distance=%f", speed, distance);
                 }
                 
@@ -151,18 +151,18 @@ namespace romi {
         }
 
 
-        bool Navigation::moveat(double left, double right)
+        bool RoverNavigation::moveat(double left, double right)
         {
                 SynchronizedCodeBlock sync(_mutex);
                 bool success = false;
                 if (_status == ROVER_MOVEAT_CAPABLE) 
                         success = _driver.moveat(left, right);
                 else
-                        r_warn("Navigation::moveat: still moving");
+                        r_warn("RoverNavigation::moveat: still moving");
                 return success;
         }
         
-        bool Navigation::move(double distance, double speed)
+        bool RoverNavigation::move(double distance, double speed)
         {
                 bool success = false;
                 {
@@ -170,7 +170,7 @@ namespace romi {
                         if (_status == ROVER_MOVEAT_CAPABLE) {
                                 _status = ROVER_MOVING;
                         } else {
-                                r_warn("Navigation::move: already moving");
+                                r_warn("RoverNavigation::move: already moving");
                         }
                 }
                         
@@ -182,7 +182,7 @@ namespace romi {
                 return success;
         }
         
-        bool Navigation::stop()
+        bool RoverNavigation::stop()
         {
                 // This flag should assure that we break out
                 // the wait_travel loop.

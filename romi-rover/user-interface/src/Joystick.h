@@ -24,60 +24,27 @@
 #ifndef _ROMI_JOYSTICK_H_
 #define _ROMI_JOYSTICK_H_
 
-#include <string>
-#include <vector>
-#include "IJoystick.h"
-
 namespace romi {
-        
-        class Joystick : public IJoystick
+
+        struct JoystickEvent
         {
-        protected:
-                int _fd;
-                bool _debug;
+                enum JoystickEventType { None, Button, Axis };
                 
-                std::vector<bool> _buttons;
-                std::vector<double> _axes;
-                
-                void close_device();
-                bool open_device(const char *name);
-                bool parse_event(JoystickEvent &e, struct js_event event);
-                int count_axes();
-                int count_buttons();
-                
+                JoystickEventType type;
+                int number;
+        };
+        
+        class Joystick
+        {
         public:
-                Joystick(const char *device);
-                virtual ~Joystick();
+                virtual ~Joystick() = default;
 
-                bool update(JoystickEvent &e) override;
-                
-                double get_axis(int i) override {
-                        double value = 0.0;
-                        if (i >=0 && i < (int) _axes.size())
-                                value = _axes[i];
-                        return value;
-                }
-                
-                bool get_button(int i) override {
-                        bool value = false;
-                        if (i >=0 && i < (int) _buttons.size())
-                                value = _buttons[i];
-                        return value;
-                }
-                        
-                int num_axes() override {
-                        return (int) _axes.size();
-                }
-                
-                int num_buttons() override {
-                        return (int) _buttons.size();
-                }
-
-                void set_debug(bool value) {
-                        _debug = value;
-                }
-
+                virtual JoystickEvent &get_next_event() = 0;
+                virtual int get_num_axes() = 0;
+                virtual double get_axis(int i) = 0;
+                virtual int get_num_buttons() = 0;
+                virtual bool is_button_pressed(int i) = 0;
         };
 }
 
-#endif // _ROMI_I_JOYSTICK_H_
+#endif // _ROMI_JOYSTICK_H_

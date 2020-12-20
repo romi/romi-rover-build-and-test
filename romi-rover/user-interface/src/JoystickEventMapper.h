@@ -21,30 +21,20 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_EVENT_MAPPER_H
-#define __ROMI_EVENT_MAPPER_H
+#ifndef __ROMI_JOYSTICK_EVENT_MAPPER_H
+#define __ROMI_JOYSTICK_EVENT_MAPPER_H
 
-#include "IEventMapper.h"
-#include "IJoystick.h"
-#include "EventsAndStates.h"
+#include <stdint.h>
+#include "Joystick.h"
 
 namespace romi {
 
-        class EventMapper : public IEventMapper
+        class JoystickEventMapper
         {
-        protected:
-                IJoystick &_joystick;
-                
         public:
-                
-                EventMapper(IJoystick &joystick) : _joystick(joystick) {}
-                
-                virtual ~EventMapper() override = default;
-
-                int16_t map_axis(JoystickEvent &event);
-                int16_t map_button(JoystickEvent &event);                
-                int16_t map(JoystickEvent &event);
+                virtual ~JoystickEventMapper() = default;
+                virtual int map(Joystick& joystick, JoystickEvent &event) = 0;
         };
 }
 
-#endif // __ROMI_EVENT_MAPPER_H
+#endif // __ROMI_JOYSTICK_EVENT_MAPPER_H

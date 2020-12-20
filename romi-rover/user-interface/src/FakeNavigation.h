@@ -25,11 +25,11 @@
 #define __ROMI_DEBUG_NAVIGATION_H
 
 #include <r.h>
-#include "INavigation.h"
+#include "Navigation.h"
 
 namespace romi {
 
-        class FakeNavigation : public INavigation
+        class FakeNavigation : public Navigation
         {
         public:
                 static constexpr const char *ClassName = "fake-navigation";

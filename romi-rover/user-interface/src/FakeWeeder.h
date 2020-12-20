@@ -1,7 +1,7 @@
 /*
   romi-rover
 
-  Copyright (C) 2019-2020 Sony Computer Science Laboratories
+  Copyright (C) 2019 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
   romi-rover is collection of applications for the Romi Rover.
@@ -21,24 +21,23 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_STATE_MACHINE_H
-#define __ROMI_STATE_MACHINE_H
+#ifndef _ROMI_FAKE_WEEDER_H_
+#define _ROMI_FAKE_WEEDER_H_
+
+#include "IWeeder.h"
 
 namespace romi {
-
-#define STATE_ERROR 0
-#define STATE_START 1
-#define ALL_STATES -1
-
-        class StateMachine
+        
+        class FakeWeeder : public IWeeder
         {
         public:
-                virtual ~StateMachine() {}
+                FakeWeeder() {}
+                virtual ~FakeWeeder() override = default;
 
-                virtual int get_state() = 0;
-
-                virtual void handle_event(int event) = 0;
+                bool hoe() override {
+                        r_debug("FakeWeeder::hoe");
+                }
         };
 }
 
-#endif // __ROMI_STATE_MACHINE_H
+#endif // _ROMI_FAKE_WEEDER_H_

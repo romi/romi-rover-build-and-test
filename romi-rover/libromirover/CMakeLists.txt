@@ -15,7 +15,7 @@ set(SOURCES
   include/IFolder.h
   include/Image.h
   include/image_impl.h
-  include/INavigation.h
+  include/Navigation.h
   include/JSONConfiguration.h
   include/Path.h 
   src/CNCRange.cpp

@@ -1,7 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../mock/mock_navigation.h"
-#include "SpeedController.h"
+#include "DefaultSpeedController.h"
+#include "SpeedConverter.h"
 #include "JSONConfiguration.h"
 
 using namespace std;
@@ -12,8 +13,8 @@ class speedcontroller_tests : public ::testing::Test
 {
 protected:
         MockNavigation navigation;
-        SpeedControllerSettings fast;
-        SpeedControllerSettings accurate;
+        SpeedConverter fast;
+        SpeedConverter accurate;
          
 	speedcontroller_tests() {
 	}
@@ -46,7 +47,7 @@ TEST_F(speedcontroller_tests, constructor_throws_error_on_bad_json)
 
         try {
                 JsonCpp config = JsonCpp::parse("{}");
-                SpeedController controller(navigation, config);
+                DefaultSpeedController controller(navigation, config);
                 FAIL() << "Expected JSONError";
                 
         } catch (JSONError &e) {
@@ -61,7 +62,7 @@ TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_1)
         fast.speed_curve_exponent = 0.0;
 
         try {
-                SpeedController controller(navigation, fast, accurate);
+                DefaultSpeedController controller(navigation, fast, accurate);
                 FAIL() << "Expected std::runtime_error";
         } catch (std::range_error const &e) {
                         // NOP
@@ -75,7 +76,7 @@ TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_2)
         fast.direction_curve_exponent = 0.0;
 
         try {
-                SpeedController controller(navigation, fast, accurate);
+                DefaultSpeedController controller(navigation, fast, accurate);
                 FAIL() << "Expected std::runtime_error";
         } catch (std::range_error const &e) {
                         // NOP
@@ -89,7 +90,7 @@ TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_3)
         fast.speed_curve_exponent = 11.0;
 
         try {
-                SpeedController controller(navigation, fast, accurate);
+                DefaultSpeedController controller(navigation, fast, accurate);
                 FAIL() << "Expected std::runtime_error";
         } catch (std::range_error const &e) {
                         // NOP
@@ -103,7 +104,7 @@ TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_4)
         fast.direction_curve_exponent = 11.0;
 
         try {
-                SpeedController controller(navigation, fast, accurate);
+                DefaultSpeedController controller(navigation, fast, accurate);
                 FAIL() << "Expected std::runtime_error";
         } catch (std::range_error const &e) {
                         // NOP
@@ -117,7 +118,7 @@ TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_5)
         fast.speed_multiplier = 0.0;
 
         try {
-                SpeedController controller(navigation, fast, accurate);
+                DefaultSpeedController controller(navigation, fast, accurate);
                 FAIL() << "Expected std::runtime_error";
         } catch (std::range_error const &e) {
                         // NOP
@@ -131,7 +132,7 @@ TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_6)
         fast.speed_multiplier = 2.0;
 
         try {
-                SpeedController controller(navigation, fast, accurate);
+                DefaultSpeedController controller(navigation, fast, accurate);
                 FAIL() << "Expected std::runtime_error";
         } catch (std::range_error const &e) {
                         // NOP
@@ -145,7 +146,7 @@ TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_7)
         fast.direction_multiplier = 0.0;
 
         try {
-                SpeedController controller(navigation, fast, accurate);
+                DefaultSpeedController controller(navigation, fast, accurate);
                 FAIL() << "Expected std::runtime_error";
         } catch (std::range_error const &e) {
                         // NOP
@@ -159,7 +160,7 @@ TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_8)
         fast.direction_multiplier = 2.0;
 
         try {
-                SpeedController controller(navigation, fast, accurate);
+                DefaultSpeedController controller(navigation, fast, accurate);
                 FAIL() << "Expected std::runtime_error";
         } catch (std::range_error const &e) {
                         // NOP
@@ -170,7 +171,7 @@ TEST_F(speedcontroller_tests, constructor_throws_range_error_on_bad_settings_8)
 
 TEST_F(speedcontroller_tests, stop_calls_navigation_stop)
 {
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
         
         EXPECT_CALL(navigation, stop())
                 .WillOnce(Return(true));
@@ -182,7 +183,7 @@ TEST_F(speedcontroller_tests, stop_calls_navigation_stop)
 
 TEST_F(speedcontroller_tests, stop_returns_false_when_navigation_stop_fails)
 {
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
         
         EXPECT_CALL(navigation, stop())
                 .WillOnce(Return(false));
@@ -199,7 +200,7 @@ TEST_F(speedcontroller_tests, moveat_generates_expected_speeds_1)
         fast.speed_multiplier = 1.0;
         fast.direction_multiplier = 1.0;
         
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
         
         // Speed 1 and direction 0: straight forward: left wheel (1)
         // and right wheel (1).
@@ -218,7 +219,7 @@ TEST_F(speedcontroller_tests, moveat_generates_expected_speeds_2)
         fast.speed_multiplier = 1.0;
         fast.direction_multiplier = 1.0;
         
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
         
         // Speed 1 and direction 1: max turning right: left wheel (1)
         // and right wheel (0).
@@ -237,7 +238,7 @@ TEST_F(speedcontroller_tests, moveat_generates_expected_speeds_3)
         fast.speed_multiplier = 1.0;
         fast.direction_multiplier = 1.0;
         
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
 
         // Speed 1 and direction -1: max turning left: left wheel
         // stops (0) and right wheel full speed (1.0).
@@ -257,7 +258,7 @@ TEST_F(speedcontroller_tests, moveat_generates_expected_speeds_4)
         fast.speed_multiplier = 1.0;
         fast.direction_multiplier = 1.0;
         
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
         
         // Speed 0 and direction -1: spin: left wheel (-1) and right
         // wheel (1).
@@ -276,7 +277,7 @@ TEST_F(speedcontroller_tests, moveat_generates_linear_speeds_without_curve)
         fast.speed_multiplier = 1.0;
         fast.direction_multiplier = 1.0;
         
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
 
         InSequence seq;
         for (int i = 0; i <= 10; i++) {
@@ -298,7 +299,7 @@ TEST_F(speedcontroller_tests, moveat_generates_less_than_linear_speeds_with_curv
         fast.speed_curve_exponent = 2.0;
         fast.speed_multiplier = 1.0;
         
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
 
         InSequence seq;
         EXPECT_CALL(navigation, moveat(0.0, 0.0))
@@ -327,7 +328,7 @@ TEST_F(speedcontroller_tests, moveat_generates_linear_directions_without_curve)
         fast.speed_multiplier = 1.0;
         fast.direction_multiplier = 1.0;
         
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
 
         InSequence seq;
         for (int i = 0; i <= 10; i++) {
@@ -350,7 +351,7 @@ TEST_F(speedcontroller_tests, moveat_generates_less_than_linear_directions_with_
         fast.direction_curve_exponent = 2.0;
         fast.direction_multiplier = 1.0;
         
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
 
         InSequence seq;
         EXPECT_CALL(navigation, moveat(0.0, 0.0))
@@ -379,7 +380,7 @@ TEST_F(speedcontroller_tests, spin_generates_inverse_speeds)
         accurate.speed_multiplier = 1.0;
         accurate.direction_multiplier = 1.0;
         
-        SpeedController controller(navigation, fast, accurate);
+        DefaultSpeedController controller(navigation, fast, accurate);
         
         EXPECT_CALL(navigation, moveat(1.0, -1.0))
                 .WillOnce(Return(true));

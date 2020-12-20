@@ -1,7 +1,7 @@
 /*
   romi-rover
 
-  Copyright (C) 2019-2020 Sony Computer Science Laboratories
+  Copyright (C) 2019 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
   romi-rover is collection of applications for the Romi Rover.
@@ -22,18 +22,14 @@
 
  */
 
-#ifndef __ROMI_I_DISPLAY_H
-#define __ROMI_I_DISPLAY_H
-
 namespace romi {
-        class IDisplay
-        {
-        public:
-                virtual ~IDisplay() = default;
 
-                virtual bool show(int line, const char* s) = 0;
-                virtual bool clear(int line) = 0;
-                virtual int count_lines() = 0;
-        };
+        int JoystickEventMapper::get_next_event()
+        {
+                int event = 0;
+                JoystickEvent& joystick_event = _joystick.get_next_event();
+                if (
+        }
 }
-#endif // __ROMI_I_DISPLAY_H
+
+

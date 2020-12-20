@@ -21,68 +21,59 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "StateMachine.h"
+#include "UIStateMachine.h"
 
 namespace romi {
 
-        int StateMachine::doTransition(IStateTransition &transition, unsigned long t)
+        void UIStateMachine::do_transition(UIStateTransition &transition)
         {
-                transition.doTransition(_interface, t);
+                transition.do_transition(_interface);
                 _currentState = transition.next_state();
-                //r_debug("new-state=%d", _currentState);
-                return OK;
         }
         
-        int StateMachine::tryTransition(int16_t event, unsigned long t)
+        bool UIStateMachine::try_regular_transitions(int event)
         {
-                int r = Ignored;
+                bool handled = false;
                 for (size_t i = 0; i < _transitions.size(); i++) {
-                        StateTransition &transition = _transitions[i];
-                                
-                        // r_debug("state(cur=%d,trans=%d), "
-                        //         "event=(cur=%d,trans=%d)",
-                        //         _currentState, transition.state(), 
-                        //         event, transition.event());
-                                
+                        UIStateTransition &transition = _transitions[i];
+                        
                         if (transition.state() == _currentState
                             && transition.event() == event) {
-                                r = doTransition(transition, t);
+                                do_transition(transition);
+                                handled = true;
                                 break;
                         }
                 }
-                return r;
+                return handled;
         }
         
-        int StateMachine::tryCatchAllTransition(int16_t event, unsigned long t)
+        void UIStateMachine::try_catchall_transitions(int event)
         {
-                int r = Ignored;
                 for (size_t i = 0; i < _transitions.size(); i++) {
-                        StateTransition &transition = _transitions[i];
+                        UIStateTransition &transition = _transitions[i];
                         if (transition.state() == ALL_STATES
                             && transition.event() == event) {
-                                r = doTransition(transition, t);
+                                do_transition(transition);
                                 break;
                         }
                 }
-                return r;
         }
 
-        int StateMachine::getState()
+        int UIStateMachine::get_state()
         {
                 return _currentState;
         }
 
-        void StateMachine::add(int from, int event, int to,
-                               StateTransitionHandler handler)
+        void UIStateMachine::add(int from, int event, int to,
+                                 StateTransitionHandler handler)
         {
-                _transitions.push_back(StateTransition(from, event, to, handler));
+                _transitions.push_back(UIStateTransition(from, event, to, handler));
         }
 
-        int StateMachine::handleEvent(int16_t event, unsigned long t)
+        void UIStateMachine::handle_event(int event)
         {
-                int r = tryTransition(event, t);
-                if (r == Ignored)
-                        r = tryCatchAllTransition(event, t);
-                return r;
+                bool handled = try_regular_transitions(event);
+                if (!handled)
+                        try_catchall_transitions(event);
         }
 }

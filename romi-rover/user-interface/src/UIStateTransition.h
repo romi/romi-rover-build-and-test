@@ -21,48 +21,47 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_STATE_TRANSITION_H
-#define __ROMI_STATE_TRANSITION_H
-
-#include "IStateTransition.h"
-#include "UserInterface.h"
+#ifndef __ROMI_UI_STATE_TRANSITION_H
+#define __ROMI_UI_STATE_TRANSITION_H
 
 namespace romi {
 
-        using StateTransitionHandler = void (*)(UserInterface& ui, unsigned long t);
+        class UserInterface;
         
-        class StateTransition : public IStateTransition
+        using StateTransitionHandler = void (*)(UserInterface& ui);
+        
+        class UIStateTransition
         {
         protected:
-                int8_t _from;
-                int16_t _event;
-                int8_t _to;
+                int _from;
+                int _event;
+                int _to;
                 StateTransitionHandler _handler;
                 
         public:
-                StateTransition(int8_t from, int16_t event, int8_t to,
-                        StateTransitionHandler handler)
+                UIStateTransition(int from, int event, int to,
+                                  StateTransitionHandler handler)
                         : _from(from), _event(event), _to(to),
                           _handler(handler) {}
                 
-                virtual ~StateTransition() {}
+                virtual ~UIStateTransition() {}
                 
-                int16_t event() override {
+                int event() {
                         return _event;
                 }
         
-                int8_t state() override {
+                int state() {
                         return _from;
                 }
                 
-                void doTransition(UserInterface& ui, unsigned long t) override {
-                        _handler(ui, t);
+                void do_transition(UserInterface& ui) {
+                        _handler(ui);
                 }
         
-                int8_t next_state() override {
+                int next_state() {
                         return _to;
                 }
         };
 }
 
-#endif // __ROMI_STATE_TRANSITION_H
+#endif // __ROMI_UI_STATE_TRANSITION_H

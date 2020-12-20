@@ -20,31 +20,32 @@
   along with this program.  If not, see
   <http://www.gnu.org/licenses/>.
 
- */
-#ifndef __I_STATE_MACHINE_H
-#define __I_STATE_MACHINE_H
-
-#include "IStateTransition.h"
+*/
+#ifndef __ROMI_UI_OPTIONS_H
+#define __ROMI_UI_OPTIONS_H
 
 namespace romi {
-
-#define STATE_ERROR 0
-#define STATE_START 1
-#define ALL_STATES -1
-
-        class IStateMachine
-        {
-        public:
-                enum { OK = 0, Ignored = 1 };
         
-                virtual ~IStateMachine() {}
+        struct UIOptions {
+        
+                const char *config_file;
+                const char *joystick_device;
+                const char *navigation_classname;
+                const char *navigation_server_name;
+                const char *display_device;
+                const char *display_classname;
 
-                virtual int getState() = 0;
-                /* virtual void add(IStateTransition *transition) = 0; */
+                UIOptions() {
+                        config_file = "config.json";
+                        display_classname = 0;
+                        display_device = "/dev/ttyACM0";
+                        joystick_device = "/dev/input/js0";
+                        navigation_classname = 0;
+                        navigation_server_name = "navigation";
+                }
 
-                // Returns OK if a transition was found, or Ignored otherwise.
-                virtual int handleEvent(int16_t event, unsigned long t) = 0;
+                void parse(int argc, char** argv);
         };
 }
 
-#endif // __I_STATE_MACHINE_H
+#endif // __ROMI_UI_OPTIONS_H

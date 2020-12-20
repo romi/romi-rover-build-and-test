@@ -21,16 +21,16 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_I_NAVIGATION_H
-#define __ROMI_I_NAVIGATION_H
+#ifndef __ROMI_NAVIGATION_H
+#define __ROMI_NAVIGATION_H
 
 namespace romi {
         
-        class INavigation
+        class Navigation
         {
         public:
                 
-                virtual ~INavigation() = default;
+                virtual ~Navigation() = default;
 
                 /** The left and right speed are relative speeds. They
                  * must have a value between -1 and 1, and indicate
@@ -47,4 +47,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_I_NAVIGATION_H
+#endif // __ROMI_NAVIGATION_H

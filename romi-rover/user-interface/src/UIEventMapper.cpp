@@ -22,13 +22,13 @@
 
  */
 
-#include "EventMapper.h"
+#include "UIEventMapper.h"
 
 namespace romi {
 
-        int16_t EventMapper::map_axis(JoystickEvent &event)
+        int UIEventMapper::map_axis(Joystick& joystick, JoystickEvent &event)
         {
-                int16_t retval = 0;
+                int retval = 0;
                         
                 if (event.number == axis_direction) {
                         retval = event_direction;
@@ -43,40 +43,40 @@ namespace romi {
                 return retval;
         }
 
-        int16_t EventMapper::map_button(JoystickEvent &event)
+        int UIEventMapper::map_button(Joystick& joystick, JoystickEvent &event)
         {
-                int16_t retval = 0;
+                int retval = 0;
                         
                 if (event.number == button_forward_mode) {
-                        if (_joystick.get_button(event.number)) {
+                        if (joystick.is_button_pressed(event.number)) {
                                 retval = event_forward_start;
                         } else {
                                 retval = event_forward_stop;
                         }
                                 
                 } else if (event.number == button_backward_mode) {
-                        if (_joystick.get_button(event.number)) {
+                        if (joystick.is_button_pressed(event.number)) {
                                 retval = event_backward_start;
                         } else {
                                 retval = event_backward_stop;
                         }
                                 
                 } else if (event.number == button_spin_mode) {
-                        if (_joystick.get_button(event.number)) {
+                        if (joystick.is_button_pressed(event.number)) {
                                 retval = event_spinning_start;
                         } else {
                                 retval = event_spinning_stop;
                         }
                                 
                 } else if (event.number == button_accurate_forward) {
-                        if (_joystick.get_button(event.number)) {
+                        if (joystick.is_button_pressed(event.number)) {
                                 retval = event_accurate_forward_start;
                         } else {
                                 retval = event_accurate_forward_stop;
                         }
                                 
                 } else if (event.number == button_accurate_backward) {
-                        if (_joystick.get_button(event.number)) {
+                        if (joystick.is_button_pressed(event.number)) {
                                 retval = event_accurate_backward_start;
                         } else {
                                 retval = event_accurate_backward_stop;
@@ -86,15 +86,15 @@ namespace romi {
                 return retval;
         }
                 
-        int16_t EventMapper::map(JoystickEvent &event)
+        int UIEventMapper::map(Joystick& joystick, JoystickEvent &event)
         {
-                int16_t retval = 0;
+                int retval = 0;
                         
                 if (event.type == JoystickEvent::Axis) {
-                        retval = map_axis(event);
+                        retval = map_axis(joystick, event);
                                 
                 } else if (event.type == JoystickEvent::Button) {
-                        retval = map_button(event);
+                        retval = map_button(joystick, event);
                 }
                         
                 return retval;

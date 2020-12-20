@@ -21,35 +21,36 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_RPC_NAVIGATION_CLIENT_ADAPTOR_H
-#define __ROMI_RPC_NAVIGATION_CLIENT_ADAPTOR_H
+#ifndef _ROMI_JOYSTICK_INPUT_DEVICE_H
+#define _ROMI_JOYSTICK_INPUT_DEVICE_H
 
-#include "INavigation.h"
-#include "IRPCClient.h"
+#include <string>
+#include <vector>
+#include "InputDevice.h"
+#include "Joystick.h"
+#include "JoystickEventMapper.h"
 
 namespace romi {
         
-        class RPCNavigationClientAdaptor : public INavigation
+        class JoystickInputDevice : public InputDevice
         {
-        public:
-                static constexpr const char *ClassName = "rpc-navigation";
-                
         protected:
-                rcom::IRPCHandler &_client;
-                
-                void execute(const char *method, JsonCpp& params, rcom::RPCError& error);
+                Joystick &_joystick;
+                JoystickEventMapper &_event_mapper;
                 
         public:
+                JoystickInputDevice(Joystick &joystick,
+                                    JoystickEventMapper &event_mapper)
+                        : _joystick(joystick),
+                          _event_mapper(event_mapper) {}
                 
-                RPCNavigationClientAdaptor(rcom::IRPCHandler &client) : _client(client) {}
-                virtual ~RPCNavigationClientAdaptor() override = default;
-
-                bool moveat(double left, double right) override;
-
-                bool move(double distance, double speed) override;
-
-                bool stop() override;
+                virtual ~JoystickInputDevice() override = default;
+                
+                int get_next_event() override;
+                double get_forward_speed() override;
+                double get_backward_speed() override;
+                double get_direction() override;
         };
 }
 
-#endif // __ROMI_RPC_NAVIGATION_CLIENT_ADAPTOR_H
+#endif // _ROMI_JOYSTICK_INPUT_DEVICE_H

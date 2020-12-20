@@ -21,10 +21,10 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_NAVIGATION_H
-#define __ROMI_NAVIGATION_H
+#ifndef __ROMI_ROVER_NAVIGATION_H
+#define __ROMI_ROVER_NAVIGATION_H
 
-#include "INavigation.h" 
+#include "Navigation.h" 
 #include "SynchronizedCodeBlock.h" 
 #include "RoverConfiguration.h"
 #include "IMotorDriver.h"
@@ -32,7 +32,7 @@
 
 namespace romi {
         
-        class Navigation : public INavigation
+        class RoverNavigation : public Navigation
         {
         protected:
 
@@ -51,12 +51,12 @@ namespace romi {
                                         
         public:
                 
-                Navigation(IMotorDriver &driver, RoverConfiguration &rover) :
+                RoverNavigation(IMotorDriver &driver, RoverConfiguration &rover) :
                         _driver(driver), _rover(rover), _status(ROVER_MOVEAT_CAPABLE) {
                         _mutex = new_mutex();
                 }
                 
-                virtual ~Navigation() override {
+                virtual ~RoverNavigation() override {
                         if (_mutex)
                                 delete_mutex(_mutex);
                 }
@@ -68,4 +68,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_NAVIGATION_H
+#endif // __ROMI_ROVER_NAVIGATION_H

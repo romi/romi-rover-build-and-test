@@ -1,8 +1,8 @@
 {
     "user-interface": {
 
-        "display": "crystal-display",
-        "navigation": "rpc-navigation",
+        "display-classname": "crystal-display",
+        "navigation-classname": "remote-navigation",
         
         "speed-controller": {
             "fast": {
@@ -21,6 +21,10 @@
                 "speed-multiplier": 0.3,
                 "direction-multiplier": 0.15
             }
+        },
+
+        "remote-navigation": {
+            "server-name": "navigation";
         }
     }
 }

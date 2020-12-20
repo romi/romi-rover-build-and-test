@@ -21,195 +21,97 @@
   <http://www.gnu.org/licenses/>.
 
  */
-
-#include "UIStateTransitions.h"
+#include <r.h>
+#include "Joystick.h"
+#include "SpeedController.h"
+#include "Display.h"
+#include "EventsAndStates.h"
+#include "UserInterface.h"
 
 namespace romi {
         
-        void navigation_ready(UserInterface& ui, unsigned long t)
+        void navigation_ready(UserInterface& ui)
         {
                 r_debug("NavigationReady");
                 ui.speed_controller.stop();
                 ui.display.show(0, "Ready");
         }
 
-        void start_driving_forward(UserInterface& ui, unsigned long t)
+        void start_driving_forward(UserInterface& ui)
         {
                 r_debug("start moving forward");
         }
 
-        void drive_forward(UserInterface& ui, unsigned long t)
+        void drive_forward(UserInterface& ui)
         {
                 r_debug("update forward speed and direction");
-                double speed = ui.joystick.get_axis(axis_forward_speed);
-                double direction = ui.joystick.get_axis(axis_direction);
+                double speed = ui.input_device.get_forward_speed();
+                double direction = ui.input_device.get_direction();
                 if (speed < 0.0)
                         speed = 0.0;
                 ui.speed_controller.drive_at(speed, direction);
         }
 
-        void start_driving_backward(UserInterface& ui, unsigned long t)
+        void start_driving_backward(UserInterface& ui)
         {
                 r_debug("start moving backward");
         }
         
-        void drive_backward(UserInterface& ui, unsigned long t)
+        void drive_backward(UserInterface& ui)
         {
                 r_debug("update backward speed and direction");
-                double speed = ui.joystick.get_axis(axis_backward_speed);
-                double direction = ui.joystick.get_axis(axis_direction);
+                double speed = ui.input_device.get_backward_speed();
+                double direction = ui.input_device.get_direction();
                 if (speed < 0.0)
                         speed = 0.0;
                 ui.speed_controller.drive_at(-speed, direction);
         }
 
-        void stop_driving(UserInterface& ui, unsigned long t)
+        void stop_driving(UserInterface& ui)
         {
                 r_debug("stop");
                 ui.speed_controller.stop();
         }
         
-        void start_driving_forward_accurately(UserInterface& ui, unsigned long t)
+        void start_driving_forward_accurately(UserInterface& ui)
         {
                 r_debug("start moving forward accurately");
         }
         
-        void drive_forward_accurately(UserInterface& ui, unsigned long t)
+        void drive_forward_accurately(UserInterface& ui)
         {
                 r_debug("update accurate forward speed and direction");
-                double speed = ui.joystick.get_axis(axis_forward_speed);
-                double direction = ui.joystick.get_axis(axis_direction);
+                double speed = ui.input_device.get_forward_speed();
+                double direction = ui.input_device.get_direction();
                 if (speed < 0.0)
                         speed = 0.0;
                 ui.speed_controller.drive_accurately_at(speed, direction);
         }
 
-        void start_driving_backward_accurately(UserInterface& ui, unsigned long t)
+        void start_driving_backward_accurately(UserInterface& ui)
         {
                 r_debug("start moving backward accurately");
         }
         
-        void drive_backward_accurately(UserInterface& ui, unsigned long t)
+        void drive_backward_accurately(UserInterface& ui)
         {
                 r_debug("update accurate backward speed and direction");
-                double speed = ui.joystick.get_axis(axis_backward_speed);
-                double direction = ui.joystick.get_axis(axis_direction);
+                double speed = ui.input_device.get_backward_speed();
+                double direction = ui.input_device.get_direction();
                 if (speed < 0.0)
                         speed = 0.0;
                 ui.speed_controller.drive_accurately_at(-speed, direction);
         }
         
-        void start_spinning(UserInterface& ui, unsigned long t)
+        void start_spinning(UserInterface& ui)
         {
                 r_debug("start spinning");
         }
         
-        void spin(UserInterface& ui, unsigned long t)
+        void spin(UserInterface& ui)
         {
                 r_debug("spinning");
-                ui.speed_controller.spin(ui.joystick.get_axis(axis_direction));
+                ui.speed_controller.spin(ui.input_device.get_direction());
         }
         
-        void init_state_transitions(StateMachine& state_machine)
-        {
-                state_machine.add(STATE_START,
-                                  event_start,
-                                  state_stopped,
-                                  navigation_ready);
-                
-                state_machine.add(state_stopped,
-                                  event_forward_start,
-                                  state_moving_forward,
-                                  start_driving_forward);
-                
-                state_machine.add(state_moving_forward,
-                                  event_forward_speed,
-                                  state_moving_forward,
-                                  drive_forward);
-                
-                state_machine.add(state_moving_forward,
-                                  event_direction,
-                                  state_moving_forward,
-                                  drive_forward);
-
-                state_machine.add(state_moving_forward,
-                                  event_forward_stop,
-                                  state_stopped,
-                                  stop_driving);
-                
-                state_machine.add(state_stopped,
-                                  event_accurate_forward_start,
-                                  state_moving_forward_accurately,
-                                  start_driving_forward_accurately);
-                
-                state_machine.add(state_moving_forward_accurately,
-                                  event_forward_speed,
-                                  state_moving_forward_accurately,
-                                  drive_forward_accurately);
-                
-                state_machine.add(state_moving_forward_accurately,
-                                  event_direction,
-                                  state_moving_forward_accurately,
-                                  drive_forward_accurately);
-
-                state_machine.add(state_moving_forward_accurately,
-                                  event_accurate_forward_stop,
-                                  state_stopped,
-                                  stop_driving);
-                
-                state_machine.add(state_stopped,
-                                  event_backward_start,
-                                  state_moving_backward,
-                                  start_driving_backward);
-                
-                state_machine.add(state_moving_backward,
-                                  event_backward_speed,
-                                  state_moving_backward,
-                                  drive_backward);
-                
-                state_machine.add(state_moving_backward,
-                                  event_direction,
-                                  state_moving_backward,
-                                  drive_backward);
-                
-                state_machine.add(state_moving_backward,
-                                  event_backward_stop,
-                                  state_stopped,
-                                  stop_driving);
-
-                state_machine.add(state_stopped,
-                                  event_accurate_backward_start,
-                                  state_moving_backward_accurately,
-                                  start_driving_backward_accurately);
-                
-                state_machine.add(state_moving_backward_accurately,
-                                  event_backward_speed,
-                                  state_moving_backward_accurately,
-                                  drive_backward_accurately);
-                
-                state_machine.add(state_moving_backward_accurately,
-                                  event_direction,
-                                  state_moving_backward_accurately,
-                                  drive_backward_accurately);
-
-                state_machine.add(state_moving_backward_accurately,
-                                  event_accurate_backward_stop,
-                                  state_stopped,
-                                  stop_driving);
-                
-                state_machine.add(state_stopped,
-                                  event_spinning_start,
-                                  state_spinning,
-                                  start_spinning);
-                 
-                state_machine.add(state_spinning,
-                                  event_direction,
-                                  state_spinning,
-                                  spin);
-
-                state_machine.add(state_spinning,
-                                  event_spinning_stop,
-                                  state_stopped,
-                                  stop_driving);
-        }
 }

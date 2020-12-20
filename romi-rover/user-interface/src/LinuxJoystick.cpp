@@ -27,11 +27,11 @@
 #include <string>
 #include <linux/joystick.h>
 #include <r.h>
-#include "Joystick.h"
+#include "LinuxJoystick.h"
 
 namespace romi {
         
-        Joystick::Joystick(const char *device) : _fd(-1), _debug(false) {
+        LinuxJoystick::LinuxJoystick(const char *device) : _fd(-1), _debug(false) {
                 if (!open_device(device)) {
                         std::string s = "Failed to open joystick device: ";
                         s += device;
@@ -41,70 +41,79 @@ namespace romi {
                 _buttons.resize(count_buttons(), false);
         }
         
-        Joystick::~Joystick() {
+        LinuxJoystick::~LinuxJoystick() {
                 close_device();
         }
 
-        void Joystick::close_device() {
+        void LinuxJoystick::close_device() {
                 if (_fd != -1) {
                         ::close(_fd);
                         _fd = -1;
                 }
         }
         
-        bool Joystick::open_device(const char *name) {
+        bool LinuxJoystick::open_device(const char *name) {
                 close_device();
                 _fd = ::open(name, O_RDONLY);
                 return (_fd >= 0);
         }
 
-        bool Joystick::parse_event(JoystickEvent &e, struct js_event event)
+        void LinuxJoystick::parse_button_event(struct js_event linux_event)
         {
-                bool has_event = false;
-                event.type &= ~JS_EVENT_INIT;
-
-                switch (event.type) {
+                _event.type = JoystickEvent::Button;
+                _event.number = linux_event.number;
+                _buttons[linux_event.number] = linux_event.value != 0;
                         
-                case JS_EVENT_BUTTON:
-                        e.type = JoystickEvent::Button;
-                        e.number = event.number;
-                        _buttons[event.number] = event.value != 0;
-                        has_event = true;
-                        
-                        if (_debug)
-                                r_debug("button[%d]=%s", event.number,
-                                        _buttons[event.number]? "pressed" : "released");
+                if (_debug)
+                        r_debug("button[%d]=%s", linux_event.number,
+                                _buttons[linux_event.number]? "pressed" : "released");
                 
+        }
+
+        void LinuxJoystick::parse_axis_event(struct js_event linux_event)
+        {
+                _event.type = JoystickEvent::Axis;
+                _event.number = linux_event.number;
+                _axes[linux_event.number] = linux_event.value / 32768.0;
+
+                if (_debug)
+                        r_debug("axis[%d]=%0.3f", linux_event.number,
+                                _axes[linux_event.number]);
+        }
+        
+        void LinuxJoystick::parse_event(struct js_event linux_event)
+        {
+                linux_event.type &= ~JS_EVENT_INIT;
+
+                switch (linux_event.type) {
+                case JS_EVENT_BUTTON:
+                        parse_button_event(linux_event);
                         break;
                         
                 case JS_EVENT_AXIS:
-                        e.type = JoystickEvent::Axis;
-                        e.number = event.number;
-                        _axes[event.number] = event.value / 32768.0;
-                        has_event = true;
-
-                        if (_debug)
-                                r_debug("axis[%d]=%0.3f", event.number,
-                                        _axes[event.number]);
+                        parse_axis_event(linux_event);
                         break;
                 }
-                return has_event;
         }
 
-        bool Joystick::update(JoystickEvent &e)
+        void LinuxJoystick::try_read_event()
         {
-                bool has_event = false;
-                struct js_event event;
-                
-                ssize_t bytes = read(_fd, &event, sizeof(js_event));
+                struct js_event linux_event;
+                ssize_t bytes = read(_fd, &linux_event, sizeof(js_event));
                 if (bytes == sizeof(js_event)) {
-                        has_event = parse_event(e, event);
+                        parse_event(linux_event);
                 }
-                
-                return has_event;
         }
 
-        int Joystick::count_axes()
+        JoystickEvent &LinuxJoystick::get_next_event()
+        {
+                r_debug("LinuxJoystick::get_next_event");
+                _event.type = JoystickEvent::None;
+                try_read_event();
+                return _event;
+        }
+        
+        int LinuxJoystick::count_axes()
         {
                 __u8 count;
                 if (ioctl(_fd, JSIOCGAXES, &count) == -1)
@@ -113,7 +122,7 @@ namespace romi {
                 return (int) count;
         }
 
-        int Joystick::count_buttons()
+        int LinuxJoystick::count_buttons()
         {
                 __u8 count;
                 if (ioctl(_fd, JSIOCGBUTTONS, &count) == -1)

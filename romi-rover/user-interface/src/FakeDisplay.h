@@ -25,11 +25,11 @@
 #ifndef __ROMI_FAKE_DISPLAY_H
 #define __ROMI_FAKE_DISPLAY_H
 
-#include "IDisplay.h"
+#include "Display.h"
 
 namespace romi {
         
-        class FakeDisplay : public IDisplay
+        class FakeDisplay : public Display
         {
         public:
                 static constexpr const char *ClassName = "fake-display";

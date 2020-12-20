@@ -7,32 +7,43 @@ set(CMAKE_BUILD_TYPE Debug)
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../arduino_libraries/RomiSerial" )
 
 set(SOURCES
+  src/DefaultSpeedController.h
+  src/DefaultSpeedController.cpp
+  src/Display.h
   src/EventsAndStates.h
-  src/EventMapper.h
-  src/EventMapper.cpp
   src/FakeDisplay.h
   src/FakeNavigation.h
-  src/IEventMapper.h
-  src/IJoystick.h
-  src/ISpeedController.h
-  src/IStateMachine.h
-  src/IStateTransition.h
+  src/InputDevice.h
   src/Joystick.h
-  src/Joystick.cpp
-  src/IDisplay.h
+  src/JoystickEventMapper.h
+  src/JoystickInputDevice.h
+  src/JoystickInputDevice.cpp
   src/FakeDisplay.h
-  src/CrystalDisplay.cpp
   src/CrystalDisplay.h
+  src/CrystalDisplay.cpp
+  src/FakeWeeder.h
+  src/LinuxJoystick.h
+  src/LinuxJoystick.cpp
   src/main.cpp
-  src/RPCNavigationClientAdaptor.h
-  src/RPCNavigationClientAdaptor.cpp
+  src/RemoteNavigation.h
+  src/RemoteNavigation.cpp
   src/SpeedController.h
-  src/SpeedController.cpp
+  src/SpeedConverter.h
+  src/SpeedConverter.cpp
   src/StateMachine.h
-  src/StateMachine.cpp
-  src/StateTransition.h
+  src/UIEventMapper.h
+  src/UIEventMapper.cpp
+  src/UIFactory.h
+  src/UIFactory.cpp
+  src/UIOptions.h
+  src/UIOptions.cpp
+  src/UIStateMachine.h
+  src/UIStateMachine.cpp
+  src/UIStateTransition.h
   src/UIStateTransitions.h
   src/UIStateTransitions.cpp
+  src/UserInterface.h
+  src/UserInterface.cpp
   )
 
 add_executable(user-interface ${SOURCES})
