@@ -2,15 +2,17 @@
 #include <stdexcept>
 #include <string.h>
 #include <rcom.h>
+#include <getopt.h>
 
-#include "ControllerServer.h"
-#include "CNCClient.h"
 #include "Oquam.h"
 #include "StepperController.h"
 #include "RomiSerialClient.h"
 #include "RSerial.h"
 #include "ConfigurationFile.h"
 #include "DebugWeedingSession.h"
+#include "RPCServer.h"
+#include "RPCCNCServerAdaptor.h"
+#include "FakeCNCController.h"
 
 using namespace romi;
 
@@ -20,15 +22,77 @@ static inline double sign(double v)
         return (v < 0)? -1.0 : 1.0;
 }
 
+struct Options {
+        
+        const char *config_file;
+        const char *serial_device;
+        const char *server_name;
+        const char *cnc_controller;
+        const char *output_directory;
+
+        Options() {
+                config_file = "config.json";
+                serial_device = "/dev/ttyACM0";
+                server_name = "oquam";
+                cnc_controller = "oquam";
+                output_directory = ".";
+        }
+
+        void parse(int argc, char** argv) {
+                int option_index;
+                static const char *optchars = "C:N:T:D:";
+                static struct option long_options[] = {
+                        {"config", required_argument, 0, 'C'},
+                        {"device", required_argument, 0, 'D'},
+                        {"navigation-server-name", required_argument, 0, 'N'},
+                        {"cnc-controller", required_argument, 0, 'c'},
+                        {"output-directory", required_argument, 0, 'd'},
+                        {0, 0, 0, 0}
+                };
+        
+                while (1) {
+                        int c = getopt_long(argc, argv, optchars,
+                                            long_options, &option_index);
+                        if (c == -1) break;
+                        switch (c) {
+                        case 'C':
+                                config_file = optarg;
+                                break;
+                        case 'N':
+                                server_name = optarg;
+                                break;
+                        case 'D':
+                                serial_device = optarg;
+                                break;
+                        case 'c':
+                                cnc_controller = optarg;
+                                break;
+                        case 'd':
+                                output_directory = optarg;
+                                break;
+                        }
+                }
+        }
+};
+        
+
 int main(int argc, char** argv)
 {
+        int retval = 1;
+        Options options;
+        options.parse(argc, argv);
+        
         app_init(&argc, argv);
-        app_set_name("oquam");
+        app_set_name(options.server_name);
+
+        ICNCController *cnc_controller = 0;
         
         try {
+                ConfigurationFile config(options.config_file);
+                
                 CNCRange range;
-                ConfigurationFile config("config.json");                
-                range.init(config.get("cnc").get("range"));
+                JsonCpp r = config.get("cnc").get("range");
+                range.init(r);
                 
                 double xmin[3];
                 double xmax[3];
@@ -60,28 +124,35 @@ int main(int argc, char** argv)
                         scale[i] = gears[i] * microsteps[i] * steps[i] / displacement[i];
                 }
                 
-                RSerial serial("/dev/ttyACM1", 115200, 1);        
-                RomiSerialClient romi_serial(&serial, &serial);
-                StepperController stepper(romi_serial);
-                Oquam oquam(stepper, xmin, xmax, vm, amax, scale, 0.01, period);
-                CNCClient client(oquam);
-                ControllerServer server(&client, "oquam", "cnc");
+                if (rstreq(options.cnc_controller, FakeCNCController::ClassName)) {
+                        cnc_controller = new FakeCNCController();
+                } else {
+                        RSerial serial(options.serial_device, 115200, 1);        
+                        RomiSerialClient romi_serial(&serial, &serial);
+                        cnc_controller = new StepperController(romi_serial);
+                }
 
-                DebugWeedingSession debug(".");
+                Oquam oquam(cnc_controller, xmin, xmax, vm, amax, scale, 0.01, period);
+
+                DebugWeedingSession debug(options.output_directory, "oquam");
                 oquam.set_file_cabinet(&debug);
+                
+                RPCCNCServerAdaptor adaptor(oquam);
+                rcom::RPCServer server(adaptor, "oquam", "cnc");
 
                 
                 while (!app_quit())
                         clock_sleep(0.1);
 
-                
-        } catch (std::runtime_error &e) {
-                r_err("main: std::runtime_error: %s", e.what());
+                retval = 0;
                 
         } catch (std::exception &e) {
                 r_err("main: std::exception: %s", e.what());
         }
 
-        return 0;
+        if (cnc_controller)
+                delete cnc_controller;
+
+        return retval;
 }
 

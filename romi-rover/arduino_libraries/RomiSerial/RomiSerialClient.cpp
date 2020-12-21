@@ -28,6 +28,7 @@
 #include <CRC8.h>
 #include <RomiSerialClient.h>
 #include <RomiSerialErrors.h>
+#include <r.h>
 
 using namespace std;
 
@@ -95,9 +96,9 @@ int RomiSerialClient::make_request(const char *command, std::string &request)
         return err;
 }
 
-json_object_t RomiSerialClient::try_sending_request(std::string &request)
+JsonCpp RomiSerialClient::try_sending_request(std::string &request)
 {
-        json_object_t response = json_null();
+        JsonCpp response;
 
         if (_debug) {
                 r_debug("RomiSerialClient::try_sending_request: %s", request.c_str());
@@ -106,7 +107,7 @@ json_object_t RomiSerialClient::try_sending_request(std::string &request)
         for (int i = 0; i < 3; i++) {
                 if (send_request(request)) {
                         
-                        json_object_t r = read_response();
+                        response = read_response();
 
                         /* Check the error code. If the error relates
                          * to the message envelope then send the
@@ -114,7 +115,7 @@ json_object_t RomiSerialClient::try_sending_request(std::string &request)
                          * intercepted by the firmware, in which case
                          * the romiserial_duplicate error code is
                          * returned.  */
-                        int code = (int) json_array_getnum(r, 0);
+                        int code = (int) response.num(0);
                         
                         if (code == romiserial_envelope_crc_mismatch
                             || code == romiserial_envelope_invalid_id
@@ -127,10 +128,8 @@ json_object_t RomiSerialClient::try_sending_request(std::string &request)
                                         r_debug("RomiSerialClient::try_sending_request: "
                                                 "re-sending request: %s", request.c_str());
                                 }
-                                json_unref(r);
                                 
                         } else  {
-                                response = r;
                                 break;
                         } 
                         
@@ -147,18 +146,15 @@ bool RomiSerialClient::send_request(std::string &request)
         return n == request.length();
 }
 
-json_object_t RomiSerialClient::make_error(int code)
+JsonCpp RomiSerialClient::make_error(int code)
 {
         const char *message = get_error_message(code);
 
         if (_debug) {
                 r_debug("RomiSerialClient::make_error: %d, %s", code, message);
         }
-        
-        json_object_t error = json_array_create();
-        json_array_setnum(error, code, 0);
-        json_array_setstr(error, message, 1);
-        return error;
+
+        return JsonCpp::construct("[%d,'%s']", code, message);
 }
 
 enum {
@@ -184,74 +180,69 @@ bool RomiSerialClient::parse_char(int c)
         return _parser.process((char) c);
 }
 
-json_object_t RomiSerialClient::check_error_response(json_object_t data)
+JsonCpp RomiSerialClient::check_error_response(JsonCpp &data)
 {
-        int code = (int) json_array_getnum(data, 0);
+        int code = (int) data.num(0);
         
         if (_debug) {
-                r_debug("RomiSerialClient::parse_response: "
+                r_debug("RomiSerialClient::check_error_response: "
                         "Firmware returned error code: %d (%s)",
                         code, get_error_message(code));
         }
 
-        if (json_array_length(data) == 1) {
+        if (data.length() == 1) {
                 const char *message = get_error_message(code);
-                json_array_setstr(data, message, 1);
+                data.setstr(message, 1);
                 
-        } else if (json_array_length(data) == 2) {
-                json_object_t message = json_array_get(data, 1);
-                if (json_isstring(message)) {
+        } else if (data.length() == 2) {
+                if (data.get(1).isstring()) {
                         if (_debug) {
-                                r_debug("RomiSerialClient::parse_response: "
+                                r_debug("RomiSerialClient::check_error_response: "
                                         "Firmware returned error message: '%s'",
-                                        json_string_value(message));
+                                        data.str(1));
                         }
                 } else {
-                        r_warn("RomiSerialClient::parse_response: "
+                        r_warn("RomiSerialClient::check_error_response: "
                                "error with invalid message: '%s'",
                                _parser.message());
-                        json_unref(data);
                         data = make_error(romiserial_invalid_error_response);
                 }  
 
         } else {
-                r_warn("RomiSerialClient::parse_response: "
+                r_warn("RomiSerialClient::check_error_response: "
                        "error with invalid arguments: '%s'",
                        _parser.message());
-                json_unref(data);
                 data = make_error(romiserial_invalid_error_response);
         }
         
         return data;
 }
 
-json_object_t RomiSerialClient::parse_response()
+JsonCpp RomiSerialClient::parse_response()
 {
-        json_object_t data = json_null();
+        JsonCpp data;
         
         if (_parser.length() > 1) {
                 
-                data = json_parse(_parser.message() + 1);
+                data = JsonCpp::parse(_parser.message() + 1);
 
                 // Check that the data is valid. If not, return an error.
-                if (json_isnull(data)) {
-                        data = make_error(romiserial_invalid_json);
+                if (data.isarray()
+                    && data.length() > 0
+                    && data.get((int)0).isnumber()) {
                         
-                } else if (!json_isarray(data)) {
-                        r_warn("RomiSerialClient::parse_response: invalid response: '%s'",
-                               _parser.message());
-                        json_unref(data);
-                        data = make_error(romiserial_invalid_json);
-                } else if (json_isnumber(json_array_get(data, 0))) {
-
-                        // If the response is an error message, make sure it is valid,
-                        // too: an array of length 2, with a string as second element.
-                        int code = (int) json_array_getnum(data, 0);
+                        // If the response is an error message, make
+                        // sure it is valid, too: it should be an
+                        // array of length 2, with a string as second
+                        // element.
+                        int code = (int) data.num(0);
                         if (code != 0) 
                                 data  = check_error_response(data);
                         
                 } else {
-                        json_unref(data);
+                        r_warn("RomiSerialClient::parse_response: "
+                               "invalid response: '%s'",
+                               _parser.message());
                         data = make_error(romiserial_invalid_response);
                 }
                 
@@ -302,9 +293,9 @@ bool RomiSerialClient::handle_one_char()
         return has_message;
 }
 
-json_object_t RomiSerialClient::read_response()
+JsonCpp RomiSerialClient::read_response()
 {
-        json_object_t result = json_null();
+        JsonCpp result;
         double start_time;
         bool has_response = false;
         
@@ -340,7 +331,7 @@ json_object_t RomiSerialClient::read_response()
                                 if (_parser.id() == _id) {
                                         has_response = true;
                                         
-                                } else if (json_array_getnum(result, 0) != 0.0) {
+                                } else if (result.num(0) != 0) {
                                         /* It's OK if the ID in the
                                          * response is not equal to
                                          * the ID in the request when
@@ -363,7 +354,6 @@ json_object_t RomiSerialClient::read_response()
 
                                         // Try again
                                         _parser.reset();
-                                        json_unref(result);
                                 }
                                 
                         } else if (_parser.error() != 0) {
@@ -386,10 +376,9 @@ json_object_t RomiSerialClient::read_response()
         return result;
 }
 
-json_object_t RomiSerialClient::send(const char *command)
+void RomiSerialClient::send(const char *command, JsonCpp& response)
 {
         std::string request;
-        json_object_t response = json_null();
 
         if (_in == 0 || _out == 0)
                 throw std::runtime_error("RomiSerialClient: Streams not initialized");
@@ -404,7 +393,6 @@ json_object_t RomiSerialClient::send(const char *command)
         }
         
         mutex_unlock(_mutex);
-        return response;
 }
 
 const char *RomiSerialClient::get_error_message(int code)

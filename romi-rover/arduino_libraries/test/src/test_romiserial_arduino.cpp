@@ -27,46 +27,46 @@ protected:
 
 TEST_F(romiserial_arduino_tests, test_success_of_simple_command)
 {
-        json_object_t response = romiserial.send("a");
-        int code = (int) json_array_getnum(response, 0);
-        json_unref(response);
+        JsonCpp response;
+        romiserial.send("a", response);
+        int code = (int) response.num(0);
         
         ASSERT_EQ(0, code);        
 }
 
 TEST_F(romiserial_arduino_tests, test_failure_bad_number_of_arguments)
 {
-        json_object_t response = romiserial.send("b");
-        int code = (int) json_array_getnum(response, 0);
-        json_unref(response);
+        JsonCpp response;
+        romiserial.send("b", response);
+        int code = (int) response.num(0);
         
         ASSERT_EQ(romiserial_bad_number_of_arguments, code);
 }
 
 TEST_F(romiserial_arduino_tests, test_success_two_arguments)
 {
-        json_object_t response = romiserial.send("b[1,2]");
-        int code = (int) json_array_getnum(response, 0);
-        json_unref(response);
+        JsonCpp response;
+        romiserial.send("b[1,2]", response);
+        int code = (int) response.num(0);
         
         ASSERT_EQ(0, code);
 }
 
 TEST_F(romiserial_arduino_tests, test_success_string_argument)
 {
-        json_object_t response = romiserial.send("c[1,\"Dinner's ready\"]");
-        int code = (int) json_array_getnum(response, 0);
-        json_unref(response);
+        JsonCpp response;
+        romiserial.send("c[1,\"Dinner's ready\"]", response);
+        int code = (int) response.num(0);
         
         ASSERT_EQ(0, code);
 }
 
 TEST_F(romiserial_arduino_tests, test_success_two_arguments_returning_value)
 {
-        json_object_t response = romiserial.send("d[1,1]");
-        int code = (int) json_array_getnum(response, 0);
-        int result = (int) json_array_getnum(response, 1);
-        json_unref(response);
+        JsonCpp response;
+        romiserial.send("d[1,1]", response);
+        int code = (int) response.num(0);
+        int result = (int) response.num(1);
         
         ASSERT_EQ(0, code);
         ASSERT_EQ(2, result);
@@ -74,16 +74,12 @@ TEST_F(romiserial_arduino_tests, test_success_two_arguments_returning_value)
 
 TEST_F(romiserial_arduino_tests, test_success_string_argument_returning_string)
 {
-        json_object_t response = romiserial.send("e[\"he's resting\"]");
-        
-        //bool is_array = json_isarray(response);
-        //int len = json_array_length(response);
-        int code = (int) json_array_getnum(response, 0);
-        //bool is_string = json_isstring(json_array_get(response, 1));
-        std::string result = json_array_getstr(response, 1);
-        json_unref(response);
+        JsonCpp response;
+        romiserial.send("e[\"he's resting\"]", response);
+        int code = (int) response.num(0);
+        const char *result = response.str(1);
         
         ASSERT_EQ(0, code);
-        ASSERT_STREQ("he's resting", result.c_str());
+        ASSERT_STREQ("he's resting", result);
 }
 

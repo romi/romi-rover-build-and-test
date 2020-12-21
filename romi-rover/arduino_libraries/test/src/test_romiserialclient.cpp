@@ -77,15 +77,14 @@ TEST_F(romiserialclient_tests, message_without_args)
         initInput("#a[0]:00e7\r");
 
         // Act
-        json_object_t response = client.send("a");
+        JsonCpp response;
+        client.send("a", response);
         
         //Assert
         EXPECT_EQ(expected_message, output_message);
-        EXPECT_EQ(1, json_isarray(response));
-        EXPECT_EQ(1, json_array_length(response));
-        EXPECT_EQ(0, json_array_getnum(response, 0));
-
-        json_unref(response);
+        EXPECT_EQ(true, response.isarray());
+        EXPECT_EQ(1, response.length());
+        EXPECT_EQ(0, response.num(0));
 }
 
 TEST_F(romiserialclient_tests, message_with_args)
@@ -95,15 +94,14 @@ TEST_F(romiserialclient_tests, message_with_args)
         initInput("#a[0]:00e7\r");
 
         // Act
-        json_object_t response = client.send("a[1,2,3]");
+        JsonCpp response;
+        client.send("a[1,2,3]", response);
         
         //Assert
         EXPECT_EQ(expected_message, output_message);
-        EXPECT_EQ(1, json_isarray(response));
-        EXPECT_EQ(1, json_array_length(response));
-        EXPECT_EQ(0, json_array_getnum(response, 0));
-
-        json_unref(response);
+        EXPECT_EQ(true, response.isarray());
+        EXPECT_EQ(1, response.length());
+        EXPECT_EQ(0, response.num(0));
 }
 
 TEST_F(romiserialclient_tests, error_reponse)
@@ -113,17 +111,16 @@ TEST_F(romiserialclient_tests, error_reponse)
         initInput("#a[1,\"Went to bed early\"]:00f2\r");
 
         // Act
-        json_object_t response = client.send("a");
+        JsonCpp response;
+        client.send("a", response);
         
         //Assert
         EXPECT_EQ(expected_message, output_message);
-        EXPECT_EQ(1, json_isarray(response));
-        EXPECT_EQ(2, json_array_length(response));
-        EXPECT_EQ(1, json_array_getnum(response, 0));
-        EXPECT_EQ(1, json_isstring(json_array_get(response, 1)));
-        EXPECT_STREQ("Went to bed early", json_array_getstr(response, 1));
-
-        json_unref(response);
+        EXPECT_EQ(true, response.isarray());
+        EXPECT_EQ(2, response.length());
+        EXPECT_EQ(1, response.num(0));
+        EXPECT_EQ(1, response.get(1).isstring());
+        EXPECT_STREQ("Went to bed early", response.str(1));
 }
 
 TEST_F(romiserialclient_tests, error_reponse_without_message)
@@ -133,16 +130,15 @@ TEST_F(romiserialclient_tests, error_reponse_without_message)
         initInput("#a[1]:0085\r");
 
         // Act
-        json_object_t response = client.send("a");
+        JsonCpp response;
+        client.send("a", response);
         
         //Assert
         EXPECT_EQ(expected_message, output_message);
-        EXPECT_EQ(1, json_isarray(response));
-        EXPECT_EQ(2, json_array_length(response));
-        EXPECT_EQ(1, json_array_getnum(response, 0));
-        EXPECT_EQ(1, json_isstring(json_array_get(response, 1)));
-
-        json_unref(response);
+        EXPECT_EQ(true, response.isarray());
+        EXPECT_EQ(2, response.length());
+        EXPECT_EQ(1, response.num(0));
+        EXPECT_EQ(1, response.get(1).isstring());
 }
 
 TEST_F(romiserialclient_tests, log_message)
@@ -152,15 +148,14 @@ TEST_F(romiserialclient_tests, log_message)
         initInput("#!LOG MESSAGE:008e\r#a[0]:00e7\r");
 
         // Act
-        json_object_t response = client.send("a");
+        JsonCpp response;
+        client.send("a", response);
         
         //Assert
         EXPECT_EQ(expected_message, output_message);
-        EXPECT_EQ(1, json_isarray(response));
-        EXPECT_EQ(1, json_array_length(response));
-        EXPECT_EQ(0, json_array_getnum(response, 0));
-
-        json_unref(response);
+        EXPECT_EQ(true, response.isarray());
+        EXPECT_EQ(1, response.length());
+        EXPECT_EQ(0, response.num(0));
 }
 
 TEST_F(romiserialclient_tests, message_too_long)
@@ -168,14 +163,32 @@ TEST_F(romiserialclient_tests, message_too_long)
         // Arrange
 
         // Act
-        json_object_t response = client.send("a[\"0123456789012345678901234567890123456789"
-                  "012345678901234567890123456789\"]");
+        JsonCpp response;
+
+        client.send("a[\"0123456789012345678901234567890123456789"
+                    "012345678901234567890123456789\"]",
+                    response);
         
         //Assert
-        EXPECT_EQ(1, json_isarray(response));
-        EXPECT_EQ(2, json_array_length(response));
-        EXPECT_EQ(romiserialclient_too_long, json_array_getnum(response, 0));
+        EXPECT_EQ(true, response.isarray());
+        EXPECT_EQ(2, response.length());
+        EXPECT_EQ(romiserialclient_too_long, response.num(0));
+}
 
-        json_unref(response);
+TEST_F(romiserialclient_tests, error_number_has_string_representation)
+{
+        // Arrange
+
+        // Act
+
+        //Assert
+        EXPECT_STREQ("No error", RomiSerialClient::get_error_message(0));
+        EXPECT_STREQ("Application error", RomiSerialClient::get_error_message(1));
+        EXPECT_STREQ("Unknown error code", RomiSerialClient::get_error_message(-99399));
+        
+        for (int i = -1; i > romiserial_last_error; i--) {
+                EXPECT_EQ(0, rstreq("Unknown error code",
+                                    RomiSerialClient::get_error_message(i)));
+        }
 }
 

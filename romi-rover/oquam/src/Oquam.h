@@ -30,27 +30,15 @@
 #include "ICNCController.h"
 #include "IFileCabinet.h"
 #include "script.h" 
+#include "SynchronizedCodeBlock.h" 
 
 namespace romi {
-
-        class SynchronizedMethod
-        {
-        protected:
-                mutex_t *_mutex;                
-        public:
-                SynchronizedMethod(mutex_t *mutex) : _mutex(mutex) {
-                        mutex_lock(_mutex);
-                }
-                ~SynchronizedMethod() {
-                        mutex_unlock(_mutex);
-                }
-        };
         
         class Oquam : public ICNC
         {
         public:
                 CNCRange _range;
-                ICNCController &_controller;
+                ICNCController *_controller;
                 IFileCabinet *_file_cabinet;
                 mutex_t *_mutex;
         
@@ -87,16 +75,20 @@ namespace romi {
                 int _script_count;
                         
         public:
-                Oquam(ICNCController &block_controller,
+                Oquam(ICNCController *controller,
                       const double *xmin, const double *xmax,
                       const double *vmax, const double *amax,
                       const double *scale_meters_to_steps, 
                       double path_max_deviation,
                       double path_slice_interval)
-                        : _controller(block_controller),
+                        : _controller(controller),
                           _file_cabinet(0),
                           _path_max_deviation(path_max_deviation),
                           _path_slice_interval(path_slice_interval) {
+
+                        if (_controller == 0)
+                                throw std::runtime_error("Oquam: invalid CNC controller");
+                        
                         vcopy(_xmin, xmin);
                         vcopy(_xmax, xmax);
                         vcopy(_vmax, vmax);
@@ -117,39 +109,42 @@ namespace romi {
                         _file_cabinet = cabinet;
                 }
                 
-                void get_range(CNCRange &range) {
+                bool get_range(CNCRange &range) {
                         range._x[0] = _xmin[0];
                         range._x[1] = _xmax[0];
                         range._y[0] = _xmin[1];
                         range._y[1] = _xmax[1];
                         range._z[0] = _xmin[2];
                         range._z[1] = _xmax[2];
+                        return true;
                 }
 
                 // See ICNC.h for more info
-                void moveto(double x, double y, double z,
+                bool moveto(double x, double y, double z,
                             double relative_speed = 0.1) override {
-                        SynchronizedMethod sync(_mutex);
-                        moveto_synchronized(x, y, z, relative_speed);
+                        SynchronizedCodeBlock sync(_mutex);
+                        return moveto_synchronized(x, y, z, relative_speed);
                 }
                 
-                void travel(Path &path, double relative_speed = 0.1) override {
-                        SynchronizedMethod sync(_mutex);
-                        travel_synchronized(path, relative_speed);
+                bool travel(Path &path, double relative_speed = 0.1) override {
+                        SynchronizedCodeBlock sync(_mutex);
+                        return travel_synchronized(path, relative_speed);
                 }
                 
-                void spindle(double speed) override {
+                bool spindle(double speed) override {
                         // TODO
+                        r_err("Oquam::spindle NOT IMPLEMENTED YET!");
+                        return true;
                 }
 
-                void homing() override {
-                        SynchronizedMethod sync(_mutex);
-                        _controller.homing();
+                bool homing() override {
+                        SynchronizedCodeBlock sync(_mutex);
+                        return _controller->homing();
                 }
 
-                void stop_execution() override;
-                void continue_execution() override;
-                void reset() override;
+                bool stop_execution() override;
+                bool continue_execution() override;
+                bool reset() override;
                 
                 /* accessors */
         
@@ -190,11 +185,11 @@ namespace romi {
                 }
 
         protected:
-                void moveto_synchronized(double x, double y, double z, double rel_speed);
-                void travel_synchronized(Path &path, double relative_speed);
+                bool moveto_synchronized(double x, double y, double z, double rel_speed);
+                bool travel_synchronized(Path &path, double relative_speed);
 
-                void get_position(double *position); 
-                void get_position(int32_t *position); 
+                bool get_position(double *position); 
+                bool get_position(int32_t *position); 
                 script_t *build_script(Path &path, double speed); 
                 bool convert_script(script_t *script, double *position, double rel_speed); 
                 bool execute_script(script_t *script);

@@ -7,7 +7,6 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../../arduino_libraries/RomiSe
 set(SRCS_OQUAMSTEPPER
   src/tests_main.cpp
   src/tests_oquamstepper.cpp
-  ../src/JSON.h
   ../src/ICNCController.h
   ../src/StepperController.h
   ../src/StepperController.cpp
@@ -19,10 +18,6 @@ set(SRCS_OQUAMSTEPPER
   ../src/plotter.h
   ../src/script.h
   ../src/script.c
-  ../src/IFileCabinet.h
-  ../src/IFolder.h
-  ../src/DebugWeedingSession.h
-  ../src/DebugWeedingSession.cpp
   ../src/Oquam.cpp
   ../../arduino_libraries/RomiSerial/IInputStream.h
   ../../arduino_libraries/RomiSerial/IOutputStream.h
@@ -35,6 +30,6 @@ set(SRCS_OQUAMSTEPPER
   ../../arduino_libraries/RomiSerial/RomiSerialClient.cpp
   )
 
-add_executable(r_unit_tests_oquam_stepper ${SRCS_OQUAMSTEPPER})
-target_link_libraries(r_unit_tests_oquam_stepper r romi gtest gmock)
+add_executable(romi_rover_unit_tests_oquam_stepper ${SRCS_OQUAMSTEPPER})
+target_link_libraries(romi_rover_unit_tests_oquam_stepper rpp romirover romi gtest gmock)
 

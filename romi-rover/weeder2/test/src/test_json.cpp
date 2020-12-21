@@ -1,6 +1,10 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+<<<<<<< HEAD
+#include <romi/JSON.h>
+=======
 #include "JsonCpp.h"
+>>>>>>> ci_dev
 
 using namespace std;
 using namespace testing;
