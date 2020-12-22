@@ -22,8 +22,6 @@
 
  */
 #include <stdexcept>
-#include <fcntl.h>
-#include <unistd.h>
 #include <string>
 #include <linux/joystick.h>
 #include <r.h>
@@ -31,57 +29,83 @@
 
 namespace romi {
         
-        LinuxJoystick::LinuxJoystick(const char *device) : _fd(-1), _debug(false) {
-                if (!open_device(device)) {
-                        std::string s = "Failed to open joystick device: ";
-                        s += device;
-                        throw std::runtime_error(s.c_str());
-                }
-                _axes.resize(count_axes(), 0.0);
-                _buttons.resize(count_buttons(), false);
+        LinuxJoystick::LinuxJoystick(rpp::ILinux &linux, const char *device)
+                : _linux(linux), _fd(-1), _debug(false) {
+                
+                try_open_device(device);
+                try_initialize();
         }
         
         LinuxJoystick::~LinuxJoystick() {
                 close_device();
         }
 
-        void LinuxJoystick::close_device() {
-                if (_fd != -1) {
-                        ::close(_fd);
-                        _fd = -1;
+        void LinuxJoystick::try_initialize()
+        {
+                try {
+                        initialize();
+                        
+                } catch (std::runtime_error& e) {
+                        close_device();
+                        throw e;
+                }
+        }
+
+        void LinuxJoystick::initialize()
+        {
+                int num_axes = try_count_axes();
+                _axes.resize(num_axes, 0.0);
+                
+                int num_buttons = try_count_buttons();
+                _buttons.resize(num_buttons, false);
+        }
+
+        void LinuxJoystick::try_open_device(const char *name) {
+                close_device();
+                open_device(name);
+                if (_fd < 0) {
+                        r_err("Failed to open joystick device: '%s'", name);
+                        throw std::runtime_error("Failed to open joystick device");
                 }
         }
         
-        bool LinuxJoystick::open_device(const char *name) {
-                close_device();
-                _fd = ::open(name, O_RDONLY);
-                return (_fd >= 0);
+        void LinuxJoystick::open_device(const char *name) {
+                r_info("LinuxJoystick: opening device '%s'", name);
+                _fd = _linux.open(name, O_RDONLY);
         }
 
-        void LinuxJoystick::parse_button_event(struct js_event linux_event)
+        void LinuxJoystick::close_device() {
+                if (_fd != -1) {
+                        _linux.close(_fd);
+                        _fd = -1;
+                }
+        }
+
+        void LinuxJoystick::parse_button_event(struct js_event& linux_event)
         {
                 _event.type = JoystickEvent::Button;
                 _event.number = linux_event.number;
                 _buttons[linux_event.number] = linux_event.value != 0;
                         
-                if (_debug)
+                if (_debug) {
                         r_debug("button[%d]=%s", linux_event.number,
                                 _buttons[linux_event.number]? "pressed" : "released");
-                
+                }
         }
 
-        void LinuxJoystick::parse_axis_event(struct js_event linux_event)
+        void LinuxJoystick::parse_axis_event(struct js_event& linux_event)
         {
                 _event.type = JoystickEvent::Axis;
                 _event.number = linux_event.number;
                 _axes[linux_event.number] = linux_event.value / 32768.0;
 
-                if (_debug)
+                if (_debug) {
                         r_debug("axis[%d]=%0.3f", linux_event.number,
                                 _axes[linux_event.number]);
+                }
         }
         
-        void LinuxJoystick::parse_event(struct js_event linux_event)
+        void LinuxJoystick::parse_event(struct js_event& linux_event)
         {
                 linux_event.type &= ~JS_EVENT_INIT;
 
@@ -95,39 +119,94 @@ namespace romi {
                         break;
                 }
         }
+        
+        bool LinuxJoystick::has_event(double timeout)
+        {
+                bool retval = false;
+                struct pollfd fds[1];
+                fds[0].fd = _fd;
+                fds[0].events = POLLIN;
+                
+                int timeout_ms = (int) (timeout * 1000.0f);
+                
+                int pollrc = _linux.poll(fds, 1, timeout_ms);
+                if (pollrc < 0) {
+                        r_err("LinuxJoystick::has_event: poll error %d", errno);
+                        throw std::runtime_error("Joystick: poll failed");
+                
+                } else if ((pollrc > 0) && (fds[0].revents & POLLIN)) {
+                        retval = true;
+                } 
+        
+                return retval;
+        }
+        
+        void LinuxJoystick::read_event(struct js_event& linux_event)
+        {
+                ssize_t bytes = _linux.read(_fd, &linux_event, sizeof(js_event));
+                if (bytes != sizeof(js_event)) {
+                        r_err("LinuxJoystick::read_event: read failed");
+                        throw std::runtime_error("Joystick: read failed");
+                }
+        }
 
-        void LinuxJoystick::try_read_event()
+        void LinuxJoystick::read_and_parse_event()
         {
                 struct js_event linux_event;
-                ssize_t bytes = read(_fd, &linux_event, sizeof(js_event));
-                if (bytes == sizeof(js_event)) {
+                if (has_event(0.100)) {
+                        read_event(linux_event);
                         parse_event(linux_event);
                 }
         }
 
-        JoystickEvent &LinuxJoystick::get_next_event()
+        JoystickEvent& LinuxJoystick::get_next_event()
         {
-                r_debug("LinuxJoystick::get_next_event");
                 _event.type = JoystickEvent::None;
-                try_read_event();
+                read_and_parse_event();
                 return _event;
+        }
+        
+        int LinuxJoystick::try_count_axes()
+        {
+                int count = count_axes();
+                if (count == -1) {
+                        r_err("LinuxJoystick::try_count_axes: ioctl failed");
+                        throw std::runtime_error("Joystick: Failed to obtain the "
+                                                 "number of axes.");
+                }
+                r_info("LinuxJoystick::count_axes: %d", count);
+                return count;
         }
         
         int LinuxJoystick::count_axes()
         {
-                __u8 count;
-                if (ioctl(_fd, JSIOCGAXES, &count) == -1)
+                int retval = -1;
+                __u8 count = 0;
+                if (_linux.ioctl(_fd, JSIOCGAXES, &count) == 0) {
+                        retval = (int) count;
+                }
+                return retval;
+        }
+        
+        int LinuxJoystick::try_count_buttons()
+        {
+                int count = count_buttons();
+                if (count == -1) {
+                        r_err("LinuxJoystick::count_buttons: ioctl failed");
                         throw std::runtime_error("Joystick: Failed to obtain the "
-                                                 "number of axes.");
-                return (int) count;
+                                                 "number of buttons.");
+                }
+                r_info("LinuxJoystick::count_buttons: %d", count);
+                return count;
         }
 
         int LinuxJoystick::count_buttons()
         {
-                __u8 count;
-                if (ioctl(_fd, JSIOCGBUTTONS, &count) == -1)
-                        throw std::runtime_error("Joystick: Failed to obtain the "
-                                                 "number of buttons.");
-                return (int) count;
+                int retval = -1;
+                __u8 count = 0;
+                if (_linux.ioctl(_fd, JSIOCGBUTTONS, &count) == 0) {
+                        retval = (int) count;
+                }
+                return retval;
         }
 }

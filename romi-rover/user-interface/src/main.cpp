@@ -28,9 +28,6 @@
 
 #include "UIOptions.h"
 #include "UIFactory.h"
-#include "LinuxJoystick.h"
-#include "UIEventMapper.h"
-#include "JoystickInputDevice.h"
 #include "DefaultSpeedController.h"
 #include "ConfigurationFile.h"
 #include "UserInterface.h"
@@ -51,43 +48,33 @@ int main(int argc, char** argv)
 
         try {
                 UIFactory ui_factory;
-                ConfigurationFile config(options.config_file);
-                JsonCpp ui_config = config.get("user-interface");
- 
-                LinuxJoystick joystick(options.joystick_device);
-                UIEventMapper joystick_event_mapper;
-                JoystickInputDevice input_device(joystick, joystick_event_mapper);
-        
-                Display& display = ui_factory.create_display(options, ui_config);
-                Navigation& navigation = ui_factory.create_navigation(options, ui_config);
-                DefaultSpeedController speed_controller(navigation, ui_config);
+                JsonCpp config = JsonCpp::load(options.config_file);
 
+                InputDevice& input_device = ui_factory.create_input_device(options,
+                                                                           config);
+
+                Display& display = ui_factory.create_display(options, config);
                 
+                Navigation& navigation = ui_factory.create_navigation(options,
+                                                                      config);
+                
+                DefaultSpeedController speed_controller(navigation, config);
+
                 UserInterface user_interface(input_device,
                                              display,
                                              speed_controller);
 
-                
 
                 while (!app_quit()) {
                         
-                        user_interface.handle_events();
+                        try {
+                                user_interface.handle_events();
                         
-                        // Status status;
-                        
-                        // navigation.get_status(status);
-                        
-                        // if (status.code == Status::Error) {
-                        //         state_machine.handle_event(event_error);
-                        // } else {
-                        //         weeder.get_status(status);
-                        //         if (status.code == Status::Error) {
-                        //                 state_machine.handle_event(event_error);
-                        //         } else {
-                        //                 state_machine.handle_event(event_ready);
-                        //         }
-                        // }
-
+                        } catch (std::exception& e) {
+                                
+                                navigation.stop();
+                                throw e;
+                        }
                 }
 
                 retval = 0;

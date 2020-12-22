@@ -72,7 +72,7 @@ namespace romi {
         {
                 init_navigation_mode_transition();
                 init_forward_driving_transitions();
-                init_accurate_backward_driving_transitions();
+                init_accurate_forward_driving_transitions();
                 init_backward_driving_transitions();
                 init_accurate_backward_driving_transitions();
                 init_spinning_transitions();

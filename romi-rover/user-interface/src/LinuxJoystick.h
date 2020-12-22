@@ -27,33 +27,46 @@
 #include <string>
 #include <vector>
 #include "Joystick.h"
+#include "ILinux.h"
 
 namespace romi {
         
         class LinuxJoystick : public Joystick
         {
         protected:
+                rpp::ILinux &_linux;
                 int _fd;
                 bool _debug;
                 JoystickEvent _event;
                 
                 std::vector<bool> _buttons;
                 std::vector<double> _axes;
-                
+
+                void try_initialize();
+                void initialize();
+
+                void try_open_device(const char *name);
+                void open_device(const char *name);
                 void close_device();
-                bool open_device(const char *name);
-                void try_read_event();
-                void parse_event(struct js_event linux_event);
-                void parse_axis_event(struct js_event linux_event);
-                void parse_button_event(struct js_event linux_event);
-                int count_axes();
+                
+                void read_and_parse_event();
+                bool has_event(double timeout);
+                void read_event(struct js_event& linux_event);
+                void parse_event(struct js_event& linux_event);
+                void parse_axis_event(struct js_event& linux_event);
+                void parse_button_event(struct js_event& linux_event);
+                
+                int try_count_axes();
+                int count_axes();                
+                int try_count_buttons();
                 int count_buttons();
                 
         public:
-                LinuxJoystick(const char *device);
+                
+                LinuxJoystick(rpp::ILinux &linux, const char *device);
                 virtual ~LinuxJoystick();
                 
-                JoystickEvent &get_next_event() override;
+                JoystickEvent& get_next_event() override;
                 
                 double get_axis(int i) override {
                         double value = 0.0;

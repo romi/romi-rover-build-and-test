@@ -74,7 +74,8 @@ TEST_F(brushmotordriver_tests, successful_config_and_enable)
         add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
         add_expected_output("E[1]", "[0]");
         
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
 
         ASSERT_EQ(expected_output.size(), observed_output.size());
         for (size_t i = 0; i < expected_output.size(); i++) {
@@ -88,7 +89,8 @@ TEST_F(brushmotordriver_tests, throws_exception_at_failed_config)
         add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[1]");
 
         try {
-                BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+                BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                        maximum_revolutions_per_second);
                 FAIL() << "Expected std::runtime_error";
         }  catch (std::runtime_error const &e) {
                 EXPECT_STREQ(e.what(), "BrushMotorDriver: Initialization failed");
@@ -103,7 +105,8 @@ TEST_F(brushmotordriver_tests, throws_exception_at_failed_enable)
         add_expected_output("E[1]", "[1]");
 
         try {
-                BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+                BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                        maximum_revolutions_per_second);
                 FAIL() << "Expected std::runtime_error";
         }  catch (std::runtime_error const &e) {
                 
@@ -123,7 +126,8 @@ TEST_F(brushmotordriver_tests, returns_true_on_successful_moveat)
         add_expected_output("E[1]", "[0]");
         add_expected_output("V[100,200]", "[0]");
 
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         bool success = driver.moveat(0.1, 0.2);
         
         ASSERT_EQ(expected_output.size(), observed_output.size());
@@ -140,7 +144,8 @@ TEST_F(brushmotordriver_tests, returns_false_on_unsuccessful_moveat)
         add_expected_output("E[1]", "[0]");
         add_expected_output("V[100,200]", "[1,'Just fooling you']");
         
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         bool success = driver.moveat(0.1, 0.2);
         
         ASSERT_EQ(expected_output.size(), observed_output.size());
@@ -158,7 +163,8 @@ TEST_F(brushmotordriver_tests, returns_true_on_successful_get_encoders)
         add_expected_output("E[1]", "[0]");
         add_expected_output("e", "[0,100,200,300]");
 
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         double left, right, timestamp;
         bool success = driver.get_encoder_values(left, right, timestamp);
         
@@ -179,7 +185,8 @@ TEST_F(brushmotordriver_tests, returns_false_on_unsuccessful_get_encoders)
         add_expected_output("E[1]", "[0]");
         add_expected_output("e", "[1,'TEST']");
 
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         double left, right, timestamp;
         bool success = driver.get_encoder_values(left, right, timestamp);
         
@@ -196,7 +203,8 @@ TEST_F(brushmotordriver_tests, returns_false_on_invalid_speeds_1)
         add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
         add_expected_output("E[1]", "[0]");
 
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         bool success = driver.moveat(2.0, 0.0);
         
         ASSERT_EQ(expected_output.size(), observed_output.size());
@@ -212,7 +220,8 @@ TEST_F(brushmotordriver_tests, returns_false_on_invalid_speeds_2)
         add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
         add_expected_output("E[1]", "[0]");
 
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         bool success = driver.moveat(-2.0, 0.0);
         
         ASSERT_EQ(expected_output.size(), observed_output.size());
@@ -228,7 +237,8 @@ TEST_F(brushmotordriver_tests, returns_false_on_invalid_speeds_3)
         add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
         add_expected_output("E[1]", "[0]");
 
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         bool success = driver.moveat(0.0, -1.1);
         
         ASSERT_EQ(expected_output.size(), observed_output.size());
@@ -244,7 +254,8 @@ TEST_F(brushmotordriver_tests, returns_false_on_invalid_speeds_4)
         add_expected_output("C[123,170,71,0,1100,2200,3300,-1,1]", "[0]");
         add_expected_output("E[1]", "[0]");
 
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         bool success = driver.moveat(0.0, 1.1);
         
         ASSERT_EQ(expected_output.size(), observed_output.size());
@@ -261,7 +272,8 @@ TEST_F(brushmotordriver_tests, returns_true_on_successful_stop)
         add_expected_output("E[1]", "[0]");
         add_expected_output("X", "[0]");
 
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         bool success = driver.stop();
         
         ASSERT_EQ(expected_output.size(), observed_output.size());
@@ -278,7 +290,8 @@ TEST_F(brushmotordriver_tests, returns_false_on_failed_stop)
         add_expected_output("E[1]", "[0]");
         add_expected_output("X", "[1,\"error\"]");
 
-        BrushMotorDriver driver(serial, driver_config, encoder_steps, maximum_revolutions_per_second);
+        BrushMotorDriver driver(serial, driver_config, encoder_steps,
+                                maximum_revolutions_per_second);
         bool success = driver.stop();
         
         ASSERT_EQ(expected_output.size(), observed_output.size());

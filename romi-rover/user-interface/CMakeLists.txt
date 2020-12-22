@@ -31,16 +31,13 @@ set(SOURCES
   src/SpeedConverter.h
   src/SpeedConverter.cpp
   src/StateMachine.h
+  src/StateMachine.cpp
   src/UIEventMapper.h
   src/UIEventMapper.cpp
   src/UIFactory.h
   src/UIFactory.cpp
   src/UIOptions.h
   src/UIOptions.cpp
-  src/UIStateMachine.h
-  src/UIStateMachine.cpp
-  src/UIStateTransition.h
-  src/UIStateTransitions.h
   src/UIStateTransitions.cpp
   src/UserInterface.h
   src/UserInterface.cpp

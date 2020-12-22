@@ -29,6 +29,7 @@ namespace romi {
         struct UIOptions {
         
                 const char *config_file;
+                const char *input_device_classname;
                 const char *joystick_device;
                 const char *navigation_classname;
                 const char *navigation_server_name;
@@ -38,13 +39,17 @@ namespace romi {
                 UIOptions() {
                         config_file = "config.json";
                         display_classname = 0;
-                        display_device = "/dev/ttyACM0";
-                        joystick_device = "/dev/input/js0";
+                        display_device = 0;
+                        input_device_classname = 0;
+                        joystick_device = 0;
                         navigation_classname = 0;
-                        navigation_server_name = "navigation";
+                        navigation_server_name = 0;
                 }
 
                 void parse(int argc, char** argv);
+                
+                void print_usage();
+                const char *get_option_message(int short_option);
         };
 }
 

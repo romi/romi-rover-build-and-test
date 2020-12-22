@@ -36,7 +36,7 @@ namespace romi {
                 direction_multiplier = config.num("direction-multiplier");
         }
 
-        bool SpeedConverter::valid()
+        bool SpeedConverter::is_valid()
         {
                 return (speed_curve_exponent > 0.0
                         && speed_curve_exponent <= 10.0

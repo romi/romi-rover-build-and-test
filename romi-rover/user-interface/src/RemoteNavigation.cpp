@@ -27,24 +27,17 @@
 namespace romi {
 
         void RemoteNavigation::execute(const char *method,
-                                                 JsonCpp& params,
-                                                 rcom::RPCError &error)
+                                       JsonCpp& params,
+                                       rcom::RPCError &error)
         {
                 JsonCpp result; // Not returned to callers. 
 
-                try {
-                        _client.execute(method, params, result, error);
-
-                        if (error.code != 0) {
-                                r_err("RemoteNavigation::execute: %s",
-                                      error.message.c_str());
-                        }
-                        
-                } catch (std::exception &e) {
-                        r_err("RemoteNavigation::execute: '%s'", e.what());
-                        error.code = 1;
-                        error.message = e.what();
-                }
+                _client.execute(method, params, result, error);
+                
+                if (error.code != 0) {
+                        r_err("RemoteNavigation::execute: %s",
+                              error.message.c_str());
+                }                
         }
 
         bool RemoteNavigation::moveat(double left, double right)

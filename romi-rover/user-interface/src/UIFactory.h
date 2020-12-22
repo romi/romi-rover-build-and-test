@@ -26,10 +26,13 @@
 #include "Display.h"
 #include "UIOptions.h"
 #include "JsonCpp.h"
-
+#include "LinuxJoystick.h"
+#include "UIEventMapper.h"
+#include "JoystickInputDevice.h"
 #include "RomiSerialClient.h"
 #include "RSerial.h"
 #include "RPCClient.h"
+#include "Linux.h"
 
 #ifndef __ROMI_UI_FACTORY_H
 #define __ROMI_UI_FACTORY_H
@@ -42,41 +45,66 @@ namespace romi {
         {
         protected:
 
-                RSerial *_serial = 0;
-                RomiSerialClient *_romi_serial = 0;
-                rcom::RPCClient *_rpc_client = 0; 
+                rpp::Linux _linux;
+                RSerial *_serial;
+                RomiSerialClient *_romi_serial;
+                rcom::RPCClient *_rpc_client; 
+                LinuxJoystick *_joystick;
+                UIEventMapper _joystick_event_mapper;
 
-                Display *_display = 0;
-                Navigation *_navigation = 0;
+                Display *_display;
+                Navigation *_navigation;
+                InputDevice *_input_device;
+                
+                const char *get_port(JsonCpp &config, const char *name);
+                const char *get_classname(JsonCpp &config, const char *module_name);
 
-                void do_create_display(UIOptions& options, JsonCpp& config);
-                void do_create_navigation(UIOptions& options, JsonCpp& config);
+                // Display
                 const char *get_display_classname(UIOptions& options, JsonCpp& config);
+                const char *get_display_classname_in_config(JsonCpp &config);
+                void instatiate_display(UIOptions &options, JsonCpp &config);
+                void instatiate_display(const char *display_classname,
+                                        UIOptions &options,
+                                        JsonCpp &config);
+                void instatiate_fake_display();
+                void instatiate_crystal_display(UIOptions &options, JsonCpp &config);
+                const char *get_crystal_display_device(UIOptions &options,
+                                                       JsonCpp &config);
+                const char *get_crystal_display_device_in_config(JsonCpp &config);
+
+                
+                // Navigation
                 const char *get_navigation_classname(UIOptions& options, JsonCpp& config);
+                const char *get_navigation_classname_in_config(JsonCpp &config);
+                void instatiate_navigation(UIOptions &options, JsonCpp &config);
+                void instatiate_navigation(const char *classname, UIOptions &options,
+                                           JsonCpp &config);
+                void instantiate_fake_navigation();
+                void instantiate_remote_navigation(UIOptions &options, JsonCpp &config);
+                const char *get_remote_navigation_server(UIOptions &options,
+                                                         JsonCpp &config);
+                const char *get_navigation_server(JsonCpp &config);
+                        
+
+                // Input device / joystick
+                const char *get_input_device_classname_in_config(JsonCpp &config);
+                const char *get_input_device_classname(UIOptions &options,
+                                                       JsonCpp &config);
+                const char *get_joystick_device(UIOptions& options, JsonCpp& config);
+                const char *get_joystick_device_in_config(JsonCpp& config);
+                void instatiate_joystick(UIOptions& options, JsonCpp& config);
+                void instatiate_input_device(const char *classname, UIOptions& options,
+                                             JsonCpp& config);
+                
                 
         public:
-                UIFactory()
-                        : _serial(0),
-                          _romi_serial(0),
-                          _rpc_client(0),
-                          _display(0),
-                          _navigation(0) {}
-                
-                virtual ~UIFactory() {
-                        if (_navigation)
-                                delete _navigation;
-                        if (_rpc_client)
-                                delete _rpc_client;
-                        if (_display)
-                                delete _display;
-                        if (_romi_serial)
-                                delete _romi_serial;
-                        if (_serial)
-                                delete _serial;
-                }
+
+                UIFactory();
+                virtual ~UIFactory();
                 
                 Display& create_display(UIOptions& options, JsonCpp& config);
                 Navigation& create_navigation(UIOptions& options, JsonCpp& config);
+                InputDevice& create_input_device(UIOptions& options, JsonCpp& config);
         };
 }
 

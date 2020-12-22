@@ -39,7 +39,7 @@ namespace romi {
         public:
                 virtual ~Joystick() = default;
 
-                virtual JoystickEvent &get_next_event() = 0;
+                virtual JoystickEvent& get_next_event() = 0;
                 virtual int get_num_axes() = 0;
                 virtual double get_axis(int i) = 0;
                 virtual int get_num_buttons() = 0;

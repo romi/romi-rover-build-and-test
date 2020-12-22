@@ -34,8 +34,12 @@ namespace romi {
                 : _navigation(navigation)
         {
                 try {
-                        JsonCpp fast_config = config.get("speed-controller").get("fast");
-                        JsonCpp accurate_config = config.get("speed-controller").get("accurate");
+                        JsonCpp fast_config = (config.get("user-interface")
+                                               .get("speed-controller")
+                                               .get("fast"));
+                        JsonCpp accurate_config = (config.get("user-interface")
+                                                   .get("speed-controller")
+                                                   .get("accurate"));
                 
                         _fast.parse(fast_config);
                         _accurate.parse(accurate_config);
@@ -46,10 +50,10 @@ namespace romi {
                         throw je;
                 }
                 
-                if (!_accurate.valid()) 
+                if (!_accurate.is_valid()) 
                         throw std::range_error("Invalid settings for "
                                                "accurate speed controller");
-                if (!_fast.valid())
+                if (!_fast.is_valid())
                         throw std::range_error("Invalid settings for "
                                                "fast speed controller");
         }
@@ -60,12 +64,12 @@ namespace romi {
                 : _navigation(navigation)
         {
                 _fast = fast;
-                if (!_fast.valid()) 
+                if (!_fast.is_valid()) 
                         throw std::range_error("Invalid settings for "
                                                "fast speed controller");
                 
                 _accurate = accurate;
-                if (!_accurate.valid()) 
+                if (!_accurate.is_valid()) 
                         throw std::range_error("Invalid settings for "
                                                "accurate speed controller");
         }

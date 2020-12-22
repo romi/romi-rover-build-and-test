@@ -28,15 +28,17 @@ namespace romi {
 
         // The joystick axes and buttons that are used.
         enum {
-                axis_forward_speed = 5,    // r2
-                axis_backward_speed = 2,    // l2
-                axis_direction = 0,       // left stick
+                axis_direction = 0,          // left stick
+                axis_backward_speed = 2,     // l2
+                axis_forward_speed = 5,      // r2
+                axis_last = 6,               // l2
                 
-                button_forward_mode = 7,   // r2
-                button_backward_mode = 6,   // l2
                 button_accurate_backward = 4, // l1
-                button_accurate_forward = 5, // r1
-                button_spin_mode = 11,
+                button_accurate_forward = 5,  // r1
+                button_backward_mode = 6,     // l2
+                button_forward_mode = 7,      // r2
+                button_spin_mode = 11,        // left stick
+                button_last = 12,
         };
 
         // the navigation events

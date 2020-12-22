@@ -33,7 +33,7 @@ namespace romi {
         {
         public:
                 virtual ~JoystickEventMapper() = default;
-                virtual int map(Joystick& joystick, JoystickEvent &event) = 0;
+                virtual int map(Joystick& joystick, JoystickEvent& event) = 0;
         };
 }
 

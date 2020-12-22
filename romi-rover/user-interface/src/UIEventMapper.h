@@ -33,13 +33,13 @@ namespace romi {
         class UIEventMapper : public JoystickEventMapper
         {
         protected:
-                int map_axis(Joystick &joystick, JoystickEvent &event);
-                int map_button(Joystick &joystick, JoystickEvent &event);                
+                int map_axis(Joystick& joystick, JoystickEvent& event);
+                int map_button(Joystick& joystick, JoystickEvent& event);                
         public:
                 
                 virtual ~UIEventMapper() override = default;
 
-                int map(Joystick &joystick, JoystickEvent &event);
+                int map(Joystick& joystick, JoystickEvent& event);
         };
 }
 

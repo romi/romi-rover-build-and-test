@@ -21,10 +21,41 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#include <stdexcept>
+#include <r.h>
 #include "JoystickInputDevice.h"
 #include "EventsAndStates.h"
 
 namespace romi {
+        
+        JoystickInputDevice::JoystickInputDevice(Joystick &joystick,
+                                                 JoystickEventMapper &event_mapper)
+                : _joystick(joystick),
+                  _event_mapper(event_mapper) {
+                
+                assure_number_of_axes(axis_last);
+                assure_number_of_buttons(button_last);
+        }
+        
+        void JoystickInputDevice::assure_number_of_axes(int minimum)
+        {
+                int num_axes = _joystick.get_num_axes();
+                if (num_axes < minimum) {
+                        r_err("JoystickInputDevice::assure_number_of_buttons: "
+                              "too few buttons (%d<%d)", num_axes, minimum);
+                        throw std::runtime_error("Joystick has too few buttons.");
+                }
+        }
+        
+        void JoystickInputDevice::assure_number_of_buttons(int minimum)
+        {
+                int num_buttons = _joystick.get_num_buttons();
+                if (num_buttons < minimum) {
+                        r_err("JoystickInputDevice::assure_number_of_buttons: "
+                              "too few buttons (%d<%d)", num_buttons, minimum);
+                        throw std::runtime_error("Joystick has too few buttons.");
+                }
+        }
         
         int JoystickInputDevice::get_next_event()
         {

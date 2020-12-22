@@ -28,7 +28,7 @@
 #include "InputDevice.h"
 #include "Display.h"
 #include "SpeedController.h"
-#include "UIStateMachine.h"
+#include "StateMachine.h"
 
 namespace romi {
         
@@ -53,7 +53,7 @@ namespace romi {
                 Display &display;
                 SpeedController &speed_controller;
                 
-                UIStateMachine state_machine;
+                StateMachine<UserInterface> state_machine;
                 
                 UserInterface(InputDevice &input_device_,
                               Display &display_,
@@ -62,6 +62,11 @@ namespace romi {
                 virtual ~UserInterface() = default;
 
                 void handle_events();
+
+                int get_state() {
+                        return state_machine.get_state();
+                }
+
         };
 }
 #endif // __ROMI_USER_INTERFACE_H

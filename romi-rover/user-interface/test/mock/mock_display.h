@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
-#include "IDisplay.h"
+#include "Display.h"
 
-class MockDisplay : public romi::IDisplay
+class MockDisplay : public romi::Display
 {
 public:
         MOCK_METHOD(bool, show, (int line, const char *s), (override));

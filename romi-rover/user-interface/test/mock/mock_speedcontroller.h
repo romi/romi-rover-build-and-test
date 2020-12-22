@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
-#include "ISpeedController.h"
+#include "SpeedController.h"
 
-class MockSpeedController : public romi::ISpeedController
+class MockSpeedController : public romi::SpeedController
 {
 public:
         MOCK_METHOD(bool, stop, (), (override));

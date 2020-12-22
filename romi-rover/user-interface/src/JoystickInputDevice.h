@@ -34,16 +34,19 @@ namespace romi {
         
         class JoystickInputDevice : public InputDevice
         {
+        public:
+                static constexpr const char *ClassName = "joystick";
+                
         protected:
                 Joystick &_joystick;
                 JoystickEventMapper &_event_mapper;
-                
+
+                void assure_number_of_axes(int minimum);
+                void assure_number_of_buttons(int minimum);
+
         public:
                 JoystickInputDevice(Joystick &joystick,
-                                    JoystickEventMapper &event_mapper)
-                        : _joystick(joystick),
-                          _event_mapper(event_mapper) {}
-                
+                                    JoystickEventMapper &event_mapper);                
                 virtual ~JoystickInputDevice() override = default;
                 
                 int get_next_event() override;

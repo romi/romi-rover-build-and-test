@@ -24,20 +24,110 @@
 #ifndef __ROMI_STATE_MACHINE_H
 #define __ROMI_STATE_MACHINE_H
 
+#include <vector>
+
 namespace romi {
 
 #define STATE_ERROR 0
 #define STATE_START 1
 #define ALL_STATES -1
 
+        template<class T> using StateTransitionHandler = void (*)(T& target);
+
+        template <class T>
+        class StateTransition
+        {
+        protected:
+                int _from;
+                int _event;
+                int _to;
+                StateTransitionHandler<T> _handler;
+                
+        public:
+                StateTransition(int from, int event, int to,
+                                  StateTransitionHandler<T> handler)
+                        : _from(from), _event(event), _to(to),
+                          _handler(handler) {}
+                
+                virtual ~StateTransition() {}
+                
+                int event() {
+                        return _event;
+                }
+        
+                int state() {
+                        return _from;
+                }
+                
+                void do_transition(T& ui) {
+                        _handler(ui);
+                }
+        
+                int next_state() {
+                        return _to;
+                }
+        };
+        
+        template <class T>
         class StateMachine
         {
+        protected:
+                T& _target;
+                int _current_state;
+                std::vector<StateTransition<T>> _transitions;
+
+                void do_transition(StateTransition<T>& transition) {
+                        transition.do_transition(_target);
+                        _current_state = transition.next_state();
+                }
+                
+                bool try_regular_transitions(int event) {
+                        bool handled = false;
+                        for (size_t i = 0; i < _transitions.size(); i++) {
+                                StateTransition<T>& transition = _transitions[i];
+                                
+                                if (transition.state() == _current_state
+                                    && transition.event() == event) {
+                                        do_transition(transition);
+                                        handled = true;
+                                        break;
+                                }
+                        }
+                        return handled;
+                }
+                
+                void try_catchall_transitions(int event) {
+                        for (size_t i = 0; i < _transitions.size(); i++) {
+                                StateTransition<T>& transition = _transitions[i];
+                                if (transition.state() == ALL_STATES
+                                    && transition.event() == event) {
+                                        do_transition(transition);
+                                        break;
+                                }
+                        }
+                }
+
         public:
-                virtual ~StateMachine() {}
+                StateMachine(T& target)
+                        : _target(target),
+                          _current_state(STATE_START) {}
+                
+                virtual ~StateMachine() = default;
+                
+                int get_state() {
+                        return _current_state;
+                }
+                        
+                void handle_event(int event) {
+                        bool handled = try_regular_transitions(event);
+                        if (!handled)
+                                try_catchall_transitions(event);
+                }
 
-                virtual int get_state() = 0;
-
-                virtual void handle_event(int event) = 0;
+                void add(int from, int event, int to,
+                         StateTransitionHandler<T> handler) {
+                        _transitions.push_back(StateTransition(from, event, to, handler));
+                }
         };
 }
 

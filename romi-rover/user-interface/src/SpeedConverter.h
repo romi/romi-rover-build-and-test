@@ -54,7 +54,7 @@ namespace romi {
                 }
                 
                 void parse(JsonCpp& config);
-                bool valid();
+                bool is_valid();
                 double map_exponential(double x, double alpha);
                 double apply_speed_curve(double speed);
                 double apply_direction_curve(double direction);

@@ -37,7 +37,9 @@ namespace romi {
 
         protected:
                 IRomiSerialClient &_serial;
-                
+                std::string observed_output;
+
+                        
         public:
                 CrystalDisplay(IRomiSerialClient &serial)
                         : _serial(serial) {
