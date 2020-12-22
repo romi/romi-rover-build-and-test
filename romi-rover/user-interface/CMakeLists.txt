@@ -31,7 +31,6 @@ set(SOURCES
   src/SpeedConverter.h
   src/SpeedConverter.cpp
   src/StateMachine.h
-  src/StateMachine.cpp
   src/UIEventMapper.h
   src/UIEventMapper.cpp
   src/UIFactory.h
