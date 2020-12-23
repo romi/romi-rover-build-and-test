@@ -28,6 +28,8 @@
 #include "RemoteNavigation.h"
 #include "FakeDisplay.h"
 #include "CrystalDisplay.h"
+#include "JoystickInputDevice.h"
+#include "FakeInputDevice.h"
 
 namespace romi {
         
@@ -58,60 +60,19 @@ namespace romi {
                 if (_input_device)
                         delete _input_device;
         }
-
         
-        const char *UIFactory::get_port(JsonCpp &config, const char *name)
+        Display& UIFactory::create_display(UIOptions &options, JsonCpp &config)
         {
-                return config.get("ports").get(name).str("port");
+                if (_display == 0)
+                        instantiate_display(options, config);
+                return *_display;
         }
 
-        
-        const char *UIFactory::get_classname(JsonCpp &config, const char *module_name)
+        void UIFactory::instantiate_display(UIOptions &options, JsonCpp &config)
         {
-                return config.get("user-interface").str(module_name);
+                const char *classname = get_display_classname(options, config);
+                instantiate_display(classname, options, config);
         }
-
-        
-        const char *UIFactory::get_crystal_display_device_in_config(JsonCpp &config)
-        {
-                const char *device_name = 0;
-                try {
-                        device_name = get_port(config, "crystal-display");
-                        
-                } catch (JSONError &je) {
-                        r_warn("Failed to get the value for "
-                               "crystal-display.port: %s", je.what());
-                        throw std::runtime_error("No crystal display device defined");
-                }
-                return device_name;
-        }
-
-        
-        const char *UIFactory::get_crystal_display_device(UIOptions &options,
-                                                          JsonCpp &config)
-        {
-                const char *device_name = options.display_device;
-                if (device_name == 0) {
-                        device_name = get_crystal_display_device_in_config(config);
-                }
-                return device_name;
-        }
-
-        
-        const char *UIFactory::get_display_classname_in_config(JsonCpp &config)
-        {
-                const char *display_classname = 0;
-                try {
-                        display_classname = get_classname(config, "display-classname");
-                        
-                } catch (JSONError &je) {
-                        r_warn("Failed to get the value for "
-                               "user-interface.display: %s", je.what());
-                        throw std::runtime_error("No display classname defined");
-                }
-                return display_classname;
-        }
-
         
         const char *UIFactory::get_display_classname(UIOptions &options, JsonCpp &config)
         {
@@ -121,15 +82,45 @@ namespace romi {
                 } 
                 return display_classname;
         }
-
         
-        void UIFactory::instatiate_fake_display()
+        const char *UIFactory::get_display_classname_in_config(JsonCpp &config)
+        {
+                const char *display_classname = 0;
+                try {
+                        display_classname = config["user-interface"]["display-classname"];
+                        
+                } catch (JSONError &je) {
+                        r_warn("Failed to get the value for "
+                               "user-interface.display: %s", je.what());
+                        throw std::runtime_error("No display classname defined");
+                }
+                return display_classname;
+        }
+        
+        void UIFactory::instantiate_display(const char *classname,
+                                           UIOptions &options,
+                                           JsonCpp &config)
+        {
+                r_info("create_display: Creating an instance of '%s'", classname);
+                
+                if (rstreq(classname, FakeDisplay::ClassName)) {
+                        instantiate_fake_display();
+
+                } else if (rstreq(classname, CrystalDisplay::ClassName)) {
+                        instantiate_crystal_display(options, config);
+                        
+                } else {
+                        r_err("Unknown display class: '%s'", classname);
+                        throw std::runtime_error("Failed to create the display");
+                }
+        }
+        
+        void UIFactory::instantiate_fake_display()
         {
                 _display = new FakeDisplay();
         }
-
         
-        void UIFactory::instatiate_crystal_display(UIOptions &options, JsonCpp &config)
+        void UIFactory::instantiate_crystal_display(UIOptions &options, JsonCpp &config)
         {
                 const char *device = get_crystal_display_device(options, config);
                 _serial = new RSerial(device, 115200, 1);
@@ -138,54 +129,46 @@ namespace romi {
                 _display = new CrystalDisplay(*_romi_serial);
         }
 
-        
-        void UIFactory::instatiate_display(const char *classname,
-                                           UIOptions &options,
-                                           JsonCpp &config)
+        const char *UIFactory::get_crystal_display_device(UIOptions &options,
+                                                          JsonCpp &config)
         {
-                r_info("create_display: Creating an instance of '%s'", classname);
-                
-                if (rstreq(classname, FakeDisplay::ClassName)) {
-                        instatiate_fake_display();
-
-                } else if (rstreq(classname, CrystalDisplay::ClassName)) {
-                        instatiate_crystal_display(options, config);
-                        
-                } else {
-                        r_err("Unknown display class: '%s'", classname);
-                        throw std::runtime_error("Failed to create the display");
+                const char *device_name = options.display_device;
+                if (device_name == 0) {
+                        device_name = get_crystal_display_device_in_config(config);
                 }
+                return device_name;
         }
-
         
-        void UIFactory::instatiate_display(UIOptions &options, JsonCpp &config)
+        const char *UIFactory::get_crystal_display_device_in_config(JsonCpp &config)
         {
-                const char *classname = get_display_classname(options, config);
-                instatiate_display(classname, options, config);
-        }
-
-        
-        Display& UIFactory::create_display(UIOptions &options, JsonCpp &config)
-        {
-                if (_display == 0)
-                        instatiate_display(options, config);
-                return *_display;
-        }
-
-        
-        const char *UIFactory::get_navigation_classname_in_config(JsonCpp &config)
-        {
-                const char *classname = 0;
+                const char *device_name = 0;
                 try {
-                        classname = get_classname(config, "navigation-classname");
+                        device_name = config["ports"]["crystal-display"]["port"];
+                        
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
-                               "user-interface.navigation-classname: %s", je.what());
-                        throw std::runtime_error("No navigation classname defined");
+                               "crystal-display.port: %s", je.what());
+                        throw std::runtime_error("No crystal display device defined");
                 }
-                return classname;
+                return device_name;
         }
+        
+        
 
+        
+        Navigation& UIFactory::create_navigation(UIOptions &options, JsonCpp &config)
+        {
+                if (_navigation == 0) {
+                        instantiate_navigation(options, config);
+                }
+                return *_navigation;
+        }
+        
+        void UIFactory::instantiate_navigation(UIOptions &options, JsonCpp &config)
+        {
+                const char *classname = get_navigation_classname(options, config);
+                instantiate_navigation(classname, options, config);
+        }
         
         const char *UIFactory::get_navigation_classname(UIOptions &options,
                                                         JsonCpp &config)
@@ -196,52 +179,21 @@ namespace romi {
                 }
                 return classname;
         }
-
         
-        const char *UIFactory::get_navigation_server(JsonCpp &config)
+        const char *UIFactory::get_navigation_classname_in_config(JsonCpp &config)
         {
-                const char *name = 0;
+                const char *classname = 0;
                 try {
-                        name = config.get("user-interface")
-                                .get(RemoteNavigation::ClassName)
-                                .str("server-name");
-                        
+                        classname = config["user-interface"]["navigation-classname"];
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
-                               "user-interface.remote-navigation.server-name: %s",
-                               je.what());
-                        throw std::runtime_error("Remote navigation: No server name");
+                               "user-interface.navigation-classname: %s", je.what());
+                        throw std::runtime_error("No navigation classname defined");
                 }
-                return name;
+                return classname;
         }
-
         
-        const char *UIFactory::get_remote_navigation_server(UIOptions &options,
-                                                            JsonCpp &config)
-        {
-                const char *name = options.navigation_server_name;
-                if (name == 0) {
-                        name = get_navigation_server(config);
-                }
-                return name;
-        }
-
-        
-        void UIFactory::instantiate_remote_navigation(UIOptions &options, JsonCpp &config)
-        {
-                const char *server_name = get_remote_navigation_server(options, config);
-                _rpc_client = new rcom::RPCClient(server_name, "navigation");
-                _navigation = new RemoteNavigation(*_rpc_client);
-        }
-
-        
-        void UIFactory::instantiate_fake_navigation()
-        {
-                _navigation = new FakeNavigation();
-        }
-
-        
-        void UIFactory::instatiate_navigation(const char *classname,
+        void UIFactory::instantiate_navigation(const char *classname,
                                               UIOptions &options,
                                               JsonCpp &config)
         {
@@ -258,72 +210,53 @@ namespace romi {
                         throw std::runtime_error("Failed to create the navigation module");
                 }
         }
-
-        
-        void UIFactory::instatiate_navigation(UIOptions &options, JsonCpp &config)
+                
+        void UIFactory::instantiate_fake_navigation()
         {
-                const char *classname = get_navigation_classname(options, config);
-                instatiate_navigation(classname, options, config);
+                _navigation = new FakeNavigation();
         }
 
-        
-        Navigation& UIFactory::create_navigation(UIOptions &options, JsonCpp &config)
+        void UIFactory::instantiate_remote_navigation(UIOptions &options, JsonCpp &config)
         {
-                if (_navigation == 0) {
-                        instatiate_navigation(options, config);
+                const char *server_name = get_remote_navigation_server(options, config);
+                _rpc_client = new rcom::RPCClient(server_name, "navigation");
+                _navigation = new RemoteNavigation(*_rpc_client);
+        }
+        
+        const char *UIFactory::get_remote_navigation_server(UIOptions &options,
+                                                            JsonCpp &config)
+        {
+                const char *name = options.navigation_server_name;
+                if (name == 0) {
+                        name = get_remote_navigation_server_in_config(config);
                 }
-                return *_navigation;
+                return name;
         }
-
         
-        const char *UIFactory::get_joystick_device_in_config(JsonCpp& config)
+        const char *UIFactory::get_remote_navigation_server_in_config(JsonCpp &config)
         {
-                const char *joystick_device = 0;
+                const char *name = 0;
                 try {
-                        joystick_device = get_port(config, "joystick");
+                        name = config["user-interface"][RemoteNavigation::ClassName]["server-name"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
-                               "ports.joystick.port: %s", je.what());
-                        throw std::runtime_error("No joystick device specified");
+                               "user-interface.remote-navigation.server-name: %s",
+                               je.what());
+                        throw std::runtime_error("Remote navigation: No server name");
                 }
-                return joystick_device;
+                return name;
         }
+        
 
         
-        const char *UIFactory::get_joystick_device(UIOptions& options, JsonCpp& config)
+        InputDevice& UIFactory::create_input_device(UIOptions& options, JsonCpp& config)
         {
-                const char *joystick_device = options.joystick_device;
-                if (joystick_device == 0) {
-                        joystick_device = get_joystick_device_in_config(config);
-                }
-                return joystick_device;
+                const char *classname = get_input_device_classname(options, config);
+                instantiate_input_device(classname, options, config);
+                return *_input_device;
         }
 
-        
-        void UIFactory::instatiate_joystick(UIOptions& options, JsonCpp& config)
-        {
-                const char *joystick_device = get_joystick_device(options, config);
-                _joystick = new LinuxJoystick(_linux, joystick_device);
-                _input_device = new JoystickInputDevice(*_joystick, _joystick_event_mapper);
-        }
-
-        
-        const char *UIFactory::get_input_device_classname_in_config(JsonCpp &config)
-        {
-                const char *classname = 0;
-                try {
-                        classname = get_classname(config, "input-device-classname");
-                        
-                } catch (JSONError &je) {
-                        r_warn("Failed to get the value for "
-                               "user-interface.input-device-classname: %s", je.what());
-                        throw std::runtime_error("No input device classname");
-                }
-                return classname;
-        }
-
-        
         const char *UIFactory::get_input_device_classname(UIOptions &options,
                                                         JsonCpp &config)
         {
@@ -333,26 +266,70 @@ namespace romi {
                 }
                 return classname;
         }
-
         
-        void UIFactory::instatiate_input_device(const char *classname,
+        const char *UIFactory::get_input_device_classname_in_config(JsonCpp &config)
+        {
+                const char *classname = 0;
+                try {
+                        classname = config["user-interface"]["input-device-classname"];
+                        
+                } catch (JSONError &je) {
+                        r_warn("Failed to get the value for "
+                               "user-interface.input-device-classname: %s", je.what());
+                        throw std::runtime_error("No input device classname");
+                }
+                return classname;
+        }
+        
+        void UIFactory::instantiate_input_device(const char *classname,
                                                 UIOptions& options,
                                                 JsonCpp& config)
         {
-                if (rstreq(classname, JoystickInputDevice::ClassName)) {
-                        instatiate_joystick(options, config);
+                r_info("Instantiating input device: '%s'", classname);
+                if (rstreq(classname, FakeInputDevice::ClassName)) {
+                        instantiate_fake_input_device();
+                        
+                } else if (rstreq(classname, JoystickInputDevice::ClassName)) {
+                        instantiate_joystick(options, config);
                         
                 } else {
                         r_err("Unknown input device class: '%s'", classname);
                         throw std::runtime_error("Failed to create the input device");
                 }
         }
-
         
-        InputDevice& UIFactory::create_input_device(UIOptions& options, JsonCpp& config)
+        void UIFactory::instantiate_fake_input_device()
         {
-                const char *classname = get_input_device_classname(options, config);
-                instatiate_input_device(classname, options, config);
-                return *_input_device;
+                _input_device = new FakeInputDevice();
+        }
+        
+        void UIFactory::instantiate_joystick(UIOptions& options, JsonCpp& config)
+        {
+                const char *joystick_device = get_joystick_device(options, config);
+                _joystick = new LinuxJoystick(_linux, joystick_device);
+                _input_device = new JoystickInputDevice(*_joystick, _joystick_event_mapper);
+        }
+
+        const char *UIFactory::get_joystick_device(UIOptions& options, JsonCpp& config)
+        {
+                const char *joystick_device = options.joystick_device;
+                if (joystick_device == 0) {
+                        joystick_device = get_joystick_device_in_config(config);
+                }
+                return joystick_device;
+        }
+
+        const char *UIFactory::get_joystick_device_in_config(JsonCpp& config)
+        {
+                const char *joystick_device = 0;
+                try {
+                        joystick_device = config["ports"]["joystick"]["port"];
+                        
+                } catch (JSONError &je) {
+                        r_warn("Failed to get the value for "
+                               "ports.joystick.port: %s", je.what());
+                        throw std::runtime_error("No joystick device specified");
+                }
+                return joystick_device;
         }
 }

@@ -12,6 +12,7 @@ set(SOURCES
   src/Display.h
   src/EventsAndStates.h
   src/FakeDisplay.h
+  src/FakeInputDevice.h
   src/FakeNavigation.h
   src/InputDevice.h
   src/Joystick.h
