@@ -34,7 +34,6 @@ namespace romi {
                 int _event;
                 double _event_time;
 
-                void reset();
                 bool has_timed_out();
 
         public:
@@ -43,6 +42,7 @@ namespace romi {
 
                 int get_next_event() override;
                 void set_timeout(double timeout) override;
+                void reset() override;
         };
 }
 

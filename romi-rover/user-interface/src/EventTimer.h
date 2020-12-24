@@ -34,6 +34,7 @@ namespace romi {
                 virtual ~EventTimer() = default;
 
                 virtual void set_timeout(double timeout) = 0;
+                virtual void reset() = 0;
         };
 }
 

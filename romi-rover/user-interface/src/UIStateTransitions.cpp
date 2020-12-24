@@ -73,17 +73,21 @@ namespace romi {
                 r_debug("initialize_navigation");
                 ui.speed_controller.stop();
                 ui.display.show(0, "Navigating");
+                // set timer to return to main mode
+                ui.event_timer.set_timeout(10.0);
         }
 
         void leave_navigation_mode(UserInterface& ui)
         {
                 r_debug("leave_navigation_mode");
                 ui.display.show(0, "Ready");
+                ui.event_timer.reset(); 
         }
 
         void start_driving_forward(UserInterface& ui)
         {
                 r_debug("start moving forward");
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
 
         void drive_forward(UserInterface& ui)
@@ -94,11 +98,13 @@ namespace romi {
                 if (speed < 0.0)
                         speed = 0.0;
                 ui.speed_controller.drive_at(speed, direction);
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
 
         void start_driving_backward(UserInterface& ui)
         {
                 r_debug("start moving backward");
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
         
         void drive_backward(UserInterface& ui)
@@ -109,17 +115,20 @@ namespace romi {
                 if (speed < 0.0)
                         speed = 0.0;
                 ui.speed_controller.drive_at(-speed, direction);
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
 
         void stop_driving(UserInterface& ui)
         {
                 r_debug("stop");
                 ui.speed_controller.stop();
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
         
         void start_driving_forward_accurately(UserInterface& ui)
         {
                 r_debug("start moving forward accurately");
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
         
         void drive_forward_accurately(UserInterface& ui)
@@ -130,11 +139,13 @@ namespace romi {
                 if (speed < 0.0)
                         speed = 0.0;
                 ui.speed_controller.drive_accurately_at(speed, direction);
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
 
         void start_driving_backward_accurately(UserInterface& ui)
         {
                 r_debug("start moving backward accurately");
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
         
         void drive_backward_accurately(UserInterface& ui)
@@ -145,17 +156,20 @@ namespace romi {
                 if (speed < 0.0)
                         speed = 0.0;
                 ui.speed_controller.drive_accurately_at(-speed, direction);
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
         
         void start_spinning(UserInterface& ui)
         {
                 r_debug("start spinning");
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
         
         void spin(UserInterface& ui)
         {
                 r_debug("spinning");
                 ui.speed_controller.spin(ui.input_device.get_direction());
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
 
         
@@ -180,6 +194,8 @@ namespace romi {
                 ui.menu.first_menu_item(name);
                 ui.display.show(0, name.c_str());
                 ui.display.clear(1);
+                // set timer to return to main mode
+                ui.event_timer.set_timeout(10.0);  
         }
 
         void show_next_menu(UserInterface& ui)
@@ -188,6 +204,7 @@ namespace romi {
                 std::string name;
                 ui.menu.next_menu_item(name);
                 ui.display.show(0, name.c_str());
+                ui.event_timer.set_timeout(10.0);  // restart timer
         }
 
         void show_previous_menu(UserInterface& ui)
@@ -196,6 +213,7 @@ namespace romi {
                 std::string name;
                 ui.menu.previous_menu_item(name);
                 ui.display.show(0, name.c_str());
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
 
         void show_current_menu(UserInterface& ui)
@@ -230,5 +248,6 @@ namespace romi {
         {
                 r_debug("leave_menu_mode");
                 ui.display.show(0, "Ready");
+                ui.event_timer.reset(); 
         }
 }

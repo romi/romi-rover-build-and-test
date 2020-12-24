@@ -170,7 +170,7 @@ namespace romi {
                 // case, the user interface quits the navigation mode
                 // and returns to the main mode.
                 state_machine.add(state_ready_to_navigate,
-                                  event_input_timeout,
+                                  event_timer_timeout,
                                   leave_navigation_mode,
                                   state_ready);
                 
@@ -329,7 +329,7 @@ namespace romi {
                                   state_ready);
                 
                 state_machine.add(state_menu,
-                                  event_input_timeout,
+                                  event_timer_timeout,
                                   leave_menu_mode,
                                   state_ready);                
 
