@@ -21,22 +21,20 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _ROMI_INPUT_DEVICE_H
-#define _ROMI_INPUT_DEVICE_H
+#ifndef _ROMI_EVENT_TIMER_H_
+#define _ROMI_EVENT_TIMER_H_
 
 #include "EventSource.h"
 
 namespace romi {
         
-        class InputDevice : public EventSource
+        class EventTimer : public EventSource
         {
         public:
-                virtual ~InputDevice() = default;
-                
-                virtual double get_forward_speed() = 0;
-                virtual double get_backward_speed() = 0;
-                virtual double get_direction() = 0;
+                virtual ~EventTimer() = default;
+
+                virtual void set_timeout(double timeout) = 0;
         };
 }
 
-#endif // _ROMI_INPUT_DEVICE_H
+#endif // _ROMI_EVENT_TIMER_H_

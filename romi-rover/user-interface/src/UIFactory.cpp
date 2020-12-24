@@ -307,6 +307,7 @@ namespace romi {
         {
                 const char *joystick_device = get_joystick_device(options, config);
                 _joystick = new LinuxJoystick(_linux, joystick_device);
+                _joystick->set_debug(true);
                 _input_device = new JoystickInputDevice(*_joystick, _joystick_event_mapper);
         }
 

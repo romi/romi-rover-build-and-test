@@ -31,6 +31,9 @@
 #include "DefaultSpeedController.h"
 #include "ConfigurationFile.h"
 #include "UserInterface.h"
+#include "DefaultEventTimer.h"
+#include "ScriptMenu.h"
+#include "FakeScriptEngine.h"
 
 using namespace romi;
 
@@ -59,11 +62,22 @@ int main(int argc, char** argv)
                                                                       config);
                 
                 DefaultSpeedController speed_controller(navigation, config);
+                DefaultEventTimer event_timer(event_timer_timeout);
+
+                FakeScriptEngine script_engine(event_script_finished);
+                script_engine.add_script("forward60", "Forward 60cm");
+                script_engine.add_script("backward60", "Backward 60cm");
+                script_engine.add_script("hoe", "Hoe weeds");
+                
+                ScriptMenu menu(script_engine);
+
 
                 UserInterface user_interface(input_device,
                                              display,
-                                             speed_controller);
-
+                                             speed_controller,
+                                             event_timer,
+                                             menu,
+                                             script_engine);
 
                 while (!app_quit()) {
                         

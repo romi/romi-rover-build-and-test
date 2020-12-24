@@ -28,7 +28,16 @@ namespace romi {
 
         class UserInterface;
         
-        void navigation_ready(UserInterface& ui);
+        void initialize_rover(UserInterface& ui);
+
+        void stop_rover(UserInterface& ui);
+        void reset_rover(UserInterface& ui);
+        void continue_rover(UserInterface& ui);
+        
+        void confirm_navigation_step_1(UserInterface& ui);
+        void confirm_navigation_step_2(UserInterface& ui);
+        void initialize_navigation(UserInterface& ui);        
+        void leave_navigation_mode(UserInterface& ui);        
         void start_driving_forward(UserInterface& ui);
         void drive_forward(UserInterface& ui);
         void start_driving_backward(UserInterface& ui);
@@ -41,6 +50,15 @@ namespace romi {
         void start_spinning(UserInterface& ui);
         void spin(UserInterface& ui);
         
+        void confirm_menu_step_1(UserInterface& ui);
+        void confirm_menu_step_2(UserInterface& ui);
+        void open_menu(UserInterface& ui);        
+        void show_next_menu(UserInterface& ui);
+        void show_previous_menu(UserInterface& ui);
+        void show_current_menu(UserInterface& ui);
+        void select_menu(UserInterface& ui);
+        void execute_menu(UserInterface& ui);
+        void leave_menu_mode(UserInterface& ui);        
 }
 
 #endif // __ROMI_UI_STATE_TRANSITIONS_H

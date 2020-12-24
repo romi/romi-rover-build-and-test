@@ -146,6 +146,23 @@ add_test(
 )
 
 
+set(SRCS_STATEMACHINE 
+  src/tests_main.cpp
+  src/tests_statemachine.cpp
+  ../src/UserInterface.h
+  ../src/StateMachine.h
+  )
+
+add_executable(romi_rover_unit_tests_userinterface_statemachine ${SRCS_STATEMACHINE})
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+target_link_libraries(romi_rover_unit_tests_userinterface_statemachine rcompp romirover gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_userinterface_statemachine
+    COMMAND romi_rover_unit_tests_userinterface_statemachine
+)
+
+
 set(SRCS_USERINTERFACE 
   src/tests_main.cpp
   src/tests_userinterface.cpp
@@ -173,7 +190,7 @@ if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
             NAME romi_rover_userinterface_coverage
             EXECUTABLE ctest -V ${n_cores}
-            EXCLUDE "src/main.cpp" "src/FakeDisplay.h" "src/FakeNavigation.h"
+            EXCLUDE "src/main.cpp" "src/FakeDisplay.h" "src/FakeNavigation.h" "src/FakeInputDevice.h"
             DEPENDENCIES romi_rover_unit_tests_userinterface_speedconverter
                          romi_rover_unit_tests_userinterface_speedcontroller
                          romi_rover_unit_tests_userinterface_joystick
@@ -181,6 +198,7 @@ if(BUILD_COVERAGE)
                          romi_rover_unit_tests_userinterface_uifactory
                          romi_rover_unit_tests_userinterface_remotenavigation
                          romi_rover_unit_tests_userinterface_crystaldisplay
+                         romi_rover_unit_tests_userinterface_statemachine
                          romi_rover_unit_tests_userinterface_userinterface)
 endif()
 

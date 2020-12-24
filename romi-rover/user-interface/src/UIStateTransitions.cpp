@@ -30,10 +30,54 @@
 
 namespace romi {
         
-        void navigation_ready(UserInterface& ui)
+        void initialize_rover(UserInterface& ui)
         {
-                r_debug("NavigationReady");
+                r_debug("initialize_rover");
+                ui.display.show(0, "Ready");
+        }
+
+        void stop_rover(UserInterface& ui)
+        {
+                r_debug("stop_rover");
+                ui.saved_state = ui.state_machine.get_state();
+                ui.display.show(0, "[] to reset");
+                ui.display.show(1, "X  to continue");
+        }
+        
+        void reset_rover(UserInterface& ui)
+        {
+                r_debug("reset_rover");
+        }
+        
+        void continue_rover(UserInterface& ui)
+        {
+                r_debug("continue_rover");
+        }
+        
+        void confirm_navigation_step_1(UserInterface& ui)
+        {
+                r_debug("confirm_navigation_step_1");
+                ui.display.show(0, "Hold to navigate");
+                ui.event_timer.set_timeout(3.0);
+        }
+
+        void confirm_navigation_step_2(UserInterface& ui)
+        {
+                r_debug("confirm_navigation_step_2");
+                ui.display.show(0, "Navigate? (X)");
+                ui.event_timer.set_timeout(2.0);
+        }
+
+        void initialize_navigation(UserInterface& ui)
+        {
+                r_debug("initialize_navigation");
                 ui.speed_controller.stop();
+                ui.display.show(0, "Navigating");
+        }
+
+        void leave_navigation_mode(UserInterface& ui)
+        {
+                r_debug("leave_navigation_mode");
                 ui.display.show(0, "Ready");
         }
 
@@ -113,5 +157,78 @@ namespace romi {
                 r_debug("spinning");
                 ui.speed_controller.spin(ui.input_device.get_direction());
         }
+
         
+        void confirm_menu_step_1(UserInterface& ui)
+        {
+                r_debug("confirm_menu_step_1");
+                ui.display.show(0, "Hold for menu");
+                ui.event_timer.set_timeout(3.0);
+        }
+
+        void confirm_menu_step_2(UserInterface& ui)
+        {
+                r_debug("confirm_menu_step_2");
+                ui.display.show(0, "Menu? (X)");
+                ui.event_timer.set_timeout(2.0);
+        }
+
+        void open_menu(UserInterface& ui)
+        {
+                r_debug("open_menu");
+                std::string name;
+                ui.menu.first_menu_item(name);
+                ui.display.show(0, name.c_str());
+                ui.display.clear(1);
+        }
+
+        void show_next_menu(UserInterface& ui)
+        {
+                r_debug("show_next_menu");
+                std::string name;
+                ui.menu.next_menu_item(name);
+                ui.display.show(0, name.c_str());
+        }
+
+        void show_previous_menu(UserInterface& ui)
+        {
+                r_debug("show_previous_menu");
+                std::string name;
+                ui.menu.previous_menu_item(name);
+                ui.display.show(0, name.c_str());
+        }
+
+        void show_current_menu(UserInterface& ui)
+        {
+                r_debug("show_current_menu");
+                std::string name;
+                ui.menu.current_menu_item(name);
+                ui.display.show(0, name.c_str());
+                ui.display.clear(1);
+        }
+
+        void select_menu(UserInterface& ui)
+        {
+                r_debug("select_menu");
+                ui.display.show(1, "X to confirm");
+                ui.event_timer.set_timeout(1.0);
+        }
+        
+        void execute_menu(UserInterface& ui)
+        {
+                r_debug("confirm_menu");
+
+                std::string id;
+                ui.menu.current_menu_item_id(id);
+                ui.script_engine.execute_script(id);
+                r_debug("execute_menu: %s", id.c_str());
+                
+                ui.display.show(1, "Running");
+        }
+        
+        void leave_menu_mode(UserInterface& ui)
+        {
+                r_debug("leave_menu_mode");
+                ui.display.show(0, "Ready");
+        }
 }

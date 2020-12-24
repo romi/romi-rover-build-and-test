@@ -22,6 +22,7 @@
 
  */
 
+#include <r.h>
 #include "UIEventMapper.h"
 
 namespace romi {
@@ -38,8 +39,14 @@ namespace romi {
                                         
                 } else if (event.number == axis_forward_speed) {
                         retval = event_forward_speed;
-                }
                         
+                } else if (event.number == axis_menu_navigation) {
+                        if (joystick.get_axis(event.number) < 0)
+                                retval = event_previous_menu;
+                        else if (joystick.get_axis(event.number) > 0)
+                                retval = event_next_menu;
+                } 
+ 
                 return retval;
         }
 
@@ -81,7 +88,30 @@ namespace romi {
                         } else {
                                 retval = event_accurate_backward_stop;
                         }
-                }
+                } else if (event.number == button_navigation_mode) {
+                        if (joystick.is_button_pressed(event.number)) {
+                                retval = event_navigation_mode_pressed;
+                        } else {
+                                retval = event_navigation_mode_released;
+                        }
+                } else if (event.number == button_menu_mode) {
+                        r_debug("button_menu_mode");
+                        if (joystick.is_button_pressed(event.number)) {
+                                r_debug("event_menu_mode_pressed");
+                                retval = event_menu_mode_pressed;
+                        } else {
+                                r_debug("event_menu_mode_released");
+                                retval = event_menu_mode_released;
+                        }
+                } else if (event.number == button_select) {
+                        if (joystick.is_button_pressed(event.number)) {
+                                retval = event_select;
+                        }
+                } else if (event.number == button_stop) {
+                        if (joystick.is_button_pressed(event.number)) {
+                                retval = event_stop;
+                        }
+                } 
                         
                 return retval;
         }

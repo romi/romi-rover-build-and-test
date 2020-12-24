@@ -149,8 +149,8 @@ namespace romi {
                         throw std::runtime_error("Joystick: read failed");
                 }
         }
-
-        void LinuxJoystick::read_and_parse_event()
+        
+        void LinuxJoystick::handle_input_event()
         {
                 struct js_event linux_event;
                 if (has_event(0.100)) {
@@ -158,11 +158,11 @@ namespace romi {
                         parse_event(linux_event);
                 }
         }
-
+        
         JoystickEvent& LinuxJoystick::get_next_event()
         {
                 _event.type = JoystickEvent::None;
-                read_and_parse_event();
+                handle_input_event();
                 return _event;
         }
         

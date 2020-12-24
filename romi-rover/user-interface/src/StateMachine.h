@@ -24,7 +24,9 @@
 #ifndef __ROMI_STATE_MACHINE_H
 #define __ROMI_STATE_MACHINE_H
 
+#include <r.h>
 #include <vector>
+#include "EventsAndStates.h"
 
 namespace romi {
 
@@ -40,14 +42,15 @@ namespace romi {
         protected:
                 int _from;
                 int _event;
-                int _to;
                 StateTransitionHandler<T> _handler;
+                int _to;
                 
         public:
-                StateTransition(int from, int event, int to,
-                                  StateTransitionHandler<T> handler)
-                        : _from(from), _event(event), _to(to),
-                          _handler(handler) {}
+                StateTransition(int from,
+                                int event,
+                                StateTransitionHandler<T> handler,
+                                int to)
+                        : _from(from), _event(event), _handler(handler), _to(to) {}
                 
                 virtual ~StateTransition() {}
                 
@@ -85,7 +88,6 @@ namespace romi {
                         bool handled = false;
                         for (size_t i = 0; i < _transitions.size(); i++) {
                                 StateTransition<T>& transition = _transitions[i];
-                                
                                 if (transition.state() == _current_state
                                     && transition.event() == event) {
                                         do_transition(transition);
@@ -119,14 +121,17 @@ namespace romi {
                 }
                         
                 void handle_event(int event) {
+                        r_debug("handle_event %d", event);
                         bool handled = try_regular_transitions(event);
                         if (!handled)
                                 try_catchall_transitions(event);
                 }
 
-                void add(int from, int event, int to,
-                         StateTransitionHandler<T> handler) {
-                        _transitions.push_back(StateTransition(from, event, to, handler));
+                void add(int from,
+                         int event,
+                         StateTransitionHandler<T> handler,
+                         int to) {
+                        _transitions.push_back(StateTransition(from, event, handler, to));
                 }
         };
 }

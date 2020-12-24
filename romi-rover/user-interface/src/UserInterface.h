@@ -29,6 +29,9 @@
 #include "Display.h"
 #include "SpeedController.h"
 #include "StateMachine.h"
+#include "EventTimer.h"
+#include "Menu.h"
+#include "ScriptEngine.h"
 
 namespace romi {
         
@@ -38,6 +41,8 @@ namespace romi {
 
                 void init_state_machine();
                 void init_start_transition();
+                void init_stop_transitions();
+                
                 void init_navigation_transitions();
                 void init_navigation_mode_transition();
                 void init_forward_driving_transitions();
@@ -46,18 +51,32 @@ namespace romi {
                 void init_accurate_backward_driving_transitions();
                 void init_spinning_transitions();
 
+                void init_menu_transitions();
+                void init_menu_mode_transition();
+                void init_menu_selection_transitions();
+
                 void handle_input_events();
+                void handle_timer_events();
+                void handle_script_events();
 
         public:
                 InputDevice &input_device;
                 Display &display;
                 SpeedController &speed_controller;
+                EventTimer &event_timer;
+                Menu &menu;
+                ScriptEngine &script_engine;
                 
                 StateMachine<UserInterface> state_machine;
-                
+
+                int saved_state;
+
                 UserInterface(InputDevice &input_device_,
                               Display &display_,
-                              SpeedController &speed_controller_);
+                              SpeedController &speed_controller_,
+                              EventTimer &event_timer,
+                              Menu &menu,
+                              ScriptEngine &script_engine);
                 
                 virtual ~UserInterface() = default;
 

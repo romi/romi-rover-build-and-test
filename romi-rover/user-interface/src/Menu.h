@@ -1,7 +1,7 @@
 /*
   romi-rover
 
-  Copyright (C) 2019 Sony Computer Science Laboratories
+  Copyright (C) 2019-2020 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
   romi-rover is collection of applications for the Romi Rover.
@@ -21,22 +21,24 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _ROMI_INPUT_DEVICE_H
-#define _ROMI_INPUT_DEVICE_H
+#ifndef _ROMI_MENU_H
+#define _ROMI_MENU_H
 
-#include "EventSource.h"
+#include <string>
 
 namespace romi {
-        
-        class InputDevice : public EventSource
+
+        class Menu
         {
         public:
-                virtual ~InputDevice() = default;
-                
-                virtual double get_forward_speed() = 0;
-                virtual double get_backward_speed() = 0;
-                virtual double get_direction() = 0;
+                virtual ~Menu() = default;
+
+                virtual void first_menu_item(std::string& name) = 0;
+                virtual void next_menu_item(std::string& name) = 0;
+                virtual void previous_menu_item(std::string& name) = 0;
+                virtual void current_menu_item(std::string& name) = 0;
+                virtual void current_menu_item_id(std::string& id) = 0;
         };
 }
 
-#endif // _ROMI_INPUT_DEVICE_H
+#endif // _ROMI_MENU_H

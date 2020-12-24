@@ -49,7 +49,7 @@ namespace romi {
                 void open_device(const char *name);
                 void close_device();
                 
-                void read_and_parse_event();
+                void handle_input_event();
                 bool has_event(double timeout);
                 void read_event(struct js_event& linux_event);
                 void parse_event(struct js_event& linux_event);

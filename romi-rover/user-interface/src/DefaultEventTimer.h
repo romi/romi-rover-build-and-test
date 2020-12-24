@@ -21,22 +21,29 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _ROMI_INPUT_DEVICE_H
-#define _ROMI_INPUT_DEVICE_H
+#ifndef _ROMI_DEFAULT_EVENT_TIMER_H
+#define _ROMI_DEFAULT_EVENT_TIMER_H
 
-#include "EventSource.h"
+#include "EventTimer.h"
 
 namespace romi {
         
-        class InputDevice : public EventSource
+        class DefaultEventTimer : public EventTimer
         {
+        protected:
+                int _event;
+                double _event_time;
+
+                void reset();
+                bool has_timed_out();
+
         public:
-                virtual ~InputDevice() = default;
-                
-                virtual double get_forward_speed() = 0;
-                virtual double get_backward_speed() = 0;
-                virtual double get_direction() = 0;
+                DefaultEventTimer(int event) : _event(event), _event_time(0) {}
+                virtual ~DefaultEventTimer() override = default;
+
+                int get_next_event() override;
+                void set_timeout(double timeout) override;
         };
 }
 
-#endif // _ROMI_INPUT_DEVICE_H
+#endif // _ROMI_DEFAULT_EVENT_TIMER_H

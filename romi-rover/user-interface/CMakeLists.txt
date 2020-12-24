@@ -9,11 +9,17 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../arduino_libraries/RomiSeria
 set(SOURCES
   src/DefaultSpeedController.h
   src/DefaultSpeedController.cpp
+  src/DefaultEventTimer.h
+  src/DefaultEventTimer.cpp
   src/Display.h
   src/EventsAndStates.h
+  src/EventSource.h
+  src/EventTimer.h
   src/FakeDisplay.h
   src/FakeInputDevice.h
   src/FakeNavigation.h
+  src/FakeScriptEngine.h
+  src/FakeScriptEngine.cpp
   src/InputDevice.h
   src/Joystick.h
   src/JoystickEventMapper.h
@@ -26,8 +32,12 @@ set(SOURCES
   src/LinuxJoystick.h
   src/LinuxJoystick.cpp
   src/main.cpp
+  src/Menu.h
   src/RemoteNavigation.h
   src/RemoteNavigation.cpp
+  src/ScriptEngine.h
+  src/ScriptMenu.h
+  src/ScriptMenu.cpp
   src/SpeedController.h
   src/SpeedConverter.h
   src/SpeedConverter.cpp

@@ -21,22 +21,24 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _ROMI_INPUT_DEVICE_H
-#define _ROMI_INPUT_DEVICE_H
+#ifndef _ROMI_SCRIPT_ENGINE_H
+#define _ROMI_SCRIPT_ENGINE_H
 
 #include "EventSource.h"
 
 namespace romi {
         
-        class InputDevice : public EventSource
+        class ScriptEngine : public EventSource
         {
         public:
-                virtual ~InputDevice() = default;
-                
-                virtual double get_forward_speed() = 0;
-                virtual double get_backward_speed() = 0;
-                virtual double get_direction() = 0;
+                virtual ~ScriptEngine() = default;
+
+                virtual int count_scripts() = 0;
+                virtual void get_script(int index,
+                                        std::string& id,
+                                        std::string& name) = 0;
+                virtual void execute_script(std::string& id) = 0;
         };
 }
 
-#endif // _ROMI_INPUT_DEVICE_H
+#endif // _ROMI_SCRIPT_ENGINE_H

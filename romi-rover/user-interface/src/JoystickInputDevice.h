@@ -40,9 +40,15 @@ namespace romi {
         protected:
                 Joystick &_joystick;
                 JoystickEventMapper &_event_mapper;
-
+                double _timestamp_last_event;
+                double _input_delay;
+                
                 void assure_number_of_axes(int minimum);
                 void assure_number_of_buttons(int minimum);
+                void update_timestamp();
+                int check_timeout_event();
+                void reset_timestamp();
+                bool did_timestamp_time_out();
 
         public:
                 JoystickInputDevice(Joystick &joystick,
