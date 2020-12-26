@@ -9,7 +9,7 @@ set(SRCS_SPEEDCONVERTER
   src/tests_main.cpp
   src/tests_speedconverter.cpp
   mock/mock_navigation.h
-  ../src/SpeedConverter.h
+  ../include/SpeedConverter.h
   ../src/SpeedConverter.cpp
   )
 
@@ -27,9 +27,9 @@ set(SRCS_SPEEDCONTROLLER
   src/tests_main.cpp
   src/tests_speedcontroller.cpp
   mock/mock_navigation.h
-  ../src/DefaultSpeedController.h
+  ../include/DefaultSpeedController.h
   ../src/DefaultSpeedController.cpp
-  ../src/SpeedConverter.h
+  ../include/SpeedConverter.h
   ../src/SpeedConverter.cpp
   )
 
@@ -47,9 +47,9 @@ set(SRCS_JOYSTICK
   src/tests_main.cpp
   src/tests_joystick.cpp
   mock/Linux-Mock.cpp
-  ../src/Joystick.h
+  ../include/Joystick.h
+  ../include/LinuxJoystick.h
   ../src/LinuxJoystick.cpp
-  ../src/LinuxJoystick.h
   )
 
 add_executable(romi_rover_unit_tests_userinterface_joystick ${SRCS_JOYSTICK})
@@ -67,7 +67,7 @@ set(SRCS_JOYSTICKINPUTDEVICE
   src/tests_joystickinputdevice.cpp
   mock/mock_eventmapper.h
   mock/mock_joystick.h
-  ../src/JoystickInputDevice.h
+  ../include/JoystickInputDevice.h
   ../src/JoystickInputDevice.cpp
   )
 
@@ -84,20 +84,20 @@ add_test(
 set(SRCS_UIFACTORY 
   src/tests_main.cpp
   src/tests_uifactory.cpp
-  ../src/UIOptions.h
-  ../src/UIFactory.h
+  ../include/UIOptions.h
+  ../include/UIFactory.h
   ../src/UIFactory.cpp
-  ../src/FakeDisplay.h
-  ../src/FakeNavigation.h
-  ../src/RemoteNavigation.h
+  ../include/FakeDisplay.h
+  ../include/FakeNavigation.h
+  ../include/RemoteNavigation.h
   ../src/RemoteNavigation.cpp
-  ../src/CrystalDisplay.h
+  ../include/CrystalDisplay.h
   ../src/CrystalDisplay.cpp
-  ../src/UIEventMapper.h
+  ../include/UIEventMapper.h
   ../src/UIEventMapper.cpp
-  ../src/LinuxJoystick.h
+  ../include/LinuxJoystick.h
   ../src/LinuxJoystick.cpp
-  ../src/JoystickInputDevice.h
+  ../include/JoystickInputDevice.h
   ../src/JoystickInputDevice.cpp
  )
 
@@ -114,7 +114,7 @@ add_test(
 set(SRCS_RPCNAVIGATIONADAPTER 
   src/tests_main.cpp
   src/tests_remotenavigation.cpp
-  ../src/RemoteNavigation.h
+  ../include/RemoteNavigation.h
   ../src/RemoteNavigation.cpp
   )
 
@@ -132,7 +132,7 @@ set(SRCS_CRYSTALDISPLAY
   src/tests_main.cpp
   src/tests_crystaldisplay.cpp
   mock/mock_romiserialclient.h
-  ../src/CrystalDisplay.h
+  ../include/CrystalDisplay.h
   ../src/CrystalDisplay.cpp
   )
 
@@ -149,8 +149,8 @@ add_test(
 set(SRCS_STATEMACHINE 
   src/tests_main.cpp
   src/tests_statemachine.cpp
-  ../src/UserInterface.h
-  ../src/StateMachine.h
+  ../include/UserInterface.h
+  ../include/StateMachine.h
   )
 
 add_executable(romi_rover_unit_tests_userinterface_statemachine ${SRCS_STATEMACHINE})
@@ -169,10 +169,10 @@ set(SRCS_USERINTERFACE
   mock/mock_inputdevice.h
   mock/mock_navigation.h
   mock/mock_display.h
-  ../src/UserInterface.h
+  ../include/UserInterface.h
   ../src/UserInterface.cpp
-  ../src/StateMachine.h
-  ../src/UIStateTransitions.h
+  ../include/StateMachine.h
+  ../include/UIStateTransitions.h
   ../src/UIStateTransitions.cpp
   )
 

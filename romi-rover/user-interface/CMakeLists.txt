@@ -5,55 +5,56 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../arduino_libraries/RomiSerial" )
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/include" )
 
 set(SOURCES
-  src/DefaultSpeedController.h
+  include/DefaultSpeedController.h
+  include/DefaultEventTimer.h
+  include/Display.h
+  include/EventsAndStates.h
+  include/EventSource.h
+  include/EventTimer.h
+  include/FakeDisplay.h
+  include/FakeInputDevice.h
+  include/FakeNavigation.h
+  include/FakeNotifications.h
+  include/FakeScriptEngine.h
+  include/FluidSoundNotifications.h
+  include/InputDevice.h
+  include/Joystick.h
+  include/JoystickEventMapper.h
+  include/JoystickInputDevice.h
+  include/FakeDisplay.h
+  include/CrystalDisplay.h
+  include/FakeWeeder.h
+  include/LinuxJoystick.h
+  include/Menu.h
+  include/Notifications.h
+  include/RemoteNavigation.h
+  include/ScriptEngine.h
+  include/ScriptMenu.h
+  include/SpeedController.h
+  include/SpeedConverter.h
+  include/StateMachine.h
+  include/UIEventMapper.h
+  include/UIFactory.h
+  include/UIOptions.h
+  include/UserInterface.h
   src/DefaultSpeedController.cpp
-  src/DefaultEventTimer.h
   src/DefaultEventTimer.cpp
-  src/Display.h
-  src/EventsAndStates.h
-  src/EventSource.h
-  src/EventTimer.h
-  src/FakeDisplay.h
-  src/FakeInputDevice.h
-  src/FakeNavigation.h
-  src/FakeNotifications.h
-  src/FakeScriptEngine.h
   src/FakeScriptEngine.cpp
-  src/FluidSoundNotifications.h
   src/FluidSoundNotifications.cpp
-  src/InputDevice.h
-  src/Joystick.h
-  src/JoystickEventMapper.h
-  src/JoystickInputDevice.h
   src/JoystickInputDevice.cpp
-  src/FakeDisplay.h
-  src/CrystalDisplay.h
   src/CrystalDisplay.cpp
-  src/FakeWeeder.h
-  src/LinuxJoystick.h
   src/LinuxJoystick.cpp
   src/main.cpp
-  src/Menu.h
-  src/Notifications.h
-  src/RemoteNavigation.h
   src/RemoteNavigation.cpp
-  src/ScriptEngine.h
-  src/ScriptMenu.h
   src/ScriptMenu.cpp
-  src/SpeedController.h
-  src/SpeedConverter.h
   src/SpeedConverter.cpp
-  src/StateMachine.h
-  src/UIEventMapper.h
   src/UIEventMapper.cpp
-  src/UIFactory.h
   src/UIFactory.cpp
-  src/UIOptions.h
   src/UIOptions.cpp
   src/UIStateTransitions.cpp
-  src/UserInterface.h
   src/UserInterface.cpp
   )
 
