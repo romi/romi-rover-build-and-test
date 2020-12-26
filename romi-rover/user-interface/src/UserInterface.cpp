@@ -32,13 +32,15 @@ namespace romi {
                                      SpeedController &speed_controller_,
                                      EventTimer &event_timer_,
                                      Menu &menu_,
-                                     ScriptEngine& script_engine_)
+                                     ScriptEngine& script_engine_,
+                                     Notifications& notifications_)
                 : input_device(input_device_),
                   display(display_),
                   speed_controller(speed_controller_),
                   event_timer(event_timer_),
                   menu(menu_),
                   script_engine(script_engine_),
+                  notifications(notifications_),
                   state_machine(*this)
         {
                 init_state_machine();
@@ -373,7 +375,7 @@ namespace romi {
                 
                 state_machine.add(state_executing_script,
                                   event_script_finished,
-                                  show_current_menu,
+                                  signal_end_and_show_current_menu,
                                   state_menu);
         }
 }

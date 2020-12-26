@@ -18,8 +18,11 @@ set(SOURCES
   src/FakeDisplay.h
   src/FakeInputDevice.h
   src/FakeNavigation.h
+  src/FakeNotifications.h
   src/FakeScriptEngine.h
   src/FakeScriptEngine.cpp
+  src/FluidSoundNotifications.h
+  src/FluidSoundNotifications.cpp
   src/InputDevice.h
   src/Joystick.h
   src/JoystickEventMapper.h
@@ -33,6 +36,7 @@ set(SOURCES
   src/LinuxJoystick.cpp
   src/main.cpp
   src/Menu.h
+  src/Notifications.h
   src/RemoteNavigation.h
   src/RemoteNavigation.cpp
   src/ScriptEngine.h
@@ -54,7 +58,7 @@ set(SOURCES
   )
 
 add_executable(user-interface ${SOURCES})
-target_link_libraries(user-interface romirover rcompp rpp romiserial)
+target_link_libraries(user-interface romirover rcompp rpp romiserial fluidsynth)
 
 
 if(BUILD_TESTS)

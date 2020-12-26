@@ -34,6 +34,7 @@
 #include "DefaultEventTimer.h"
 #include "ScriptMenu.h"
 #include "FakeScriptEngine.h"
+#include "FluidSoundNotifications.h"
 
 using namespace romi;
 
@@ -71,13 +72,15 @@ int main(int argc, char** argv)
                 
                 ScriptMenu menu(script_engine);
 
-
+                FluidSoundNotifications sound_notifications(config);
+                
                 UserInterface user_interface(input_device,
                                              display,
                                              speed_controller,
                                              event_timer,
                                              menu,
-                                             script_engine);
+                                             script_engine,
+                                             sound_notifications);
 
                 while (!app_quit()) {
                         

@@ -34,6 +34,7 @@ namespace romi {
         {
                 r_debug("initialize_rover");
                 ui.display.show(0, "Ready");
+                ui.notifications.notify(NotifyStartup);
         }
 
         void stop_rover(UserInterface& ui)
@@ -66,6 +67,7 @@ namespace romi {
                 r_debug("confirm_navigation_step_2");
                 ui.display.show(0, "Navigate? (X)");
                 ui.event_timer.set_timeout(2.0);
+                ui.notifications.notify(NotifyConfirmNavigationMode);
         }
 
         void initialize_navigation(UserInterface& ui)
@@ -82,6 +84,7 @@ namespace romi {
                 r_debug("leave_navigation_mode");
                 ui.display.show(0, "Ready");
                 ui.event_timer.reset(); 
+                ui.notifications.notify(NotifyLeaveNavigationMode);
         }
 
         void start_driving_forward(UserInterface& ui)
@@ -185,6 +188,7 @@ namespace romi {
                 r_debug("confirm_menu_step_2");
                 ui.display.show(0, "Menu? (X)");
                 ui.event_timer.set_timeout(2.0);
+                ui.notifications.notify(NotifyConfirmMenuMode);
         }
 
         void open_menu(UserInterface& ui)
@@ -205,6 +209,7 @@ namespace romi {
                 ui.menu.next_menu_item(name);
                 ui.display.show(0, name.c_str());
                 ui.event_timer.set_timeout(10.0);  // restart timer
+                ui.notifications.notify(NotifyChangeMenu);
         }
 
         void show_previous_menu(UserInterface& ui)
@@ -214,6 +219,7 @@ namespace romi {
                 ui.menu.previous_menu_item(name);
                 ui.display.show(0, name.c_str());
                 ui.event_timer.set_timeout(10.0); // restart timer
+                ui.notifications.notify(NotifyChangeMenu);
         }
 
         void show_current_menu(UserInterface& ui)
@@ -223,6 +229,14 @@ namespace romi {
                 ui.menu.current_menu_item(name);
                 ui.display.show(0, name.c_str());
                 ui.display.clear(1);
+        }
+
+        void signal_end_and_show_current_menu(UserInterface& ui)
+        {
+                r_debug("signal_end_and_show_current_menu");
+                ui.notifications.notify(NotifyMenuFinished);
+                show_current_menu(ui);
+                ui.event_timer.set_timeout(10.0); // restart timer
         }
 
         void select_menu(UserInterface& ui)
@@ -237,6 +251,7 @@ namespace romi {
                 r_debug("confirm_menu");
 
                 std::string id;
+                ui.notifications.notify(NotifyMenuConfirmed);
                 ui.menu.current_menu_item_id(id);
                 ui.script_engine.execute_script(id);
                 r_debug("execute_menu: %s", id.c_str());
@@ -249,5 +264,6 @@ namespace romi {
                 r_debug("leave_menu_mode");
                 ui.display.show(0, "Ready");
                 ui.event_timer.reset(); 
+                ui.notifications.notify(NotifyLeaveMenuMode);
         }
 }

@@ -4,6 +4,7 @@
         "display-classname": "crystal-display",
         "navigation-classname": "remote-navigation",
         "input-device-classname": "joystick",
+        "sound-notifications": "fluid-sounds",
         
         "speed-controller": {
             "fast": {
@@ -26,6 +27,21 @@
 
         "remote-navigation": {
             "server-name": "navigation"
+        },
+
+        "fluid-sounds": {
+            "sound-font": "notifications.sf2",
+            "sounds": {
+                "notify-startup": 4,
+                "notify-confirm-menu-mode": 22,
+                "notify-leave-menu-mode": 21,
+                "notify-change-menu": 1,
+                "notify-menu-confirmed": 22,
+                "notify-menu-finished": 10,
+                "notify-confirm-navigation-mode": 16,
+                "notify-leave-navigation-mode": 21,
+                "notify-moving": 7
+            }
         }
     },
     "ports": {

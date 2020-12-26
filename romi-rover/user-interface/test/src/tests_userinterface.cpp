@@ -6,6 +6,7 @@
 #include "../mock/mock_eventtimer.h"
 #include "../mock/mock_menu.h"
 #include "../mock/mock_scriptengine.h"
+#include "../mock/mock_notifications.h"
 #include "UserInterface.h"
 #include "EventsAndStates.h"
 
@@ -22,7 +23,8 @@ protected:
         MockEventTimer event_timer;
         MockMenu menu;
         MockScriptEngine script_engine;
-
+        MockNotifications notifications;
+        
 	userinterface_tests() {
 	}
 
@@ -41,7 +43,8 @@ TEST_F(userinterface_tests, create_display_uses_options_first)
                                 speed_controller,
                                 event_timer,
                                 menu,
-                                script_engine);
+                                script_engine,
+                                notifications);
 
         ASSERT_EQ(interface.get_state(), state_ready);
 }

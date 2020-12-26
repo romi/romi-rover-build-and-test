@@ -32,6 +32,7 @@
 #include "EventTimer.h"
 #include "Menu.h"
 #include "ScriptEngine.h"
+#include "Notifications.h"
 
 namespace romi {
         
@@ -60,23 +61,25 @@ namespace romi {
                 void handle_script_events();
 
         public:
-                InputDevice &input_device;
-                Display &display;
-                SpeedController &speed_controller;
-                EventTimer &event_timer;
-                Menu &menu;
-                ScriptEngine &script_engine;
+                InputDevice& input_device;
+                Display& display;
+                SpeedController& speed_controller;
+                EventTimer& event_timer;
+                Menu& menu;
+                ScriptEngine& script_engine;
+                Notifications& notifications;
                 
                 StateMachine<UserInterface> state_machine;
 
                 int saved_state;
 
-                UserInterface(InputDevice &input_device_,
-                              Display &display_,
-                              SpeedController &speed_controller_,
-                              EventTimer &event_timer,
-                              Menu &menu,
-                              ScriptEngine &script_engine);
+                UserInterface(InputDevice& input_device_,
+                              Display& display_,
+                              SpeedController& speed_controller_,
+                              EventTimer& event_timer,
+                              Menu& menu,
+                              ScriptEngine& script_engine,
+                              Notifications& notifications);
                 
                 virtual ~UserInterface() = default;
 

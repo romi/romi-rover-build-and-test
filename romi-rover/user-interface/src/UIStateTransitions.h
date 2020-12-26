@@ -56,6 +56,7 @@ namespace romi {
         void show_next_menu(UserInterface& ui);
         void show_previous_menu(UserInterface& ui);
         void show_current_menu(UserInterface& ui);
+        void signal_end_and_show_current_menu(UserInterface& ui);
         void select_menu(UserInterface& ui);
         void execute_menu(UserInterface& ui);
         void leave_menu_mode(UserInterface& ui);        
