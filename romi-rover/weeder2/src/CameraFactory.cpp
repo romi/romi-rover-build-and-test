@@ -25,27 +25,27 @@
 #include "CameraFactory.h"
 #include "CameraProxy.h"
 #include "CameraFile.h"
-#include "CameraUSB.h"
+#include "USBCamera.h"
 
 namespace romi {
 
         int32_t CameraFactory::set_parameter(const char* key,
-                                                   json_object_t value,
-                                                   void *data)
+                                             json_object_t value,
+                                             void *data)
         {
-                ICamera *obj = (ICamera *) data;
+                Camera *obj = (Camera *) data;
                 return obj->set_parameter(key, value);
         }
 
-        ICamera *CameraFactory::create(const char *name, JsonCpp config)
+        Camera *CameraFactory::create(const char *name, JsonCpp config)
         {
-                ICamera *camera = 0;
+                Camera *camera = 0;
                 if (rstreq(name, "camera-file")) {
                         camera = new CameraFile();
                 } else if (rstreq(name, "camera-proxy")) {
                         camera = new CameraProxy();
                 } else if (rstreq(name, "camera-usb")) {
-                        camera = new CameraUSB();
+                        camera = new USBCamera();
                 } else {
                         r_warn("Failed to find the image class: %s", name);
                 }

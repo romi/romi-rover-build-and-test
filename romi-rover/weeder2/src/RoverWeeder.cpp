@@ -23,61 +23,61 @@
  */
 
 #include "DebugWeedingSession.h"
-#include "Weeder.h"
+#include "RoverWeeder.h"
 
 namespace romi {
 
-        bool Weeder::move_arm_to_camera_position()
+        bool RoverWeeder::move_arm_to_camera_position()
         {
                 bool success = false;
                 if (stop_spindle_and_move_arm_up()) {
                         if (_cnc->moveto(0.0, _range._y[1], 0.0, 0.8)) {
                                 success = true;
                         } else {
-                                r_warn("Weeder::move_arm_to_camera_position: moveto failed");
+                                r_warn("RoverWeeder::move_arm_to_camera_position: moveto failed");
                         }
                 } else {
-                        r_warn("Weeder::move_arm_to_camera_position: stop_spindle_and_move_arm_up failed");
+                        r_warn("RoverWeeder::move_arm_to_camera_position: stop_spindle_and_move_arm_up failed");
                 }        
                 return success;
         }
 
-        bool Weeder::move_arm_to_start_position(Waypoint p)
+        bool RoverWeeder::move_arm_to_start_position(Waypoint p)
         {
                 bool success = false;
-                r_debug("Weeder::move_arm_to_start_position");
+                r_debug("RoverWeeder::move_arm_to_start_position");
                 success = (stop_spindle_and_move_arm_up()
                            && _cnc->moveto(p.x, p.y, 0.0, 0.8)
                            && _cnc->spindle(1.0)
                            && _cnc->moveto(p.x, p.y, _z0, 0.8));
                 if (!success) {
-                        r_warn("Weeder::move_arm_to_start_position: stop_spindle_and_move_arm_up, "
+                        r_warn("RoverWeeder::move_arm_to_start_position: stop_spindle_and_move_arm_up, "
                                "moveto or spindle failed");
                 } 
                 return success;
         }
 
-        bool Weeder::stop_spindle_and_move_arm_up()
+        bool RoverWeeder::stop_spindle_and_move_arm_up()
         {
                 bool success = false;
-                r_debug("Weeder::stop_spindle_and_move_arm_up");
+                r_debug("RoverWeeder::stop_spindle_and_move_arm_up");
                 if (_cnc->spindle(0.0)) {
-                        if (_cnc->moveto(ICNC::UNCHANGED,
-                                         ICNC::UNCHANGED,
+                        if (_cnc->moveto(CNC::UNCHANGED,
+                                         CNC::UNCHANGED,
                                          0.0, 0.8)) {
                                 success = true;
                         } else {
-                                r_warn("Weeder::stop_spindle_and_move_arm_up: moveto failed");
+                                r_warn("RoverWeeder::stop_spindle_and_move_arm_up: moveto failed");
                         }
                 } else {
-                        r_warn("Weeder::stop_spindle_and_move_arm_up: spindle failed");
+                        r_warn("RoverWeeder::stop_spindle_and_move_arm_up: spindle failed");
                 }
                 return success;
         }
         
-        bool Weeder::path_in_range(Path &path)
+        bool RoverWeeder::path_in_range(Path &path)
         {
-                r_debug("Weeder::path_in_range");
+                r_debug("RoverWeeder::path_in_range");
                 bool valid = true;
                 for (size_t i = 0; i < path.size(); i++) {
                         double x = path[i].x;
@@ -125,9 +125,9 @@ namespace romi {
                 return valid;
         }
 
-        void Weeder::scale_to_range(Path &path)
+        void RoverWeeder::scale_to_range(Path &path)
         {
-                r_debug("Weeder::scale_to_range");
+                r_debug("RoverWeeder::scale_to_range");
 
                 // The y-axis of the rover is inverted with respect to
                 // the image coordinates.
@@ -146,16 +146,16 @@ namespace romi {
                         throw std::runtime_error("Computed path out of range");
         }
         
-        void Weeder::shift_to_first_point(Path &path, Path &out)
+        void RoverWeeder::shift_to_first_point(Path &path, Path &out)
         {
-                r_debug("Weeder::shift_to_first_point");
+                r_debug("RoverWeeder::shift_to_first_point");
                 size_t start_point = path_closest_point(path, 0.0, _range._y[1], _z0);
                 path_shift(path, out, start_point);
         }
         
-        void Weeder::adjust_path(Path &path, Path &out)
+        void RoverWeeder::adjust_path(Path &path, Path &out)
         {
-                r_debug("Weeder::adjust_path");
+                r_debug("RoverWeeder::adjust_path");
                 scale_to_range(path);
                 shift_to_first_point(path, out);
                 
@@ -164,26 +164,26 @@ namespace romi {
                 }
         }
         
-        bool Weeder::do_hoe(Path &som_path)
+        bool RoverWeeder::do_hoe(Path &som_path)
         {
                 Path path;
                 bool success = false;
                 
-                r_debug("Weeder::do_hoe");
+                r_debug("RoverWeeder::do_hoe");
                 
                 adjust_path(som_path, path);
        
                 try {
-                        r_debug("Weeder::do_hoe: move_arm_to_start_position");
+                        r_debug("RoverWeeder::do_hoe: move_arm_to_start_position");
                         success = move_arm_to_start_position(path[0]);
                         
                         if (success) {
-                                r_debug("Weeder::do_hoe: _cnc->travel"); 
+                                r_debug("RoverWeeder::do_hoe: _cnc->travel"); 
                                 success = _cnc->travel(path, 0.4);
                         }
                         
                         if (success) {
-                                r_debug("Weeder::do_hoe: stop_spindle_and_move_arm_up");
+                                r_debug("RoverWeeder::do_hoe: stop_spindle_and_move_arm_up");
                                 success = stop_spindle_and_move_arm_up();
                         }
                         
@@ -192,7 +192,7 @@ namespace romi {
                         // Whatever happens, make sure the spindle
                         // stops and the arm goes back up
                         
-                        r_debug("Weeder::do_hoe: catch");
+                        r_debug("RoverWeeder::do_hoe: catch");
                         stop_spindle_and_move_arm_up();
                         throw e;
                 }
@@ -200,24 +200,24 @@ namespace romi {
                 return success;
         }
         
-        bool Weeder::hoe()
+        bool RoverWeeder::hoe()
         {
                 IFolder &folder = _filecabinet.start_new_folder();
                 Image camera_image;
                 Path path;
                 bool success = false;
                 
-                r_debug("Weeder::hoe");
+                r_debug("RoverWeeder::hoe");
                 
                 success = move_arm_to_camera_position();
 
                 if (success) {
-                        r_debug("Weeder::hoe: _camera->grab");
+                        r_debug("RoverWeeder::hoe: _camera->grab");
                         success = _camera->grab(camera_image);
                 }
 
                 if (success) {
-                        r_debug("Weeder::hoe: _pipeline->run");
+                        r_debug("RoverWeeder::hoe: _pipeline->run");
                         success = _pipeline->run(folder, camera_image, 0.05, path);
                 }
                 
@@ -228,10 +228,10 @@ namespace romi {
                 return success;
         }
         
-        void Weeder::execute(const char *method, JsonCpp& params,
+        void RoverWeeder::execute(const char *method, JsonCpp& params,
                              JsonCpp& result, rcom::RPCError &error)
         {
-                r_debug("Weeder::execute");
+                r_debug("RoverWeeder::execute");
                 
                 if (rstreq(method, "hoe")) {
                         
@@ -240,7 +240,7 @@ namespace romi {
                                 error.code = 0;
                                 
                         } catch (std::exception& e) {
-                                r_debug("Weeder::exception: catched exception: %s", e.what());
+                                r_debug("RoverWeeder::exception: catched exception: %s", e.what());
                                 error.code = 0;
                                 error.message = e.what();
                         }

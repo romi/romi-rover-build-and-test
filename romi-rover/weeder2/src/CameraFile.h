@@ -26,11 +26,11 @@
 #define __ROMI_CAMERA_FILE_H
 
 #include <string>
-#include "ICamera.h"
+#include "Camera.h"
 
 namespace romi {
 
-        class CameraFile : public ICamera {
+        class CameraFile : public Camera {
         protected:
                 std::string _filename;
                 Image _image;

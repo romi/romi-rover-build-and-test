@@ -11,7 +11,7 @@
 #include "ConfigurationFile.h"
 #include "DebugWeedingSession.h"
 #include "RPCServer.h"
-#include "RPCCNCServerAdaptor.h"
+#include "CNCAdaptor.h"
 #include "FakeCNCController.h"
 
 using namespace romi;
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
                 DebugWeedingSession debug(options.output_directory, "oquam");
                 oquam.set_file_cabinet(&debug);
                 
-                RPCCNCServerAdaptor adaptor(oquam);
+                CNCAdaptor adaptor(oquam);
                 rcom::RPCServer server(adaptor, "oquam", "cnc");
 
                 

@@ -26,7 +26,7 @@
 
 #include <r.h>
 #include "v.h"
-#include "ICNC.h"
+#include "CNC.h"
 #include "ICNCController.h"
 #include "IFileCabinet.h"
 #include "script.h" 
@@ -34,7 +34,7 @@
 
 namespace romi {
         
-        class Oquam : public ICNC
+        class Oquam : public CNC
         {
         public:
                 CNCRange _range;

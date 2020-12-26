@@ -22,12 +22,12 @@
 
  */
 
-#ifndef __ROMI_I_CAMERA_USB_H
-#define __ROMI_I_CAMERA_USB_H
+#ifndef __ROMI_USB_CAMERA_H
+#define __ROMI_USB_CAMERA_H
 
 #include <string>
 #include <r.h>
-#include "ICamera.h"
+#include "Camera.h"
 #include "Image.h"
 #include "JsonCpp.h"
 
@@ -35,7 +35,7 @@
 
 namespace romi {
 
-        class CameraUSB : public ICamera {
+        class USBCamera : public Camera {
         protected:
                 camera_t* _camera;
                 std::string _device;
@@ -48,7 +48,7 @@ namespace romi {
                 void close();
 
                 static void _run(void* data) {
-                        CameraUSB *camera = (CameraUSB*) data;
+                        USBCamera *camera = (USBCamera*) data;
                         camera->run();
                 }
 
@@ -62,11 +62,11 @@ namespace romi {
                 }
                         
         public:
-                CameraUSB() : _camera(0), _width(0), _height(0), _thread(0), _done(false) {
+                USBCamera() : _camera(0), _width(0), _height(0), _thread(0), _done(false) {
                         _mutex = new_mutex();
                 }
                 
-                virtual ~CameraUSB() override {
+                virtual ~USBCamera() override {
                         if (_thread) {
                                 _done = true;
                                 thread_join(_thread);
@@ -84,4 +84,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_I_CAMERA_USB_H
+#endif // __ROMI_USB_CAMERA_H

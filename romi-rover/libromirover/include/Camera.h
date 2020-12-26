@@ -22,23 +22,21 @@
 
  */
 
-#ifndef __ROMI_CAMERA_FACTORY_H
-#define __ROMI_CAMERA_FACTORY_H
+#ifndef __ROMI_CAMERA_H
+#define __ROMI_CAMERA_H
 
-#include "Camera.h"
+#include "Image.h"
+#include "JsonCpp.h"
 
 namespace romi {
-        
-        class CameraFactory
-        {
-        protected:
-                static int32_t set_parameter(const char* key,
-                                             json_object_t value,
-                                             void *data);
-                
+
+        class Camera {
         public:
-                static Camera *create(const char *name, JsonCpp config);
+                virtual ~Camera() = default;
+                virtual int set_parameter(const char *name, JsonCpp value) = 0;
+                virtual bool open() = 0;
+                virtual bool grab(Image &image) = 0;
         };
 }
 
-#endif // __ROMI_CAMERA_FACTORY_H
+#endif // __ROMI_CAMERA_H

@@ -21,18 +21,18 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_RPC_CNC_SERVER_ADAPTER_H
-#define __ROMI_RPC_CNC_SERVER_ADAPTER_H
+#ifndef __ROMI_CNC_ADAPTER_H
+#define __ROMI_CNC_ADAPTER_H
 
-#include "ICNC.h"
+#include "CNC.h"
 #include "IRPCHandler.h"
 
 namespace romi {
         
-        class RPCCNCServerAdaptor : public rcom::IRPCHandler
+        class CNCAdaptor : public rcom::IRPCHandler
         {
         protected:
-                ICNC &_cnc;
+                CNC &_cnc;
                 
                 void handle_get_range(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
                 void handle_moveto(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
@@ -44,12 +44,12 @@ namespace romi {
                 void handle_reset(JsonCpp& params, JsonCpp& result, rcom::RPCError &error);
 
         public:
-                RPCCNCServerAdaptor(ICNC &cnc) : _cnc(cnc) {}
-                virtual ~RPCCNCServerAdaptor() override = default;
+                CNCAdaptor(CNC &cnc) : _cnc(cnc) {}
+                virtual ~CNCAdaptor() override = default;
                 
                 void execute(const char *method, JsonCpp& params,
                              JsonCpp& result, rcom::RPCError &error) override;
         };
 }
 
-#endif // __ROMI_RPC_CNC_SERVER_ADAPTER_H
+#endif // __ROMI_CNC_ADAPTER_H

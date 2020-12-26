@@ -22,25 +22,26 @@
 
  */
 
-#ifndef __ROMI_WEEDER_H
-#define __ROMI_WEEDER_H
+#ifndef __ROMI_ROVER_WEEDER_H
+#define __ROMI_ROVER_WEEDER_H
 
 #include <string>
 #include <IRPCHandler.h>
-#include "ICamera.h"
+#include "Camera.h"
 #include "IConfiguration.h"
-#include "ICNC.h"
+#include "CNC.h"
 #include "IPipeline.h"
 #include "IFileCabinet.h"
+#include "Weeder.h"
 
 namespace romi {
 
-        class Weeder : public rcom::IRPCHandler
+        class RoverWeeder : public rcom::IRPCHandler
         {
         protected:
-                ICamera *_camera;
+                Camera *_camera;
                 IPipeline *_pipeline;
-                ICNC *_cnc;
+                CNC *_cnc;
                 CNCRange _range;
                 double _z0;
                 IFileCabinet &_filecabinet;
@@ -55,18 +56,18 @@ namespace romi {
                 bool do_hoe(Path &som_path);
 
         public:
-                Weeder(IConfiguration *configuration,
-                       ICamera *camera,
-                       IPipeline *pipeline,
-                       ICNC *cnc,
-                       CNCRange &range,
-                       IFileCabinet &filecabinet)
+                RoverWeeder(IConfiguration *configuration,
+                            Camera *camera,
+                            IPipeline *pipeline,
+                            CNC *cnc,
+                            CNCRange &range,
+                            IFileCabinet &filecabinet)
                         : _camera(camera), _pipeline(pipeline),
                         _cnc(cnc), _range(range), _filecabinet(filecabinet) {
                         _z0 = configuration->get("weeder").num("z0");
                 }
                 
-                virtual ~Weeder() override = default;
+                virtual ~RoverWeeder() override = default;
                 
                 bool hoe();
 
@@ -76,4 +77,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_WEEDER_H
+#endif // __ROMI_ROVER_WEEDER_H

@@ -21,11 +21,11 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "RPCCNCClientAdaptor.h"
+#include "RemoteCNC.h"
 
 namespace romi {
 
-        bool RPCCNCClientAdaptor::execute(const char *method,
+        bool RemoteCNC::execute(const char *method,
                                           JsonCpp& params,
                                           JsonCpp& result)
         {
@@ -35,13 +35,13 @@ namespace romi {
                         _client->execute(method, params, result, error);
 
                         if (error.code != 0) {
-                                r_err("RPCCNCClientAdaptor::execute: %s",
+                                r_err("RemoteCNC::execute: %s",
                                       error.message.c_str());
                         }
                         
                 } catch (std::exception &e) {
                         
-                        r_err("RPCCNCClientAdaptor::execute: '%s'", e.what());
+                        r_err("RemoteCNC::execute: '%s'", e.what());
                         error.code = 1;
                         error.message = e.what();
                 }
@@ -49,28 +49,28 @@ namespace romi {
                 return (error.code == 0);
         }
 
-        bool RPCCNCClientAdaptor::execute_with_result(const char *method, JsonCpp& result)
+        bool RemoteCNC::execute_with_result(const char *method, JsonCpp& result)
         {
                 JsonCpp params;
                 return execute(method, params, result);
         }
 
-        bool RPCCNCClientAdaptor::execute_with_params(const char *method, JsonCpp& params)
+        bool RemoteCNC::execute_with_params(const char *method, JsonCpp& params)
         {
                 JsonCpp result;
                 return execute(method, params, result);
         }
 
-        bool RPCCNCClientAdaptor::execute_simple_request(const char *method)
+        bool RemoteCNC::execute_simple_request(const char *method)
         {
                 JsonCpp params;
                 JsonCpp result;
                 return execute(method, params, result);
         }
 
-        bool RPCCNCClientAdaptor::get_range(CNCRange &range)
+        bool RemoteCNC::get_range(CNCRange &range)
         {
-                r_debug("RPCCNCClientAdaptor::get_range");
+                r_debug("RemoteCNC::get_range");
 
                 bool success = false;
                 JsonCpp result;
@@ -82,15 +82,15 @@ namespace romi {
                         }
                         
                 } catch (JSONError &je) {
-                        r_err("RPCCNCClientAdaptor::get_range failed: %s", je.what());
+                        r_err("RemoteCNC::get_range failed: %s", je.what());
                 }
 
                 return success;
         }
 
-        bool RPCCNCClientAdaptor::moveto(double x, double y, double z, double v)
+        bool RemoteCNC::moveto(double x, double y, double z, double v)
         {
-                r_debug("RPCCNCClientAdaptor::moveto");
+                r_debug("RemoteCNC::moveto");
                 
                 // TODO: use JSON C++ API
                 json_object_t p = json_object_create();
@@ -113,9 +113,9 @@ namespace romi {
                 return execute_with_params("moveto", params);
         }
 
-        bool RPCCNCClientAdaptor::spindle(double speed)
+        bool RemoteCNC::spindle(double speed)
         {
-                r_debug("RPCCNCClientAdaptor::spindle");
+                r_debug("RemoteCNC::spindle");
 
                 // TODO: use JSON C++ API
                 json_object_t p = json_object_create();                
@@ -126,9 +126,9 @@ namespace romi {
                 return execute_with_params("spindle", params);
         }
         
-        bool RPCCNCClientAdaptor::travel(Path &path, double relative_speed)
+        bool RemoteCNC::travel(Path &path, double relative_speed)
         {
-                r_debug("RPCCNCClientAdaptor::travel");
+                r_debug("RemoteCNC::travel");
 
                 // TODO: use JSON C++ API
                 json_object_t parameters = json_object_create();
@@ -153,27 +153,27 @@ namespace romi {
                 return execute_with_params("travel", params);
         }
 
-        bool RPCCNCClientAdaptor::homing()
+        bool RemoteCNC::homing()
         {
-                r_debug("RPCCNCClientAdaptor::homing");
+                r_debug("RemoteCNC::homing");
                 return execute_simple_request("homing");
         }
 
-        bool RPCCNCClientAdaptor::stop_execution()
+        bool RemoteCNC::stop_execution()
         {
-                r_debug("RPCCNCClientAdaptor::stop_execution");
+                r_debug("RemoteCNC::stop_execution");
                 return execute_simple_request("stop");
         }
 
-        bool RPCCNCClientAdaptor::continue_execution()
+        bool RemoteCNC::continue_execution()
         {
-                r_debug("RPCCNCClientAdaptor::continue_execution");
+                r_debug("RemoteCNC::continue_execution");
                 return execute_simple_request("continue");
         }
 
-        bool RPCCNCClientAdaptor::reset()
+        bool RemoteCNC::reset()
         {
-                r_debug("RPCCNCClientAdaptor::reset");
+                r_debug("RemoteCNC::reset");
                 return execute_simple_request("reset");
         }
 }

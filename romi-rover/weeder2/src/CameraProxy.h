@@ -27,11 +27,11 @@
 
 #include <string>
 #include <rcom.h>
-#include "ICamera.h"
+#include "Camera.h"
 
 namespace romi {
 
-        class CameraProxy : public ICamera {
+        class CameraProxy : public Camera {
         protected:
                 std::string _name;
                 std::string _resource;

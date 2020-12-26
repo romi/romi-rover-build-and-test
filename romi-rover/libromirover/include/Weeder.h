@@ -21,22 +21,18 @@
   <http://www.gnu.org/licenses/>.
 
  */
-
-#ifndef __ROMI_I_CAMERA_H
-#define __ROMI_I_CAMERA_H
-
-#include "Image.h"
-#include "JsonCpp.h"
+#ifndef _ROMI_WEEDER_H_
+#define _ROMI_WEEDER_H_
 
 namespace romi {
-
-        class ICamera {
+        
+        class Weeder
+        {
         public:
-                virtual ~ICamera() = default;
-                virtual int set_parameter(const char *name, JsonCpp value) = 0;
-                virtual bool open() = 0;
-                virtual bool grab(Image &image) = 0;
+                virtual ~Weeder() = default;
+
+                virtual bool hoe() = 0;
         };
 }
 
-#endif // __ROMI_I_CAMERA_H
+#endif // _ROMI_WEEDER_H_

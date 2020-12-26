@@ -21,14 +21,14 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "RPCCNCServerAdaptor.h"
+#include "CNCAdaptor.h"
 
 namespace romi {
 
-        void RPCCNCServerAdaptor::execute(const char *method, JsonCpp& params,
-                                          JsonCpp& result, rcom::RPCError &error)
+        void CNCAdaptor::execute(const char *method, JsonCpp& params,
+                                 JsonCpp& result, rcom::RPCError &error)
         {
-                r_debug("RPCCNCServerAdaptor::execute");
+                r_debug("CNCAdaptor::execute");
 
                 error.code = 0;
                 
@@ -64,9 +64,10 @@ namespace romi {
                 }
         }
 
-        void RPCCNCServerAdaptor::handle_get_range(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
+        void CNCAdaptor::handle_get_range(JsonCpp& params, JsonCpp& result,
+                                          rcom::RPCError &error)
         {
-                r_debug("RPCCNCServerAdaptor::handle_get_range");
+                r_debug("CNCAdaptor::handle_get_range");
                 CNCRange range;
                 if (_cnc.get_range(range)) {
                         result = JsonCpp::construct("[[%f,%f],[%f,%f],[%f,%f]]",
@@ -74,41 +75,43 @@ namespace romi {
                                                     range._y[0], range._y[1],
                                                     range._z[0], range._z[1]);
                 } else {
-                        r_err("RPCCNCServerAdaptor::handle_get_range failed");
+                        r_err("CNCAdaptor::handle_get_range failed");
                         error.code = 1;
                         error.message = "get_range failed";
                 }
         }
         
-        void RPCCNCServerAdaptor::handle_moveto(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
+        void CNCAdaptor::handle_moveto(JsonCpp& params, JsonCpp& result,
+                                       rcom::RPCError &error)
         {
-                r_debug("RPCCNCServerAdaptor::handle_moveto");
+                r_debug("CNCAdaptor::handle_moveto");
 
                 {
                         char buffer[256];
                         json_tostring(params.ptr(), buffer, 256);
-                        r_debug("RPCCNCServerAdaptor::handle_moveto: %s", buffer);
+                        r_debug("CNCAdaptor::handle_moveto: %s", buffer);
                 }
 
                 try {
-                        double x = params.num("x", ICNC::UNCHANGED);
-                        double y = params.num("y", ICNC::UNCHANGED);
-                        double z = params.num("z", ICNC::UNCHANGED);
+                        double x = params.num("x", CNC::UNCHANGED);
+                        double y = params.num("y", CNC::UNCHANGED);
+                        double z = params.num("z", CNC::UNCHANGED);
                         double v = params.num("speed", 0.2);
                         
-                        r_debug("RPCCNCServerAdaptor::handle_moveto: %f, %f, %f", x, y, z);
+                        r_debug("CNCAdaptor::handle_moveto: %f, %f, %f", x, y, z);
                         _cnc.moveto(x, y, z, v);
 
                 } catch (JSONError &je) {
-                        r_err("RPCCNCServerAdaptor::handle_moveto failed: %s", je.what());
+                        r_err("CNCAdaptor::handle_moveto failed: %s", je.what());
                         error.code = 1;
                         error.message = je.what();
                 }
         }
         
-        void RPCCNCServerAdaptor::handle_spindle(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
+        void CNCAdaptor::handle_spindle(JsonCpp& params, JsonCpp& result,
+                                        rcom::RPCError &error)
         {
-                r_debug("RPCCNCServerAdaptor::handle_spindle");
+                r_debug("CNCAdaptor::handle_spindle");
                 
                 try {
                         double speed = params.num("speed");
@@ -118,15 +121,16 @@ namespace romi {
                         }
 
                 } catch (JSONError &je) {
-                        r_err("RPCCNCServerAdaptor::handle_spindle failed: %s", je.what());
+                        r_err("CNCAdaptor::handle_spindle failed: %s", je.what());
                         error.code = 1;
                         error.message = je.what();
                 }
         }
         
-        void RPCCNCServerAdaptor::handle_travel(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
+        void CNCAdaptor::handle_travel(JsonCpp& params, JsonCpp& result,
+                                       rcom::RPCError &error)
         {
-                r_debug("RPCCNCServerAdaptor::handle_travel");
+                r_debug("CNCAdaptor::handle_travel");
                 
                 try {
                         Path path;
@@ -147,15 +151,16 @@ namespace romi {
                         }
 
                 } catch (JSONError &je) {
-                        r_err("RPCCNCServerAdaptor::handle_spindle failed: %s", je.what());
+                        r_err("CNCAdaptor::handle_spindle failed: %s", je.what());
                         error.code = 1;
                         error.message = je.what();
                 }
         }
         
-        void RPCCNCServerAdaptor::handle_homing(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
+        void CNCAdaptor::handle_homing(JsonCpp& params, JsonCpp& result,
+                                       rcom::RPCError &error)
         {
-                r_debug("RPCCNCServerAdaptor::handle_homing");
+                r_debug("CNCAdaptor::handle_homing");
                 
                 if (!_cnc.homing()) {
                         error.code = 1;
@@ -163,27 +168,30 @@ namespace romi {
                 }
         }
 
-        void RPCCNCServerAdaptor::handle_stop(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
+        void CNCAdaptor::handle_stop(JsonCpp& params, JsonCpp& result,
+                                     rcom::RPCError &error)
         {
-                r_debug("RPCCNCServerAdaptor::handle_stop");
+                r_debug("CNCAdaptor::handle_stop");
                 if (!_cnc.stop_execution()) {
                         error.code = 1;
                         error.message = "stop failed";
                 }
         }
 
-        void RPCCNCServerAdaptor::handle_continue(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
+        void CNCAdaptor::handle_continue(JsonCpp& params, JsonCpp& result,
+                                         rcom::RPCError &error)
         {
-                r_debug("RPCCNCServerAdaptor::handle_continue");
+                r_debug("CNCAdaptor::handle_continue");
                 if (!_cnc.continue_execution()) {
                         error.code = 1;
                         error.message = "continue failed";
                 }
         }
 
-        void RPCCNCServerAdaptor::handle_reset(JsonCpp& params, JsonCpp& result, rcom::RPCError &error)
+        void CNCAdaptor::handle_reset(JsonCpp& params, JsonCpp& result,
+                                      rcom::RPCError &error)
         {
-                r_debug("RPCCNCServerAdaptor::handle_reset");
+                r_debug("CNCAdaptor::handle_reset");
                 if (!_cnc.reset()) {
                         error.code = 1;
                         error.message = "reset failed";

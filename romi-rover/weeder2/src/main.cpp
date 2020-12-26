@@ -31,11 +31,11 @@
 #include "ConfigurationFile.h"
 #include "CameraFactory.h"
 #include "CameraServer.h"
-#include "Weeder.h"
+#include "RoverWeeder.h"
 #include "Pipeline.h"
 #include "DebugWeedingSession.h"
 #include "RPCClient.h"
-#include "RPCCNCClientAdaptor.h"
+#include "RemoteCNC.h"
 
 using namespace romi;
 using namespace rcom;
@@ -111,9 +111,9 @@ struct Options {
         }
 };
 
-static ICNC *cnc = 0;
+static CNC *cnc = 0;
 static RPCClient *rpc_client = 0;
-static ICamera *camera = 0;
+static Camera *camera = 0;
 
 const char *get_camera_class(Options &options, IConfiguration &config)
 {
@@ -138,7 +138,7 @@ void get_camera_config(const char *camera_class, IConfiguration &config, JsonCpp
                        camera_class);  
 }
 
-ICamera *create_camera(Options &options, IConfiguration &config)
+Camera *create_camera(Options &options, IConfiguration &config)
 {
         const char *camera_class = get_camera_class(options, config);
         if (camera_class == 0)
@@ -148,7 +148,7 @@ ICamera *create_camera(Options &options, IConfiguration &config)
         JsonCpp camera_config;
         get_camera_config(camera_class, config, camera_config);
         
-        ICamera *camera = CameraFactory::create(camera_class, camera_config);
+        Camera *camera = CameraFactory::create(camera_class, camera_config);
         if (camera == 0) {
                 r_err("Failed to create the camera '%s'", camera_class);
                 throw std::runtime_error("Failed to create the camera");
@@ -169,14 +169,14 @@ const char *get_cnc_class(Options &options, IConfiguration &config)
         return cnc_class;
 }
 
-ICNC *create_cnc(Options &options, IConfiguration &config)
+CNC *create_cnc(Options &options, IConfiguration &config)
 {
         const char *cnc_class = get_cnc_class(options, config);
         if (cnc_class == 0)
                 throw std::runtime_error("No CNC class was defined in the options "
                                          "or in the configuration file.");
         
-        ICNC *cnc = 0;
+        CNC *cnc = 0;
         
         if (rstreq(cnc_class, FakeCNC::ClassName)) {
                 try {
@@ -185,12 +185,12 @@ ICNC *create_cnc(Options &options, IConfiguration &config)
                         r_warn("Failed to configure FakeCNC: %s", je.what());
                 }
                 
-        } else if (rstreq(cnc_class, RPCCNCClientAdaptor::ClassName)) {
+        } else if (rstreq(cnc_class, RemoteCNC::ClassName)) {
                 const char *name = options.cnc_name;
                 if (name == 0)
                         name = "oquam";
                 rpc_client = new RPCClient(name, "cnc");
-                cnc = new RPCCNCClientAdaptor(rpc_client);
+                cnc = new RemoteCNC(rpc_client);
         }
 
         if (cnc == 0) {
@@ -201,7 +201,7 @@ ICNC *create_cnc(Options &options, IConfiguration &config)
         return cnc;
 }
 
-void init_cnc_range(ICNC *cnc, CNCRange &range)
+void init_cnc_range(CNC *cnc, CNCRange &range)
 {
         bool success = false;
         for (int attempt = 1; attempt <= 10; attempt++) {
@@ -234,10 +234,10 @@ int main(int argc, char** argv)
                 ConfigurationFile config(options.config_file);
 
                 // Instantiate the camera
-                ICamera *camera = create_camera(options, config);
+                Camera *camera = create_camera(options, config);
                 
                 // Instantiate the CNC
-                ICNC *cnc = create_cnc(options, config);
+                CNC *cnc = create_cnc(options, config);
 
                 CNCRange range;
                 init_cnc_range(cnc, range);
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
                 
                 DebugWeedingSession session(options.output_directory, "weeder");
                 
-                Weeder weeder(&config, camera, &pipeline, cnc, range, session);
+                RoverWeeder weeder(&config, camera, &pipeline, cnc, range, session);
                 
                 RPCServer weeder_server(weeder,
                                         options.server_name,

@@ -30,7 +30,7 @@
 #include "CameraFile.h"
 #include "ConfigurationFile.h"
 
-#include "Weeder.h"
+#include "RoverWeeder.h"
 #include "Pipeline.h"
 #include "DebugWeedingSession.h"
 
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
                 cnc.get_range(range);
                 Pipeline pipeline(range, config.get());
                 DebugWeedingSession session(options.output_directory, options.output_name);
-                Weeder weeder(&config, &camera, &pipeline, &cnc, range, session);
+                RoverWeeder weeder(&config, &camera, &pipeline, &cnc, range, session);
                 
                 weeder.hoe();
                 

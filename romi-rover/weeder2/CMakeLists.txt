@@ -7,6 +7,8 @@ set(CMAKE_BUILD_TYPE Debug)
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/src" )
 
 add_executable(weeder2
+  src/CameraServer.h
+  src/CameraServer.cpp
   src/IImageCropper.h
   src/ImageCropperFactory.h
   src/ImageCropperFactory.cpp
@@ -15,8 +17,8 @@ add_executable(weeder2
   src/IImageSegmentation.h
   src/ImageSegmentationFactory.h
   src/ImageSegmentationFactory.cpp
-  src/RPCCNCClientAdaptor.h
-  src/RPCCNCClientAdaptor.cpp
+  src/RemoteCNC.h
+  src/RemoteCNC.cpp
   src/svm/SVMSegmentation.h
   src/svm/SVMSegmentation.cpp
   src/quincunx/Quincunx.h
@@ -34,9 +36,10 @@ add_executable(weeder2
   src/Pipeline.h
   src/Pipeline.cpp
   src/CameraFactory.cpp
-  src/Weeder.h
-  src/Weeder.cpp
-  src/CameraUSB.cpp
+  src/RoverWeeder.h
+  src/RoverWeeder.cpp
+  src/USBCamera.h
+  src/USBCamera.cpp
   src/camera_v4l.c
   src/main.cpp)
 
@@ -52,8 +55,8 @@ add_executable(weeder2_eval
   src/IImageSegmentation.h
   src/ImageSegmentationFactory.h
   src/ImageSegmentationFactory.cpp
-  src/RPCCNCClientAdaptor.h
-  src/RPCCNCClientAdaptor.cpp
+  src/RemoteCNC.h
+  src/RemoteCNC.cpp
   src/svm/SVMSegmentation.h
   src/svm/SVMSegmentation.cpp
   src/quincunx/Quincunx.h
@@ -71,9 +74,10 @@ add_executable(weeder2_eval
   src/Pipeline.h
   src/Pipeline.cpp
   src/CameraFactory.cpp
-  src/Weeder.h
-  src/Weeder.cpp
-  src/CameraUSB.cpp
+  src/RoverWeeder.h
+  src/RoverWeeder.cpp
+  src/USBCamera.h
+  src/USBCamera.cpp
   src/camera_v4l.c
   src/eval.cpp)
 

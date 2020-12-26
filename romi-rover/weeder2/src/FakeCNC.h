@@ -25,11 +25,11 @@
 #define __ROMI_FAKE_CNC_H
 
 #include "IConfiguration.h"
-#include "ICNC.h"
+#include "CNC.h"
 
 namespace romi {
         
-        class FakeCNC : public ICNC
+        class FakeCNC : public CNC
         {
         public:
                 static constexpr const char *ClassName = "fake-cnc";

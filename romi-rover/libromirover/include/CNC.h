@@ -21,8 +21,8 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_I_CNC_H
-#define __ROMI_I_CNC_H
+#ifndef __ROMI_CNC_H
+#define __ROMI_CNC_H
 
 #include "IConfiguration.h"
 #include "Path.h"
@@ -30,13 +30,13 @@
 
 namespace romi {
         
-        class ICNC
+        class CNC
         {
         public:
 
                 static constexpr double UNCHANGED = -999999.0;
                 
-                virtual ~ICNC() = default;
+                virtual ~CNC() = default;
 
                 virtual bool get_range(CNCRange &range) = 0;
 
@@ -55,8 +55,7 @@ namespace romi {
                 virtual bool stop_execution() = 0;
                 virtual bool continue_execution() = 0;
                 virtual bool reset() = 0;
-                                
         };
 }
 
-#endif // __ROMI_I_CNC_H
+#endif // __ROMI_CNC_H

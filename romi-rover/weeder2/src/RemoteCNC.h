@@ -21,16 +21,16 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_RPC_CNC_CLIENT_ADAPTOR_H
-#define __ROMI_RPC_CNC_CLIENT_ADAPTOR_H
+#ifndef __ROMI_REMOTE_CNC_H
+#define __ROMI_REMOTE_CNC_H
 
 #include <stdexcept>
 #include "IRPCHandler.h"
-#include "ICNC.h"
+#include "CNC.h"
 
 namespace romi {
 
-        class RPCCNCClientAdaptor : public ICNC
+        class RemoteCNC : public CNC
         {
         public:
                 static constexpr const char *ClassName = "rpc-cnc";
@@ -44,13 +44,13 @@ namespace romi {
                 bool execute_simple_request(const char *method);
 
         public:
-                RPCCNCClientAdaptor(rcom::IRPCHandler *rpc_handler)
+                RemoteCNC(rcom::IRPCHandler *rpc_handler)
                         : _client(rpc_handler) {
                         if (_client == 0) {
-                                throw std::runtime_error("RPCCNCClientAdaptor: client=0");
+                                throw std::runtime_error("RemoteCNC: client=0");
                         }
                 }
-                virtual ~RPCCNCClientAdaptor() = default;
+                virtual ~RemoteCNC() = default;
 
                 bool get_range(CNCRange &range) override;
                 bool moveto(double x, double y, double z,
@@ -65,4 +65,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_RPC_CNC_CLIENT_ADAPTOR_H
+#endif // __ROMI_REMOTE_CNC_H

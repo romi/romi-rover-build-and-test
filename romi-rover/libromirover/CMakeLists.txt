@@ -8,8 +8,8 @@ set(SOURCES
   include/CNCRange.h
   include/ConfigurationFile.h
   include/DebugWeedingSession.h
-  include/ICamera.h
-  include/ICNC.h
+  include/Camera.h
+  include/CNC.h
   include/IConfiguration.h
   include/IFileCabinet.h
   include/IFolder.h
@@ -18,6 +18,7 @@ set(SOURCES
   include/Navigation.h
   include/JSONConfiguration.h
   include/Path.h 
+  include/Weeder.h
   src/CNCRange.cpp
   src/DebugWeedingSession.cpp
   src/image_impl.c

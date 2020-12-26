@@ -22,8 +22,8 @@ set(SOURCES
   src/plotter.h
   src/Oquam.cpp
   src/Oquam.h
-  src/RPCCNCServerAdaptor.h
-  src/RPCCNCServerAdaptor.cpp
+  src/CNCAdaptor.h
+  src/CNCAdaptor.cpp
   )
 
 add_executable(oquam ${SOURCES})
