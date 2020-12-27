@@ -28,44 +28,39 @@ namespace romi {
         void ScriptMenu::first_menu_item(std::string& name)
         {
                 _current_menu = 0;
-                current_menu_item(name);
+                get_current_menu(name);
         }
 
         bool ScriptMenu::has_menus()
         {
-                return _script_engine.count_scripts() > 0;
+                return _scripts.size() > 0;
         }
         
         void ScriptMenu::next_menu_item(std::string& name)
         {
                 if (has_menus()
-                    && _current_menu < _script_engine.count_scripts() - 1)
+                    && _current_menu < (int) _scripts.size() - 1)
                         _current_menu++;
-                current_menu_item(name);
+                get_current_menu(name);
         }
         
         void ScriptMenu::previous_menu_item(std::string& name)
         {
                 if (_current_menu > 0)
                         _current_menu--;
-                current_menu_item(name);
+                get_current_menu(name);
         }
 
-        void ScriptMenu::current_menu_item(std::string& name)
+        void ScriptMenu::get_current_menu(std::string& name)
         {
-                std::string id;
-                if (has_menus())
-                        _script_engine.get_script(_current_menu, id, name);
+                if (has_menus()) 
+                        name = _scripts[_current_menu].title;
                 else
                         name = "No menus!";
         }
         
-        void ScriptMenu::current_menu_item_id(std::string& id)
+        int ScriptMenu::get_current_index() 
         {
-                std::string name;
-                if (has_menus())
-                        _script_engine.get_script(_current_menu, id, name);
-                else
-                        id = "No menus!";
+                return _current_menu;
         }
 }

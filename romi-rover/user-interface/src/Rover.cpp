@@ -21,38 +21,29 @@
   <http://www.gnu.org/licenses/>.
 
  */
-
-#ifndef __ROMI_USER_INTERFACE_H
-#define __ROMI_USER_INTERFACE_H
-
 #include "Rover.h"
-#include "StateMachine.h"
 
 namespace romi {
         
-        class UserInterface
+        Rover::Rover(InputDevice &input_device_,
+                     Display &display_,
+                     SpeedController &speed_controller_,
+                     Navigation& navigation_,
+                     EventTimer &event_timer_,
+                     Menu &menu_,
+                     ScriptEngine<Rover>& script_engine_,
+                     Notifications& notifications_,
+                     Weeder& weeder_)
+                : input_device(input_device_),
+                  display(display_),
+                  speed_controller(speed_controller_),
+                  navigation(navigation_),
+                  event_timer(event_timer_),
+                  menu(menu_),
+                  script_engine(script_engine_),
+                  notifications(notifications_),
+                  weeder(weeder_)
         {
-        protected:
+        }
 
-                void handle_input_events();
-                void handle_timer_events();
-                void handle_script_events();
-                
-        public:
-                Rover& _rover;
-                StateMachine<Rover>& _state_machine;
-
-                UserInterface(Rover& rover,
-                              StateMachine<Rover>& state_machine);
-                
-                virtual ~UserInterface() = default;
-
-                void handle_events();
-
-                int get_state() {
-                        return _state_machine.get_state();
-                }
-
-        };
 }
-#endif // __ROMI_USER_INTERFACE_H

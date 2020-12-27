@@ -36,8 +36,8 @@ namespace romi {
                 virtual void first_menu_item(std::string& name) = 0;
                 virtual void next_menu_item(std::string& name) = 0;
                 virtual void previous_menu_item(std::string& name) = 0;
-                virtual void current_menu_item(std::string& name) = 0;
-                virtual void current_menu_item_id(std::string& id) = 0;
+                virtual void get_current_menu(std::string& name) = 0;
+                virtual int get_current_index() = 0;
         };
 }
 

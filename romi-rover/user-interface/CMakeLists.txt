@@ -18,43 +18,47 @@ set(SOURCES
   include/FakeInputDevice.h
   include/FakeNavigation.h
   include/FakeNotifications.h
-  include/FakeScriptEngine.h
   include/FluidSoundNotifications.h
   include/InputDevice.h
   include/Joystick.h
   include/JoystickEventMapper.h
   include/JoystickInputDevice.h
+  include/RoverScriptEngine.h
   include/FakeDisplay.h
   include/CrystalDisplay.h
-  include/FakeWeeder.h
   include/LinuxJoystick.h
   include/Menu.h
   include/Notifications.h
   include/RemoteNavigation.h
   include/ScriptEngine.h
+  include/Rover.h
   include/ScriptMenu.h
+  include/ScriptList.h
   include/SpeedController.h
   include/SpeedConverter.h
   include/StateMachine.h
   include/UIEventMapper.h
   include/UIFactory.h
-  include/UIOptions.h
+  include/UIOptions.h 
+  include/UIStateMachine.h
   include/UserInterface.h
   src/DefaultSpeedController.cpp
   src/DefaultEventTimer.cpp
-  src/FakeScriptEngine.cpp
   src/FluidSoundNotifications.cpp
+  src/RoverScriptEngine.cpp
   src/JoystickInputDevice.cpp
   src/CrystalDisplay.cpp
   src/LinuxJoystick.cpp
   src/main.cpp
   src/RemoteNavigation.cpp
+  src/Rover.cpp
   src/ScriptMenu.cpp
+  src/ScriptList.cpp
   src/SpeedConverter.cpp
   src/UIEventMapper.cpp
   src/UIFactory.cpp
   src/UIOptions.cpp
-  src/UIStateTransitions.cpp
+  src/UIStateMachine.cpp
   src/UserInterface.cpp
   )
 

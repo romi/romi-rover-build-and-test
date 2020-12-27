@@ -31,9 +31,7 @@ namespace romi {
         JoystickInputDevice::JoystickInputDevice(Joystick &joystick,
                                                  JoystickEventMapper &event_mapper)
                 : _joystick(joystick),
-                  _event_mapper(event_mapper),
-                  _timestamp_last_event(0.0),
-                  _input_delay(10.0) {
+                  _event_mapper(event_mapper) {
                 
                 assure_number_of_axes(axis_last);
                 assure_number_of_buttons(button_last);
@@ -65,36 +63,7 @@ namespace romi {
                 JoystickEvent& joystick_event = _joystick.get_next_event();
                 if (joystick_event.type != JoystickEvent::None) {
                         event = _event_mapper.map(_joystick, joystick_event);
-                        update_timestamp();
-                } else {
-                        event = check_timeout_event();
                 }
-                return event;
-        }
-        
-        void JoystickInputDevice::update_timestamp()
-        {
-                _timestamp_last_event = clock_time();
-        }
-        
-        void JoystickInputDevice::reset_timestamp()
-        {
-                _timestamp_last_event = 0.0;
-        }
-        
-        bool JoystickInputDevice::did_timestamp_time_out()
-        {
-                return (_timestamp_last_event > 0.0
-                        && clock_time() - _timestamp_last_event > _input_delay);
-        }
-        
-        int JoystickInputDevice::check_timeout_event()
-        {
-                int event = event_none;
-                if (did_timestamp_time_out()) {
-                        event = event_input_timeout;
-                        reset_timestamp();
-                }  
                 return event;
         }
 

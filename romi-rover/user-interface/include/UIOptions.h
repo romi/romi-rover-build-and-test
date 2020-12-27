@@ -35,6 +35,7 @@ namespace romi {
                 const char *navigation_server_name;
                 const char *display_device;
                 const char *display_classname;
+                const char *script_file;
 
                 UIOptions() {
                         config_file = "config.json";
@@ -44,6 +45,7 @@ namespace romi {
                         joystick_device = 0;
                         navigation_classname = 0;
                         navigation_server_name = 0;
+                        script_file = 0;
                 }
 
                 void parse(int argc, char** argv);

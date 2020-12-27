@@ -163,27 +163,27 @@ add_test(
 )
 
 
-set(SRCS_USERINTERFACE 
-  src/tests_main.cpp
-  src/tests_userinterface.cpp
-  mock/mock_inputdevice.h
-  mock/mock_navigation.h
-  mock/mock_display.h
-  ../include/UserInterface.h
-  ../src/UserInterface.cpp
-  ../include/StateMachine.h
-  ../include/UIStateTransitions.h
-  ../src/UIStateTransitions.cpp
-  )
-
-add_executable(romi_rover_unit_tests_userinterface_userinterface ${SRCS_USERINTERFACE})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_userinterface_userinterface rcompp romirover gtest gmock)
-
-add_test(
-    NAME romi_rover_unit_tests_userinterface_userinterface
-    COMMAND romi_rover_unit_tests_userinterface_userinterface
-)
+#set(SRCS_USERINTERFACE 
+#  src/tests_main.cpp
+#  src/tests_userinterface.cpp
+#  mock/mock_inputdevice.h
+#  mock/mock_navigation.h
+#  mock/mock_display.h
+#  ../include/UserInterface.h
+#  ../src/UserInterface.cpp
+#  ../include/StateMachine.h
+#  ../include/UIStateTransitions.h
+#  ../src/UIStateTransitions.cpp
+#  )
+#
+#add_executable(romi_rover_unit_tests_userinterface_userinterface ${SRCS_USERINTERFACE})
+#include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+#target_link_libraries(romi_rover_unit_tests_userinterface_userinterface rcompp romirover gtest gmock)
+#
+#add_test(
+#    NAME romi_rover_unit_tests_userinterface_userinterface
+#    COMMAND romi_rover_unit_tests_userinterface_userinterface
+#)
 
 
 if(BUILD_COVERAGE)
@@ -199,6 +199,7 @@ if(BUILD_COVERAGE)
                          romi_rover_unit_tests_userinterface_remotenavigation
                          romi_rover_unit_tests_userinterface_crystaldisplay
                          romi_rover_unit_tests_userinterface_statemachine
-                         romi_rover_unit_tests_userinterface_userinterface)
+                         #romi_rover_unit_tests_userinterface_userinterface
+                         )
 endif()
 

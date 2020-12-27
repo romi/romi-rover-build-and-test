@@ -24,11 +24,12 @@
 #ifndef _ROMI_FAKE_WEEDER_H_
 #define _ROMI_FAKE_WEEDER_H_
 
-#include "IWeeder.h"
+#include <r.h>
+#include "Weeder.h"
 
 namespace romi {
         
-        class FakeWeeder : public IWeeder
+        class FakeWeeder
         {
         public:
                 FakeWeeder() {}

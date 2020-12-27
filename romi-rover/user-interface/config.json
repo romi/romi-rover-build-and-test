@@ -4,7 +4,7 @@
         "display-classname": "crystal-display",
         "navigation-classname": "remote-navigation",
         "input-device-classname": "joystick",
-        "sound-notifications": "fluid-sounds",
+        "notifications": "fluid-sounds",
         
         "speed-controller": {
             "fast": {
@@ -42,6 +42,10 @@
                 "notify-leave-navigation-mode": 21,
                 "notify-moving": 7
             }
+        },
+        
+        "rover-script-engine": {
+            "script-file": "scripts.json"
         }
     },
     "ports": {

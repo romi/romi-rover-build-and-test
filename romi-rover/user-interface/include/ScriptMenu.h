@@ -21,35 +21,35 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _ROMI_DEFAULT_MENU_H
-#define _ROMI_DEFAULT_MENU_H
+#ifndef _ROMI_SCRIPT_MENU_H
+#define _ROMI_SCRIPT_MENU_H
 
 #include <vector>
 #include "Menu.h"
-#include "ScriptEngine.h"
+#include "ScriptList.h"
 
 namespace romi {
         
         class ScriptMenu : public Menu
         {
         protected:
-                ScriptEngine& _script_engine;
+                ScriptList& _scripts;
                 int _current_menu;
 
                 bool has_menus();
                 
         public:
-                ScriptMenu(ScriptEngine& script_engine)
-                        : _script_engine(script_engine), _current_menu(0) {}
+                ScriptMenu(ScriptList& scripts)
+                        : _scripts(scripts), _current_menu(0) {}
                 
                 virtual ~ScriptMenu() override = default;
                 
                 void first_menu_item(std::string& name) override;
                 void next_menu_item(std::string& name) override;
                 void previous_menu_item(std::string& name) override;
-                void current_menu_item(std::string& name) override;
-                void current_menu_item_id(std::string& id) override;
+                void get_current_menu(std::string& name) override ;
+                int get_current_index() override;
         };
 }
 
-#endif // _ROMI_DEFAULT_MENU_H
+#endif // _ROMI_SCRIPT_MENU_H

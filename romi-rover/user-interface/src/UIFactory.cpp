@@ -31,34 +31,19 @@
 #include "JoystickInputDevice.h"
 #include "FakeInputDevice.h"
 
+using namespace std;
+using namespace rcom;
+
 namespace romi {
         
         UIFactory::UIFactory()
-                : _serial(0),
-                  _romi_serial(0),
-                  _rpc_client(0),
-                  _joystick(0),
-                  _display(0),
-                  _navigation(0),
-                  _input_device(0)
+                : _serial(0)
         {}
         
         UIFactory::~UIFactory()
         {
-                if (_navigation)
-                        delete _navigation;
-                if (_rpc_client)
-                        delete _rpc_client;
-                if (_display)
-                        delete _display;
-                if (_romi_serial)
-                        delete _romi_serial;
                 if (_serial)
                         delete _serial;
-                if (_joystick)
-                        delete _joystick;
-                if (_input_device)
-                        delete _input_device;
         }
         
         Display& UIFactory::create_display(UIOptions &options, JsonCpp &config)
@@ -117,16 +102,16 @@ namespace romi {
         
         void UIFactory::instantiate_fake_display()
         {
-                _display = new FakeDisplay();
+                _display = std::unique_ptr<Display>(new FakeDisplay());
         }
         
         void UIFactory::instantiate_crystal_display(UIOptions &options, JsonCpp &config)
         {
                 const char *device = get_crystal_display_device(options, config);
                 _serial = new RSerial(device, 115200, 1);
-                _romi_serial = new RomiSerialClient(_serial, _serial);
+                _romi_serial = unique_ptr<RomiSerialClient>(new RomiSerialClient(_serial, _serial));
                 _romi_serial->set_debug(true);
-                _display = new CrystalDisplay(*_romi_serial);
+                _display = std::unique_ptr<Display>(new CrystalDisplay(*_romi_serial));
         }
 
         const char *UIFactory::get_crystal_display_device(UIOptions &options,
@@ -152,9 +137,6 @@ namespace romi {
                 }
                 return device_name;
         }
-        
-        
-
         
         Navigation& UIFactory::create_navigation(UIOptions &options, JsonCpp &config)
         {
@@ -213,14 +195,14 @@ namespace romi {
                 
         void UIFactory::instantiate_fake_navigation()
         {
-                _navigation = new FakeNavigation();
+                _navigation = unique_ptr<Navigation>(new FakeNavigation());
         }
 
         void UIFactory::instantiate_remote_navigation(UIOptions &options, JsonCpp &config)
         {
                 const char *server_name = get_remote_navigation_server(options, config);
-                _rpc_client = new rcom::RPCClient(server_name, "navigation");
-                _navigation = new RemoteNavigation(*_rpc_client);
+                _rpc_client = unique_ptr<RPCClient>(new RPCClient(server_name, "navigation"));
+                _navigation = unique_ptr<Navigation>(new RemoteNavigation(*_rpc_client));
         }
         
         const char *UIFactory::get_remote_navigation_server(UIOptions &options,
@@ -300,15 +282,16 @@ namespace romi {
         
         void UIFactory::instantiate_fake_input_device()
         {
-                _input_device = new FakeInputDevice();
+                _input_device = std::unique_ptr<InputDevice>(new FakeInputDevice());
         }
         
         void UIFactory::instantiate_joystick(UIOptions& options, JsonCpp& config)
         {
                 const char *joystick_device = get_joystick_device(options, config);
-                _joystick = new LinuxJoystick(_linux, joystick_device);
+                _joystick = std::unique_ptr<LinuxJoystick>(new LinuxJoystick(_linux, joystick_device));
                 _joystick->set_debug(true);
-                _input_device = new JoystickInputDevice(*_joystick, _joystick_event_mapper);
+                _input_device = std::unique_ptr<InputDevice>(new JoystickInputDevice(*_joystick,
+                                                                                     _joystick_event_mapper));
         }
 
         const char *UIFactory::get_joystick_device(UIOptions& options, JsonCpp& config)
@@ -332,5 +315,28 @@ namespace romi {
                         throw std::runtime_error("No joystick device specified");
                 }
                 return joystick_device;
+        }
+
+        const char *UIFactory::get_script_file(UIOptions &options, JsonCpp &config)
+        {
+                const char *path = options.script_file;
+                if (path == 0) {
+                        path = get_script_file_in_config(config);
+                }
+                return path;
+        }
+
+        const char *UIFactory::get_script_file_in_config(JsonCpp &config)
+        {
+                const char *path = 0;
+                try {
+                        path = config["user-interface"]["rover-script-engine"]["script-file"];
+                        
+                } catch (JSONError &je) {
+                        r_warn("Failed to get the value for "
+                               "user-interface.rover-script-engine.script-file: %s", je.what());
+                        throw std::runtime_error("No script file");
+                }
+                return path;
         }
 }

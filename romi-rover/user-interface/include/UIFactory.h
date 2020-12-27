@@ -22,6 +22,8 @@
 
  */
 
+#include <memory>
+
 #include "Navigation.h"
 #include "Display.h"
 #include "InputDevice.h"
@@ -47,15 +49,16 @@ namespace romi {
         protected:
 
                 rpp::Linux _linux;
-                RSerial *_serial;
-                RomiSerialClient *_romi_serial;
-                rcom::RPCClient *_rpc_client; 
-                LinuxJoystick *_joystick;
                 UIEventMapper _joystick_event_mapper;
+                
+                RSerial *_serial;
+                std::unique_ptr<RomiSerialClient> _romi_serial;
+                std::unique_ptr<rcom::RPCClient> _rpc_client; 
+                std::unique_ptr<LinuxJoystick> _joystick;
 
-                Display *_display;
-                Navigation *_navigation;
-                InputDevice *_input_device;
+                std::unique_ptr<Display> _display;
+                std::unique_ptr<Navigation> _navigation;
+                std::unique_ptr<InputDevice> _input_device;
                 
 
                 // Display
@@ -95,16 +98,26 @@ namespace romi {
                 void instantiate_joystick(UIOptions& options, JsonCpp& config);
                 const char *get_joystick_device(UIOptions& options, JsonCpp& config);
                 const char *get_joystick_device_in_config(JsonCpp& config);
+
                 
+                const char *get_script_file_in_config(JsonCpp &config);
                 
         public:
 
                 UIFactory();
                 virtual ~UIFactory();
                 
-                Display& create_display(UIOptions& options, JsonCpp& config);
-                Navigation& create_navigation(UIOptions& options, JsonCpp& config);
-                InputDevice& create_input_device(UIOptions& options, JsonCpp& config);
+                Display& create_display(UIOptions& options,
+                                        JsonCpp& config);
+
+                Navigation& create_navigation(UIOptions& options,
+                                              JsonCpp& config);
+                
+                InputDevice& create_input_device(UIOptions& options,
+                                                 JsonCpp& config);
+                
+                const char *get_script_file(UIOptions &options,
+                                             JsonCpp &config);
         };
 }
 

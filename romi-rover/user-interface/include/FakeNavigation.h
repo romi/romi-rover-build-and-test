@@ -38,17 +38,17 @@ namespace romi {
                 virtual ~FakeNavigation() override = default;
                 
                 bool moveat(double left, double right) override {
-                        r_debug("moveat(left=%0.3f, right=%0.3f)", left, right);
+                        r_debug("FakeNavigation: moveat(left=%0.3f, right=%0.3f)", left, right);
                         return true;
                 }
 
                 bool move(double distance, double speed) override {
-                        r_debug("move(distance=%0.3f, speed=%0.3f)", distance, speed);
+                        r_debug("FakeNavigation: move(distance=%0.3f, speed=%0.3f)", distance, speed);
                         return true;
                 }
 
                 bool stop() override {
-                        r_debug("stop()");
+                        r_debug("FakeNavigation: stop");
                         return true;
                 }
         };

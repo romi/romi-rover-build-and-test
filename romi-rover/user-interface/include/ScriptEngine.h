@@ -24,20 +24,18 @@
 #ifndef _ROMI_SCRIPT_ENGINE_H
 #define _ROMI_SCRIPT_ENGINE_H
 
+#include "ScriptList.h"
 #include "EventSource.h"
 
 namespace romi {
         
+        template <class T>
         class ScriptEngine : public EventSource
         {
         public:
                 virtual ~ScriptEngine() = default;
 
-                virtual int count_scripts() = 0;
-                virtual void get_script(int index,
-                                        std::string& id,
-                                        std::string& name) = 0;
-                virtual void execute_script(std::string& id) = 0;
+                virtual void execute_script(T& target, int id) = 0;
         };
 }
 

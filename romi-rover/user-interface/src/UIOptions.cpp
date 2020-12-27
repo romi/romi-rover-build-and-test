@@ -30,7 +30,7 @@
 
 namespace romi {
         
-        static const char *optchars = "hC:N:T:D:n:T:";
+        static const char *optchars = "hC:N:T:D:n:T:S:I:";
         
         static struct option long_options[] = {
                 {"help", no_argument, 0, 'h'},
@@ -41,6 +41,7 @@ namespace romi {
                 {"navigation-server-name", required_argument, 0, 'N'},
                 {"display-device", required_argument, 0, 'D'},
                 {"display-classname", required_argument, 0, 'T'},
+                {"script-file", required_argument, 0, 'S'},
                 {0, 0, 0, 0}
         };
         
@@ -78,6 +79,9 @@ namespace romi {
                         case 'T':
                                 display_classname = optarg;
                                 break;
+                        case 'S':
+                                script_file = optarg;
+                                break;
                         }
                 }
         }
@@ -109,6 +113,9 @@ namespace romi {
                         break;
                 case 'D':
                         message = "The device used by the display module.";
+                        break;
+                case 'S':
+                        message = "The script file.";
                         break;
                 }
                 return message;

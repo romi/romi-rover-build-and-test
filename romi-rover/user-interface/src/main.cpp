@@ -32,9 +32,14 @@
 #include "ConfigurationFile.h"
 #include "UserInterface.h"
 #include "DefaultEventTimer.h"
+#include "ScriptList.h"
 #include "ScriptMenu.h"
-#include "FakeScriptEngine.h"
 #include "FluidSoundNotifications.h"
+#include "FakeWeeder.h"
+#include "RoverScriptEngine.h"
+#include "UIStateTransitions.h"
+#include "UIStateMachine.h"
+#include "Rover.h"
 
 using namespace romi;
 
@@ -65,23 +70,30 @@ int main(int argc, char** argv)
                 DefaultSpeedController speed_controller(navigation, config);
                 DefaultEventTimer event_timer(event_timer_timeout);
 
-                FakeScriptEngine script_engine(event_script_finished);
-                script_engine.add_script("forward60", "Forward 60cm");
-                script_engine.add_script("backward60", "Backward 60cm");
-                script_engine.add_script("hoe", "Hoe weeds");
-                
-                ScriptMenu menu(script_engine);
+                ScriptList scripts(ui_factory.get_script_file(options, config));
+                ScriptMenu menu(scripts);
+                RoverScriptEngine script_engine(scripts, event_script_finished,
+                                                event_script_error);
 
-                FluidSoundNotifications sound_notifications(config);
-                
-                UserInterface user_interface(input_device,
-                                             display,
-                                             speed_controller,
-                                             event_timer,
-                                             menu,
-                                             script_engine,
-                                             sound_notifications);
+                FluidSoundNotifications notifications(config);
 
+                FakeWeeder weeder;
+                
+                Rover rover(input_device,
+                            display,
+                            speed_controller,
+                            navigation,
+                            event_timer,
+                            menu,
+                            script_engine,
+                            notifications,
+                            weeder);
+
+                UIStateMachine state_machine(rover);
+                UserInterface user_interface(rover, state_machine);
+
+                state_machine.handle_event(event_start);
+                
                 while (!app_quit()) {
                         
                         try {

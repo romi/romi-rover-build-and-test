@@ -86,6 +86,7 @@ namespace romi {
                 event_previous_menu,
                 
                 event_script_finished,
+                event_script_error,
         };
 
         enum StateID {
