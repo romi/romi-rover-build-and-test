@@ -29,7 +29,7 @@
 
 namespace romi {
         
-        class FakeWeeder
+        class FakeWeeder : public Weeder
         {
         public:
                 FakeWeeder() {}
@@ -37,6 +37,7 @@ namespace romi {
 
                 bool hoe() override {
                         r_debug("FakeWeeder::hoe");
+                        return true;
                 }
         };
 }

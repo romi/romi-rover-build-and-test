@@ -2,8 +2,8 @@
     "navigation": {
 
         "rover": {
-            "wheel_diameter": 0.506,
-            "wheel_base": 1.00,
+            "wheel_diameter": 0.15,
+            "wheel_base": 0.30,
             "encoder_steps": 2100,
             "maximum_speed": 1.0
         },

@@ -10,6 +10,7 @@ set(SOURCES
   include/DebugWeedingSession.h
   include/Camera.h
   include/CNC.h
+  include/FakeWeeder.h
   include/IConfiguration.h
   include/IFileCabinet.h
   include/IFolder.h
