@@ -16,9 +16,11 @@ set(SOURCES
   src/StepperController.h
   src/v.c
   src/v.h
-  src/script.c
-  src/script.h
-  src/plotter.c
+  src/Section.cpp
+  src/Section.h
+  src/Script.cpp
+  src/Script.h
+  src/plotter.cpp
   src/plotter.h
   src/Oquam.cpp
   src/Oquam.h

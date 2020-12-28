@@ -14,10 +14,12 @@ set(SRCS_OQUAMSTEPPER
   ../src/Oquam.cpp
   ../src/v.h
   ../src/v.c
-  ../src/plotter.c
+  ../src/plotter.cpp
   ../src/plotter.h
-  ../src/script.h
-  ../src/script.c
+  ../src/Section.h
+  ../src/Section.cpp
+  ../src/Script.h
+  ../src/Script.cpp
   ../src/Oquam.cpp
   ../../arduino_libraries/RomiSerial/IInputStream.h
   ../../arduino_libraries/RomiSerial/IOutputStream.h
