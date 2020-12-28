@@ -78,7 +78,7 @@ struct Section {
         bool has_valid_acceleration(const char *name, double *amax);
 
         list_t *slice(double period, double maxlen);
-        Section *cut_slice(double start_time, double dt);
+        Section *compute_slice(double start_time, double dt);
         void print(membuf_t *text, const char *prefix);
 };
 

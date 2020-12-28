@@ -50,31 +50,31 @@ Section::Section(double duration_, double at_,
         vsub(d, p1, p0);
 }
 
-Section *Section::cut_slice(double start_time, double dt)
+Section *Section::compute_slice(double offset, double dt)
 {
         double tmp[3];
         
         double v0_[3];
-        smul(v0_, a, start_time);
+        smul(v0_, a, offset);
         vadd(v0_, v0, v0_);
                 
         double p0_[3];
-        smul(tmp, v0, start_time);
-        smul(p0_, a, 0.5 * start_time * start_time);
+        smul(tmp, v0, offset);
+        smul(p0_, a, 0.5 * offset * offset);
         vadd(p0_, p0_, tmp);
         vadd(p0_, p0_, p0);
                 
         double v1_[3];
-        smul(v1_, a, start_time+dt);
+        smul(v1_, a, offset+dt);
         vadd(v1_, v0, v1_);
                 
         double p1_[3];
-        smul(tmp, v0, start_time+dt);
-        smul(p1_, a, 0.5 * (start_time + dt) * (start_time + dt));
+        smul(tmp, v0, offset+dt);
+        smul(p1_, a, 0.5 * (offset + dt) * (offset + dt));
         vadd(p1_, p1_, tmp);
         vadd(p1_, p1_, p0);
                 
-        return new Section(dt, start_time, p0_, p1_, v0_, v1_, a);
+        return new Section(dt, at + offset, p0_, p1_, v0_, v1_, a);
 }
 
 list_t *Section::slice(double period, double maxlen)
@@ -87,19 +87,19 @@ list_t *Section::slice(double period, double maxlen)
         if (norm(a) == 0)
                 T = maxlen;
 
-        double elapsed_time = 0.0;
+        double offset = 0.0;
 
         //r_debug("t=%f", t);
         
-        while (elapsed_time < duration) {
-                double dt = duration - elapsed_time;
+        while (offset < duration) {
+                double dt = duration - offset;
                 if (dt > T)
                         dt = T;
 
-                Section *s = cut_slice(elapsed_time, dt);
+                Section *s = compute_slice(offset, dt);
                 slices = list_append(slices, s);
                 
-                elapsed_time += dt;
+                offset += dt;
         }
         
         //r_err("section_slice: return %p", slices);
@@ -170,7 +170,6 @@ bool Section::has_valid_acceleration(const char *name, double *amax)
 {
         return is_valid_vector(name, "a", a, amax);
 }
-
 
 
 static bool is_nan(const char *name, const char *param, double *value, int index)
