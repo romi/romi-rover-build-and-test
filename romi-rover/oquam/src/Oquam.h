@@ -25,14 +25,16 @@
 #define __ROMI_OQUAM_H
 
 #include <r.h>
+#include <mutex>
 #include "v.h"
 #include "CNC.h"
 #include "ICNCController.h"
 #include "IFileCabinet.h"
 #include "Script.h" 
-#include "SynchronizedCodeBlock.h" 
 
 namespace romi {
+
+        using SynchonizedCodeBlock = std::lock_guard<std::mutex>;
         
         class Oquam : public CNC
         {
@@ -40,7 +42,7 @@ namespace romi {
                 CNCRange _range;
                 ICNCController *_controller;
                 IFileCabinet *_file_cabinet;
-                mutex_t *_mutex;
+                std::mutex _m;
         
                 /**
                  * The minumum positions, in m
@@ -73,37 +75,17 @@ namespace romi {
                 double _path_slice_interval;
 
                 int _script_count;
-                        
+
+                
         public:
                 Oquam(ICNCController *controller,
                       const double *xmin, const double *xmax,
                       const double *vmax, const double *amax,
                       const double *scale_meters_to_steps, 
                       double path_max_deviation,
-                      double path_slice_interval)
-                        : _controller(controller),
-                          _file_cabinet(0),
-                          _path_max_deviation(path_max_deviation),
-                          _path_slice_interval(path_slice_interval) {
-
-                        if (_controller == 0)
-                                throw std::runtime_error("Oquam: invalid CNC controller");
-                        
-                        vcopy(_xmin, xmin);
-                        vcopy(_xmax, xmax);
-                        vcopy(_vmax, vmax);
-                        vcopy(_amax, amax);
-                        vcopy(_scale_meters_to_steps, scale_meters_to_steps);
-                        _mutex = new_mutex();
-                        _script_count = 0;
-
-                        homing();
-                }
+                      double path_slice_interval);
                 
-                virtual ~Oquam() {
-                        if (_mutex)
-                                delete_mutex(_mutex);
-                }
+                virtual ~Oquam() = default;
 
                 void set_file_cabinet(IFileCabinet *cabinet) {
                         _file_cabinet = cabinet;
@@ -122,12 +104,12 @@ namespace romi {
                 // See ICNC.h for more info
                 bool moveto(double x, double y, double z,
                             double relative_speed = 0.1) override {
-                        SynchronizedCodeBlock sync(_mutex);
+                        SynchonizedCodeBlock synchronize(_m);
                         return moveto_synchronized(x, y, z, relative_speed);
                 }
                 
                 bool travel(Path &path, double relative_speed = 0.1) override {
-                        SynchronizedCodeBlock sync(_mutex);
+                        SynchonizedCodeBlock synchronize(_m);
                         return travel_synchronized(path, relative_speed);
                 }
                 
@@ -138,7 +120,7 @@ namespace romi {
                 }
 
                 bool homing() override {
-                        SynchronizedCodeBlock sync(_mutex);
+                        SynchonizedCodeBlock synchronize(_m);
                         return _controller->homing();
                 }
 

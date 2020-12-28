@@ -28,6 +28,30 @@
 #include "Oquam.h"
 
 namespace romi {
+        
+        Oquam::Oquam(ICNCController *controller,
+                     const double *xmin, const double *xmax,
+                     const double *vmax, const double *amax,
+                     const double *scale_meters_to_steps, 
+                     double path_max_deviation,
+                     double path_slice_interval)
+                : _controller(controller),
+                  _file_cabinet(0),
+                  _path_max_deviation(path_max_deviation),
+                  _path_slice_interval(path_slice_interval)
+        {
+                if (_controller == 0)
+                        throw std::runtime_error("Oquam: invalid CNC controller");
+                
+                vcopy(_xmin, xmin);
+                vcopy(_xmax, xmax);
+                vcopy(_vmax, vmax);
+                vcopy(_amax, amax);
+                vcopy(_scale_meters_to_steps, scale_meters_to_steps);
+                _script_count = 0;
+                
+                homing();
+        }
 
         bool Oquam::moveto_synchronized(double x, double y, double z, double rel_speed)
         {
