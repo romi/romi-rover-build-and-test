@@ -77,7 +77,7 @@ struct Section {
         bool has_valid_speeds(const char *name, double *vmax);
         bool has_valid_acceleration(const char *name, double *amax);
 
-        list_t *slice(double period, double maxlen);
+        list_t *slice(double interval, double max_duration);
         Section *compute_slice(double start_time, double dt);
         void print(membuf_t *text, const char *prefix);
 };

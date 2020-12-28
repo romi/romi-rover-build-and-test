@@ -76,29 +76,31 @@ Section *Section::compute_slice(double offset, double dt)
         return new Section(dt, at + offset, p0_, p1_, v0_, v1_, a);
 }
 
-list_t *Section::slice(double period, double maxlen)
+list_t *Section::slice(double interval, double max_duration)
 {
         list_t *slices = NULL;
-        double T = period;
+        double used_interval = interval;
         
-        /* The segment has a constant speed. Sample at distances
-         * 'maxlen' instead of 'period'. */
+        /* The segment has a constant speed there is no need to sample
+         * the speed and position at small intervals. We can therefore
+         * sample at speeds and positions at 'max_duration' instead of
+         * 'interval'. */
         if (norm(a) == 0)
-                T = maxlen;
+                used_interval = max_duration;
 
         double offset = 0.0;
 
         //r_debug("t=%f", t);
         
         while (offset < duration) {
-                double dt = duration - offset;
-                if (dt > T)
-                        dt = T;
+                double slice_duration = duration - offset;
+                if (slice_duration > used_interval)
+                        slice_duration = used_interval;
 
-                Section *s = compute_slice(offset, dt);
+                Section *s = compute_slice(offset, slice_duration);
                 slices = list_append(slices, s);
                 
-                offset += dt;
+                offset += slice_duration;
         }
         
         //r_err("section_slice: return %p", slices);
