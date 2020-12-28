@@ -32,7 +32,6 @@ static bool out_of_range(const char *name, const char *param, double value,
 static bool is_valid_position(const char *name, const char *param,
                               double *p, double *xmin, double *xmax);
 static bool is_valid_vector(const char *name, const char *param, double *v, double *vmax);
-static bool is_valid_length(const char *name, const char *param, double *v, double *vmax);
 
 
 Section::Section(double duration_, double at_,
@@ -218,15 +217,5 @@ static bool is_valid_vector(const char *name, const char *param, double *v, doub
                         return false;
                 }
         }
-        return is_valid_length(name, param, v, vmax);
-}
-
-static bool is_valid_length(const char *name, const char *param, double *v, double *vmax)
-{
-        bool valid = true;
-        if (norm(v) + 0.0001 > norm(vmax)) {
-                r_warn("Section (%s): vector %s is too long", param);
-                valid = false;
-        }
-        return valid;
+        return true;
 }
