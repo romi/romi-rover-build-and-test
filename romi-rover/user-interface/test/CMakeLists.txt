@@ -163,6 +163,72 @@ add_test(
 )
 
 
+set(SRCS_SCRIPTLIST 
+  src/tests_main.cpp
+  src/tests_scriptlist.cpp
+  mock/mock_inputdevice.h
+  mock/mock_navigation.h
+  mock/mock_display.h
+  ../include/ScriptList.h
+  ../src/ScriptList.cpp
+  )
+
+add_executable(romi_rover_unit_tests_userinterface_scriptlist ${SRCS_SCRIPTLIST})
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+target_link_libraries(romi_rover_unit_tests_userinterface_scriptlist rcompp romirover gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_userinterface_scriptlist
+    COMMAND romi_rover_unit_tests_userinterface_scriptlist
+)
+
+
+set(SRCS_SCRIPTMENU 
+  src/tests_main.cpp
+  src/tests_scriptmenu.cpp
+  mock/mock_inputdevice.h
+  mock/mock_navigation.h
+  mock/mock_display.h
+  ../include/ScriptList.h
+  ../src/ScriptList.cpp
+  ../include/ScriptMenu.h
+  ../src/ScriptMenu.cpp
+  )
+
+add_executable(romi_rover_unit_tests_userinterface_scriptmenu ${SRCS_SCRIPTMENU})
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+target_link_libraries(romi_rover_unit_tests_userinterface_scriptmenu rcompp romirover gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_userinterface_scriptmenu
+    COMMAND romi_rover_unit_tests_userinterface_scriptmenu
+)
+
+
+set(SRCS_ROVERSCRIPTENGINE 
+  src/tests_main.cpp
+  src/tests_roverscriptengine.cpp
+  mock/mock_inputdevice.h
+  mock/mock_navigation.h
+  mock/mock_display.h
+  ../include/Rover.h
+  ../src/Rover.cpp
+  ../include/RoverScriptEngine.h
+  ../src/RoverScriptEngine.cpp
+  ../include/ScriptList.h
+  ../src/ScriptList.cpp
+  )
+
+add_executable(romi_rover_unit_tests_userinterface_roverscriptengine ${SRCS_ROVERSCRIPTENGINE})
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+target_link_libraries(romi_rover_unit_tests_userinterface_roverscriptengine rcompp romirover gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_userinterface_roverscriptengine
+    COMMAND romi_rover_unit_tests_userinterface_roverscriptengine
+)
+
+
 #set(SRCS_USERINTERFACE 
 #  src/tests_main.cpp
 #  src/tests_userinterface.cpp
@@ -199,6 +265,9 @@ if(BUILD_COVERAGE)
                          romi_rover_unit_tests_userinterface_remotenavigation
                          romi_rover_unit_tests_userinterface_crystaldisplay
                          romi_rover_unit_tests_userinterface_statemachine
+                         romi_rover_unit_tests_userinterface_scriptlist
+                         romi_rover_unit_tests_userinterface_scriptmenu
+                         romi_rover_unit_tests_userinterface_roverscriptengine
                          #romi_rover_unit_tests_userinterface_userinterface
                          )
 endif()

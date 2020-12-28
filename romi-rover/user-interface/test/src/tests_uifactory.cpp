@@ -329,3 +329,54 @@ TEST_F(uifactory_tests, throws_exception_on_invalid_joystick_device)
                 // NOP
         }
 }
+
+TEST_F(uifactory_tests, successfully_uses_script_file_from_options)
+{
+        JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
+        options.script_file = "/foo/bar";
+        
+        try {
+                UIFactory factory;
+                const char *path = factory.get_script_file(options, config);
+
+                ASSERT_STREQ(path, "/foo/bar");
+                
+        } catch (...) {
+                FAIL() << "Didn't expect an exception";
+        }
+}
+
+TEST_F(uifactory_tests, successfully_uses_script_file_from_config)
+{
+        JsonCpp config = JsonCpp::parse("{'user-interface': {'rover-script-engine': {'script-file':'/bar/foo'}}}");
+        options.script_file = 0;
+        
+        try {
+                UIFactory factory;
+                const char *path = factory.get_script_file(options, config);
+
+                ASSERT_STREQ(path, "/bar/foo");
+                
+        } catch (...) {
+                FAIL() << "Didn't expect an exception";
+        }
+}
+
+TEST_F(uifactory_tests, throws_exception_on_missing_script_file)
+{
+        JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
+        options.script_file = 0;
+        
+        try {
+                UIFactory factory;
+                factory.get_script_file(options, config);
+
+                FAIL() << "Expected an exception";
+                
+        } catch (std::runtime_error& e) {
+                // OK
+                
+        } catch (...) {
+                FAIL() << "Expected a runtime exception";
+        }
+}

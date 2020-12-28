@@ -56,11 +56,11 @@ namespace romi {
                 if (has_menus()) 
                         name = _scripts[_current_menu].title;
                 else
-                        name = "No menus!";
+                        name = Menu::Empty;
         }
         
         int ScriptMenu::get_current_index() 
         {
-                return _current_menu;
+                return has_menus()? _current_menu : -1;
         }
 }

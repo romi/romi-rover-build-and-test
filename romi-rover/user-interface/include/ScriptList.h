@@ -78,6 +78,7 @@ namespace romi {
         public:
                 
                 ScriptList(const char *path);
+                ScriptList(JsonCpp& json);
                 virtual ~ScriptList() = default;
         };
 }

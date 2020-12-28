@@ -31,12 +31,18 @@ namespace romi {
         class Menu
         {
         public:
+
+                static constexpr const char *Empty = "No menus";
+                
                 virtual ~Menu() = default;
 
                 virtual void first_menu_item(std::string& name) = 0;
                 virtual void next_menu_item(std::string& name) = 0;
                 virtual void previous_menu_item(std::string& name) = 0;
                 virtual void get_current_menu(std::string& name) = 0;
+
+                /** Returns the index of the menu item, or -1 if there
+                 * are no menu items. */
                 virtual int get_current_index() = 0;
         };
 }

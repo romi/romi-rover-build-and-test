@@ -45,6 +45,24 @@ namespace romi {
                         throw std::runtime_error("Invalid script");
                 }
         }
+                
+        ScriptList::ScriptList(JsonCpp& json)
+        {
+                try {
+                        
+                        convert_scripts(json);
+                
+                } catch (JSONError& je) {
+                        r_err("ScriptList: JSON error while "
+                              "loading scripts: %s", je.what());
+                        throw std::runtime_error("Invalid script");
+                        
+                } catch (std::runtime_error& re) {
+                        r_err("ScriptList: Error while converting "
+                              "scripts: %s", re.what());
+                        throw std::runtime_error("Invalid script");
+                }
+        }
         
         void ScriptList::load_scripts(const char *path)
         {

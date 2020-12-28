@@ -78,12 +78,18 @@ namespace romi {
                 
         bool RoverScriptEngine::execute_move(double distance, double speed)
         {
-                return _rover->navigation.move(distance, speed);
+                bool success = _rover->navigation.move(distance, speed);
+                if (!success)
+                        r_err("RoverScriptEngine: 'move' failed");
+                return success;
         }
                 
         bool RoverScriptEngine::execute_hoe()
         {
-                return _rover->weeder.hoe();
+                bool success = _rover->weeder.hoe();
+                if (!success)
+                        r_err("RoverScriptEngine: 'hoe' failed");
+                return success;
         }
 
         void RoverScriptEngine::execute_script(Rover& rover, int id)

@@ -49,31 +49,43 @@ Section::Section(double duration_, double at_,
         vsub(d, p1, p0);
 }
 
-Section *Section::compute_slice(double offset, double dt)
+void Section::get_position_at(double t, double *p)
 {
-        double tmp[3];
+        double dx_v[3];
+        double dx_a[3];
+        double dx[3];
+
+        smul(dx_v, v0, t);
+        smul(dx_a, a, 0.5 * t * t);
+        vadd(dx, dx_v, dx_a);
+        vadd(p, p0, dx);
+}
+
+void Section::get_speed_at(double t, double *v)
+{
+        double dv[3];
+        smul(dv, a, t);
+        vadd(v, v0, dv);
+}
+
+Section *Section::compute_slice(double offset, double slice_duration)
+{
+        double t0 = offset;
+        double t1 = offset + slice_duration;
         
-        double v0_[3];
-        smul(v0_, a, offset);
-        vadd(v0_, v0, v0_);
+        double slice_p0[3];
+        double slice_p1[3];
+        double slice_v0[3];
+        double slice_v1[3];
+        
+        get_position_at(t0, slice_p0);
+        get_position_at(t1, slice_p1);
+        get_speed_at(t0, slice_v0);
+        get_speed_at(t1, slice_v1);
                 
-        double p0_[3];
-        smul(tmp, v0, offset);
-        smul(p0_, a, 0.5 * offset * offset);
-        vadd(p0_, p0_, tmp);
-        vadd(p0_, p0_, p0);
-                
-        double v1_[3];
-        smul(v1_, a, offset+dt);
-        vadd(v1_, v0, v1_);
-                
-        double p1_[3];
-        smul(tmp, v0, offset+dt);
-        smul(p1_, a, 0.5 * (offset + dt) * (offset + dt));
-        vadd(p1_, p1_, tmp);
-        vadd(p1_, p1_, p0);
-                
-        return new Section(dt, at + offset, p0_, p1_, v0_, v1_, a);
+        return new Section(slice_duration, at + offset,
+                           slice_p0, slice_p1,
+                           slice_v0, slice_v1, a);
 }
 
 list_t *Section::slice(double interval, double max_duration)

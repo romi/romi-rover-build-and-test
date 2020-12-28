@@ -67,6 +67,9 @@ struct Section {
                 double *p0, double *p1,
                 double *v0, double *v1,
                 double *a);
+
+        void get_position_at(double t_from_start, double *p);
+        void get_speed_at(double t_from_start, double *v);
         
         bool is_valid(const char *name, double tmax,
                       double *xmin, double *xmax, 
