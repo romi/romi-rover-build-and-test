@@ -24,7 +24,6 @@
 
 #include <vector>
 #include <stdexcept>
-#include "script.h"
 #include "plotter.h"
 #include "Oquam.h"
 
@@ -83,7 +82,7 @@ namespace romi {
                 return success;
         }
 
-        void Oquam::store_script(script_t *script) 
+        void Oquam::store_script(Script *script) 
         {
                 if (_file_cabinet) {
 
@@ -133,7 +132,7 @@ namespace romi {
                         smul(v, _vmax, relative_speed);
                         double speed_ms = ::vmax(v);
                 
-                        script_t *script = build_script(path, speed_ms);
+                        Script *script = build_script(path, speed_ms);
                         
                         if (script != 0) {
                                 
@@ -146,7 +145,7 @@ namespace romi {
                                                 double duration = script_duration(script);
                                                 double timeout = 60.0 + 1.5 * duration;
                                                 
-                                                delete_script(script);
+                                                delete script;
                                         
                                                 if (_controller->synchronize(timeout)) {
                                                         success = true;
@@ -156,12 +155,12 @@ namespace romi {
                                                 }
                                                 
                                         } else {
-                                                delete_script(script);
+                                                delete script;
                                                 r_err("Oquam::travel_synchronized: execute_script failed");
                                         }
 
                                 } else {
-                                        delete_script(script);
+                                        delete script;
                                         r_err("Oquam::travel_synchronized: convert_script failed");
                                 }
                                 
@@ -176,9 +175,9 @@ namespace romi {
         }
 
         
-        script_t *Oquam::build_script(Path &path, double speed) 
+        Script *Oquam::build_script(Path &path, double speed) 
         {
-                script_t *script = new_script();
+                Script *script = new Script();
 
                 for (size_t i = 0; i < path.size(); i++) {
                         double x = path[i].x;
@@ -186,11 +185,11 @@ namespace romi {
                         double z = path[i].z;
 
                         if (valid_x(x) && valid_y(y) && valid_z(z)) {
-                                script_moveto(script, x, y, z, speed);
+                                script->moveto(x, y, z, speed);
                         } else {
                                 r_warn("Oquam::build_script: Point[%d]: out of bounds: "
                                        "(%0.4f, %0.4f, %0.4f)", x, y, z);
-                                delete_script(script);
+                                delete script;
                                 script = 0;
                                 break;
                         }
@@ -214,17 +213,17 @@ namespace romi {
                 return success;
         }
 
-        double Oquam::script_duration(script_t *script)
+        double Oquam::script_duration(Script *script)
         {
                 double duration = 0.0;
                 for (list_t *l = script->slices; l != 0; l = list_next(l)) {
-                        section_t *section = list_get(l, section_t);
-                        duration = section->at + section->t; // We only need the last one..
+                        Section *section = list_get(l, Section);
+                        duration = section->at + section->duration; // We only need the last one..
                 }
                 return duration;
         }
 
-        bool Oquam::convert_script(script_t *script, double *position,
+        bool Oquam::convert_script(Script *script, double *position,
                                    double relative_speed) 
         {
                 bool success = false;
@@ -232,9 +231,9 @@ namespace romi {
                 smul(vmax, _vmax, relative_speed);
                 
                 r_debug("Oquam::convert_script: script_convert");
-                if (script_convert(script, position, _xmin, _xmax,
-                                   vmax, _amax, _path_max_deviation,
-                                   _path_slice_interval, 32.0) == 0) {
+                if (script->convert(position, _xmin, _xmax,
+                                    vmax, _amax, _path_max_deviation,
+                                    _path_slice_interval, 32.0) == 0) {
                         
                         success = true;
                         
@@ -245,7 +244,7 @@ namespace romi {
                 return success;
         }
         
-        bool Oquam::execute_move(section_t *section, int32_t *pos_steps)
+        bool Oquam::execute_move(Section *section, int32_t *pos_steps)
         {
                 bool success = true;
                 int32_t p1[3];
@@ -253,7 +252,7 @@ namespace romi {
                 p1[1] = (int32_t) (section->p1[1] * _scale_meters_to_steps[1]);
                 p1[2] = (int32_t) (section->p1[2] * _scale_meters_to_steps[2]);
                 
-                int16_t dt = (int16_t) (1000.0 * section->t);
+                int16_t dt = (int16_t) (1000.0 * section->duration);
                 int16_t dx = (int16_t) (p1[0] - pos_steps[0]);
                 int16_t dy = (int16_t) (p1[1] - pos_steps[1]);
                 int16_t dz = (int16_t) (p1[2] - pos_steps[2]);
@@ -293,11 +292,11 @@ namespace romi {
                 return success;
         }
         
-        bool Oquam::execute_script(script_t *script) 
+        bool Oquam::execute_script(Script *script) 
         {
                 bool success = true;
                 int32_t pos_steps[3];
-                section_t *section = list_get(script->slices, section_t);
+                Section *section = list_get(script->slices, Section);
                 double *scale = _scale_meters_to_steps;
                 
                 if (section) {
@@ -313,7 +312,7 @@ namespace romi {
                         int count = 0;
                         for (list_t *l = script->slices; l != 0; l = list_next(l)) {
                                 r_debug("Section %d:", count);
-                                section = list_get(l, section_t);
+                                section = list_get(l, Section);
                                 if (!execute_move(section, pos_steps)) {
                                         success = false;
                                         break;

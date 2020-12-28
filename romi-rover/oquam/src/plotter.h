@@ -25,29 +25,21 @@
 #ifndef _OQUAM_PLOTTER_H_
 #define _OQUAM_PLOTTER_H_
 
-#include "script.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "Script.h"
 
 int plot_to_file(const char *filepath,
-                 script_t *script,
+                 Script *script,
                  double *xmin,
                  double *xmax,
                  double *vmax,
                  double *amax,
                  double *scale);
 
-membuf_t *plot_to_mem(script_t *script,
+membuf_t *plot_to_mem(Script *script,
                       double *xmin,
                       double *xmax,
                       double *vmax,
                       double *amax,
                       double *scale);
-        
-#ifdef __cplusplus
-}
-#endif
 
 #endif // _OQUAM_PLOTTER_H_

@@ -117,7 +117,7 @@ static void print_lineto(plot_t *plot, double x, double y)
         membuf_printf(plot->buffer, "L %f,%f ", x, y);
 }
 
-static void print_line(plot_t *plot, double x0, double y0, double x1, double y1, char *color)
+static void print_line(plot_t *plot, double x0, double y0, double x1, double y1, const char *color)
 {
         membuf_printf(plot->buffer, "        <path d=\"");
         print_moveto(plot, x0, y0);
@@ -185,7 +185,7 @@ static void print_atdc_ij(plot_t *plot, atdc_t *path,
                 membuf_printf(plot->buffer, "        <path d=\"");
                 print_moveto(plot, _X(r, t0->curve.p0[i]), _Y(r, t0->curve.p0[j]));
 
-                int ms = (int) (1000.0 * t0->curve.t);
+                int ms = (int) (1000.0 * t0->curve.duration);
                 int n = ms / 10;
                 for (int k = 1; k < n; k++) {
                         double x[3];
@@ -262,10 +262,10 @@ static double atdc_duration(atdc_t *atdc)
 {
         double t = 0.0;
         for (atdc_t *t0 = atdc; t0; t0 = t0->next) {
-                t += (t0->accelerate.t
-                      + t0->travel.t
-                      + t0->decelerate.t
-                      + t0->curve.t);
+                t += (t0->accelerate.duration
+                      + t0->travel.duration
+                      + t0->decelerate.duration
+                      + t0->curve.duration);
         }
         return t;
 }
@@ -273,8 +273,8 @@ static double atdc_duration(atdc_t *atdc)
 static double slices_duration(list_t *list)
 {
         list_t *last = list_last(list);
-        section_t *section = list_get(last, section_t);
-        return section->at + section->t;
+        Section *section = list_get(last, Section);
+        return section->at + section->duration;
 }
 
 static void print_path_speed_i(plot_t *plot,
@@ -296,7 +296,7 @@ static void print_path_speed_i(plot_t *plot,
         // curve
         while (s0) {
                 double t0 = t;
-                double t1 = t + a0->accelerate.t;
+                double t1 = t + a0->accelerate.duration;
                 print_line(plot,
                            xscale * t0,
                            yscale * a0->accelerate.v0[i],
@@ -305,7 +305,7 @@ static void print_path_speed_i(plot_t *plot,
                            "#00ff00");
                 
                 t0 = t1;
-                t1 += a0->travel.t;
+                t1 += a0->travel.duration;
                 print_line(plot,
                            xscale * t0,
                            yscale * a0->travel.v0[i],
@@ -314,7 +314,7 @@ static void print_path_speed_i(plot_t *plot,
                            "#ffff00");
                         
                 t0 = t1;
-                t1 += a0->decelerate.t;
+                t1 += a0->decelerate.duration;
                 print_line(plot,
                            xscale * t0,
                            yscale * a0->decelerate.v0[i],
@@ -323,7 +323,7 @@ static void print_path_speed_i(plot_t *plot,
                            "#ff0000");
 
                 t0 = t1;
-                t1 += a0->curve.t;
+                t1 += a0->curve.duration;
                 print_line(plot,
                            xscale * t0,
                            yscale * a0->curve.v0[i],
@@ -374,7 +374,7 @@ static void print_path_acceleration_i(plot_t *plot,
         // curve
         while (s0) {
                 double t0 = t;
-                double t1 = t + a0->accelerate.t;
+                double t1 = t + a0->accelerate.duration;
                 print_line(plot,
                            xscale * t0,
                            yscale * a0->accelerate.a[i],
@@ -383,7 +383,7 @@ static void print_path_acceleration_i(plot_t *plot,
                            "#00ff00");
                 
                 t0 = t1;
-                t1 += a0->travel.t;
+                t1 += a0->travel.duration;
                 /* print_line(plot, */
                 /*            xscale * t0, */
                 /*            yscale * a0->travel.a[i], */
@@ -392,7 +392,7 @@ static void print_path_acceleration_i(plot_t *plot,
                 /*            "#ffff00"); */
                         
                 t0 = t1;
-                t1 += a0->decelerate.t;
+                t1 += a0->decelerate.duration;
                 print_line(plot,
                            xscale * t0,
                            yscale * a0->decelerate.a[i],
@@ -401,7 +401,7 @@ static void print_path_acceleration_i(plot_t *plot,
                            "#ff0000");
 
                 t0 = t1;
-                t1 += a0->curve.t;
+                t1 += a0->curve.duration;
                 print_line(plot,
                            xscale * t0,
                            yscale * a0->curve.a[i],
@@ -436,10 +436,10 @@ static void print_slices_speed_i(plot_t *plot, list_t *slices, int i,
                       plot->v[i].x, plot->v[i].y);
 
         for (list_t *l = slices; l; l = list_next(l)) {
-                section_t *section = list_get(l, section_t);
+                Section *section = list_get(l, Section);
                 print_line(plot,
                            xscale * section->at, yscale * section->v0[i],
-                           xscale * (section->at + section->t), yscale * section->v1[i], 
+                           xscale * (section->at + section->duration), yscale * section->v1[i], 
                            "#ff00ff");
         }
         
@@ -452,7 +452,7 @@ static void print_slices_ij(plot_t *plot, list_t *slices, int i, int j, rect_t *
                       r->x, r->y);
 
         for (list_t *l = slices; l; l = list_next(l)) {
-                section_t *section = list_get(l, section_t);
+                Section *section = list_get(l, Section);
                 print_line(plot,
                            _X(r, section->p0[i]), _Y(r, section->p0[j]),
                            _X(r, section->p1[i]), _Y(r, section->p1[j]),
@@ -580,7 +580,7 @@ static void print_axes(plot_t *plot)
         membuf_printf(plot->buffer, "    </g>\n");
 }
 
-membuf_t *plot_to_mem(script_t *script,
+membuf_t *plot_to_mem(Script *script,
                       double *xmin,
                       double *xmax,
                       double *vmax_,
@@ -705,7 +705,7 @@ membuf_t *plot_to_mem(script_t *script,
 }
 
 int plot_to_file(const char *filepath,
-                 script_t *script,
+                 Script *script,
                  double *xmin,
                  double *xmax,
                  double *vmax,

@@ -29,7 +29,7 @@
 #include "CNC.h"
 #include "ICNCController.h"
 #include "IFileCabinet.h"
-#include "script.h" 
+#include "Script.h" 
 #include "SynchronizedCodeBlock.h" 
 
 namespace romi {
@@ -190,12 +190,12 @@ namespace romi {
 
                 bool get_position(double *position); 
                 bool get_position(int32_t *position); 
-                script_t *build_script(Path &path, double speed); 
-                bool convert_script(script_t *script, double *position, double rel_speed); 
-                bool execute_script(script_t *script);
-                bool execute_move(section_t *section, int32_t *pos_steps);
-                double script_duration(script_t *script);
-                void store_script(script_t *script);
+                Script *build_script(Path &path, double speed); 
+                bool convert_script(Script *script, double *position, double rel_speed); 
+                bool execute_script(Script *script);
+                bool execute_move(Section *section, int32_t *pos_steps);
+                double script_duration(Script *script);
+                void store_script(Script *script);
         };
 }
 
