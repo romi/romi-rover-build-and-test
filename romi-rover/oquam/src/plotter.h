@@ -27,19 +27,22 @@
 
 #include "Script.h"
 
-int plot_to_file(const char *filepath,
-                 Script *script,
-                 double *xmin,
-                 double *xmax,
-                 double *vmax,
-                 double *amax,
-                 double *scale);
+namespace romi {
 
-membuf_t *plot_to_mem(Script *script,
-                      double *xmin,
-                      double *xmax,
-                      double *vmax,
-                      double *amax,
-                      double *scale);
+        int plot_to_file(const char *filepath,
+                         Script *script,
+                         double *xmin,
+                         double *xmax,
+                         double *vmax,
+                         double *amax,
+                         double *scale);
+
+        membuf_t *plot_to_mem(Script *script,
+                              double *xmin,
+                              double *xmax,
+                              double *vmax,
+                              double *amax,
+                              double *scale);
+}
 
 #endif // _OQUAM_PLOTTER_H_

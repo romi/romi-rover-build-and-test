@@ -4,6 +4,21 @@ cmake_minimum_required(VERSION 3.10)
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../../arduino_libraries/RomiSerial" )
 
+
+set(SRCS_SECTION
+  src/tests_main.cpp
+  src/tests_section.cpp
+  ../src/Section.h
+  ../src/Section.cpp
+  ../src/v.h
+  ../src/v.c
+  )
+
+add_executable(romi_rover_unit_tests_oquam_section ${SRCS_SECTION})
+target_link_libraries(romi_rover_unit_tests_oquam_section rpp gtest gmock)
+
+
+
 set(SRCS_OQUAMSTEPPER
   src/tests_main.cpp
   src/tests_oquamstepper.cpp
@@ -34,4 +49,15 @@ set(SRCS_OQUAMSTEPPER
 
 add_executable(romi_rover_unit_tests_oquam_stepper ${SRCS_OQUAMSTEPPER})
 target_link_libraries(romi_rover_unit_tests_oquam_stepper rpp romirover romi gtest gmock)
+
+
+
+if(BUILD_COVERAGE)
+    SETUP_TARGET_FOR_COVERAGE_LCOV(
+            NAME romi_rover_oquam_coverage
+            EXECUTABLE ctest -V ${n_cores}
+            EXCLUDE "src/main.cpp" 
+            DEPENDENCIES romi_rover_unit_tests_oquam_section
+                         )
+endif()
 

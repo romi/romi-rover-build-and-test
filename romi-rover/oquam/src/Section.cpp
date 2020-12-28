@@ -25,211 +25,280 @@
 #include "Section.h"
 #include "v.h"
 
-
-static bool is_nan(const char *name, const char *param, double *value, int index);
-static bool out_of_range(const char *name, const char *param, double value,
-                         double minimum, double maximum, double epsilon);
-static bool is_valid_position(const char *name, const char *param,
-                              double *p, double *xmin, double *xmax);
-static bool is_valid_vector(const char *name, const char *param, double *v, double *vmax);
+namespace romi {
 
 
-Section::Section(double duration_, double at_,
-                 double *p0_, double *p1_,
-                 double *v0_, double *v1_,
-                 double *a_)
-{
-        duration = duration_;
-        at = at_;
-        vcopy(p0, p0_);
-        vcopy(p1, p1_);
-        vcopy(v0, v0_);
-        vcopy(v1, v1_);
-        vcopy(a, a_);
-        vsub(d, p1, p0);
-}
+        static bool is_nan(const char *name, const char *param, double *value, int index);
+        static bool is_out_of_range(const char *name, const char *param, double value,
+                                 double minimum, double maximum, double epsilon);
+        static bool is_valid_position(const char *name, const char *param,
+                                      double *p, const double *xmin, const double *xmax);
+        static bool is_valid_vector(const char *name, const char *param, double *v, const double *vmax);
 
-void Section::get_position_at(double t, double *p)
-{
-        double dx_v[3];
-        double dx_a[3];
-        double dx[3];
 
-        smul(dx_v, v0, t);
-        smul(dx_a, a, 0.5 * t * t);
-        vadd(dx, dx_v, dx_a);
-        vadd(p, p0, dx);
-}
+        Section::Section(double duration_, double at_,
+                         const double *p0_, const double *p1_,
+                         const double *v0_, const double *v1_,
+                         const double *a_)
+        {
+                duration = duration_;
+                at = at_;
+                vcopy(p0, p0_);
+                vcopy(p1, p1_);
+                vcopy(v0, v0_);
+                vcopy(v1, v1_);
+                vcopy(a, a_);
+                vsub(d, p1, p0);
+        }
 
-void Section::get_speed_at(double t, double *v)
-{
-        double dv[3];
-        smul(dv, a, t);
-        vadd(v, v0, dv);
-}
+        void Section::get_position_at(double t, double *p)
+        {
+                double dx_v[3];
+                double dx_a[3];
+                double dx[3];
 
-Section *Section::compute_slice(double offset, double slice_duration)
-{
-        double t0 = offset;
-        double t1 = offset + slice_duration;
+                smul(dx_v, v0, t);
+                smul(dx_a, a, 0.5 * t * t);
+                vadd(dx, dx_v, dx_a);
+                vadd(p, p0, dx);
+        }
+
+        void Section::get_speed_at(double t, double *v)
+        {
+                double dv[3];
+                smul(dv, a, t);
+                vadd(v, v0, dv);
+        }
+
+        Section *Section::compute_slice(double offset, double slice_duration)
+        {
+                double t0 = offset;
+                double t1 = offset + slice_duration;
         
-        double slice_p0[3];
-        double slice_p1[3];
-        double slice_v0[3];
-        double slice_v1[3];
+                double slice_p0[3];
+                double slice_p1[3];
+                double slice_v0[3];
+                double slice_v1[3];
         
-        get_position_at(t0, slice_p0);
-        get_position_at(t1, slice_p1);
-        get_speed_at(t0, slice_v0);
-        get_speed_at(t1, slice_v1);
+                get_position_at(t0, slice_p0);
+                get_position_at(t1, slice_p1);
+                get_speed_at(t0, slice_v0);
+                get_speed_at(t1, slice_v1);
                 
-        return new Section(slice_duration, at + offset,
-                           slice_p0, slice_p1,
-                           slice_v0, slice_v1, a);
-}
+                return new Section(slice_duration, at + offset,
+                                   slice_p0, slice_p1,
+                                   slice_v0, slice_v1, a);
+        }
 
-list_t *Section::slice(double interval, double max_duration)
-{
-        list_t *slices = NULL;
-        double used_interval = interval;
+        list_t *Section::slice(double interval, double max_duration)
+        {
+                list_t *slices = NULL;
+                double used_interval = interval;
         
-        /* The segment has a constant speed there is no need to sample
-         * the speed and position at small intervals. We can therefore
-         * sample at speeds and positions at 'max_duration' instead of
-         * 'interval'. */
-        if (norm(a) == 0)
-                used_interval = max_duration;
+                /* The segment has a constant speed there is no need to sample
+                 * the speed and position at small intervals. We can therefore
+                 * sample at speeds and positions at 'max_duration' instead of
+                 * 'interval'. */
+                if (norm(a) == 0)
+                        used_interval = max_duration;
 
-        double offset = 0.0;
+                double offset = 0.0;
 
-        //r_debug("t=%f", t);
+                //r_debug("t=%f", t);
         
-        while (offset < duration) {
-                double slice_duration = duration - offset;
-                if (slice_duration > used_interval)
-                        slice_duration = used_interval;
+                while (offset < duration) {
+                        double slice_duration = duration - offset;
+                        if (slice_duration > used_interval)
+                                slice_duration = used_interval;
 
-                Section *s = compute_slice(offset, slice_duration);
-                slices = list_append(slices, s);
+                        Section *s = compute_slice(offset, slice_duration);
+                        slices = list_append(slices, s);
                 
-                offset += slice_duration;
-        }
+                        offset += slice_duration;
+                }
         
-        //r_err("section_slice: return %p", slices);
-        return slices;
-}
-
-void Section::print(membuf_t *text, const char *prefix)
-{
-        membuf_printf(text, "%s: ", prefix);
-        membuf_printf(text, "at=%0.6f, t=%0.6f; ", at, duration);
-        membuf_printf(text, "d=(%0.4f,%0.4f,%0.4f); ",
-                      d[0], d[1], d[2]);
-        membuf_printf(text, "p0(%0.4f,%0.4f,%0.4f)-p1(%0.4f,%0.4f,%0.4f); ",
-                      p0[0], p0[1], p0[2],
-                      p1[0], p1[1], p1[2]);
-        membuf_printf(text, "v0(%0.3f,%0.3f,%0.3f)-v1(%0.3f,%0.3f,%0.3f); ",
-                      v0[0], v0[1], v0[2],
-                      v1[0], v1[1], v1[2]);
-        membuf_printf(text, "a(%0.3f,%0.3f,%0.3f)",
-               a[0], a[1], a[2]);
-        membuf_printf(text, "\n");
-}
-
-bool Section::is_valid(const char *name, double tmax,
-                       double *xmin, double *xmax, 
-                       double *vmax, double *amax)
-{
-        return (has_valid_start_time(name)
-                && has_valid_duration(name, tmax)
-                && has_valid_positions(name, xmin, xmax)
-                && has_valid_speeds(name, vmax)
-                && has_valid_acceleration(name, amax));
-}
-
-bool Section::has_valid_start_time(const char *name)
-{
-        bool valid = false;
-        if (at < 0.0) {
-                r_warn("Section (%s): at < 0", name);
-        } else {
-                valid = true;
+                //r_err("section_slice: return %p", slices);
+                return slices;
         }
-        return valid;
-}
 
-bool Section::has_valid_duration(const char *name, double tmax)
-{
-        bool valid = true;
-        if (out_of_range(name, "duration", duration, 0.0, tmax, 0.0)) {
-                valid = false;
+        void Section::print(membuf_t *text, const char *prefix)
+        {
+                membuf_printf(text, "%s: ", prefix);
+                membuf_printf(text, "at=%0.6f, t=%0.6f; ", at, duration);
+                membuf_printf(text, "d=(%0.4f,%0.4f,%0.4f); ",
+                              d[0], d[1], d[2]);
+                membuf_printf(text, "p0(%0.4f,%0.4f,%0.4f)-p1(%0.4f,%0.4f,%0.4f); ",
+                              p0[0], p0[1], p0[2],
+                              p1[0], p1[1], p1[2]);
+                membuf_printf(text, "v0(%0.3f,%0.3f,%0.3f)-v1(%0.3f,%0.3f,%0.3f); ",
+                              v0[0], v0[1], v0[2],
+                              v1[0], v1[1], v1[2]);
+                membuf_printf(text, "a(%0.3f,%0.3f,%0.3f)",
+                              a[0], a[1], a[2]);
+                membuf_printf(text, "\n");
         }
-        return valid;
-}
 
-bool Section::has_valid_positions(const char *name, double *xmin, double *xmax)
-{
-        return (is_valid_position(name, "p0", p0, xmin, xmax)
-                && is_valid_position(name, "p1", p1, xmin, xmax));
-}
-
-bool Section::has_valid_speeds(const char *name, double *vmax)
-{
-        return (is_valid_vector(name, "v0", v0, vmax)
-                && is_valid_vector(name, "v1", v1, vmax));
-}
-
-bool Section::has_valid_acceleration(const char *name, double *amax)
-{
-        return is_valid_vector(name, "a", a, amax);
-}
-
-
-static bool is_nan(const char *name, const char *param, double *value, int index)
-{
-        bool nan = false;
-        if (::isnan(value[index])) {
-                r_warn("Section (%s): %s[%d] is NaN", name, param, index);
-                nan = true;
+        bool Section::is_valid(const char *name, double tmax,
+                               const double *xmin, const double *xmax, 
+                               const double *vmax, const double *amax)
+        {
+                return (has_valid_start_time(name)
+                        && has_valid_duration(name, tmax)
+                        && has_valid_positions(name, xmin, xmax)
+                        && has_valid_speeds(name, vmax)
+                        && has_valid_acceleration(name, amax)
+                        && is_coherent(name));
         }
-        return nan;
-}
 
-static bool out_of_range(const char *name, const char *param, double value,
-                         double minimum, double maximum, double epsilon)
-{
-        bool in_range = false;
-        if (value < minimum - epsilon
-            || value > maximum + epsilon) {
-                r_warn("Section (%s): %s is out of range: %.6f < %.6f < %.6f",
-                       name, param, value, minimum, maximum);
-        } else {
-                in_range = true;
-        }
-        return in_range;
-}
-
-static bool is_valid_position(const char *name, const char *param,
-                              double *p, double *xmin, double *xmax)
-{
-        for (int i = 0; i < 3; i++) {
-                if (is_nan(name, param, p, i)) {
-                        return false;
-                } else if (out_of_range(name, param, p[i], xmin[i], xmax[i], 0.001)) {
-                        return false;
+        bool Section::has_valid_start_time(const char *name)
+        {
+                bool valid = false;
+                if (at < 0.0) {
+                        r_warn("Section (%s): at < 0", name);
+                } else {
+                        valid = true;
                 }
+                return valid;
         }
-        return true;
-}
 
-static bool is_valid_vector(const char *name, const char *param, double *v, double *vmax)
-{
-        for (int i = 0; i < 3; i++) {
-                if (is_nan(name, param, v, i)) {
-                        return false;
-                } else if (out_of_range(name, param, v[i], -vmax[i], vmax[i], 0.01)) {
-                        return false;
+        bool Section::has_valid_duration(const char *name, double tmax)
+        {
+                bool valid = true;
+                if (is_out_of_range(name, "duration", duration, 0.0, tmax, 0.0)) {
+                        valid = false;
                 }
+                return valid;
         }
-        return true;
+
+        bool Section::has_valid_positions(const char *name, const double *xmin, const double *xmax)
+        {
+                return (is_valid_position(name, "p0", p0, xmin, xmax)
+                        && is_valid_position(name, "p1", p1, xmin, xmax));
+        }
+
+        bool Section::has_valid_speeds(const char *name, const double *vmax)
+        {
+                return (is_valid_vector(name, "v0", v0, vmax)
+                        && is_valid_vector(name, "v1", v1, vmax));
+        }
+
+        bool Section::has_valid_acceleration(const char *name, const double *amax)
+        {
+                return is_valid_vector(name, "a", a, amax);
+        }
+
+        bool Section::is_coherent(const char *name)
+        {
+                return has_coherent_distance(name)
+                        && has_coherent_acceleration_1(name)
+                        && has_coherent_acceleration_2(name);
+        }
+
+        bool Section::has_coherent_distance(const char *name)
+        {
+                double e[3];
+                vsub(e, p1, p0);
+                vsub(e, d, e);
+                bool ok = norm(e) < 0.001;
+                if (!ok) {
+                        r_warn("Section (%s): |(p1-p0)-d|>0.001", name);
+                }
+                return ok;
+        }
+
+        bool Section::has_coherent_acceleration_1(const char *name)
+        {
+                double dv[3];
+                smul(dv, a, duration);
+                
+                double v[3];
+                vadd(v, v0, dv);
+                
+                double e[3];
+                vsub(e, v, v1);
+                
+                bool ok = norm(e) < 0.001;
+                if (!ok) {
+                        r_warn("Section (%s): |(v0+a.t)-v1|>0.001", name);
+                        r_warn("Section (%s): v1=(%f,%f,%f), v0+a.t=(%f,%f,%f)",
+                               v1[0], v1[1], v1[2], v[0], v[1], v[2]);
+                }
+                return ok;
+        }
+
+        bool Section::has_coherent_acceleration_2(const char *name)
+        {
+                double dx_v[3];
+                smul(dx_v, v0, duration);
+                
+                double dx_a[3];
+                smul(dx_a, a, 0.5 * duration * duration);
+                
+                double dx[3];
+                vadd(dx, dx_v, dx_a);
+
+                double p[3];
+                vadd(p, p0, dx);
+                
+                double e[3];
+                vsub(e, p, p1);
+                
+                bool ok = norm(e) < 0.001;
+                if (!ok) {
+                        r_warn("Section (%s): |(p0+v0.t+a.t²/2)-p1|>0.001", name);
+                        r_warn("Section (%s): p1=(%f,%f,%f), p=(%f,%f,%f)",
+                               p1[0], p1[1], p1[2], p[0], p[1], p[2]);
+                }
+                return ok;
+        }
+
+
+        static bool is_nan(const char *name, const char *param, double *value, int index)
+        {
+                bool nan = false;
+                if (::isnan(value[index])) {
+                        r_warn("Section (%s): %s[%d] is NaN", name, param, index);
+                        nan = true;
+                }
+                return nan;
+        }
+
+        static bool is_out_of_range(const char *name, const char *param, double value,
+                                 double minimum, double maximum, double epsilon)
+        {
+                bool out_of_range = true;
+                if (value < minimum - epsilon
+                    || value > maximum + epsilon) {
+                        r_warn("Section (%s): %s is out of range: %.6f < value=%.6f < %.6f",
+                               name, param, minimum, value, maximum);
+                } else {
+                        out_of_range = false;
+                }
+                return out_of_range;
+        }
+
+        static bool is_valid_position(const char *name, const char *param,
+                                      double *p, const double *xmin, const double *xmax)
+        {
+                for (int i = 0; i < 3; i++) {
+                        if (is_nan(name, param, p, i)) {
+                                return false;
+                        } else if (is_out_of_range(name, param, p[i], xmin[i], xmax[i], 0.001)) {
+                                return false;
+                        }
+                }
+                return true;
+        }
+
+        static bool is_valid_vector(const char *name, const char *param, double *v, const double *vmax)
+        {
+                for (int i = 0; i < 3; i++) {
+                        if (is_nan(name, param, v, i)) {
+                                return false;
+                        } else if (is_out_of_range(name, param, v[i], -vmax[i], vmax[i], 0.01)) {
+                                return false;
+                        }
+                }
+                return true;
+        }
 }
