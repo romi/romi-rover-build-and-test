@@ -25,12 +25,22 @@
 #include "Section.h"
 #include "v.h"
 
-Section::Section(double t_, double at_,
+
+static bool is_nan(const char *name, const char *param, double *value, int index);
+static bool out_of_range(const char *name, const char *param, double value,
+                         double minimum, double maximum, double epsilon);
+static bool is_valid_position(const char *name, const char *param,
+                              double *p, double *xmin, double *xmax);
+static bool is_valid_vector(const char *name, const char *param, double *v, double *vmax);
+static bool is_valid_length(const char *name, const char *param, double *v, double *vmax);
+
+
+Section::Section(double duration_, double at_,
                  double *p0_, double *p1_,
                  double *v0_, double *v1_,
                  double *a_)
 {
-        duration = t_;
+        duration = duration_;
         at = at_;
         vcopy(p0, p0_);
         vcopy(p1, p1_);
@@ -40,10 +50,36 @@ Section::Section(double t_, double at_,
         vsub(d, p1, p0);
 }
 
+Section *Section::cut_slice(double start_time, double dt)
+{
+        double tmp[3];
+        
+        double v0_[3];
+        smul(v0_, a, start_time);
+        vadd(v0_, v0, v0_);
+                
+        double p0_[3];
+        smul(tmp, v0, start_time);
+        smul(p0_, a, 0.5 * start_time * start_time);
+        vadd(p0_, p0_, tmp);
+        vadd(p0_, p0_, p0);
+                
+        double v1_[3];
+        smul(v1_, a, start_time+dt);
+        vadd(v1_, v0, v1_);
+                
+        double p1_[3];
+        smul(tmp, v0, start_time+dt);
+        smul(p1_, a, 0.5 * (start_time + dt) * (start_time + dt));
+        vadd(p1_, p1_, tmp);
+        vadd(p1_, p1_, p0);
+                
+        return new Section(dt, start_time, p0_, p1_, v0_, v1_, a);
+}
+
 list_t *Section::slice(double period, double maxlen)
 {
         list_t *slices = NULL;
-        double tmp[3];        
         double T = period;
         
         /* The segment has a constant speed. Sample at distances
@@ -59,30 +95,8 @@ list_t *Section::slice(double period, double maxlen)
                 double dt = duration - elapsed_time;
                 if (dt > T)
                         dt = T;
-                
-                double v0[3];
-                smul(v0, a, elapsed_time);
-                vadd(v0, v0, v0);
-                
-                double p0[3];
-                smul(tmp, v0, elapsed_time);
-                smul(p0, a, 0.5 * elapsed_time * elapsed_time);
-                vadd(p0, p0, tmp);
-                vadd(p0, p0, p0);
-                
-                double v1[3];
-                smul(v1, a, elapsed_time+dt);
-                vadd(v1, v0, v1);
-                
-                double p1[3];
-                smul(tmp, v0, elapsed_time+dt);
-                smul(p1, a, 0.5 * (elapsed_time+dt) * (elapsed_time+dt));
-                vadd(p1, p1, tmp);
-                vadd(p1, p1, p0);
-                
-                Section *s = new Section(dt, at + elapsed_time,
-                                         p0, p1, v0, v1, a);
 
+                Section *s = cut_slice(elapsed_time, dt);
                 slices = list_append(slices, s);
                 
                 elapsed_time += dt;
@@ -113,107 +127,107 @@ bool Section::is_valid(const char *name, double tmax,
                        double *xmin, double *xmax, 
                        double *vmax, double *amax)
 {
-        if (duration > tmax) {
-                r_warn("Section::is_valid (%s): t too long", name);
-                return false;
-        }
-        if (duration < 0.0) {
-                r_warn("Section::is_valid (%s): t < 0", name);
-                return false;
-        }
+        return (has_valid_start_time(name)
+                && has_valid_duration(name, tmax)
+                && has_valid_positions(name, xmin, xmax)
+                && has_valid_speeds(name, vmax)
+                && has_valid_acceleration(name, amax));
+}
+
+bool Section::has_valid_start_time(const char *name)
+{
+        bool valid = false;
         if (at < 0.0) {
-                r_warn("Section::is_valid (%s): at < 0", name);
-                return false;
+                r_warn("Section (%s): at < 0", name);
+        } else {
+                valid = true;
         }
-        
-        double dx[3];
-        double dmax;
+        return valid;
+}
 
-        vsub(dx, xmax, xmin);
-        dmax = norm(dx);
-        
+bool Section::has_valid_duration(const char *name, double tmax)
+{
+        bool valid = true;
+        if (out_of_range(name, "duration", duration, 0.0, tmax, 0.0)) {
+                valid = false;
+        }
+        return valid;
+}
+
+bool Section::has_valid_positions(const char *name, double *xmin, double *xmax)
+{
+        return (is_valid_position(name, "p0", p0, xmin, xmax)
+                && is_valid_position(name, "p1", p1, xmin, xmax));
+}
+
+bool Section::has_valid_speeds(const char *name, double *vmax)
+{
+        return (is_valid_vector(name, "v0", v0, vmax)
+                && is_valid_vector(name, "v1", v1, vmax));
+}
+
+bool Section::has_valid_acceleration(const char *name, double *amax)
+{
+        return is_valid_vector(name, "a", a, amax);
+}
+
+
+
+static bool is_nan(const char *name, const char *param, double *value, int index)
+{
+        bool nan = false;
+        if (::isnan(value[index])) {
+                r_warn("Section (%s): %s[%d] is NaN", name, param, index);
+                nan = true;
+        }
+        return nan;
+}
+
+static bool out_of_range(const char *name, const char *param, double value,
+                         double minimum, double maximum, double epsilon)
+{
+        bool in_range = false;
+        if (value < minimum - epsilon
+            || value > maximum + epsilon) {
+                r_warn("Section (%s): %s is out of range: %.6f < %.6f < %.6f",
+                       name, param, value, minimum, maximum);
+        } else {
+                in_range = true;
+        }
+        return in_range;
+}
+
+static bool is_valid_position(const char *name, const char *param,
+                              double *p, double *xmin, double *xmax)
+{
         for (int i = 0; i < 3; i++) {
-                if (isnan(p0[i])) {
-                        r_warn("Section::is_valid (%s): p0[%d] is NaN", name, i);
+                if (is_nan(name, param, p, i)) {
                         return false;
-                }
-                if (isnan(p1[i])) {
-                        r_warn("Section::is_valid (%s): p1[%d] is NaN", name, i);
-                        return false;
-                }
-                if (isnan(v0[i])) {
-                        r_warn("Section::is_valid (%s): v0[%d] is NaN", name, i);
-                        return false;
-                }
-                if (isnan(v1[i])) {
-                        r_warn("Section::is_valid (%s): v1[%d] is NaN", name, i);
-                        return false;
-                }
-                if (isnan(a[i])) {
-                        r_warn("Section::is_valid (%s): a[%d] is NaN", name, i);
-                        return false;
-                }
-                if (isnan(d[i])) {
-                        r_warn("Section::is_valid (%s): d[%d] is NaN", name, i);
-                        return false;
-                }
-                
-                if (p0[i] < xmin[i] - 0.001) {
-                        r_warn("Section::is_valid (%s): p0[%d] is too small: %.12f < %.12f",
-                               name, i, p0[i], xmin[i]);
-                        return false;
-                }
-                if (p0[i] > xmax[i] + 0.001) {
-                        r_warn("Section::is_valid (%s): p0[%d] is too large: %.12f > %.12f",
-                               name, i, p0[i], xmax[i]);
-                        return false;
-                }
-                if (p1[i] < xmin[i] - 0.001) {
-                        r_warn("Section::is_valid (%s): p1[%d] is too small: %.12f < %.12f",
-                               name, i, p1[i], xmin[i]);
-                        return false;
-                }
-                if (p1[i] > xmax[i] + 0.001) {
-                        r_warn("Section::is_valid (%s): p1[%d] is too large: %.12f > %.12f",
-                               name, i, p1[i], xmax[i]);
-                        return false;
-                }
-                if (fabs(v0[i]) > vmax[i] + 0.01) {
-                        r_warn("Section::is_valid (%s): v0[%d] is too large: %.12f > %.12f",
-                               name, i, fabs(v0[i]), vmax[i]);
-                        return false;
-                }
-                if (fabs(v1[i]) > vmax[i] + 0.01) {
-                        r_warn("Section::is_valid (%s): v1[%d] is too large: %.12f > %.12f",
-                               name, i, fabs(v1[i]), vmax[i]);
-                        return false;
-                }
-                if (fabs(a[i]) > amax[i] + 0.001) {
-                        r_warn("Section::is_valid (%s): a[%d] is too large: %.12f > %.12f",
-                               name, i, fabs(a[i]), amax[i]);
-                        return false;
-                }
-                if (fabs(d[i]) > dmax + 0.01) {
-                        r_warn("Section::is_valid (%s): d[%d] is too large: %.12f > %.12f",
-                               name, i, fabs(d[i]), dmax);
+                } else if (out_of_range(name, param, p[i], xmin[i], xmax[i], 0.001)) {
                         return false;
                 }
         }
-
-        double v = norm(vmax); 
-        double length_amax = norm(amax);
-        if (norm(v0) + 0.0001 > v) {
-                r_warn("Section::is_valid (%s): v0 is too large");
-                return false;
-        }
-        if (norm(v1) + 0.0001 > v) {
-                r_warn("Section::is_valid (%s): v1 is too large");
-                return false;
-        }
-        if (norm(a) + 0.0001 > length_amax) {
-                r_warn("Section::is_valid (%s): a is too large");
-                return false;
-        }
-        
         return true;
+}
+
+static bool is_valid_vector(const char *name, const char *param, double *v, double *vmax)
+{
+        for (int i = 0; i < 3; i++) {
+                if (is_nan(name, param, v, i)) {
+                        return false;
+                } else if (out_of_range(name, param, v[i], -vmax[i], vmax[i], 0.01)) {
+                        return false;
+                }
+        }
+        return is_valid_length(name, param, v, vmax);
+}
+
+static bool is_valid_length(const char *name, const char *param, double *v, double *vmax)
+{
+        bool valid = true;
+        if (norm(v) + 0.0001 > norm(vmax)) {
+                r_warn("Section (%s): vector %s is too long", param);
+                valid = false;
+        }
+        return valid;
 }

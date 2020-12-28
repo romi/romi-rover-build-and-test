@@ -63,7 +63,7 @@ struct Section {
         // The relative position at the end of the section, in meters.
         double d[3];
 
-        Section(double t, double at,
+        Section(double duration, double at,
                 double *p0, double *p1,
                 double *v0, double *v1,
                 double *a);
@@ -71,8 +71,14 @@ struct Section {
         bool is_valid(const char *name, double tmax,
                       double *xmin, double *xmax, 
                       double *vmax, double *amax);
-        
+        bool has_valid_start_time(const char *name);
+        bool has_valid_duration(const char *name, double tmax);
+        bool has_valid_positions(const char *name, double *xmin, double *xmax);
+        bool has_valid_speeds(const char *name, double *vmax);
+        bool has_valid_acceleration(const char *name, double *amax);
+
         list_t *slice(double period, double maxlen);
+        Section *cut_slice(double start_time, double dt);
         void print(membuf_t *text, const char *prefix);
 };
 
