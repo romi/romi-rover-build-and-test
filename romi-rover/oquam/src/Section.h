@@ -26,20 +26,22 @@
 #define _OQUAM_SECTION_H_
 
 #include <r.h>
+#include <vector>
 
 namespace romi {
 
         /**
-         *  \brief A section represents a component of the longer path that is
+         *  A section represents a component of the longer path that is
          *  traveled with a constant acceleration (including zero
          *  acceleration).
          *
-         * The following the properties should be satisfied:
+         *  The following the properties should be satisfied:
          *    d = p1 - p0
          *    v1 = v0 + a * duration
          *    d = v0 * duration + a * duration² / 2
          */
-        struct Section {
+        class Section {
+        public:
                 // The absolute positions at the beginning and end of the
                 // section in meters.
                 double p0[3];
@@ -65,17 +67,28 @@ namespace romi {
                 // The relative position at the end of the section, in meters.
                 double d[3];
 
+                Section();
+                
                 Section(double duration, double at,
                         const double *p0, const double *p1,
                         const double *v0, const double *v1,
                         const double *a);
 
-                void get_position_at(double t_from_start, double *p);
-                void get_speed_at(double t_from_start, double *v);
-        
                 bool is_valid(const char *name, double tmax,
                               const double *xmin, const double *xmax, 
                               const double *vmax, const double *amax);
+
+                void slice(std::vector<Section>& slices, double interval, double max_duration);
+                void get_position_at(double t_from_start, double *p);
+                void get_speed_at(double t_from_start, double *v);
+                void print(membuf_t *text, const char *prefix);
+                void print(const char *prefix);
+
+                void zero();
+
+        protected:
+                
+                void compute_slice(std::vector<Section>& slices, double start_time, double dt);
                 bool has_valid_start_time(const char *name);
                 bool has_valid_duration(const char *name, double tmax);
                 bool has_valid_positions(const char *name, const double *xmin, const double *xmax);
@@ -85,10 +98,6 @@ namespace romi {
                 bool has_coherent_distance(const char *name);
                 bool has_coherent_acceleration_1(const char *name);
                 bool has_coherent_acceleration_2(const char *name);
-
-                list_t *slice(double interval, double max_duration);
-                Section *compute_slice(double start_time, double dt);
-                void print(membuf_t *text, const char *prefix);
         };
 }
 

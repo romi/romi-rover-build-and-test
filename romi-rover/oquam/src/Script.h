@@ -28,67 +28,11 @@
 #include <r.h>
 #include <vector>
 #include "Section.h"
+#include "ATDC.h"
 
 namespace romi {
-
-/**
- *   segment
- */
-
-        typedef struct _segment_t  segment_t;
-
-/**
- *  \brief A segment is a node in doubly linked list of sections.
- *
- * A segment is a data structure introduced for convenience. It
- * combines a section and a doubly-linked list.
- *
- */
-        struct _segment_t {
-                /* The section */
-                Section section;
-
-                /* The doubly-linked list */
-                segment_t *prev;
-                segment_t *next;
-        };
-
-        segment_t *new_segment();
-        void delete_segment(segment_t *segment);
-
-        void segments_print(segment_t *segment, membuf_t *text);
-
-
-/**
- *   atdc (acceleration-travel-deceleration-curve)
- */
-
-        typedef struct _atdc_t atdc_t;
-
-/** \brief The atdc_t structure combines four sections: 
- *   1. a straight-line Acceleration (A), 
- *   2. a constant-speed Travel (T), 
- *   3. a straight-line Deceleration (D), 
- *   4. a Curve with constant acceleration (C). 
- */
-        struct _atdc_t {
-                Section accelerate;
-                Section travel;
-                Section decelerate;
-                Section curve;
         
-                atdc_t *prev;
-                atdc_t *next;
-        };
-
-        atdc_t *new_atdc();
-        void delete_atdc(atdc_t *atdc);
-
-        void atdc_print(atdc_t *atdc, membuf_t *text);
-
-
         struct Move {
-        
                 double p[3];
                 double v;
 
@@ -100,52 +44,89 @@ namespace romi {
                 }
         };
 
+        /** A segment is a data structure introduced for
+         *  convenience. It combines a section and a doubly-linked
+         *  list.
+         */
+        struct Segment {
+                Section section;
+                Segment *prev;
+                Segment *next;
 
-        struct Script {
+                Segment() : prev(0), next(0) {}
+        };
+        
+        class Script
+        {
+        protected:
+                
                 /* The list of moves given by the user. */
-                std::vector<Move> actions;
-
+                std::vector<Move> _moves;
+                double _position[3];
+                
+        public:
+                
                 /* An intermediate representation of the move actions to
                  * facilitate to computation of the ADTC below. */
-                segment_t *segments;
+                Segment *segments;
 
                 /* The list of move actions rewitten as a list of lists of
                  * acceleration-travel-deceleration-curve (ATDC) sections. */
-                atdc_t *atdc;
+                ATDC *atdc;
 
                 /* The list of lists of slices or short sections of constant
                  * speed. */
-                list_t *slices;
-
-                /** Move to absolute position (x,y,z) in meters at a speed of v m/s.
+                //list_t *slices;
+                std::vector<Section> slices;
+                
+                Script(double *start_position) : segments(0), atdc(0), slices(0) {
+                        set_position(start_position);
+                }
+                
+                virtual ~Script();
+                
+                /* Move to absolute position (x,y,z) in meters at an
+                 * absolute speed of v, in m/s.
                  */
                 void moveto(double x, double y, double z, double v);
 
-                /** position is the start position (current position of the CNC) */
-                bool convert(double *position,
-                             double *xmin, double *xmax,
-                             double *vmax, double *amax,
-                             double deviation, double period, double maxlen);
+                void convert(double *vmax,
+                             double *amax,
+                             double deviation,
+                             double period,
+                             double maxlen);
+                
+                void print_segments(membuf_t *text);
+                void print_atdc(membuf_t *text);
+                void print_slices(membuf_t *text);
 
-        
-                void convert_to_segments(double *position);
-
-                void convert_to_atdc(double d, double tmax,
-                                     double *xmin, double *xmax, 
-                                     double *vmax, double *amax);
+                bool check_validity(double tmax,
+                                    double *xmin, double *xmax, 
+                                    double *vmax, double *amax);
+                
+        protected:
+                
+                void set_position(double *p);
+                void convert_to_segments();
+                void convert_to_atdc(double d, double *vmax, double *amax);
                 void check_max_speeds(double *vmax);
-                void check_max_speed(segment_t *s0, double *vmax);
+                void check_max_speed(Segment *s0, double *vmax);
                 void copy_segments_to_atdc();
                 void slice(double period, double maxlen);
-                list_t *slice(atdc_t *atdc, double period, double maxlen);
-                list_t *slice(Section *section, double period, double maxlen);
-
-                void clear();
+                void slice(ATDC *atdc, double period, double maxlen);
+                void slice(Section *section, double period, double maxlen);
+                
+                void compute_curves_and_speeds(double d, double *amax);
+                void compute_curve_and_speeds(Segment *s0, ATDC *t0,
+                                              double d, double *amax);
+                void compute_curve(Segment *s0, ATDC *t0, double d, double *amax);
+                void update_speeds(Segment *s0, ATDC *t0, double *amax);
+                void compute_accelerations(Segment *s0, ATDC *t0, double *amax);
+                void compute_accelerations(double *amax);
+                void update_start_times();
+                
+                void print_atdc(ATDC *atdc, int index, membuf_t *text);
         };
-
-
-        void slices_print(list_t *slices, membuf_t *text);
-
 }
 
 #endif // _OQUAM_SCRIPT_H_

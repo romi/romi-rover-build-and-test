@@ -2,9 +2,9 @@
 #include <stdexcept>
 #include <string.h>
 #include <rcom.h>
-#include <getopt.h>
 
 #include "Oquam.h"
+#include "OquamOptions.h"
 #include "StepperController.h"
 #include "RomiSerialClient.h"
 #include "RSerial.h"
@@ -22,70 +22,16 @@ static inline double sign(double v)
         return (v < 0)? -1.0 : 1.0;
 }
 
-struct Options {
-        
-        const char *config_file;
-        const char *serial_device;
-        const char *server_name;
-        const char *cnc_controller;
-        const char *output_directory;
-
-        Options() {
-                config_file = "config.json";
-                serial_device = "/dev/ttyACM0";
-                server_name = "oquam";
-                cnc_controller = "oquam";
-                output_directory = ".";
-        }
-
-        void parse(int argc, char** argv) {
-                int option_index;
-                static const char *optchars = "C:N:T:D:";
-                static struct option long_options[] = {
-                        {"config", required_argument, 0, 'C'},
-                        {"device", required_argument, 0, 'D'},
-                        {"navigation-server-name", required_argument, 0, 'N'},
-                        {"cnc-controller", required_argument, 0, 'c'},
-                        {"output-directory", required_argument, 0, 'd'},
-                        {0, 0, 0, 0}
-                };
-        
-                while (1) {
-                        int c = getopt_long(argc, argv, optchars,
-                                            long_options, &option_index);
-                        if (c == -1) break;
-                        switch (c) {
-                        case 'C':
-                                config_file = optarg;
-                                break;
-                        case 'N':
-                                server_name = optarg;
-                                break;
-                        case 'D':
-                                serial_device = optarg;
-                                break;
-                        case 'c':
-                                cnc_controller = optarg;
-                                break;
-                        case 'd':
-                                output_directory = optarg;
-                                break;
-                        }
-                }
-        }
-};
-        
-
 int main(int argc, char** argv)
 {
         int retval = 1;
-        Options options;
+        OquamOptions options;
         options.parse(argc, argv);
         
         app_init(&argc, argv);
         app_set_name(options.server_name);
 
-        ICNCController *cnc_controller = 0;
+        CNCController *cnc_controller = 0;
         
         try {
                 ConfigurationFile config(options.config_file);

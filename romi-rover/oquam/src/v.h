@@ -29,35 +29,31 @@
 extern "C" {
 #endif
 
-double *smul(double *w, const double *v, double s);
-double *sdiv(double *w, const double *v, double s);
-double *sadd(double *w, const double *v, double s);
+        double *smul(double *w, const double *v, double s);
+        double *sdiv(double *w, const double *v, double s);
+        double *sadd(double *w, const double *v, double s);
 
-double *vadd(double *r, const double *a, const double *b);
-double *vsub(double *r, const double *a, const double *b);
-double *vmul(double *r, const double *a, const double *b);
-double *vdiv(double *r, const double *a, const double *b);
-double *vcross(double *r, const double *a, const double *b);
+        double *vadd(double *r, const double *a, const double *b);
+        double *vsub(double *r, const double *a, const double *b);
+        double *vmul(double *r, const double *a, const double *b);
+        double *vdiv(double *r, const double *a, const double *b);
+        double vdot(const double *a, const double *b);
+        double *vcross(double *r, const double *a, const double *b);
 
-double vmax(const double *a);
-double vmin(const double *a);
+        double vmax(const double *a);
+        double vmin(const double *a);
 
-double *vabs(double *r, const double *a);
-double *vsqrt(double *r, const double *a);
-double *vcopy(double *r, const double *a);
-double *vzero(double *r);
-double *vset(double *r, double v);
+        double *vabs(double *r, const double *a);
+        double *vcopy(double *r, const double *a);
+        double *vzero(double *r);
+        double *vset(double *r, double v);
 
-double norm(const double *v);
-double *normalize(double *w, const double *v);
+        double norm(const double *v);
+        double *normalize(double *w, const double *v);
 
-int *vaddi(int *r, const int *a, const int *b);
-int *vsubi(int *r, const int *a, const int *b);
-
-int *vconvfi(int *r, const double *a);
-double *vconvif(double *r, const int *a);
-
-int veq(const double *a, const double *b);
+        double vdist(double *a, double *b);
+        int veq(const double *a, const double *b);
+        int vnear(double *a, double *b, double epsilon);
 
 #ifdef __cplusplus
 }

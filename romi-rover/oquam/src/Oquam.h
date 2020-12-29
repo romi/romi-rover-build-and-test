@@ -28,7 +28,7 @@
 #include <mutex>
 #include "v.h"
 #include "CNC.h"
-#include "ICNCController.h"
+#include "CNCController.h"
 #include "IFileCabinet.h"
 #include "Script.h" 
 
@@ -39,46 +39,25 @@ namespace romi {
         class Oquam : public CNC
         {
         public:
-                CNCRange _range;
-                ICNCController *_controller;
+                CNCController *_controller;
                 IFileCabinet *_file_cabinet;
                 std::mutex _m;
         
-                /**
-                 * The minumum positions, in m
-                 */
-                double _xmin[3];
-                
-                /**
-                 * The maximum positions, in m
-                 */
-                double _xmax[3];
+                double _xmin[3]; // in meters
+                double _xmax[3]; // in meters
+                double _vmax[3]; // in m/s
+                double _amax[3]; // in m/s²
 
-                /**
-                 * The maximum speed, in m/s
-                 */
-                double _vmax[3];
-
-                /**
-                 * The maximum acceleration, in m/s^2
-                 */
-                double _amax[3];
-
-                /**
-                 * The maximum deviation allowed when computed a continuous
-                 * path, in m.
-                 */        
+                // The maximum deviation allowed when computed a
+                // continuous path, in m.
                 double _path_max_deviation;
-
                 double _scale_meters_to_steps[3];
-                
                 double _path_slice_interval;
-
                 int _script_count;
-
                 
         public:
-                Oquam(ICNCController *controller,
+                
+                Oquam(CNCController *controller,
                       const double *xmin, const double *xmax,
                       const double *vmax, const double *amax,
                       const double *scale_meters_to_steps, 
@@ -127,57 +106,40 @@ namespace romi {
                 bool stop_execution() override;
                 bool continue_execution() override;
                 bool reset() override;
-                
-                /* accessors */
-        
-                virtual const double *xmin() {
-                        return _xmin;
-                }
-        
-                virtual const double *xmax() {
-                        return _xmax;
-                }
-
-                virtual const double *vmax() {
-                        return _vmax;
-                }
-
-                virtual const double *amax() {
-                        return _amax;
-                }
-
-                virtual double path_max_deviation() {
-                        return _path_max_deviation;
-                }
-
-                virtual bool valid_position(double value, int axis) {
-                        return value >= _xmin[axis] && value <= _xmax[axis];
-                }
-
-                virtual bool valid_x(double value) {
-                        return valid_position(value, 0);
-                }
-
-                virtual bool valid_y(double value) {
-                        return valid_position(value, 1);
-                }
-
-                virtual bool valid_z(double value) {
-                        return valid_position(value, 2);
-                }
 
         protected:
                 bool moveto_synchronized(double x, double y, double z, double rel_speed);
                 bool travel_synchronized(Path &path, double relative_speed);
+                void do_travel(Path &path, double relative_speed);
+                void synchronize(double timeout);
 
                 bool get_position(double *position); 
                 bool get_position(int32_t *position); 
-                Script *build_script(Path &path, double speed); 
-                bool convert_script(Script *script, double *position, double rel_speed); 
-                bool execute_script(Script *script);
-                bool execute_move(Section *section, int32_t *pos_steps);
-                double script_duration(Script *script);
-                void store_script(Script *script);
+                void build_script(Path &path, double speed, Script& script); 
+                void convert_script(Script& script, double rel_speed); 
+                void execute_script(Script& script);
+                void execute_move(Section& section, int32_t *pos_steps);
+                void wait_end_of_script(Script& script); 
+                double script_duration(Script& script);
+                void store_script(Script& script);
+                double get_absolute_speed(double relative_speed); 
+                void assert_relative_speed(double relative_speed); 
+        
+                bool valid_position(double value, int axis) {
+                        return value >= _xmin[axis] && value <= _xmax[axis];
+                }
+
+                bool valid_x(double value) {
+                        return valid_position(value, 0);
+                }
+
+                bool valid_y(double value) {
+                        return valid_position(value, 1);
+                }
+
+                bool valid_z(double value) {
+                        return valid_position(value, 2);
+                }
         };
 }
 

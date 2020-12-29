@@ -21,17 +21,17 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _OQUAM_I_CNC_CONTROLLER_HPP_
-#define _OQUAM_I_CNC_CONTROLLER_HPP_
+#ifndef _OQUAM_CNC_CONTROLLER_HPP_
+#define _OQUAM_CNC_CONTROLLER_HPP_
 
 namespace romi {
 
-        class ICNCController
+        class CNCController
         {
         public:
                 enum { RUNNING, HOMING, ERROR };
                         
-                virtual ~ICNCController() = default;
+                virtual ~CNCController() = default;
                 
                 virtual bool get_position(int32_t *pos) = 0;
 
@@ -48,4 +48,4 @@ namespace romi {
         };
 }
 
-#endif // _OQUAM_I_CNC_CONTROLLER_HPP_
+#endif // _OQUAM_CNC_CONTROLLER_HPP_

@@ -24,8 +24,6 @@
 #include <math.h>
 #include "v.h"
 
-#define N 3
-
 double norm(const double *v)
 {
        return sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -36,14 +34,6 @@ double *vabs(double *r, const double *a)
         r[0] = fabs(a[0]);
         r[1] = fabs(a[1]);
         r[2] = fabs(a[2]);
-        return r;
-}
-
-double *vsqrt(double *r, const double *a)
-{
-        r[0] = sqrt(a[0]);
-        r[1] = sqrt(a[1]);
-        r[2] = sqrt(a[2]);
         return r;
 }
 
@@ -147,6 +137,11 @@ double *vdiv(double *r, const double *a, const double *b)
         return r;
 }
 
+double vdot(const double *a, const double *b)
+{
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
 double *vcross(double *r, const double *a, const double *b)
 {
         r[0] =   a[1] * b[2] - a[2] * b[1];
@@ -164,39 +159,18 @@ double *normalize(double *w, const double *v)
         return w;
 }
 
-int *vaddi(int *r, const int *a, const int *b)
-{
-        r[0] = a[0] + b[0];
-        r[1] = a[1] + b[1];
-        r[2] = a[2] + b[2];
-        return r;
-}
-
-int *vsubi(int *r, const int *a, const int *b)
-{
-        r[0] = a[0] - b[0];
-        r[1] = a[1] - b[1];
-        r[2] = a[2] - b[2];
-        return r;
-}
-
-int *vconvfi(int *r, const double *a)
-{
-        r[0] = (int) a[0];
-        r[1] = (int) a[1];
-        r[2] = (int) a[2];
-        return r;
-}
-
-double *vconvif(double *r, const int *a)
-{
-        r[0] = (double) a[0];
-        r[1] = (double) a[1];
-        r[2] = (double) a[2];
-        return r;
-}
-
 int veq(const double *a, const double *b)
 {
         return ((a[0] == b[0]) && (a[1] == b[1]) && (a[2] == b[2]));
+}
+
+double vdist(double *a, double *b)
+{
+        double d[3];
+        return norm(vsub(d, a, b));
+}
+
+int vnear(double *a, double *b, double epsilon)
+{
+        return vdist(a, b) <= epsilon;
 }

@@ -163,13 +163,13 @@ namespace romi {
 #define _X(_r, _v) (((_r)->x1 - (_r)->x0 != 0.0)? (_r)->w * ((_v) - (_r)->x0) / ((_r)->x1 - (_r)->x0) : (_r)->x0)
 #define _Y(_r, _v) (((_r)->y1 - (_r)->y0 != 0.0)? (_r)->h * ((_v) - (_r)->y0) / ((_r)->y1 - (_r)->y0) : (_r)->y0)
 
-        static void print_atdc_ij(plot_t *plot, atdc_t *path,
+        static void print_atdc_ij(plot_t *plot, ATDC *path,
                                   int i, int j, rect_t *r)
         {
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
                               r->x, r->y);
         
-                for (atdc_t *t0 = path; t0; t0 = t0->next) {
+                for (ATDC *t0 = path; t0; t0 = t0->next) {
                         print_line(plot,
                                    _X(r, t0->accelerate.p0[i]), _Y(r, t0->accelerate.p0[j]),
                                    _X(r, t0->accelerate.p1[i]), _Y(r, t0->accelerate.p1[j]),
@@ -211,7 +211,7 @@ namespace romi {
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_atdc(plot_t *plot, atdc_t *atdc)
+        static void print_atdc(plot_t *plot, ATDC *atdc)
         {
                 membuf_printf(plot->buffer,
                               "    <g inkscape:groupmode=\"layer\" "
@@ -225,14 +225,14 @@ namespace romi {
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_path_ij(plot_t *plot, segment_t *path,
+        static void print_path_ij(plot_t *plot, Segment *path,
                                   int i, int j, rect_t *r)
         {
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
                               r->x, r->y);
                 membuf_printf(plot->buffer, "        <path d=\"");
         
-                for (segment_t *s0 = path; s0; s0 = s0->next) {
+                for (Segment *s0 = path; s0; s0 = s0->next) {
                         if (s0->prev == NULL)
                                 print_moveto(plot, _X(r, s0->section.p0[i]), _Y(r, s0->section.p0[j]));
                         else 
@@ -247,7 +247,7 @@ namespace romi {
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_path(plot_t *plot, segment_t *path)
+        static void print_path(plot_t *plot, Segment *path)
         {
                 membuf_printf(plot->buffer,
                               "    <g inkscape:groupmode=\"layer\" "
@@ -261,10 +261,10 @@ namespace romi {
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static double atdc_duration(atdc_t *atdc)
+        static double atdc_duration(ATDC *atdc)
         {
                 double t = 0.0;
-                for (atdc_t *t0 = atdc; t0; t0 = t0->next) {
+                for (ATDC *t0 = atdc; t0; t0 = t0->next) {
                         t += (t0->accelerate.duration
                               + t0->travel.duration
                               + t0->decelerate.duration
@@ -273,24 +273,23 @@ namespace romi {
                 return t;
         }
 
-        static double slices_duration(list_t *list)
+        static double slices_duration(std::vector<Section>& slices)
         {
-                list_t *last = list_last(list);
-                Section *section = list_get(last, Section);
-                return section->at + section->duration;
+                Section& section = slices.back();
+                return section.at + section.duration;
         }
 
         static void print_path_speed_i(plot_t *plot,
-                                       segment_t *path,
-                                       atdc_t *atdc,
+                                       Segment *path,
+                                       ATDC *atdc,
                                        int i,
                                        double duration,
                                        double *vm)
         {
                 double xscale = plot->v[i].w / duration;
                 double yscale = plot->v[i].h / vmax(vm);
-                segment_t *s0 = path;
-                atdc_t *a0 = atdc;
+                Segment *s0 = path;
+                ATDC *a0 = atdc;
                 double t = 0.0;
 
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
@@ -349,8 +348,8 @@ namespace romi {
         }
 
         static void print_path_speeds(plot_t *plot,
-                                      segment_t *path,
-                                      atdc_t *atdc,
+                                      Segment *path,
+                                      ATDC *atdc,
                                       double duration,
                                       double *vmax)
         {
@@ -359,16 +358,16 @@ namespace romi {
         }
 
         static void print_path_acceleration_i(plot_t *plot,
-                                              segment_t *path,
-                                              atdc_t *atdc,
+                                              Segment *path,
+                                              ATDC *atdc,
                                               int i,
                                               double duration,
                                               double *amax)
         {
                 double xscale = plot->a[i].w / duration;
                 double yscale = plot->a[i].h / vmax(amax);
-                segment_t *s0 = path;
-                atdc_t *a0 = atdc;
+                Segment *s0 = path;
+                ATDC *a0 = atdc;
                 double t = 0.0;
 
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
@@ -420,8 +419,8 @@ namespace romi {
         }
 
         static void print_path_accelerations(plot_t *plot,
-                                             segment_t *path,
-                                             atdc_t *atdc,
+                                             Segment *path,
+                                             ATDC *atdc,
                                              double duration,
                                              double *amax)
         {
@@ -429,7 +428,7 @@ namespace romi {
                         print_path_acceleration_i(plot, path, atdc, i, duration, amax);
         }
 
-        static void print_slices_speed_i(plot_t *plot, list_t *slices, int i,
+        static void print_slices_speed_i(plot_t *plot, std::vector<Section>& slices, int i,
                                          double duration, double *vm)
         {
                 double xscale = plot->v[i].w / duration;
@@ -438,34 +437,34 @@ namespace romi {
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
                               plot->v[i].x, plot->v[i].y);
 
-                for (list_t *l = slices; l; l = list_next(l)) {
-                        Section *section = list_get(l, Section);
+                for (size_t k = 0; k < slices.size(); k++) {
+                        Section& section = slices[k];
                         print_line(plot,
-                                   xscale * section->at, yscale * section->v0[i],
-                                   xscale * (section->at + section->duration), yscale * section->v1[i], 
+                                   xscale * section.at, yscale * section.v0[i],
+                                   xscale * (section.at + section.duration), yscale * section.v1[i], 
                                    "#ff00ff");
                 }
         
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_slices_ij(plot_t *plot, list_t *slices, int i, int j, rect_t *r)
+        static void print_slices_ij(plot_t *plot, std::vector<Section>& slices, int i, int j, rect_t *r)
         {
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
                               r->x, r->y);
 
-                for (list_t *l = slices; l; l = list_next(l)) {
-                        Section *section = list_get(l, Section);
+                for (size_t k = 0; k < slices.size(); k++) {
+                        Section& section = slices[k];
                         print_line(plot,
-                                   _X(r, section->p0[i]), _Y(r, section->p0[j]),
-                                   _X(r, section->p1[i]), _Y(r, section->p1[j]),
+                                   _X(r, section.p0[i]), _Y(r, section.p0[j]),
+                                   _X(r, section.p1[i]), _Y(r, section.p1[j]),
                                    "#ff00ff");
                 }
         
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_slices(plot_t *plot, list_t *slices, double duration, double *vm)
+        static void print_slices(plot_t *plot, std::vector<Section>& slices, double duration, double *vm)
         {
                 membuf_printf(plot->buffer,
                               "    <g inkscape:groupmode=\"layer\" "
@@ -681,23 +680,17 @@ namespace romi {
 
                 double duration = 1.0;
 
-                segment_t *segments = script->segments;
-                atdc_t *atdc = script->atdc;
+                Segment *segments = script->segments;
+                ATDC *atdc = script->atdc;
         
                 if (atdc)
                         duration = atdc_duration(atdc);
-                else if (script->slices)
+                else if (script->slices.size())
                         duration = slices_duration(script->slices);
 
-                if (segments)
-                        print_path(plot, segments);
-        
-                if (atdc)
-                        print_atdc(plot, atdc);
-
-                if (script->slices != NULL)
-                        print_slices(plot, script->slices, duration, vmax_);
-
+                print_path(plot, segments);
+                print_atdc(plot, atdc);
+                print_slices(plot, script->slices, duration, vmax_);
                 print_path_speeds(plot, segments, atdc, duration, vmax_);
                 print_path_accelerations(plot, segments, atdc, duration, amax);
 

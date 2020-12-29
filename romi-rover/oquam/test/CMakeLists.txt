@@ -13,16 +13,42 @@ set(SRCS_SECTION
   ../src/v.h
   ../src/v.c
   )
-
 add_executable(romi_rover_unit_tests_oquam_section ${SRCS_SECTION})
 target_link_libraries(romi_rover_unit_tests_oquam_section rpp gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_oquam_section
+    COMMAND romi_rover_unit_tests_oquam_section
+)
+
+
+
+set(SRCS_SCRIPT
+  src/tests_main.cpp
+  src/tests_script.cpp
+  ../src/Script.h
+  ../src/Script.cpp
+  ../src/ATDC.h
+  ../src/ATDC.cpp
+  ../src/Section.h
+  ../src/Section.cpp
+  ../src/v.h
+  ../src/v.c
+  )
+add_executable(romi_rover_unit_tests_oquam_script ${SRCS_SCRIPT})
+target_link_libraries(romi_rover_unit_tests_oquam_script rpp gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_oquam_script
+    COMMAND romi_rover_unit_tests_oquam_script
+)
 
 
 
 set(SRCS_OQUAMSTEPPER
   src/tests_main.cpp
   src/tests_oquamstepper.cpp
-  ../src/ICNCController.h
+  ../src/CNCController.h
   ../src/StepperController.h
   ../src/StepperController.cpp
   ../src/Oquam.h
@@ -33,6 +59,8 @@ set(SRCS_OQUAMSTEPPER
   ../src/plotter.h
   ../src/Section.h
   ../src/Section.cpp
+  ../src/ATDC.h
+  ../src/ATDC.cpp
   ../src/Script.h
   ../src/Script.cpp
   ../src/Oquam.cpp
@@ -47,8 +75,8 @@ set(SRCS_OQUAMSTEPPER
   ../../arduino_libraries/RomiSerial/RomiSerialClient.cpp
   )
 
-add_executable(romi_rover_unit_tests_oquam_stepper ${SRCS_OQUAMSTEPPER})
-target_link_libraries(romi_rover_unit_tests_oquam_stepper rpp romirover romi gtest gmock)
+add_executable(romi_rover_hardware_tests_oquam ${SRCS_OQUAMSTEPPER})
+target_link_libraries(romi_rover_hardware_tests_oquam rpp romirover romi gtest gmock)
 
 
 
@@ -57,7 +85,6 @@ if(BUILD_COVERAGE)
             NAME romi_rover_oquam_coverage
             EXECUTABLE ctest -V ${n_cores}
             EXCLUDE "src/main.cpp" 
-            DEPENDENCIES romi_rover_unit_tests_oquam_section
-                         )
+            DEPENDENCIES romi_rover_unit_tests_oquam_section romi_rover_unit_tests_oquam_script)
 endif()
 

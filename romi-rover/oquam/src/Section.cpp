@@ -36,6 +36,11 @@ namespace romi {
         static bool is_valid_vector(const char *name, const char *param, double *v, const double *vmax);
 
 
+        Section::Section()
+        {
+                zero();
+        }
+        
         Section::Section(double duration_, double at_,
                          const double *p0_, const double *p1_,
                          const double *v0_, const double *v1_,
@@ -49,6 +54,18 @@ namespace romi {
                 vcopy(v1, v1_);
                 vcopy(a, a_);
                 vsub(d, p1, p0);
+        }
+
+        void Section::zero()
+        {
+                duration = 0.0;
+                at = 0.0;
+                vzero(p0);
+                vzero(p1);
+                vzero(v0);
+                vzero(v1);
+                vzero(a);
+                vzero(d);
         }
 
         void Section::get_position_at(double t, double *p)
@@ -70,7 +87,7 @@ namespace romi {
                 vadd(v, v0, dv);
         }
 
-        Section *Section::compute_slice(double offset, double slice_duration)
+        void Section::compute_slice(std::vector<Section>& slices, double offset, double slice_duration)
         {
                 double t0 = offset;
                 double t1 = offset + slice_duration;
@@ -85,14 +102,14 @@ namespace romi {
                 get_speed_at(t0, slice_v0);
                 get_speed_at(t1, slice_v1);
                 
-                return new Section(slice_duration, at + offset,
-                                   slice_p0, slice_p1,
-                                   slice_v0, slice_v1, a);
+                slices.push_back(Section(slice_duration, at + offset,
+                                         slice_p0, slice_p1,
+                                         slice_v0, slice_v1, a));
         }
 
-        list_t *Section::slice(double interval, double max_duration)
+        void Section::slice(std::vector<Section>& slices, double interval, double max_duration)
         {
-                list_t *slices = NULL;
+                double offset = 0.0;
                 double used_interval = interval;
         
                 /* The segment has a constant speed there is no need to sample
@@ -102,40 +119,39 @@ namespace romi {
                 if (norm(a) == 0)
                         used_interval = max_duration;
 
-                double offset = 0.0;
-
-                //r_debug("t=%f", t);
-        
                 while (offset < duration) {
                         double slice_duration = duration - offset;
                         if (slice_duration > used_interval)
                                 slice_duration = used_interval;
-
-                        Section *s = compute_slice(offset, slice_duration);
-                        slices = list_append(slices, s);
-                
+                        compute_slice(slices, offset, slice_duration);
                         offset += slice_duration;
                 }
-        
-                //r_err("section_slice: return %p", slices);
-                return slices;
         }
 
         void Section::print(membuf_t *text, const char *prefix)
         {
                 membuf_printf(text, "%s: ", prefix);
-                membuf_printf(text, "at=%0.6f, t=%0.6f; ", at, duration);
-                membuf_printf(text, "d=(%0.4f,%0.4f,%0.4f); ",
-                              d[0], d[1], d[2]);
-                membuf_printf(text, "p0(%0.4f,%0.4f,%0.4f)-p1(%0.4f,%0.4f,%0.4f); ",
-                              p0[0], p0[1], p0[2],
-                              p1[0], p1[1], p1[2]);
-                membuf_printf(text, "v0(%0.3f,%0.3f,%0.3f)-v1(%0.3f,%0.3f,%0.3f); ",
-                              v0[0], v0[1], v0[2],
-                              v1[0], v1[1], v1[2]);
-                membuf_printf(text, "a(%0.3f,%0.3f,%0.3f)",
-                              a[0], a[1], a[2]);
+                membuf_printf(text, "start=%0.6f, duration=%0.6f; ", at, duration);
+                membuf_printf(text, "from=(%0.4f,%0.4f,%0.4f), ", p0[0], p0[1], p0[2]);
+                membuf_printf(text, "to=(%0.4f,%0.4f,%0.4f), ", p1[0], p1[1], p1[2]);
+                membuf_printf(text, "distance=(%0.4f,%0.4f,%0.4f), ", d[0], d[1], d[2]);
+                membuf_printf(text, "v0=(%0.3f,%0.3f,%0.3f), ", v0[0], v0[1], v0[2]);
+                membuf_printf(text, "v1=(%0.3f,%0.3f,%0.3f), ", v1[0], v1[1], v1[2]);
+                membuf_printf(text, "a=(%0.3f,%0.3f,%0.3f)", a[0], a[1], a[2]);
                 membuf_printf(text, "\n");
+        }
+
+        void Section::print(const char *prefix)
+        {
+                printf("%s: ", prefix);
+                printf("start=%0.6f, duration=%0.6f; ", at, duration);
+                printf("from=(%0.4f,%0.4f,%0.4f), ", p0[0], p0[1], p0[2]);
+                printf("to=(%0.4f,%0.4f,%0.4f), ", p1[0], p1[1], p1[2]);
+                printf("distance=(%0.4f,%0.4f,%0.4f), ", d[0], d[1], d[2]);
+                printf("v0=(%0.3f,%0.3f,%0.3f), ", v0[0], v0[1], v0[2]);
+                printf("v1=(%0.3f,%0.3f,%0.3f), ", v1[0], v1[1], v1[2]);
+                printf("a=(%0.3f,%0.3f,%0.3f)", a[0], a[1], a[2]);
+                printf("\n");
         }
 
         bool Section::is_valid(const char *name, double tmax,
@@ -221,7 +237,7 @@ namespace romi {
                 if (!ok) {
                         r_warn("Section (%s): |(v0+a.t)-v1|>0.001", name);
                         r_warn("Section (%s): v1=(%f,%f,%f), v0+a.t=(%f,%f,%f)",
-                               v1[0], v1[1], v1[2], v[0], v[1], v[2]);
+                               name, v1[0], v1[1], v1[2], v[0], v[1], v[2]);
                 }
                 return ok;
         }
@@ -247,7 +263,7 @@ namespace romi {
                 if (!ok) {
                         r_warn("Section (%s): |(p0+v0.t+a.t²/2)-p1|>0.001", name);
                         r_warn("Section (%s): p1=(%f,%f,%f), p=(%f,%f,%f)",
-                               p1[0], p1[1], p1[2], p[0], p[1], p[2]);
+                               name, p1[0], p1[1], p1[2], p[0], p[1], p[2]);
                 }
                 return ok;
         }

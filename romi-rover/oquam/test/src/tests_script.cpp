@@ -4,10 +4,20 @@
 
 using namespace std;
 using namespace testing;
+using namespace romi;
 
 class script_tests : public ::testing::Test
 {
 protected:
+
+        double xmin[3] = { 0.0, 0.0, 0.0};
+        double xmax[3] = { 3.0, 2.0, 0.0};
+        double vmax[3] = { 1.0, 1.0, 0.0};
+        double amax[3] = { 1.0, 1.0, 1.0};
+        double deviation = 0.01;
+        double period = 0.010;
+        double maxlen = 32.0;
+        
 	script_tests() {
 	}
 
@@ -20,87 +30,253 @@ protected:
 	}
 };
 
-TEST_F(script_tests, add_moveto_action)
+TEST_F(script_tests, test_constructor)
 {
         // Arrange
-        oquam::Script script;
-
-        // Act
-        script.moveto(1.0, 2.0, 3.0, 4.0, 5);
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
         
         //Assert
-        ASSERT_EQ(script.length(), 1);
-
-        oquam::V3 p(1.0, 2.0, 3.0);
-        oquam::Action action = script.get(0);
-        ASSERT_EQ(action.type, oquam::Action::MOVETO);
-        ASSERT_EQ(action.id, 5);
-        ASSERT_EQ(action.destination == p, true);
-        ASSERT_EQ(action.speed, 4.0);
+        ASSERT_EQ(script.segments, (Segment *) 0);
+        ASSERT_EQ(script.atdc, (ATDC *) 0);
+        ASSERT_EQ(script.slices.size(), 0);
 }
 
-TEST_F(script_tests, add_delay_action)
+TEST_F(script_tests, test_moveto)
 {
         // Arrange
-        oquam::Script script;
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
 
-        // Act
-        script.delay(1.0, 2);
-        
+        script.moveto(1.0, 0.0, 0.0, 1.0);
+        script.convert(vmax, amax, deviation, period, maxlen);
+
+        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+
         //Assert
-        ASSERT_EQ(script.length(), 1);
+        ATDC *first = script.atdc;
+        ASSERT_NE(first, (ATDC *) 0);
+        
+        ASSERT_GT(first->accelerate.duration, 0.0);
+        ASSERT_EQ(first->accelerate.p0[0], 0.0);
+        ASSERT_EQ(first->accelerate.p0[1], 0.0);
+        ASSERT_GT(first->accelerate.p1[0], 0.0);
+        ASSERT_EQ(first->accelerate.p1[1], 0.0);
+        ASSERT_EQ(first->accelerate.v0[0], 0.0);
+        ASSERT_EQ(first->accelerate.v0[1], 0.0);
+        ASSERT_EQ(first->accelerate.v1[0], 1.0);
+        ASSERT_EQ(first->accelerate.v1[1], 0.0);
+        ASSERT_EQ(first->accelerate.a[0], 1.0);
+        ASSERT_EQ(first->accelerate.a[1], 0.0);
 
-        oquam::Action action = script.get(0);
-        ASSERT_EQ(action.type, oquam::Action::DELAY);
-        ASSERT_EQ(action.id, 2);
-        ASSERT_EQ(action.delay, 1.0);
+        ASSERT_NEAR(first->travel.duration, 0.0, 0.01);
+        ASSERT_EQ(first->travel.p0[0], first->accelerate.p1[0]);
+        ASSERT_EQ(first->travel.p0[1], 0.0);
+        //ASSERT_GT(first->travel.p1[0], 0.0);
+        //ASSERT_EQ(first->travel.p1[1], 0.0);
+        ASSERT_EQ(first->travel.v0[0], first->accelerate.v1[0]);
+        ASSERT_EQ(first->travel.v0[1], first->accelerate.v1[1]);
+        ASSERT_EQ(first->travel.v1[0], 1.0);
+        ASSERT_EQ(first->travel.v1[1], 0.0);
+        ASSERT_EQ(first->travel.a[0], 0.0);
+        ASSERT_EQ(first->travel.a[1], 0.0);
+
+        ASSERT_GT(first->decelerate.duration, 0.0);
+        ASSERT_EQ(first->decelerate.p0[0], first->travel.p1[0]);
+        ASSERT_EQ(first->decelerate.p0[1], 0.0);
+        ASSERT_EQ(first->decelerate.p1[0], 1.0);
+        ASSERT_EQ(first->decelerate.p1[1], 0.0);
+        ASSERT_EQ(first->decelerate.v0[0], 1.0);
+        ASSERT_EQ(first->decelerate.v0[1], 0.0);
+        ASSERT_EQ(first->decelerate.v1[0], 0.0);
+        ASSERT_EQ(first->decelerate.v1[1], 0.0);
+        ASSERT_EQ(first->decelerate.a[0], -1.0);
+        ASSERT_EQ(first->decelerate.a[1], 0.0);
+        
+        ASSERT_EQ(first->curve.duration, 0.0);
+        ASSERT_EQ(first->curve.p1[0], 1.0);
+        ASSERT_EQ(first->curve.p1[1], 0.0);
+        ASSERT_EQ(first->curve.v0[0], 0.0);
+        ASSERT_EQ(first->curve.v0[1], 0.0);
+        ASSERT_EQ(first->curve.v1[0], 0.0);
+        ASSERT_EQ(first->curve.v1[1], 0.0);
+        ASSERT_EQ(first->curve.a[0], 0.0);
+        ASSERT_EQ(first->curve.a[1], 0.0);
+
+        ATDC *second = first->next;
+        ASSERT_EQ(second, (ATDC *) 0);
 }
 
-TEST_F(script_tests, add_trigger_action)
+TEST_F(script_tests, test_move_and_back)
 {
         // Arrange
-        oquam::Script script;
-        void *p = (void *) 0x01;
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
 
-        MockFunction<void(void*, int16_t)> mockCallback;
-        EXPECT_CALL(mockCallback, Call((void*)0x01, 2))
-                .Times(1);
-        
-        // Act
-        script.trigger(mockCallback.AsStdFunction(), p, 2, 3.0, 4);
-        oquam::Action action = script.get(0);
-        action.invoke();
-        
+        script.moveto(1.0, 0.0, 0.0, 1.0);
+        script.moveto(0.0, 0.0, 0.0, 1.0);
+        script.convert(vmax, amax, deviation, period, maxlen);
+        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+
         //Assert
-        ASSERT_EQ(script.length(), 1);
-        ASSERT_EQ(action.type, oquam::Action::TRIGGER);
-        ASSERT_EQ(action.id, 4);
-        ASSERT_EQ(action.delay, 3.0);
+        ATDC *first = script.atdc;
+        ASSERT_NE(first, (ATDC *) 0);
+        
+        ASSERT_GT(first->accelerate.duration, 0.0);
+        ASSERT_EQ(first->accelerate.p0[0], 0.0);
+        ASSERT_EQ(first->accelerate.p0[1], 0.0);
+        ASSERT_GT(first->accelerate.p1[0], 0.0);
+        ASSERT_EQ(first->accelerate.p1[1], 0.0);
+        ASSERT_EQ(first->accelerate.v0[0], 0.0);
+        ASSERT_EQ(first->accelerate.v0[1], 0.0);
+        ASSERT_NEAR(first->accelerate.v1[0], 1.0, 0.01);
+        ASSERT_EQ(first->accelerate.v1[1], 0.0);
+        ASSERT_EQ(first->accelerate.a[0], 1.0);
+        ASSERT_EQ(first->accelerate.a[1], 0.0);
+
+        ASSERT_NEAR(first->travel.duration, 0.0, 0.01);
+        ASSERT_EQ(first->travel.p0[0], first->accelerate.p1[0]);
+        ASSERT_EQ(first->travel.p0[1], 0.0);
+        ASSERT_GT(first->travel.p1[0], 0.0);
+        ASSERT_EQ(first->travel.p1[1], 0.0);
+        ASSERT_NEAR(first->travel.v0[0], 1.0, 0.01);
+        ASSERT_EQ(first->travel.v0[1], 0.0);
+        ASSERT_NEAR(first->travel.v1[0], 1.0, 0.01);
+        ASSERT_EQ(first->travel.v1[1], 0.0);
+        ASSERT_EQ(first->travel.a[0], 0.0);
+        ASSERT_EQ(first->travel.a[1], 0.0);
+
+        ASSERT_GT(first->decelerate.duration, 0.0);
+        ASSERT_NEAR(first->decelerate.p0[0], first->travel.p1[0], 0.0001);
+        ASSERT_EQ(first->decelerate.p0[1], 0.0);
+        // ASSERT_EQ(first->decelerate.p1[0], ???);
+        ASSERT_EQ(first->decelerate.p1[1], 0.0);
+        ASSERT_NEAR(first->decelerate.v0[0], 1.0, 0.01);
+        ASSERT_EQ(first->decelerate.v0[1], 0.0);
+        ASSERT_EQ(first->decelerate.a[0], -1.0);
+        ASSERT_EQ(first->decelerate.a[1], 0.0);
+        
+        ASSERT_GT(first->curve.duration, 0.0);
+        ASSERT_NEAR(first->curve.p0[0], first->decelerate.p1[0], 0.0001);
+        ASSERT_EQ(first->curve.p0[1], 0.0);
+        ASSERT_NEAR(first->curve.p1[0], first->curve.p0[0], 0.0001); // symmetric
+        ASSERT_EQ(first->curve.p1[1], 0.0);
+        ASSERT_EQ(first->curve.a[0], -1.0);
+        ASSERT_EQ(first->curve.a[1], 0.0);
+
+        ATDC *second = first->next;
+        ASSERT_NE(second, (ATDC *) 0);
+        
+        ASSERT_GT(second->accelerate.duration, 0.0);
+        ASSERT_NEAR(second->accelerate.p0[0], first->curve.p1[0], 0.0001);
+        ASSERT_EQ(second->accelerate.p0[1], 0.0);
+        ASSERT_LT(second->accelerate.p1[0], 1.0);
+        ASSERT_EQ(second->accelerate.p1[1], 0.0);
+        ASSERT_NEAR(second->accelerate.v0[0], first->curve.v1[0], 0.0001);
+        ASSERT_EQ(second->accelerate.v0[1], 0.0);
+        ASSERT_NEAR(second->accelerate.v1[0], -1.0, 0.01);
+        ASSERT_EQ(second->accelerate.v1[1], 0.0);
+        ASSERT_EQ(second->accelerate.a[0], -1.0);
+        ASSERT_EQ(second->accelerate.a[1], 0.0);
+
+        ASSERT_NEAR(first->travel.duration, 0.0, 0.01);
+        ASSERT_NEAR(second->travel.p0[0], second->accelerate.p1[0], 0.0001);
+        ASSERT_EQ(second->travel.p0[1], 0.0);
+        ASSERT_GT(second->travel.p1[0], 0.0);
+        ASSERT_EQ(second->travel.p1[1], 0.0);
+        ASSERT_NEAR(second->travel.v0[0], second->accelerate.v1[0], 0.0001);
+        ASSERT_EQ(second->travel.v0[1], 0.0);
+        ASSERT_NEAR(second->travel.v1[0], second->travel.v0[0], 0.0001);
+        ASSERT_EQ(second->travel.v1[1], 0.0);
+        ASSERT_EQ(second->travel.a[0], 0.0);
+        ASSERT_EQ(second->travel.a[1], 0.0);
+
+        ASSERT_GT(second->decelerate.duration, 0.0);
+        ASSERT_NEAR(second->decelerate.p0[0], second->travel.p1[0], 0.0001);
+        ASSERT_EQ(second->decelerate.p0[1], 0.0);
+        ASSERT_EQ(second->decelerate.p1[0], 0.0);
+        ASSERT_EQ(second->decelerate.p1[1], 0.0);
+        ASSERT_NEAR(second->decelerate.v0[0], second->travel.v1[0], 0.0001);
+        ASSERT_EQ(second->decelerate.v0[1], 0.0);
+        ASSERT_EQ(second->decelerate.v1[0], 0.0);
+        ASSERT_EQ(second->decelerate.v1[1], 0.0);
+        ASSERT_EQ(second->decelerate.a[0], 1.0);
+        ASSERT_EQ(second->decelerate.a[1], 0.0);
+        
+        ASSERT_EQ(second->curve.duration, 0.0);
+        ASSERT_EQ(second->curve.p0[0], 0.0);
+        ASSERT_EQ(second->curve.p0[1], 0.0);
+        ASSERT_EQ(second->curve.p1[0], 0.0);
+        ASSERT_EQ(second->curve.p1[1], 0.0);
+        ASSERT_EQ(second->curve.v0[0], 0.0);
+        ASSERT_EQ(second->curve.v0[1], 0.0);
+        ASSERT_EQ(second->curve.v1[0], 0.0);
+        ASSERT_EQ(second->curve.v1[1], 0.0);
+        ASSERT_EQ(second->curve.a[0], 0.0);
+        ASSERT_EQ(second->curve.a[1], 0.0);
+
+        ATDC *third = second->next;
+        ASSERT_EQ(third, (ATDC *) 0);
 }
 
-TEST_F(script_tests, add_two_moveto_actions)
+TEST_F(script_tests, test_move_forward_twice)
 {
         // Arrange
-        oquam::Script script;
-        
-        // Act
-        script.moveto(1.0, 2.0, 3.0, 4.0, 5);
-        script.moveto(6.0, 7.0, 8.0, 9.0, 10);
-        
-        //Assert
-        ASSERT_EQ(script.length(), 2);
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
 
-        oquam::V3 p1(1.0, 2.0, 3.0);
-        oquam::Action action = script.get(0);
-        ASSERT_EQ(action.type, oquam::Action::MOVETO);
-        ASSERT_EQ(action.id, 5);
-        ASSERT_EQ(action.destination == p1, true);
-        ASSERT_EQ(action.speed, 4.0);
+        script.moveto(1.0, 0.0, 0.0, 1.0);
+        script.moveto(2.0, 0.0, 0.0, 1.0);
+        script.convert(vmax, amax, deviation, period, maxlen);
+        
+        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+}
 
-        oquam::V3 p2(6.0, 7.0, 8.0);
-        action = script.get(1);
-        ASSERT_EQ(action.type, oquam::Action::MOVETO);
-        ASSERT_EQ(action.id, 10);
-        ASSERT_EQ(action.destination == p2, true);
-        ASSERT_EQ(action.speed, 9.0);
+TEST_F(script_tests, test_moves_at_90degrees)
+{
+        // Arrange
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
+
+        script.moveto(0.01, 0.00, 0.0, 1.0);
+        script.moveto(0.01, 0.01, 0.0, 1.0);
+        script.convert(vmax, amax, deviation, period, maxlen);
+        
+        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+
+        // ATDC *first = script.atdc;
+        // ATDC *second = first->next;
+
+        // printf("#0\n");
+        // first->print();
+        // printf("#1\n");
+        // second->print();
+}
+
+TEST_F(script_tests, test_three_small_moves_in_u)
+{
+        // Arrange
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
+
+        // Three successive short moves are 90°. The first move will
+        // only have an acceleration and a curve. The second only a
+        // curve. The last one only a curve and a deceleration.
+        script.moveto(0.01, 0.00, 0.0, 1.0);
+        script.moveto(0.01, 0.01, 0.0, 1.0);
+        script.moveto(0.00, 0.01, 0.0, 1.0);
+        script.convert(vmax, amax, deviation, period, maxlen);
+        
+        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+
+        // ATDC *first = script.atdc;
+        // ATDC *second = first->next;
+        // ATDC *third = second->next;
+
+        // printf("#0\n");
+        // first->print();
+        // printf("#1\n");
+        // second->print();
+        // printf("#2\n");
+        // third->print();
 }

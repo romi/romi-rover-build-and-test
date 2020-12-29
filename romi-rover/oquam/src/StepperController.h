@@ -27,11 +27,11 @@
 #include <r.h>
 #include "RomiSerialClient.h" 
 #include "RSerial.h" 
-#include "ICNCController.h" 
+#include "CNCController.h" 
 
 namespace romi {
 
-        class StepperController : public ICNCController
+        class StepperController : public CNCController
         {
         public:
                 static constexpr const char *ClassName = "stepper-controller";

@@ -24,9 +24,11 @@
 #ifndef _OQUAM_FAKE_CNC_CONTROLLER_HPP_
 #define _OQUAM_FAKE_CNC_CONTROLLER_HPP_
 
+#include "CNCController.h"
+
 namespace romi {
 
-        class FakeCNCController : public ICNCController
+        class FakeCNCController : public CNCController
         {
         public:
                 static constexpr const char *ClassName = "fake-cnc-controller";

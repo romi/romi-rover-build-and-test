@@ -11,19 +11,23 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../arduino_libraries/RomiSeria
 
 set(SOURCES
   src/main.cpp
-  src/ICNCController.h
+  src/CNCController.h
   src/StepperController.cpp
   src/StepperController.h
   src/v.c
   src/v.h
   src/Section.cpp
   src/Section.h
+  src/ATDC.cpp
+  src/ATDC.h
   src/Script.cpp
   src/Script.h
   src/plotter.cpp
   src/plotter.h
   src/Oquam.cpp
   src/Oquam.h
+  src/OquamOptions.cpp
+  src/OquamOptions.h
   src/CNCAdaptor.h
   src/CNCAdaptor.cpp
   )
