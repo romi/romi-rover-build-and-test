@@ -32,15 +32,42 @@
         "fluid-sounds": {
             "sound-font": "notifications.sf2",
             "sounds": {
-                "notify-startup": 4,
-                "notify-confirm-menu-mode": 22,
-                "notify-leave-menu-mode": 21,
-                "notify-change-menu": 1,
-                "notify-menu-confirmed": 22,
-                "notify-menu-finished": 10,
-                "notify-confirm-navigation-mode": 16,
-                "notify-leave-navigation-mode": 21,
-                "notify-moving": 7
+                "notify-startup": {
+                    "preset": 4,
+                    "volume": 90
+                },
+                "notify-confirm-menu-mode": {
+                    "preset": 22,
+                    "volume": 90
+                },
+                "notify-leave-menu-mode": {
+                    "preset": 21,
+                    "volume": 90
+                },
+                "notify-change-menu": {
+                    "preset": 1,
+                    "volume": 90
+                },
+                "notify-menu-confirmed": {
+                    "preset": 22,
+                    "volume": 90
+                },
+                "notify-menu-finished": {
+                    "preset": 10,
+                    "volume": 90
+                },
+                "notify-confirm-navigation-mode": {
+                    "preset": 16,
+                    "volume": 90
+                },
+                "notify-leave-navigation-mode": {
+                    "preset": 21,
+                    "volume": 90
+                },
+                "notify-moving": {
+                    "preset": 7,
+                    "volume": 90
+                }
             }
         },
         
@@ -48,6 +75,7 @@
             "script-file": "scripts.json"
         }
     },
+    
     "ports": {
         "joystick": {
             "port": "/dev/input/js0", 

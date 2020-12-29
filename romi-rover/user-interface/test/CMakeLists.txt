@@ -14,7 +14,6 @@ set(SRCS_SPEEDCONVERTER
   )
 
 add_executable(romi_rover_unit_tests_userinterface_speedconverter ${SRCS_SPEEDCONVERTER})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_speedconverter rpp romirover gtest gmock)
 
 add_test(
@@ -34,7 +33,6 @@ set(SRCS_SPEEDCONTROLLER
   )
 
 add_executable(romi_rover_unit_tests_userinterface_speedcontroller ${SRCS_SPEEDCONTROLLER})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_speedcontroller rpp romirover gtest gmock)
 
 add_test(
@@ -53,7 +51,6 @@ set(SRCS_JOYSTICK
   )
 
 add_executable(romi_rover_unit_tests_userinterface_joystick ${SRCS_JOYSTICK})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_joystick rpp romirover gtest gmock)
 
 add_test(
@@ -72,7 +69,6 @@ set(SRCS_JOYSTICKINPUTDEVICE
   )
 
 add_executable(romi_rover_unit_tests_userinterface_joystickinputdevice ${SRCS_JOYSTICKINPUTDEVICE})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_joystickinputdevice rpp romirover gtest gmock)
 
 add_test(
@@ -102,7 +98,6 @@ set(SRCS_UIFACTORY
  )
 
 add_executable(romi_rover_unit_tests_userinterface_uifactory ${SRCS_UIFACTORY})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_uifactory romirover romiserial rcompp rpp gtest gmock)
 
 add_test(
@@ -119,7 +114,6 @@ set(SRCS_RPCNAVIGATIONADAPTER
   )
 
 add_executable(romi_rover_unit_tests_userinterface_remotenavigation ${SRCS_RPCNAVIGATIONADAPTER})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_remotenavigation rcompp romirover gtest gmock)
 
 add_test(
@@ -137,7 +131,6 @@ set(SRCS_CRYSTALDISPLAY
   )
 
 add_executable(romi_rover_unit_tests_userinterface_crystaldisplay ${SRCS_CRYSTALDISPLAY})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_crystaldisplay rcompp romirover gtest gmock)
 
 add_test(
@@ -154,7 +147,6 @@ set(SRCS_STATEMACHINE
   )
 
 add_executable(romi_rover_unit_tests_userinterface_statemachine ${SRCS_STATEMACHINE})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_statemachine rcompp romirover gtest gmock)
 
 add_test(
@@ -174,7 +166,6 @@ set(SRCS_SCRIPTLIST
   )
 
 add_executable(romi_rover_unit_tests_userinterface_scriptlist ${SRCS_SCRIPTLIST})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_scriptlist rcompp romirover gtest gmock)
 
 add_test(
@@ -196,7 +187,6 @@ set(SRCS_SCRIPTMENU
   )
 
 add_executable(romi_rover_unit_tests_userinterface_scriptmenu ${SRCS_SCRIPTMENU})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_scriptmenu rcompp romirover gtest gmock)
 
 add_test(
@@ -220,7 +210,6 @@ set(SRCS_ROVERSCRIPTENGINE
   )
 
 add_executable(romi_rover_unit_tests_userinterface_roverscriptengine ${SRCS_ROVERSCRIPTENGINE})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 target_link_libraries(romi_rover_unit_tests_userinterface_roverscriptengine rcompp romirover gtest gmock)
 
 add_test(

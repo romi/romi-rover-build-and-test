@@ -32,6 +32,18 @@
 
 namespace romi {
 
+        struct Sound
+        {
+                int preset;
+                int volume;
+
+                Sound(int p, int v) {
+                        preset = p;
+                        volume = v;
+                }
+        };
+              
+        
         class FluidSoundNotifications : public Notifications
         {
         protected:
@@ -39,7 +51,7 @@ namespace romi {
                 fluid_synth_t *_synth;
                 fluid_audio_driver_t *_adriver;
                 int _sfont_id;
-                std::map<std::string, int> _sounds;
+                std::map<std::string, Sound> _sounds;
 
                 static int32_t add_sound(const char* key,
                                          json_object_t value,
@@ -50,10 +62,10 @@ namespace romi {
                 void get_sound_font_file(JsonCpp& config, std::string& path);
                 void load_sound_font(std::string& path);
                 void clean_up();
-                void add_sound(const char *name, int preset);
+                void add_sound(const char *name, int preset, int volume);
                 void add_sounds(JsonCpp& config);
                 void try_add_sounds(JsonCpp& config);
-                int get_preset(const char *name);
+                Sound& get_sound(const char *name);
 
                 void play(const char *name);
 

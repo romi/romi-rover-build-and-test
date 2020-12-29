@@ -118,53 +118,56 @@ namespace romi {
                 sounds.foreach(add_sound, this);
         }
         
-        int32_t FluidSoundNotifications::add_sound(const char* key,
+        int32_t FluidSoundNotifications::add_sound(const char* notification,
                                                   json_object_t value,
                                                   void *data)
         {
                 FluidSoundNotifications *fluid = (FluidSoundNotifications *) data;
-                if (json_isnumber(value)) {
-                        fluid->add_sound(key, (int) json_number_value(value));
+                if (json_isobject(value)
+                    && json_object_has(value, "preset")
+                    && json_object_has(value, "volume")) {
+                        int preset = (int) json_object_getnum(value, "preset");
+                        int volume = (int) json_object_getnum(value, "volume");
+                        
+                        fluid->add_sound(notification, preset, volume);
+                        
                 } else {
                         r_err("FluidSoundNotification: Value '%s' in list of sounds "
-                                "is not a number");
+                                "is not valid");
                 }
                 return 0;
         }
 
-        void FluidSoundNotifications::add_sound(const char *name, int preset)
+        void FluidSoundNotifications::add_sound(const char *notification,
+                                                int preset, int volume)
         {
-                r_info("FluidSoundNotification: %s -> preset %d", name, preset);
-                _sounds.insert(std::pair<std::string, int>(name, preset));
+                r_info("FluidSoundNotification: %s -> preset %d", notification, preset);
+                _sounds.insert(std::pair<std::string, Sound>(notification, Sound(preset, volume)));
         }
                 
-        int FluidSoundNotifications::get_preset(const char *name)
+        Sound& FluidSoundNotifications::get_sound(const char *name)
         {
-                int preset = -1;
-                try {
-                        preset = _sounds.at(name);
-                } catch (...) {
-                        r_warn("FluidSoundNotification: Failed to get preset for '%s'",
-                               name);
-                }
-                return preset;
+                return _sounds.at(name);
         }
 
         void FluidSoundNotifications::notify(const char *name)
         {
-                play(name);
+                try {
+                        play(name);
+                } catch (...) {
+                        r_warn("FluidSoundNotification: Failed to play '%s'", name);
+                }
         }
 
         void FluidSoundNotifications::play(const char *name)
         {
-                int velocity = 90;
-                int preset = get_preset(name);
-                r_debug("FluidSoundNotification: play %s, preset %d, velocity %d",
-                        name, preset, velocity);
-                fluid_synth_program_select(_synth, 0, _sfont_id, 0, preset);
-                fluid_synth_noteon(_synth, 0, 60, velocity);
+                Sound& sound = get_sound(name);
+                r_debug("FluidSoundNotification: play %s, preset %d, volume %d",
+                        name, sound.preset, sound.volume);
+                fluid_synth_program_select(_synth, 0, _sfont_id, 0, sound.preset); // TODO
+                fluid_synth_noteon(_synth, 0, 60, sound.volume);
         }
-
+        
         void FluidSoundNotifications::stop(const char *name)
         {
                 fluid_synth_noteoff(_synth, 0, 60);
