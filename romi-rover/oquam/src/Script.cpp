@@ -27,14 +27,29 @@
 #include <r.h>
 #include "Script.h"
 #include "v.h"
+#include "print.h"
 
 namespace romi {
+
+        static void define_unit_vectors(double *w0, double *w1,
+                                        double *ex, double *ey);
+        static bool are_collinear(double *w0, double *w1);
+        static bool is_same_direction(double *w0, double *w1);
+        static void define_unit_vectors_collinear(double *w0, double *w1,
+                                                  double *ex, double *ey);
+        static void define_unit_vectors_same_dir(double *w0, double *w1,
+                                                 double *ex, double *ey);
+        static void define_unit_vectors_opposite_dir(double *w0, double *w1,
+                                                     double *ex, double *ey);
+        static void define_unit_vectors_default(double *w0, double *w1,
+                                                double *ex, double *ey);
 
         static inline double sign(double a)
         {
                 return (a < 0.0)? -1.0 : 1.0;
         }
 
+        
         Script::~Script()
         {
                 if (segments) {
@@ -81,108 +96,34 @@ namespace romi {
                         s = s->next;
                 }
         }
-
-        static bool is_collinear(double *w0, double *w1);
-        static void define_unit_vectors_collinear(double *w0, double *w1,
-                                                  double *ex, double *ey);
-        static void define_unit_vectors_same_dir(double *w0, double *w1,
-                                                 double *ex, double *ey);
-        static void define_unit_vectors_opposite_dir(double *w0, double *w1,
-                                                     double *ex, double *ey);
-        static void define_unit_vectors_default(double *w0, double *w1,
-                                                double *ex, double *ey);
-
         
-        static void define_unit_vectors(double *w0, double *w1,
-                                        double *ex, double *ey)
+        void Script::compute_curve(Segment *s0, ATDC *t0, double deviation, double *amax)
         {
-                if (is_collinear(w0, w1)) {
-                        define_unit_vectors_collinear(w0, w1, ex, ey);
-                
+                if (s0->next == NULL) {
+                        no_curve(s0, t0);
                 } else {
-                        define_unit_vectors_default(w0, w1, ex, ey);
+                        default_curve(s0, s0->next, t0, deviation, amax);
                 }
         }
 
-        static bool is_collinear(double *w0, double *w1)
+        void Script::no_curve(Segment *s0, ATDC *t0)
         {
-                /* Test whether the two speeds w0 and w1 are collinear by
-                 * checking whether the cross product is zero.  */
-                double c[3];
-                vcross(c, w0, w1);
-                double w = norm(w0);
-                double cww = norm(c) / (w * w);
-                return (cww < 0.001);
-        }
-
-        static void define_unit_vectors_collinear(double *w0, double *w1,
-                                                  double *ex, double *ey)
-        {
-                double n;
-                
-                if (w1[0] != 0.0)
-                        n = w0[0] / w1[0];
-                else if (w1[1] != 0.0)
-                        n = w0[1] / w1[1];
-                else if (w1[2] != 0.0)
-                        n = w0[2] / w1[2];
-                
-                if (n > 0.0) {
-                        define_unit_vectors_same_dir(w0, w1, ex, ey);
-                } else {
-                        define_unit_vectors_opposite_dir(w0, w1, ex, ey);
-                }
-        }
-
-        static void define_unit_vectors_same_dir(double *w0, double *w1,
-                                                 double *ex, double *ey)
-        {
-                normalize(ex, w0);
-                ey[0] = -ex[1];
-                ey[1] = ex[0];
-                ey[2] = ex[2];
-        }
-
-        static void define_unit_vectors_opposite_dir(double *w0, double *w1,
-                                                     double *ex, double *ey)
-        {
-                normalize(ey, w0);
-                smul(ey, ey, -1);
-                ex[0] = ey[1];
-                ex[1] = -ey[0];
-                ex[2] = ey[2];
+                t0->curve.zero();
+                vcopy(t0->curve.p0, s0->p1);
+                vcopy(t0->curve.p1, s0->p1);
         }
         
-        static void define_unit_vectors_default(double *w0, double *w1,
-                                                double *ex, double *ey)
+        void Script::default_curve(Segment *s0, Segment *s1, ATDC *t0,
+                                   double deviation, double *amax)
         {
-                vadd(ex, w1, w0);
-                normalize(ex, ex);
-                vsub(ey, w1, w0);
-                normalize(ey, ey);
-        }
-
-        void Script::compute_curve(Segment *s0, ATDC *t0, double d, double *amax)
-        {
-                Segment *s1 = s0->next;
-                ATDC *t1 = t0->next;
-
-                if (s1 == NULL) {
-                        t0->curve.zero();
-                        vcopy(t0->curve.p0, s0->section.p1);
-                        vcopy(t0->curve.p1, s0->section.p1);
-                        return;
-                }
-
-                // Set the entry and exit speed of the curve to smallest speed
-                // before and after the junction.
-                double w = std::min(norm(s0->section.v0), norm(s1->section.v0));
-
-                // The speed - and direction - before and after the curve.
+                // The speeds and their directions before and after the curve.
+                double w;
                 double w0[3];
                 double w1[3];
-                smul(w0, normalize(w0, s0->section.d), w);
-                smul(w1, normalize(w1, s1->section.d), w);
+
+                w = get_curve_speed_magnitude(s0, s1);
+                get_curve_speed_vector(s0, w, w0);
+                get_curve_speed_vector(s1, w, w1);
         
                 /*
 
@@ -234,11 +175,9 @@ namespace romi {
 
                 /* Compute the maximum allowed acceleration in the direction
                    of wy (or ey). */
-                double a[3];
-                amax_in_direction(amax, ey, a);
 
-                double am = norm(a);
-
+                double am = amax_in_direction(amax, ey);
+                
                 /*
                   The acceleration is applied only along the y-axis, a =
                   ay. The absolute speed at the entry of the curve is the same
@@ -293,17 +232,10 @@ namespace romi {
                   coordinate space of the CNC. 
 
                 */
-        
-                // Check for maximum velocity wymax at the entry point, given
-                // the maximum acceleration and deviation. If the current
-                // speed is higher than wymax then scale the entry velocity
-                // proportionally.
-                double wymax = sqrt(2.0 * am * d);
-                double vscale = 1.0;
-        
-                if (fabs(wy0) > wymax)
-                        vscale = wymax / wy0;
 
+                // Scale the speed if it is too fast, given the
+                // acceleration and deviation.
+                double vscale = scale_speed(am, deviation, wy0);
                 wx0 *= vscale;
                 wy0 *= vscale;
                 smul(w0, w0, vscale);
@@ -315,161 +247,352 @@ namespace romi {
 
                 // The distance between the entry/exit points and the
                 // junction.
-                double lq = sqrt(x0 * x0 + y0 * y0);
+                double distance = sqrt(x0 * x0 + y0 * y0);
 
-                // If the entry or exit point is more than halfway along the
-                // segment then we should slow down.
-                double len0 = norm(s0->section.d);
-                double len1 = norm(s1->section.d);
-                double len = std::min(len0, len1);
-        
-                if (lq > len / 2.0) {
-                        vscale = len / (2.0 * lq);
-                        double sqvs = sqrt(vscale);
-                        x0 *= vscale;
-                        y0 *= vscale;
-                        wx0 *= sqvs;
-                        wy0 *= sqvs;
-                        smul(w0, w0, sqvs);
-                        smul(w1, w1, sqvs);
-                        lq = len / 2.0;
-                }
+                // If the entry or exit point is more than halfway
+                // along the segment then we should slow down. We
+                // don't want the entry or exit point to be over the
+                // half of the segment's length because that would
+                // cause problems when chaining together short
+                // segments.
+                double dscale = scale_distance(distance, s0, s1);
+                double sqrt_dscale = sqrt(dscale);
 
-                vcopy(t0->curve.v0, w0);                                 // v0
-                vcopy(t0->curve.v1, w1);                                 // v1
+                wy0 *= sqrt_dscale;
+                smul(w0, w0, sqrt_dscale);
+                smul(w1, w1, sqrt_dscale);
+                distance *= dscale;
 
-                // FYI, The deviation is:
-                //s0->deviation = 0.5 * wy0 * wy0 / am; 
-        
-                // Compute a vector along d0 with length lq
+
+                double duration = fabs(2.0 * wy0 / am);
                 double p0[3];
-                normalize(p0, s0->section.d);
-                smul(p0, p0, lq);
-
-                /* The absolute position of the entry point of the speed
-                 * curve. */
-                vsub(p0, s0->section.p1, p0);
-                vcopy(t0->curve.p0, p0);                                 // p0
-
-        
-                // Compute a vector along d1 with length lq
                 double p1[3];
-                normalize(p1, s1->section.d);
-                smul(p1, p1, lq);
-
-                /* The absolute position of the exit point of the speed
-                 * curve */
-                vadd(p1, s0->section.p1, p1);
-                vcopy(t0->curve.p1, p1);                                 // p1
-
-                vsub(t0->curve.d, t0->curve.p1, t0->curve.p0);
-
-                /* Copy the next segment's entry speed and entry point to its
-                 * accelerate section */
-                vcopy(t1->accelerate.v0, t0->curve.v1);
-                vcopy(t1->accelerate.p0, p1);
+                double a[3];
+                
+                compute_curve_entry_point(s0, distance, p0);
+                compute_curve_exit_point(s1, distance, p1);
+                smul(a, ey, am);
+                
+                t0->curve.set(duration, 0, p0, p1, w0, w1, a);
+        }
         
-                /* The acceleration, in the coordinate space of the CNC
-                 * machine. */
-                vcopy(t0->curve.a, a);                                   // a
-        
-                /* The time it takes to follow the speed curve. */
-                t0->curve.duration = fabs(2.0 * wy0 / am);                      // t
+        static void define_unit_vectors(double *w0, double *w1,
+                                        double *ex, double *ey)
+        {
+                if (are_collinear(w0, w1)) {
+                        define_unit_vectors_collinear(w0, w1, ex, ey);
+                } else {
+                        define_unit_vectors_default(w0, w1, ex, ey);
+                }
         }
 
-        /**
-         *  Readjusts the speed in case the next segment had to slow down.
-         *
-         */
-        void Script::update_speeds(Segment *s0, ATDC *t0, double *amax)
+        static bool are_collinear(double *w0, double *w1)
         {
+                /* Test whether the two speeds w0 and w1 are collinear by
+                 * checking whether the cross product is zero.  */
+                double c[3];
+                vcross(c, w0, w1);
+                double w = norm(w0);
+                double cww = norm(c) / (w * w);
+                return (cww < 0.001);
+        }
+
+        static void define_unit_vectors_collinear(double *w0, double *w1,
+                                                  double *ex, double *ey)
+        {
+                if (is_same_direction(w0, w1)) {
+                        define_unit_vectors_same_dir(w0, w1, ex, ey);
+                } else {
+                        define_unit_vectors_opposite_dir(w0, w1, ex, ey);
+                }
+        }
+
+        static bool is_same_direction(double *w0, double *w1)
+        {
+                // It should already be established that w0 and w1 are
+                // collinear. We check the factor 'n' so that
+                // w0=n.w1. If n>0 then w0 and w1 point in the same
+                // direction.
+                double n = 1.0;
+                if (w1[0] != 0.0)
+                        n = w0[0] / w1[0];
+                else if (w1[1] != 0.0)
+                        n = w0[1] / w1[1];
+                else if (w1[2] != 0.0)
+                        n = w0[2] / w1[2];
+                return (n > 0.0);
+        }        
+        static void define_unit_vectors_same_dir(double *w0, double *w1,
+                                                 double *ex, double *ey)
+        {
+                normalize(ex, w0);
+                ey[0] = -ex[1];
+                ey[1] = ex[0];
+                ey[2] = ex[2];
+        }
+
+        static void define_unit_vectors_opposite_dir(double *w0, double *w1,
+                                                     double *ex, double *ey)
+        {
+                normalize(ey, w0);
+                smul(ey, ey, -1);
+                ex[0] = ey[1];
+                ex[1] = -ey[0];
+                ex[2] = ey[2];
+        }
+        
+        static void define_unit_vectors_default(double *w0, double *w1,
+                                                double *ex, double *ey)
+        {
+                vadd(ex, w1, w0);
+                normalize(ex, ex);
+                vsub(ey, w1, w0);
+                normalize(ey, ey);
+        }
+
+        double Script::get_curve_speed_magnitude(Segment *s0, Segment *s1)
+        {
+                // Set the entry and exit speed of the curve to smallest speed
+                // before and after the junction.
+                return std::min(norm(s0->v), norm(s1->v));
+        }
+        
+        void Script::get_curve_speed_vector(Segment *segment, double magnitude, double *w)
+        {
+                double dir[3];
+                segment->direction(dir);
+                smul(w, dir, magnitude);
+        }
+        
+        void Script::compute_curve_entry_point(Segment *segment, double distance, double *p)
+        {
+                double dir[3];
+                segment->direction(dir);
+                // Compute a vector along the segment with length 'distance'
+                smul(p, dir, distance);
+                // Substract the vector from the end point. 
+                vsub(p, segment->p1, p);
+        }
+        
+        void Script::compute_curve_exit_point(Segment *segment, double distance, double *p)
+        {
+                double dir[3];
+                segment->direction(dir);
+                // Compute a vector along the segment with length 'distance'
+                smul(p, dir, distance);
+                // Add the vector to the start point. 
+                vadd(p, segment->p0, p);
+        }
+        
+        double Script::scale_speed(double am, double deviation, double speed)
+        {
+                // Check for maximum velocity at the entry point,
+                // given the maximum acceleration and deviation. If
+                // the current speed is higher than this maximum speed
+                // then the entry velocity must be scaled
+                // proportionally.
+                double max_speed = sqrt(2.0 * am * deviation);
+                double scale = 1.0;
+        
+                if (fabs(speed) > max_speed)
+                        scale = max_speed / speed;
+
+                return scale;
+        }
+
+        double Script::scale_distance(double distance, Segment *s0, Segment *s1)
+        {
+                double scale = 1.0;
+                double len = shortest_length(s0, s1);
+                if (distance > len / 2.0) {
+                        scale = len / (2.0 * distance);
+                }
+                return scale;
+        }
+
+        double Script::shortest_length(Segment *s0, Segment *s1)
+        {
+                double len0 = s0->length();
+                double len1 = s1->length();
+                return std::min(len0, len1);
+        }
+
+        bool Script::update_speeds_if_needed(ATDC *t, double *amax)
+        {
+                bool must_backpropagate = false;
+                
                 /* Compare the speeds at the start of the segments and at the
                    entry of the curve. Check whether there is enough space to
                    accelerate/decelerate. If not, adapt one of the two
                    speeds. */
-
+                
                 /* The available path length */
-                double len;
-                double d[3];
-                vsub(d, t0->curve.p0, t0->accelerate.p0);
-                len = norm(d);
+                double segment_length = vdist(t->accelerate.p0, t->curve.p0);
+                double required_length = required_acceleration_path_length(t, amax);
 
-                /* The two speeds */
-                double v0 = norm(t0->accelerate.v0);
-                double v1 = norm(t0->curve.v1);
-                double v0_next = 0.0;
-                if (t0->next)
-                        v0_next = norm(t0->next->accelerate.v0);
-
-                // The next segment lowered its entry speed. Slow down the
-                // curve.
-                if (v1 != v0_next) {
-                        double alpha = v0_next / v1;
-                        smul(t0->curve.v0, t0->curve.v0, alpha);
-                        smul(t0->curve.v1, t0->curve.v1, alpha);
-                        smul(t0->curve.a, t0->curve.a, alpha * alpha);
-                        t0->curve.duration /= alpha;
+                if (required_length > segment_length) {
+                        must_backpropagate = adjust_speeds(t, amax);
                 }
+
+                return must_backpropagate;
+        }
         
-                /* The maximum allowable acceleration in the direction of this
-                   segment */
-                double tmp[3];
-                normalize(tmp, s0->section.d);
-                vmul(tmp, tmp, amax);
-                double am = norm(tmp);
+        double Script::required_acceleration_path_length(ATDC *t, double *amax)
+        {
+                double length = 0.0;
+                
+                double displacement[3];
+                vsub(displacement, t->curve.p0, t->accelerate.p0);
 
-                /* The path length needed to change the speed */
-                double dv = v1 - v0;
-                double dt = sign(dv) * dv / am;
-                double dx = v0 * dt + sign(dv) * 0.5 * am * dt * dt;
-
-                if (dx > len && v0 > v1) {
-                
-                        /* The speed at the entry of this segment is too high
-                           and the segment is not long enough to slow down to
-                           the maximum entry speed of the curve at the end of
-                           the segment. We must scale back the speed at the
-                           start of this segment. */
-
-                        /* This change will have to be propagated back to the
-                           previous segments. This will be done during the
-                           backward traversal of the segments. */
-                
-                        dt = (sqrt(v1 * v1 + 2.0 * am * len) - v1) / am;
-                        double v0s = v1 + am * dt;
-                        v0s = sqrt(2 * am * len + v1 * v1);
-                        double alpha = v0s / v0;
-                        smul(t0->accelerate.v0, t0->accelerate.v0, alpha);
-
-                        // Propagate the speed change backwards through the path.
-                        if (s0->prev == NULL || t0->prev == NULL) {
-                                r_err("check_curve_speed_forward: pushing speed change "
-                                      "backwards but we're at the first segment?!");
-                                return;
-                        }
-                
-                        update_speeds(s0->prev, t0->prev, amax);
-                
-                } else if (dx > len && v0 < v1) {
-                
-                        /* The segment is too short to accelerate up to the
-                           desired entry speed of the curve. Reduce the
-                           curve's entry speed and recalculate the force to
-                           apply.  TODO: ideally, the maximum acceleration is
-                           maintained during the curve but the entry and exit
-                           points are remapped. For simplicity, I started by
-                           changing the acceleration and speeds. */
-                
-                        dt = (sqrt(v0 * v0 + 2.0 * am * len) - v0) / am;
-                        double v1s = v0 + am * dt;
-                        double alpha = v1s / v1;
-                        smul(t0->curve.v0, t0->curve.v0, alpha);
-                        smul(t0->curve.v1, t0->curve.v1, alpha);
-                        smul(t0->curve.a, t0->curve.a, alpha * alpha);
-                        t0->curve.duration /= alpha;
+                if (norm(displacement) == 0) {
+                        assert_equal_speeds(t->accelerate.v0, t->curve.v0);
+                        
+                } else {
+                        length = required_acceleration_path_length(t->accelerate.v0,
+                                                                   t->curve.v0,
+                                                                   displacement,
+                                                                   amax);
                 }
+                        
+                return length;
+        }
+        
+        double Script::required_acceleration_path_length(double *v0, double *v1,
+                                                         double *d, double *amax)
+        {
+                double v0n = norm(v0);
+                double v1n = norm(v1);
+                double a = amax_in_direction(amax, d);
+                return required_acceleration_path_length(v0n, v1n, a);
         }
 
+        double Script::required_acceleration_path_length(double v0, double v1, double a)
+        {
+                double dv = v1 - v0;
+                double dt = fabs(dv / a);
+                double dx = v0 * dt + sign(dv) * 0.5 * a * dt * dt;
+                return dx;
+        }
+
+        bool Script::adjust_speeds(ATDC *t, double *amax)
+        {
+                /* We know that the segment length is smaller than the
+                 * required length to accelerate or slow down to the
+                 * desired speed. */
+
+                double v0 = norm(t->accelerate.v0);
+                double v1 = norm(t->curve.v0);
+
+                bool must_backpropagate = false;
+                
+                if (v0 > v1) {
+                        /* The speed at the entry of this segment is
+                           too high and the segment is not long enough
+                           to slow down to the maximum entry speed of
+                           the curve at the end of the segment. We
+                           must reduce the speed at the start of this
+                           segment. */
+                        reduce_entry_speed(t, amax);
+                        must_backpropagate = true;
+                        
+                } else if (v0 < v1) {
+                        /* The segment is too short to accelerate up
+                           to the desired entry speed of the
+                           curve. Reduce the curve's entry speed.  */
+                        reduce_exit_speed(t, amax);
+                }
+                
+                return must_backpropagate;
+        }
+
+        void Script::reduce_entry_speed(ATDC *t, double *amax)
+        {
+                /*  v1 < v0 and a > 0 and t > 0
+                    v1 = v0 - at  => t = (v0 - v1) / a    (1)
+                    L = v0.t - at²/2                      (2)
+                    (1,2) => L = (v1² - v0²) / 2a
+                          => v0 = sqrt(v1² + 2aL)
+                 */
+                double displacement[3];
+                vsub(displacement, t->curve.p0, t->accelerate.p0);
+                
+                double length = norm(displacement);
+                double v0 = norm(t->accelerate.v0);
+                double v1 = norm(t->curve.v0);
+                double a = amax_in_direction(amax, displacement);
+                double v0s = sqrt(v1 * v1 + 2 * a * length);
+                double factor = v0s / v0;
+                smul(t->accelerate.v0, t->accelerate.v0, factor);
+        }
+
+        void Script::reduce_exit_speed(ATDC *t, double *amax)
+        {
+                /*  L = v0.t + at²/2                      (1)
+                    v1 = v0 + at  => t = (v1 - v0) / a    (2)
+                    (1,2) => L = (v1² - v0²) / 2a
+                          => v1 = sqrt(v0² + 2aL)
+                 */
+                double displacement[3];
+                vsub(displacement, t->curve.p0, t->accelerate.p0);
+                
+                double length = norm(displacement);
+                double v0 = norm(t->accelerate.v0);
+                double v1 = norm(t->curve.v0);
+                double a = amax_in_direction(amax, displacement);
+                double v1s = sqrt(v0 * v0 + 2.0 * a * length);
+                double factor = v1s / v1;
+                
+                slow_down_curve(t, factor);
+        }
+
+        void Script::back_propagate_speed_change(Segment *s0, ATDC *t, double *amax)
+        {
+                /* This fuctions is called recursively to propagate
+                 * changes from the end of the path back to the
+                 * front. We may have been called because the next
+                 * segment had to slow down. If so, update the exit
+                 * speed of the current segement. */
+
+                if (update_curve_speed_if_needed(t)
+                    && update_speeds_if_needed(t, amax)) {
+                        assert_not_first(s0, t);
+                        back_propagate_speed_change(s0->prev, t->prev, amax);
+                }                        
+        }
+
+        void Script::assert_not_first(Segment *s, ATDC *t)
+        {
+                if (s->prev == NULL || t->prev == NULL) {
+                        r_err("check_curve_speed_forward: pushing speed change "
+                              "backwards but we're at the first segment?!");
+                        throw std::runtime_error("assert_not_first failed");
+                }
+        }
+        
+        bool Script::update_curve_speed_if_needed(ATDC *t)
+        {
+                bool changed = false;
+                if (t->next) {
+                        double v1 = norm(t->curve.v0);
+                        double v0_next = norm(t->next->accelerate.v0);
+                        if (v1 != v0_next) {
+                                // The next segment lowered its entry speed. Slow down the
+                                // curve.
+                                slow_down_curve(t, v0_next / v1);
+                                changed = true;
+                        }
+                }
+                return changed;
+        }
+        
+        void Script::slow_down_curve(ATDC *t, double factor)
+        {
+                smul(t->curve.v0, t->curve.v0, factor);
+                smul(t->curve.v1, t->curve.v1, factor);
+                smul(t->curve.a, t->curve.a, factor * factor);
+                t->curve.duration /= factor;
+        }
+        
         /**
          *  Computes the curve at the end of the segment. This function may
          *  adjust the entry speed of the segment to assure that the curve
@@ -478,35 +601,49 @@ namespace romi {
          *  s0: The current segment.
          *  amax: The maximum acceleration that the machine tolerates. 
          */
-        void Script::compute_curve_and_speeds(Segment *s0, ATDC *t0,
-                                              double d, double *amax)
+        void Script::compute_curve_and_speeds(Segment *s, ATDC *t,
+                                              double deviation, double *amax)
         {
-                compute_curve(s0, t0, d, amax);
-                update_speeds(s0, t0, amax);
+                compute_curve(s, t, deviation, amax);
+                
+                if (update_speeds_if_needed(t, amax)) {
+                        assert_not_first(s, t);
+                        back_propagate_speed_change(s->prev, t->prev, amax);
+                }
+                
+                initialize_next_acceleration(t);
+        }
+        
+        void Script::initialize_next_acceleration(ATDC *t0)
+        {
+                ATDC *t1 = t0->next;
+                if (t1) {
+                        vcopy(t1->accelerate.v0, t0->curve.v1);
+                        vcopy(t1->accelerate.p0, t0->curve.p1);
+                }
         }
 
-        void Script::check_max_speed(Segment *s0, double *vmax)
+        void Script::check_max_speed(Segment *segment, double *vmax)
         {
                 double s = 1.0;
 
                 for (int i = 0; i < 3; i++) {
-                        if (s0->section.v0[i] != 0.0)
-                                s = std::min(s, vmax[i] / fabs(s0->section.v0[i]));
+                        if (segment->v[i] != 0.0)
+                                s = std::min(s, vmax[i] / fabs(segment->v[i]));
                 }
         
-                smul(s0->section.v0, s0->section.v0, s);
-                smul(s0->section.v1, s0->section.v1, s);
+                smul(segment->v, segment->v, s);
         }
 
-        void Script::compute_curves_and_speeds(double d, double *amax)
+        void Script::compute_curves_and_speeds(double deviation, double *amax)
         {
-                Segment *s0 = segments;
-                ATDC *t0 = atdc;
+                Segment *segment = segments;
+                ATDC *t = atdc;
         
-                while (s0) {
-                        compute_curve_and_speeds(s0, t0, d, amax);
-                        s0 = s0->next;
-                        t0 = t0->next;
+                while (segment) {
+                        compute_curve_and_speeds(segment, t, deviation, amax);
+                        segment = segment->next;
+                        t = t->next;
                 }
         }
 
@@ -523,7 +660,7 @@ namespace romi {
                 vcopy(from, t0->accelerate.p0);
                 vcopy(to, t0->curve.p0);
                 vcopy(start_speed, t0->accelerate.v0);
-                vcopy(target_speed, s0->section.v0);
+                vcopy(target_speed, s0->v);
                 vcopy(arrival_speed, t0->curve.v0);
                 
                 t0->compute_accelerations(from, to, start_speed,
@@ -550,31 +687,9 @@ namespace romi {
         
                 while (t0) {
                         t0->update_start_times(at);
-                        at = t0->curve.at + t0->curve.duration;
+                        at = t0->curve.end_time();
                         t0 = t0->next;
                 }
-        }
-
-        bool Script::check_validity(double tmax,
-                                    double *xmin, double *xmax, 
-                                    double *vmax, double *amax)
-        {
-                bool valid = true;
-                ATDC *t0 = atdc;
-                int atdc_count = 0;
-        
-                while (t0) {
-                        if (!t0->is_valid(tmax, xmin, xmax, vmax, amax)) {
-                                valid = false;
-                                r_warn("compute_accelerations: invalid atdc: "
-                                       "atdc %d", atdc_count);
-                                t0->print();
-                        }
-                        t0 = t0->next;
-                        atdc_count++;
-                }
-                
-                return valid;
         }
 
         void Script::check_max_speeds(double *vmax)
@@ -613,6 +728,20 @@ namespace romi {
                 update_start_times();
         }
 
+        void Script::init_segment_positions(Segment& segment, Move& move)
+        {
+                vcopy(segment.p0, _position); 
+                vcopy(segment.p1, move.p); 
+        }
+
+        void Script::init_segment_speed(Segment& segment, Move& move)
+        {
+                double d[3];
+                vsub(d, segment.p1, segment.p0);
+                normalize(d, d);
+                smul(segment.v, d, move.v);
+        }
+        
         void Script::convert_to_segments()
         {
                 Segment *first = NULL;
@@ -634,27 +763,10 @@ namespace romi {
                                         first = segment;
                                 else 
                                         prev->next = segment;
-                        
                                 prev = segment;
 
-                                // p0 and p1
-                                vcopy(segment->section.p0, _position); 
-                                vcopy(segment->section.p1, move.p); 
-
-                                // d
-                                vsub(segment->section.d,
-                                     segment->section.p1,
-                                     segment->section.p0); 
-                        
-                                // v0 and v1
-                                normalize(segment->section.v0, segment->section.d);
-                                smul(segment->section.v0,
-                                     segment->section.v0,
-                                     move.v);
-                                vcopy(segment->section.v1, segment->section.v0);
-                        
-                                // a
-                                vzero(segment->section.a);
+                                init_segment_positions(*segment, move);
+                                init_segment_speed(*segment, move);
 
                                 // update current position
                                 vcopy(_position, move.p); 
@@ -676,40 +788,5 @@ namespace romi {
                 convert_to_segments();
                 convert_to_atdc(deviation, vmax, amax);
                 slice(period, maxlen);
-        }
-
-        void Script::print_slices(membuf_t *text)
-        {
-                for (size_t k = 0; k < slices.size(); k++) {
-                        slices[k].print(text, "Slice");
-                }
-        }
-
-        void Script::print_segments(membuf_t *text)
-        {
-                Segment *s = segments;
-                while (s != NULL) {
-                        s->section.print(text, "S");
-                        s = s->next;
-                }
-        }
-
-        void Script::print_atdc(ATDC *atdc, int index, membuf_t *text)
-        {
-                membuf_printf(text, "%d:\n", index);
-                atdc->print(text);
-        }
-        
-        void Script::print_atdc(membuf_t *text)
-        {
-                int count = 1;
-                ATDC *s = atdc;
-                while (s != NULL) {
-                        print_atdc(s, count++, text);
-                        s = s->next;
-                        if (s) {
-                                membuf_printf(text, "-\n");
-                        }
-                }
         }
 }

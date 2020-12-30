@@ -70,58 +70,35 @@ namespace romi {
                         _file_cabinet = cabinet;
                 }
                 
-                bool get_range(CNCRange &range) {
-                        range._x[0] = _xmin[0];
-                        range._x[1] = _xmax[0];
-                        range._y[0] = _xmin[1];
-                        range._y[1] = _xmax[1];
-                        range._z[0] = _xmin[2];
-                        range._z[1] = _xmax[2];
-                        return true;
-                }
 
-                // See ICNC.h for more info
+                // See CNC.h for more info
                 bool moveto(double x, double y, double z,
-                            double relative_speed = 0.1) override {
-                        SynchonizedCodeBlock synchronize(_m);
-                        return moveto_synchronized(x, y, z, relative_speed);
-                }
-                
-                bool travel(Path &path, double relative_speed = 0.1) override {
-                        SynchonizedCodeBlock synchronize(_m);
-                        return travel_synchronized(path, relative_speed);
-                }
-                
-                bool spindle(double speed) override {
-                        // TODO
-                        r_err("Oquam::spindle NOT IMPLEMENTED YET!");
-                        return true;
-                }
-
-                bool homing() override {
-                        SynchonizedCodeBlock synchronize(_m);
-                        return _controller->homing();
-                }
+                            double relative_speed = 0.1) override;
+                bool travel(Path &path, double relative_speed = 0.1) override;
+                bool spindle(double speed) override;
+                bool homing() override;
+                bool get_range(CNCRange &range) override;
 
                 bool stop_execution() override;
                 bool continue_execution() override;
                 bool reset() override;
 
         protected:
+                
                 bool moveto_synchronized(double x, double y, double z, double rel_speed);
                 bool travel_synchronized(Path &path, double relative_speed);
                 void do_travel(Path &path, double relative_speed);
-                void synchronize(double timeout);
-
-                bool get_position(double *position); 
-                bool get_position(int32_t *position); 
-                void build_script(Path &path, double speed, Script& script); 
-                void convert_script(Script& script, double rel_speed); 
+                void convert_path_to_script(Path &path, double speed, Script& script); 
+                void convert_script(Script& script, double *vmax);
+                void store_script(Script& script);
+                void check_script(Script& script, double *vmax);
                 void execute_script(Script& script);
                 void execute_move(Section& section, int32_t *pos_steps);
                 void wait_end_of_script(Script& script); 
                 double script_duration(Script& script);
-                void store_script(Script& script);
+                void synchronize(double timeout);
+                bool get_position(double *position); 
+                bool get_position(int32_t *position); 
                 double get_absolute_speed(double relative_speed); 
                 void assert_relative_speed(double relative_speed); 
         

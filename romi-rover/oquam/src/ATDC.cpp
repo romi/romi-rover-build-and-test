@@ -32,58 +32,40 @@ namespace romi {
 
         /* Compute the maximum allowed acceleration in the direction
            of v. */
-        void amax_in_direction(double *amax, double *v, double *new_a)
+        double amax_in_direction(double *amax, double *v)
         {
                 double e[3];
                 normalize(e, v);
 
-                double s = DBL_MAX;
-                for (int i = 0; i < 3; i++) {
-                        if (e[i] != 0.0)
-                                s = std::min(s, amax[i] / fabs(e[i]));
-                }
-                smul(new_a, e, s);
+                // double s = DBL_MAX;
+                // for (int i = 0; i < 3; i++) {
+                //         if (e[i] != 0.0)
+                //                 s = std::min(s, amax[i] / fabs(e[i]));
+                // }
+                // smul(new_a, e, s);
+                
+                double a[3];
+                vmul(a, e, amax);
+                return norm(a);
         }
 
-        
-        bool ATDC::is_valid(double tmax,
-                            double *xmin, double *xmax, 
-                            double *vmax, double *amax)
+        void assert_equal_speeds(double *v0, double *v1)
         {
-                return (accelerate.is_valid("accelerate", tmax, xmin, xmax, vmax, amax)
-                        && travel.is_valid("travel", tmax, xmin, xmax, vmax, amax)
-                        && decelerate.is_valid("decelerate", tmax, xmin, xmax, vmax, amax)
-                        && curve.is_valid("curve", tmax, xmin, xmax, vmax, amax)
-                        && points_and_speeds_match());
-        }
-
-        bool ATDC::points_and_speeds_match()
-        {
-                bool match = (points_and_speeds_match(accelerate, travel)
-                              && points_and_speeds_match(travel, decelerate)
-                              && points_and_speeds_match(decelerate, curve));
-                if (match && prev) {
-                        match = points_and_speeds_match(prev->curve, accelerate);
+                double dv[3];
+                vsub(dv, v1, v0);
+                if (norm(dv) > 0.01) {
+                        r_err("section with zero length but different speeds");
+                        throw std::runtime_error("section with zero length "
+                                                 "but different speeds");
                 }
-                return match;
-        }
-
-        bool ATDC::points_and_speeds_match(Section& first, Section& second)
-        {
-                bool match = (vnear(first.p1, second.p0, 0.001)
-                              && vnear(first.v1, second.v0, 0.001));
-                if (!match) {
-                        r_err("points_and_speeds_match(first,second) failed");
-                }
-                return match;
         }
 
         void ATDC::update_start_times(double at)
         {
-                accelerate.at = at;             
-                travel.at = accelerate.at + accelerate.duration;
-                decelerate.at = travel.at + travel.duration;
-                curve.at = decelerate.at + decelerate.duration;
+                accelerate.start_time = at;             
+                travel.start_time = accelerate.end_time();
+                decelerate.start_time = travel.end_time();
+                curve.start_time = decelerate.end_time();
         }
         
         void ATDC::compute_accelerations(double *p0, double *p1,
@@ -100,17 +82,6 @@ namespace romi {
                 
                 } else {
                         do_compute_accelerations(p0, p1, v0, v, v1, amax);
-                }
-        }
-
-        void ATDC::assert_equal_speeds(double *v0, double *v1)
-        {
-                double dv[3];
-                vsub(dv, v1, v0);
-                if (norm(dv) > 0.01) {
-                        r_err("section with zero length but different speeds");
-                        throw std::runtime_error("section with zero length "
-                                                 "but different speeds");
                 }
         }
         
@@ -161,8 +132,8 @@ namespace romi {
 
                 vsub(dx, curve.p0, accelerate.p0);
                 len = norm(dx);
-                len_a = norm(accelerate.d);
-                len_d = norm(decelerate.d);
+                len_a = accelerate.length();
+                len_d = decelerate.length();
                 len_t = len - len_a - len_d;
 
                 if (len_t < -0.001) {
@@ -188,7 +159,6 @@ namespace romi {
         {
                 accelerate.duration = 0;
                 vzero(accelerate.a); 
-                vzero(accelerate.d); 
                 vcopy(accelerate.p0, p);
                 vcopy(accelerate.p1, p);
                 vcopy(accelerate.v0, v);
@@ -217,8 +187,6 @@ namespace romi {
                 smul(dx, accelerate.v0, accelerate.duration);
                 smul(tmp, accelerate.a, 0.5 * accelerate.duration * accelerate.duration);
                 vadd(dx, dx, tmp);
-                vcopy(accelerate.d, dx);
-                
                 vadd(accelerate.p1, accelerate.p0, dx);
         }
         
@@ -238,7 +206,6 @@ namespace romi {
         {
                 decelerate.duration = 0;
                 vzero(decelerate.a); 
-                vzero(decelerate.d); 
                 vcopy(decelerate.p0, p);
                 vcopy(decelerate.p1, p);
                 vcopy(decelerate.v0, v);
@@ -267,8 +234,6 @@ namespace romi {
                 smul(dx, decelerate.v0, decelerate.duration);
                 smul(tmp, decelerate.a, 0.5 * decelerate.duration * decelerate.duration);
                 vadd(dx, dx, tmp);
-                vcopy(decelerate.d, dx);
-                
                 vsub(decelerate.p0, decelerate.p1, dx);
         }
 
@@ -291,7 +256,6 @@ namespace romi {
                 vcopy(travel.p1, p);
                 vcopy(travel.v0, v);
                 vcopy(travel.v1, v);
-                vzero(travel.d);
                 vzero(travel.a);
         }
 
@@ -301,14 +265,22 @@ namespace romi {
                 vcopy(travel.p1, p1);
                 vcopy(travel.v0, v);
                 vcopy(travel.v1, v);
-                vsub(travel.d, p1, p0);
                 vzero(travel.a);
                 
-                double len = norm(travel.d);
+                double len = travel.length();
                 double vn = norm(v);
                 travel.duration = len / vn; 
         }
-        
+
+        void assert_speeds(double v0, double v_target, double v1)
+        {
+                if (v_target < v0 || v_target < v1) {
+                        // Should not happen! Throw an exception if it does.
+                        r_err("scale_target_speed: v_target < v0 || v_target < v1");
+                        throw std::runtime_error("scale_target_speed: v_target < v0 || v_target < v1");
+                }
+        }
+
         void ATDC::scale_target_speed(double *p0, double *p1,
                                       double *v0, double *v, double *v1, 
                                       double *amax,
@@ -324,16 +296,10 @@ namespace romi {
                 double v0n = norm(accelerate.v0);
                 double v1n = norm(curve.v0);
 
-                if (v_target < v0n || v_target < v1n) {
-                        // Should not happen! Throw an exception if it does.
-                        r_err("scale_target_speed: v_target < v0n || v_target < v1n");
-                        throw std::runtime_error("scale_target_speed: v_target < v0n || v_target < v1n");
-                }
+                assert_speeds(v0n, v_target, v1n);
                 
                 // The maximum acceleration in the direction of the segment
-                double a[3];
-                amax_in_direction(amax, dx, a);                
-                double am = norm(a);
+                double am = amax_in_direction(amax, dx);
 
                 /* 
                    The maximum speed that can be reached by
@@ -364,21 +330,5 @@ namespace romi {
                 } else {
                         vcopy(scaled_v, v);
                 }
-        }
-        
-        void ATDC::print()
-        {
-                accelerate.print("A");
-                travel.print("T");
-                decelerate.print("D");
-                curve.print("C");
-        }
-        
-        void ATDC::print(membuf_t *text)
-        {
-                accelerate.print(text, "A");
-                travel.print(text, "T");
-                decelerate.print(text, "D");
-                curve.print(text, "C");
         }
 }

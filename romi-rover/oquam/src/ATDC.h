@@ -29,7 +29,8 @@
 
 namespace romi {
 
-        void amax_in_direction(double *amax, double *v, double *new_a);
+        double amax_in_direction(double *amax, double *v);
+        void assert_equal_speeds(double *v0, double *v1);
 
         /**  The ATDC structure combines four sections: 
          *   1. a straight-line Acceleration (A), 
@@ -49,18 +50,11 @@ namespace romi {
                 ATDC *next;
 
                 ATDC() : prev(0), next(0) {}
-
-                bool is_valid(double tmax,
-                              double *xmin, double *xmax, 
-                              double *vmax, double *amax);
                 
                 void update_start_times(double at);
                 void compute_accelerations(double *p0, double *p1,
                                            double *v0, double *v, double *v1,
                                            double *amax);
-
-                void print();
-                void print(membuf_t *text);
 
         private:
                 
@@ -82,13 +76,10 @@ namespace romi {
                 void normal_travel(double *p0, double *p1, double *v);
                 
                 void assert_coherent_travel_length();
-                void assert_equal_speeds(double *v0, double *v1);
                 
                 void scale_target_speed(double *p0, double *p1,
                                         double *v0, double *v, double *v1, 
                                         double *amax, double *scaled_v);
-                bool points_and_speeds_match();
-                bool points_and_speeds_match(Section& first, Section& second);
 
         };
 

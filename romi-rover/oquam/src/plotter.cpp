@@ -234,10 +234,10 @@ namespace romi {
         
                 for (Segment *s0 = path; s0; s0 = s0->next) {
                         if (s0->prev == NULL)
-                                print_moveto(plot, _X(r, s0->section.p0[i]), _Y(r, s0->section.p0[j]));
+                                print_moveto(plot, _X(r, s0->p0[i]), _Y(r, s0->p0[j]));
                         else 
-                                print_lineto(plot, _X(r, s0->section.p0[i]), _Y(r, s0->section.p0[j]));
-                        print_lineto(plot, _X(r, s0->section.p1[i]), _Y(r, s0->section.p1[j]));
+                                print_lineto(plot, _X(r, s0->p0[i]), _Y(r, s0->p0[j]));
+                        print_lineto(plot, _X(r, s0->p1[i]), _Y(r, s0->p1[j]));
                 }
         
                 membuf_printf(plot->buffer, "\" id=\"path\" style=\"fill:none;stroke:#000000;"
@@ -276,7 +276,7 @@ namespace romi {
         static double slices_duration(std::vector<Section>& slices)
         {
                 Section& section = slices.back();
-                return section.at + section.duration;
+                return section.end_time();
         }
 
         static void print_path_speed_i(plot_t *plot,
@@ -335,9 +335,9 @@ namespace romi {
                 
                         print_line(plot,
                                    xscale * t,
-                                   yscale * s0->section.v0[i],
+                                   yscale * s0->v[i],
                                    xscale * t1,
-                                   yscale * s0->section.v0[i],
+                                   yscale * s0->v[i],
                                    "#000000");
                
                         s0 = s0->next;
@@ -440,8 +440,8 @@ namespace romi {
                 for (size_t k = 0; k < slices.size(); k++) {
                         Section& section = slices[k];
                         print_line(plot,
-                                   xscale * section.at, yscale * section.v0[i],
-                                   xscale * (section.at + section.duration), yscale * section.v1[i], 
+                                   xscale * section.start_time, yscale * section.v0[i],
+                                   xscale * section.end_time(), yscale * section.v1[i], 
                                    "#ff00ff");
                 }
         

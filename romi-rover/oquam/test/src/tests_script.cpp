@@ -1,6 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "Script.h"
+#include "print.h"
+#include "is_valid.h"
 
 using namespace std;
 using namespace testing;
@@ -15,7 +17,7 @@ protected:
         double vmax[3] = { 1.0, 1.0, 0.0};
         double amax[3] = { 1.0, 1.0, 1.0};
         double deviation = 0.01;
-        double period = 0.010;
+        double period = 0.100;
         double maxlen = 32.0;
         
 	script_tests() {
@@ -51,7 +53,7 @@ TEST_F(script_tests, test_moveto)
         script.moveto(1.0, 0.0, 0.0, 1.0);
         script.convert(vmax, amax, deviation, period, maxlen);
 
-        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
 
         //Assert
         ATDC *first = script.atdc;
@@ -116,7 +118,10 @@ TEST_F(script_tests, test_move_and_back)
         script.moveto(1.0, 0.0, 0.0, 1.0);
         script.moveto(0.0, 0.0, 0.0, 1.0);
         script.convert(vmax, amax, deviation, period, maxlen);
-        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+        
+        //print(script, false);
+        
+        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
 
         //Assert
         ATDC *first = script.atdc;
@@ -229,7 +234,7 @@ TEST_F(script_tests, test_move_forward_twice)
         script.moveto(2.0, 0.0, 0.0, 1.0);
         script.convert(vmax, amax, deviation, period, maxlen);
         
-        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
 }
 
 TEST_F(script_tests, test_moves_at_90degrees)
@@ -242,7 +247,7 @@ TEST_F(script_tests, test_moves_at_90degrees)
         script.moveto(0.01, 0.01, 0.0, 1.0);
         script.convert(vmax, amax, deviation, period, maxlen);
         
-        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
 
         // ATDC *first = script.atdc;
         // ATDC *second = first->next;
@@ -266,8 +271,10 @@ TEST_F(script_tests, test_three_small_moves_in_u)
         script.moveto(0.01, 0.01, 0.0, 1.0);
         script.moveto(0.00, 0.01, 0.0, 1.0);
         script.convert(vmax, amax, deviation, period, maxlen);
+
+        //print(script);
         
-        ASSERT_EQ(true, script.check_validity(120.0, xmin, xmax, vmax, amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
 
         // ATDC *first = script.atdc;
         // ATDC *second = first->next;
@@ -279,4 +286,89 @@ TEST_F(script_tests, test_three_small_moves_in_u)
         // second->print();
         // printf("#2\n");
         // third->print();
+}
+
+TEST_F(script_tests, test_reduce_exit_speed)
+{
+        // Arrange
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
+
+        double test_amax[3] = { 0.5, 0.5, 0.5};
+
+        script.moveto(0.2, 0.00, 0.0, 1.0);
+        script.moveto(0.4, 0.10, 0.0, 1.0);
+        script.convert(vmax, test_amax, 0.04, period, maxlen);
+
+        //print(script, false);
+
+        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, test_amax));
+
+        // ATDC *first = script.atdc;
+        // ATDC *second = first->next;
+
+        // printf("#0\n");
+        // first->print();
+        // printf("#1\n");
+        // second->print();
+}
+
+TEST_F(script_tests, test_reduce_entry_speed)
+{
+        // Arrange
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
+
+        double test_amax[3] = { 0.5, 0.5, 0.5};
+
+        script.moveto(0.4, 0.00, 0.0, 1.0);
+        script.moveto(0.6, 0.10, 0.0, 1.0);
+        script.convert(vmax, test_amax, 0.04, period, maxlen);
+
+        // print(script, false);
+
+        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, test_amax));
+
+        // ATDC *first = script.atdc;
+        // ATDC *second = first->next;
+
+        // printf("#0\n");
+        // first->print();
+        // printf("#1\n");
+        // second->print();
+}
+
+TEST_F(script_tests, moveto_throws_exception_if_negative_speed_1)
+{
+        // Arrange
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
+
+        try {
+                script.moveto(0.4, 0.00, 0.0, -1.0);
+                FAIL() << "Expected a runtime_error";
+                
+        } catch (std::runtime_error& e) {
+                // OK
+        } catch (...) {
+                FAIL() << "Expected a runtime_error";
+        }
+}
+
+TEST_F(script_tests, moveto_throws_exception_if_negative_speed_2)
+{
+        // Arrange
+        double start_position[3] = {0, 0, 0};
+        Script script(start_position);
+
+        try {
+                script.moveto(0.4, 0.00, 0.0, 1.0);
+                script.moveto(0.0, 0.00, 0.0, -1.0);
+                FAIL() << "Expected a runtime_error";
+                
+        } catch (std::runtime_error& e) {
+                // OK
+        } catch (...) {
+                FAIL() << "Expected a runtime_error";
+        }
 }

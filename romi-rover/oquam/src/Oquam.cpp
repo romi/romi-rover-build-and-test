@@ -25,6 +25,8 @@
 #include <vector>
 #include <stdexcept>
 #include "plotter.h"
+#include "print.h"
+#include "is_valid.h"
 #include "Oquam.h"
 
 namespace romi {
@@ -51,6 +53,39 @@ namespace romi {
                 _script_count = 0;
                 
                 homing();
+        }
+                
+        bool Oquam::get_range(CNCRange &range)
+        {
+                range._x[0] = _xmin[0];
+                range._x[1] = _xmax[0];
+                range._y[0] = _xmin[1];
+                range._y[1] = _xmax[1];
+                range._z[0] = _xmin[2];
+                range._z[1] = _xmax[2];
+                return true;
+        }
+
+        bool Oquam::get_position(int32_t *position) 
+        {
+                return _controller->get_position(position);
+        }
+        
+        bool Oquam::get_position(double *position) 
+        {
+                int32_t p[3];
+                bool success = get_position(p);
+                if (success) {
+                        for (int i = 0; i < 3; i++)
+                                position[i] = (double) p[i] / _scale_meters_to_steps[i];
+                }
+                return success;
+        }
+
+        bool Oquam::moveto(double x, double y, double z, double relative_speed)
+        {
+                SynchonizedCodeBlock synchronize(_m);
+                return moveto_synchronized(x, y, z, relative_speed);
         }
 
         bool Oquam::moveto_synchronized(double x, double y, double z, double rel_speed)
@@ -105,39 +140,24 @@ namespace romi {
                 }
                 return success;
         }
-
-        void Oquam::store_script(Script& script) 
+        
+        bool Oquam::spindle(double speed)
         {
-                if (_file_cabinet) {
+                // TODO
+                r_err("Oquam::spindle NOT IMPLEMENTED YET!");
+                return true;
+        }
 
-                        char name[64];
-                        rprintf(name, 64, "oquam-%04d", _script_count++);
-                        
-                        IFolder &folder = _file_cabinet->start_new_folder();
-                        membuf_t *svg = plot_to_mem(&script, _xmin, _xmax, _vmax,
-                                                    _amax, _scale_meters_to_steps);
-                        if (svg != 0) {
-                                folder.store_svg("path", membuf_data(svg),
-                                                 membuf_len(svg));
-                                delete_membuf(svg);
-                        } else {
-                                r_warn("Oquam::store_script: plot failed");
-                        }
-
-                        membuf_t *text = new_membuf();
-                        script.print_segments(text);
-                        folder.store_txt("segments", membuf_data(text), membuf_len(text));
-
-                        membuf_clear(text);
-                        script.print_atdc(text);
-                        folder.store_txt("atdc", membuf_data(text), membuf_len(text));
-
-                        membuf_clear(text);
-                        script.print_slices(text);
-                        folder.store_txt("slices", membuf_data(text), membuf_len(text));
-                        
-                        delete_membuf(text);
-                }
+        bool Oquam::homing()
+        {
+                SynchonizedCodeBlock synchronize(_m);
+                return _controller->homing();
+        }
+                
+        bool Oquam::travel(Path &path, double relative_speed)
+        {
+                SynchonizedCodeBlock synchronize(_m);
+                return travel_synchronized(path, relative_speed);
         }
         
         bool Oquam::travel_synchronized(Path &path, double relative_speed) 
@@ -179,30 +199,21 @@ namespace romi {
                 get_position(start_position);
                         
                 Script script(start_position);
-
-                double speed_ms = get_absolute_speed(relative_speed);
                 
-                build_script(path, speed_ms, script);
-                convert_script(script, relative_speed);
+                double vmax[3];
+                smul(vmax, _vmax, relative_speed);
+                
+                double speed_ms = norm(vmax);
+                
+                convert_path_to_script(path, speed_ms, script);
+                convert_script(script, vmax);
                 store_script(script);
+                check_script(script, vmax); 
                 execute_script(script);
                 wait_end_of_script(script); 
         }
 
-        void Oquam::wait_end_of_script(Script& script) 
-        {
-                double duration = script_duration(script);
-                double timeout = 60.0 + 1.5 * duration;
-                synchronize(timeout);
-        }
-        
-        void Oquam::synchronize(double timeout) 
-        {
-                if (!_controller->synchronize(timeout)) 
-                        throw std::runtime_error("Oquam: synchronize failed");
-        }
-
-        void Oquam::build_script(Path &path, double speed, Script& script) 
+        void Oquam::convert_path_to_script(Path &path, double speed, Script& script) 
         {
                 for (size_t i = 0; i < path.size(); i++) {
                         double x = path[i].x;
@@ -220,62 +231,43 @@ namespace romi {
                 }
         }
 
-        bool Oquam::get_position(int32_t *position) 
+        void Oquam::convert_script(Script& script, double *vmax) 
         {
-                return _controller->get_position(position);
-        }
-        
-        bool Oquam::get_position(double *position) 
-        {
-                int32_t p[3];
-                bool success = get_position(p);
-                if (success) {
-                        for (int i = 0; i < 3; i++)
-                                position[i] = (double) p[i] / _scale_meters_to_steps[i];
-                }
-                return success;
-        }
-
-        double Oquam::script_duration(Script& script)
-        {
-                Section& section = script.slices.back();
-                return section.at + section.duration;
-        }
-
-        void Oquam::convert_script(Script& script, double relative_speed) 
-        {
-                double vmax[3];
-                smul(vmax, _vmax, relative_speed);
-                
                 r_debug("Oquam::convert_script: script_convert");
-                
                 script.convert(vmax, _amax, _path_max_deviation,
-                               _path_slice_interval, 32.0);
-                
-                script.check_validity(32.0, _xmin, _xmax, vmax, _amax);
+                               _path_slice_interval, 32.0);                
         }
 
-        void Oquam::execute_move(Section& section, int32_t *pos_steps)
+        void Oquam::store_script(Script& script) 
         {
-                int32_t p1[3];
-                p1[0] = (int32_t) (section.p1[0] * _scale_meters_to_steps[0]);
-                p1[1] = (int32_t) (section.p1[1] * _scale_meters_to_steps[1]);
-                p1[2] = (int32_t) (section.p1[2] * _scale_meters_to_steps[2]);
-                
-                int16_t dt = (int16_t) (1000.0 * section.duration);
-                int16_t dx = (int16_t) (p1[0] - pos_steps[0]);
-                int16_t dy = (int16_t) (p1[1] - pos_steps[1]);
-                int16_t dz = (int16_t) (p1[2] - pos_steps[2]);
-                
-                if ((dt > 0) && (dx != 0 || dy != 0 || dz != 0)) {
-                        bool success = _controller->move(dt, dx, dy, dz);
-                        if (!success)
-                                throw std::runtime_error("Oquam: move failed");
+                if (_file_cabinet) {
+
+                        char name[64];
+                        rprintf(name, 64, "oquam-%04d", _script_count++);
                         
-                        // Update the current position
-                        pos_steps[0] = p1[0];
-                        pos_steps[1] = p1[1];
-                        pos_steps[2] = p1[2];
+                        IFolder &folder = _file_cabinet->start_new_folder();
+                        membuf_t *svg = plot_to_mem(&script, _xmin, _xmax, _vmax,
+                                                    _amax, _scale_meters_to_steps);
+                        if (svg != 0) {
+                                folder.store_svg("path", membuf_data(svg),
+                                                 membuf_len(svg));
+                                delete_membuf(svg);
+                        } else {
+                                r_warn("Oquam::store_script: plot failed");
+                        }
+
+                        membuf_t *text = new_membuf();
+                        print(script, text);
+                        folder.store_txt("script", membuf_data(text), membuf_len(text));
+                        delete_membuf(text);
+                }
+        }
+
+        void Oquam::check_script(Script& script, double *vmax) 
+        {
+                if (!is_valid(script, 32.0, _xmin, _xmax, vmax, _amax)) {
+                        r_err("Oquam::convert_script: generated script is invalid");
+                        throw std::runtime_error("is_valid(script) failed");
                 }
         }
         
@@ -301,6 +293,49 @@ namespace romi {
 
                 // r_debug("End: Abs(%d,%d,%d)",
                 //         pos_steps[0], pos_steps[1], pos_steps[2]);
+        }
+
+        void Oquam::execute_move(Section& section, int32_t *pos_steps)
+        {
+                int32_t p1[3];
+                p1[0] = (int32_t) (section.p1[0] * _scale_meters_to_steps[0]);
+                p1[1] = (int32_t) (section.p1[1] * _scale_meters_to_steps[1]);
+                p1[2] = (int32_t) (section.p1[2] * _scale_meters_to_steps[2]);
+                
+                int16_t dt = (int16_t) (1000.0 * section.duration);
+                int16_t dx = (int16_t) (p1[0] - pos_steps[0]);
+                int16_t dy = (int16_t) (p1[1] - pos_steps[1]);
+                int16_t dz = (int16_t) (p1[2] - pos_steps[2]);
+                
+                if ((dt > 0) && (dx != 0 || dy != 0 || dz != 0)) {
+                        bool success = _controller->move(dt, dx, dy, dz);
+                        if (!success)
+                                throw std::runtime_error("Oquam: move failed");
+                        
+                        // Update the current position
+                        pos_steps[0] = p1[0];
+                        pos_steps[1] = p1[1];
+                        pos_steps[2] = p1[2];
+                }
+        }
+
+        void Oquam::wait_end_of_script(Script& script) 
+        {
+                double duration = script_duration(script);
+                double timeout = 60.0 + 1.5 * duration;
+                synchronize(timeout);
+        }
+        
+        void Oquam::synchronize(double timeout) 
+        {
+                if (!_controller->synchronize(timeout)) 
+                        throw std::runtime_error("Oquam: synchronize failed");
+        }
+
+        double Oquam::script_duration(Script& script)
+        {
+                Section& section = script.slices.back();
+                return section.end_time();
         }
 
         bool Oquam::stop_execution()

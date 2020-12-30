@@ -10,8 +10,16 @@ set(SRCS_SECTION
   src/tests_section.cpp
   ../src/Section.h
   ../src/Section.cpp
+  ../src/Script.h
+  ../src/Script.cpp
+  ../src/ATDC.h
+  ../src/ATDC.cpp
   ../src/v.h
   ../src/v.c
+  ../src/is_valid.cpp
+  ../src/is_valid.h
+  ../src/print.h
+  ../src/print.cpp
   )
 add_executable(romi_rover_unit_tests_oquam_section ${SRCS_SECTION})
 target_link_libraries(romi_rover_unit_tests_oquam_section rpp gtest gmock)
@@ -19,6 +27,32 @@ target_link_libraries(romi_rover_unit_tests_oquam_section rpp gtest gmock)
 add_test(
     NAME romi_rover_unit_tests_oquam_section
     COMMAND romi_rover_unit_tests_oquam_section
+)
+
+
+
+set(SRCS_PRINT
+  src/tests_main.cpp
+  src/tests_print.cpp
+  ../src/Script.h
+  ../src/Script.cpp
+  ../src/ATDC.h
+  ../src/ATDC.cpp
+  ../src/Section.h
+  ../src/Section.cpp
+  ../src/v.h
+  ../src/v.c
+  ../src/print.h
+  ../src/print.cpp
+  ../src/is_valid.cpp
+  ../src/is_valid.h
+  )
+add_executable(romi_rover_unit_tests_oquam_print ${SRCS_PRINT})
+target_link_libraries(romi_rover_unit_tests_oquam_print rpp gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_oquam_print
+    COMMAND romi_rover_unit_tests_oquam_print
 )
 
 
@@ -34,6 +68,10 @@ set(SRCS_SCRIPT
   ../src/Section.cpp
   ../src/v.h
   ../src/v.c
+  ../src/print.h
+  ../src/print.cpp
+  ../src/is_valid.cpp
+  ../src/is_valid.h
   )
 add_executable(romi_rover_unit_tests_oquam_script ${SRCS_SCRIPT})
 target_link_libraries(romi_rover_unit_tests_oquam_script rpp gtest gmock)
@@ -57,6 +95,10 @@ set(SRCS_OQUAMSTEPPER
   ../src/v.c
   ../src/plotter.cpp
   ../src/plotter.h
+  ../src/print.h
+  ../src/print.cpp
+  ../src/is_valid.cpp
+  ../src/is_valid.h
   ../src/Section.h
   ../src/Section.cpp
   ../src/ATDC.h
@@ -85,6 +127,8 @@ if(BUILD_COVERAGE)
             NAME romi_rover_oquam_coverage
             EXECUTABLE ctest -V ${n_cores}
             EXCLUDE "src/main.cpp" 
-            DEPENDENCIES romi_rover_unit_tests_oquam_section romi_rover_unit_tests_oquam_script)
+            DEPENDENCIES romi_rover_unit_tests_oquam_section
+                         romi_rover_unit_tests_oquam_script
+                         romi_rover_unit_tests_oquam_print)
 endif()
 

@@ -24,6 +24,10 @@ set(SOURCES
   src/Script.h
   src/plotter.cpp
   src/plotter.h
+  src/print.cpp
+  src/print.h
+  src/is_valid.cpp
+  src/is_valid.h
   src/Oquam.cpp
   src/Oquam.h
   src/OquamOptions.cpp

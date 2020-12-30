@@ -36,9 +36,8 @@ namespace romi {
          *  acceleration).
          *
          *  The following the properties should be satisfied:
-         *    d = p1 - p0
          *    v1 = v0 + a * duration
-         *    d = v0 * duration + a * duration² / 2
+         *    p1 = p0 + v0 * duration + a * duration² / 2
          */
         class Section {
         public:
@@ -53,7 +52,7 @@ namespace romi {
                 // The absolute start time of this section, if known. The
                 // start time is measured from the beginning of the continuous
                 // path to which this segment belongs.
-                double at;
+                double start_time;
 
                 // The speed at the start of this section, in m/s.
                 double v0[3];
@@ -63,41 +62,32 @@ namespace romi {
 
                 // The acceleation of this section, in m/s².
                 double a[3];
-        
-                // The relative position at the end of the section, in meters.
-                double d[3];
 
                 Section();
                 
-                Section(double duration, double at,
+                Section(double duration, double start_time,
                         const double *p0, const double *p1,
                         const double *v0, const double *v1,
                         const double *a);
 
-                bool is_valid(const char *name, double tmax,
-                              const double *xmin, const double *xmax, 
-                              const double *vmax, const double *amax);
+                void set(double duration, double start_time,
+                         const double *p0, const double *p1,
+                         const double *v0, const double *v1,
+                         const double *a);
 
                 void slice(std::vector<Section>& slices, double interval, double max_duration);
                 void get_position_at(double t_from_start, double *p);
                 void get_speed_at(double t_from_start, double *v);
-                void print(membuf_t *text, const char *prefix);
-                void print(const char *prefix);
 
                 void zero();
+                double length();
+                double *direction(double *d);
+                double *displacement(double *d);
+                double end_time();
 
         protected:
                 
                 void compute_slice(std::vector<Section>& slices, double start_time, double dt);
-                bool has_valid_start_time(const char *name);
-                bool has_valid_duration(const char *name, double tmax);
-                bool has_valid_positions(const char *name, const double *xmin, const double *xmax);
-                bool has_valid_speeds(const char *name, const double *vmax);
-                bool has_valid_acceleration(const char *name, const double *amax);
-                bool is_coherent(const char *name);
-                bool has_coherent_distance(const char *name);
-                bool has_coherent_acceleration_1(const char *name);
-                bool has_coherent_acceleration_2(const char *name);
         };
 }
 
