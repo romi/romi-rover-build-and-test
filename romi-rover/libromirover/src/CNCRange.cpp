@@ -34,6 +34,28 @@ namespace romi {
                         _z[i] = 0.0;
                 }
         }
+
+        CNCRange::CNCRange(double x0, double x1,
+                           double y0, double y1,
+                           double z0, double z1)
+        {
+                _x[0] = x0;
+                _x[1] = x1;
+                _y[0] = y0;
+                _y[1] = y1;
+                _z[0] = z0;
+                _z[1] = z1;
+        }
+        
+        CNCRange::CNCRange(const double *xmin, const double *xmax)
+        {
+                _x[0] = xmin[0];
+                _y[0] = xmin[1];
+                _z[0] = xmin[2];
+                _x[1] = xmax[0];
+                _y[1] = xmax[1];
+                _z[1] = xmax[2];
+        }
                 
         void CNCRange::init(JsonCpp& range)
         {

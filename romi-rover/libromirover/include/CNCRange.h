@@ -29,12 +29,17 @@
 
 namespace romi {
         
-        struct CNCRange {
+        struct CNCRange
+        {
                 double _x[2];
                 double _y[2];
                 double _z[2];
                 
                 CNCRange();
+                CNCRange(double x0, double x1,
+                         double y0, double y1,
+                         double z0, double z1);
+                CNCRange(const double *xmin, const double *xmax);
                 
                 void init(JsonCpp &range);
 
