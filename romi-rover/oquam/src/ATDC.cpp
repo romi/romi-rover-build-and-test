@@ -53,7 +53,7 @@ namespace romi {
         {
                 double dv[3];
                 vsub(dv, v1, v0);
-                if (norm(dv) > 0.01) {
+                if (norm(dv) > 0.00001) {
                         r_err("section with zero length but different speeds");
                         throw std::runtime_error("section with zero length "
                                                  "but different speeds");

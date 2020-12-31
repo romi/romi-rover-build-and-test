@@ -440,23 +440,32 @@ namespace romi {
         double Script::required_acceleration_path_length(ATDC *t, double *amax)
         {
                 double length = 0.0;
-                
                 double displacement[3];
+                
                 vsub(displacement, t->curve.p0, t->accelerate.p0);
 
                 if (norm(displacement) == 0) {
-                        assert_equal_speeds(t->accelerate.v0, t->curve.v0);
-                        
+                        length = required_acceleration_path_length(t->accelerate.v0,
+                                                                   t->curve.v0,
+                                                                   amax);
                 } else {
                         length = required_acceleration_path_length(t->accelerate.v0,
                                                                    t->curve.v0,
                                                                    displacement,
                                                                    amax);
                 }
-                        
+
                 return length;
         }
         
+        double Script::required_acceleration_path_length(double *v0, double *v1, double *amax)
+        {
+                double v0n = norm(v0);
+                double v1n = norm(v1);
+                double a = norm(amax);
+                return required_acceleration_path_length(v0n, v1n, a);
+        }
+
         double Script::required_acceleration_path_length(double *v0, double *v1,
                                                          double *d, double *amax)
         {
@@ -519,7 +528,9 @@ namespace romi {
                 double length = norm(displacement);
                 double v0 = norm(t->accelerate.v0);
                 double v1 = norm(t->curve.v0);
-                double a = amax_in_direction(amax, displacement);
+                double a = 0.0;
+                if (norm(displacement) > 0.0) 
+                        a = amax_in_direction(amax, displacement);
                 double v0s = sqrt(v1 * v1 + 2 * a * length);
                 double factor = v0s / v0;
                 smul(t->accelerate.v0, t->accelerate.v0, factor);

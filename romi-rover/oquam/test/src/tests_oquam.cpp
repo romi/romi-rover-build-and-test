@@ -345,27 +345,27 @@ TEST_F(oquam_tests, test_oquam_travel_square_fast)
         ASSERT_EQ(success, true);
 }
 
-// TEST_F(oquam_tests, test_oquam_travel_snake)
-// {
-//         DefaultSetUp();
+TEST_F(oquam_tests, test_oquam_travel_snake)
+{
+        DefaultSetUp();
 
-//         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-//         oquam.set_file_cabinet(&debug);
+        Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
+        oquam.set_file_cabinet(&debug);
 
-//         Path path;
-//         for (int i = 1; i <= 1; i++) {
-//                 Waypoint p0(i * 0.01, (i-1) * 0.01);
-//                 path.push_back(p0);
-//                 Waypoint p1(i * 0.01, i * 0.01);
-//                 path.push_back(p1);
-//         }
+        Path path;
+        for (int i = 1; i <= 1; i++) {
+                Waypoint p0(i * 0.01, (i-1) * 0.01);
+                path.push_back(p0);
+                Waypoint p1(i * 0.01, i * 0.01);
+                path.push_back(p1);
+        }
         
-//         Waypoint p(0.0, 0.0);
-//         path.push_back(p);
+        Waypoint p(0.0, 0.0);
+        path.push_back(p);
 
-//         bool success = oquam.travel(path, 1.0);
-//         ASSERT_EQ(success, true);
-// }
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
+}
 
 TEST_F(oquam_tests, test_oquam_travel_round_trip)
 {

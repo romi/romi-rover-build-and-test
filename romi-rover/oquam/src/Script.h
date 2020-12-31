@@ -179,6 +179,7 @@ namespace romi {
                 double scale_distance(double distance, Segment *s0, Segment *s1);
                 double shortest_length(Segment *s0, Segment *s1);
                 double required_acceleration_path_length(ATDC *t, double *amax);
+                double required_acceleration_path_length(double *v0, double *v1, double *amax);
                 double required_acceleration_path_length(double *v0, double *v1, double *d, double *amax);
                 double required_acceleration_path_length(double v0, double v1, double a);
         };
