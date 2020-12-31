@@ -40,8 +40,8 @@ int main(int argc, char** argv)
                 JsonCpp r = config.get("cnc").get("range");
                 range.init(r);
                 
-                double xmin[3];
-                double xmax[3];
+                // double xmin[3];
+                // double xmax[3];
                 double vm[3];
                 double steps[3] = { 200.0, 200.0, 200.0 };
                 double gears[3] = { 1.0, 1.0, 1.0 };
@@ -58,12 +58,12 @@ int main(int argc, char** argv)
                 //double amax[3] = { 0.5, 0.5, 0.05 };
                 double amax[3] = { 0.3, 0.3, 0.03 };
 
-                xmin[0] = range._x[0];
-                xmax[0] = range._x[1];
-                xmin[1] = range._y[0];
-                xmax[1] = range._y[1];
-                xmin[2] = range._z[0];
-                xmax[2] = range._z[1];
+                // xmin[0] = range._x[0];
+                // xmax[0] = range._x[1];
+                // xmin[1] = range._y[0];
+                // xmax[1] = range._y[1];
+                // xmin[2] = range._z[0];
+                // xmax[2] = range._z[1];
 
                 for (int i = 0; i < 3; i++) {
                         vm[i] = sign(displacement[i]) * displacement[i] * rpm[i] / 60.0 / gears[i];
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
                         cnc_controller = new StepperController(romi_serial);
                 }
 
-                Oquam oquam(cnc_controller, xmin, xmax, vm, amax, scale, 0.01, period);
+                Oquam oquam(*cnc_controller, range, vm, amax, scale, 0.01, period);
 
                 DebugWeedingSession debug(options.output_directory, "oquam");
                 oquam.set_file_cabinet(&debug);

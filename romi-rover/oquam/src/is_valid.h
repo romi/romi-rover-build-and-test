@@ -26,6 +26,7 @@
 #define _OQUAM_IS_VALID_H_
 
 #include "Script.h"
+#include "CNCRange.h"
 
 namespace romi {
         
@@ -37,8 +38,7 @@ namespace romi {
                       double *xmin, double *xmax, 
                       double *vmax, double *amax);
 
-        bool is_valid(Script& script, double tmax,
-                      double *xmin, double *xmax, 
+        bool is_valid(Script& script, double tmax, CNCRange& range, 
                       double *vmax, double *amax);
        
 }

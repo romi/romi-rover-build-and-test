@@ -26,23 +26,14 @@
 #define _OQUAM_PLOTTER_H_
 
 #include "Script.h"
+#include "CNCRange.h"
 
 namespace romi {
 
-        int plot_to_file(const char *filepath,
-                         Script *script,
-                         double *xmin,
-                         double *xmax,
-                         double *vmax,
-                         double *amax,
-                         double *scale);
-
         membuf_t *plot_to_mem(Script *script,
-                              double *xmin,
-                              double *xmax,
+                              CNCRange& range,
                               double *vmax,
-                              double *amax,
-                              double *scale);
+                              double *amax);
 }
 
 #endif // _OQUAM_PLOTTER_H_

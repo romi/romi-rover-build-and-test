@@ -60,8 +60,6 @@ namespace romi {
         static plot_t *new_plot(membuf_t *buffer)
         {
                 plot_t *plot = r_new(plot_t);
-                if (plot == NULL)
-                        return NULL;
                 plot->buffer = buffer;
                 return plot;
         }
@@ -271,12 +269,6 @@ namespace romi {
                               + t0->curve.duration);
                 }
                 return t;
-        }
-
-        static double slices_duration(std::vector<Section>& slices)
-        {
-                Section& section = slices.back();
-                return section.end_time();
         }
 
         static void print_path_speed_i(plot_t *plot,
@@ -582,23 +574,8 @@ namespace romi {
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        membuf_t *plot_to_mem(Script *script,
-                              double *xmin,
-                              double *xmax,
-                              double *vmax_,
-                              double *amax,
-                              double *scale)
+        static void plot_init_dimensions(plot_t *plot, double *xmin, double *xmax)
         {
-                membuf_t *buffer = new_membuf();
-                if (buffer == NULL)
-                        return NULL;
-
-                plot_t *plot = new_plot(buffer);
-                if (plot == NULL) {
-                        delete_membuf(buffer);
-                        return NULL;
-                }
-        
                 plot->d = 0.1;
 
                 double dx[3];
@@ -611,8 +588,10 @@ namespace romi {
         
                 plot->h = 3 * plot->d + vmax(dx) + 0.7;
                 plot->scale = 1000.0;
+        }
 
-                // XY
+        static void plot_init_xy(plot_t *plot, double *xmin, double *xmax)
+        {
                 plot->xy.x = plot->d;
                 plot->xy.y = plot->h - plot->d - plot->L;
                 plot->xy.w = xmax[0] - xmin[0];
@@ -621,8 +600,10 @@ namespace romi {
                 plot->xy.x1 = xmax[0];
                 plot->xy.y0 = xmin[1];
                 plot->xy.y1 = xmax[1];
-        
-                // XZ
+        }
+
+        static void plot_init_xz(plot_t *plot, double *xmin, double *xmax)
+        {
                 plot->xz.x = plot->xy.x + plot->xy.w + plot->d;
                 plot->xz.y = plot->xy.y;
                 plot->xz.w = xmax[0] - xmin[0];
@@ -631,8 +612,10 @@ namespace romi {
                 plot->xz.x1 = xmax[0];
                 plot->xz.y0 = xmin[2];
                 plot->xz.y1 = xmax[2];
-
-                // YZ        
+        }
+        
+        static void plot_init_yz(plot_t *plot, double *xmin, double *xmax)
+        {
                 plot->yz.x = plot->xz.x + plot->xz.w + plot->d;
                 plot->yz.y = plot->xy.y;
                 plot->yz.w = xmax[1] - xmin[1];
@@ -641,8 +624,10 @@ namespace romi {
                 plot->yz.x1 = xmax[1];
                 plot->yz.y0 = xmin[2];
                 plot->yz.y1 = xmax[2];
-
+        }
         
+        static void plot_init_v(plot_t *plot)
+        {
                 plot->v[0].x = plot->d;
                 plot->v[0].y = 7.5 * plot->d;
                 plot->v[0].w = plot->w - 2 * plot->d;
@@ -652,12 +637,15 @@ namespace romi {
                 plot->v[1].y = 6.5 * plot->d;
                 plot->v[1].w = plot->w - 2 * plot->d;
                 plot->v[1].h = 0.9 * plot->d / 2.0;
-        
+                
                 plot->v[2].x = plot->d;
                 plot->v[2].y = 5.5 * plot->d;
                 plot->v[2].w = plot->w - 2 * plot->d;
                 plot->v[2].h = 0.9 * plot->d / 2.0;
+        }
         
+        static void plot_init_a(plot_t *plot)
+        {
                 plot->a[0].x = plot->d;
                 plot->a[0].y = 3.5 * plot->d;
                 plot->a[0].w = plot->w - 2 * plot->d;
@@ -672,55 +660,67 @@ namespace romi {
                 plot->a[2].y = 1.5 * plot->d;
                 plot->a[2].w = plot->w - 2 * plot->d;
                 plot->a[2].h = 0.9 * plot->d / 2.0;
-
+        }
         
-                plot_open(plot);
+        static void plot_init(plot_t *plot, double *xmin, double *xmax)
+        {
+                plot_init_dimensions(plot, xmin, xmax);
+                plot_init_xy(plot, xmin, xmax);
+                plot_init_xz(plot, xmin, xmax);
+                plot_init_yz(plot, xmin, xmax);
+                plot_init_v(plot);
+                plot_init_a(plot);
+        }
+        
+        static void plot_draw_graphs(plot_t *plot, Script *script, membuf_t *buffer,
+                            double *vmax_, double *amax)
+        {
+                double duration = atdc_duration(script->atdc);
+                print_path(plot, script->segments);
+                print_atdc(plot, script->atdc);
+                print_slices(plot, script->slices, duration, vmax_);
+                print_path_speeds(plot, script->segments, script->atdc,
+                                  duration, vmax_);
+                print_path_accelerations(plot, script->segments, script->atdc,
+                                         duration, amax);
+        }
 
+        membuf_t *plot_to_mem(Script *script,
+                              double *xmin,
+                              double *xmax,
+                              double *vmax_,
+                              double *amax)
+        {
+                membuf_t *buffer = new_membuf();
+                plot_t *plot = new_plot(buffer);
+        
+                plot_init(plot, xmin, xmax);
+                plot_open(plot);
                 print_axes(plot);
 
-                double duration = 1.0;
-
-                Segment *segments = script->segments;
-                ATDC *atdc = script->atdc;
-        
-                if (atdc)
-                        duration = atdc_duration(atdc);
-                else if (script->slices.size())
-                        duration = slices_duration(script->slices);
-
-                print_path(plot, segments);
-                print_atdc(plot, atdc);
-                print_slices(plot, script->slices, duration, vmax_);
-                print_path_speeds(plot, segments, atdc, duration, vmax_);
-                print_path_accelerations(plot, segments, atdc, duration, amax);
-
+                if (script->segments
+                    && script->atdc
+                    && script->slices.size() > 0) {
+                        
+                        plot_draw_graphs(plot, script, buffer, vmax_, amax);
+                }
+                
                 plot_close(plot);
                 delete_plot(plot);
 
                 return buffer;
         }
 
-        int plot_to_file(const char *filepath,
-                         Script *script,
-                         double *xmin,
-                         double *xmax,
-                         double *vmax,
-                         double *amax,
-                         double *scale)
+        membuf_t *plot_to_mem(Script *script, CNCRange& range, double *vmax, double *amax)
         {
-                membuf_t *buffer = plot_to_mem(script, xmin, xmax, vmax, amax, scale);
-                if (buffer == NULL)
-                        return -1;
-        
-                FILE *fp = fopen(filepath, "w");
-                if (fp == NULL) {
-                        r_warn("Failed to open file '%s'", filepath);
-                        return -1;
-                }
-                fprintf(fp, "%s", membuf_data(buffer));
-                fclose(fp);
-                delete_membuf(buffer);
-                return 0;
+                double xmin[3];
+                double xmax[3];
+                xmin[0] = range._x[0];
+                xmin[1] = range._y[0];
+                xmin[2] = range._z[0];
+                xmax[0] = range._x[1];
+                xmax[1] = range._y[1];
+                xmax[2] = range._z[1];
+                return plot_to_mem(script, xmin, xmax, vmax, amax);
         }
-
 }

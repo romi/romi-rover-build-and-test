@@ -248,5 +248,18 @@ namespace romi {
                 return valid;
         }
 
+        bool is_valid(Script& script, double tmax, CNCRange& range, 
+                      double *vmax, double *amax)
+        {
+                double xmin[3];
+                double xmax[3];
+                xmin[0] = range._x[0];
+                xmin[1] = range._y[0];
+                xmin[2] = range._z[0];
+                xmax[0] = range._x[1];
+                xmax[1] = range._y[1];
+                xmax[2] = range._z[1];
+                return is_valid(script, tmax, xmin, xmax, vmax, amax);
+        }
 
 }

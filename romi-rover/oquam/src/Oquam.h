@@ -39,12 +39,11 @@ namespace romi {
         class Oquam : public CNC
         {
         public:
-                CNCController *_controller;
+                CNCController& _controller;
                 IFileCabinet *_file_cabinet;
                 std::mutex _m;
-        
-                double _xmin[3]; // in meters
-                double _xmax[3]; // in meters
+
+                CNCRange _range;
                 double _vmax[3]; // in m/s
                 double _amax[3]; // in m/s²
 
@@ -57,8 +56,7 @@ namespace romi {
                 
         public:
                 
-                Oquam(CNCController *controller,
-                      const double *xmin, const double *xmax,
+                Oquam(CNCController& controller, CNCRange& range,
                       const double *vmax, const double *amax,
                       const double *scale_meters_to_steps, 
                       double path_max_deviation,
@@ -86,6 +84,7 @@ namespace romi {
         protected:
                 
                 bool moveto_synchronized(double x, double y, double z, double rel_speed);
+                void do_moveto(double x, double y, double z, double rel_speed);
                 bool travel_synchronized(Path &path, double relative_speed);
                 void do_travel(Path &path, double relative_speed);
                 void convert_path_to_script(Path &path, double speed, Script& script); 
@@ -96,27 +95,19 @@ namespace romi {
                 void execute_move(Section& section, int32_t *pos_steps);
                 void wait_end_of_script(Script& script); 
                 double script_duration(Script& script);
-                void synchronize(double timeout);
                 bool get_position(double *position); 
                 bool get_position(int32_t *position); 
-                double get_absolute_speed(double relative_speed); 
+                void assert_get_position(double *position); 
                 void assert_relative_speed(double relative_speed); 
-        
-                bool valid_position(double value, int axis) {
-                        return value >= _xmin[axis] && value <= _xmax[axis];
-                }
-
-                bool valid_x(double value) {
-                        return valid_position(value, 0);
-                }
-
-                bool valid_y(double value) {
-                        return valid_position(value, 1);
-                }
-
-                bool valid_z(double value) {
-                        return valid_position(value, 2);
-                }
+                void assert_in_range(double x, double y, double z);
+                void compute_steps_and_millis(double x, double y, double z,
+                                              double rel_speed,
+                                              int16_t *results);
+                bool is_zero(int16_t *params);
+                double get_duration(int16_t *params);
+                void move_and_synchronize(int16_t *params);
+                void assert_move(int16_t *params);
+                void assert_synchronize(double timeout);
         };
 }
 

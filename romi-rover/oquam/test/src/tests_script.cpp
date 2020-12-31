@@ -19,8 +19,9 @@ protected:
         double deviation = 0.01;
         double period = 0.100;
         double maxlen = 32.0;
+        CNCRange range;
         
-	script_tests() {
+	script_tests() : range(xmin, xmax) {
 	}
 
 	~script_tests() override = default;
@@ -53,7 +54,7 @@ TEST_F(script_tests, test_moveto)
         script.moveto(1.0, 0.0, 0.0, 1.0);
         script.convert(vmax, amax, deviation, period, maxlen);
 
-        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, range, vmax, amax));
 
         //Assert
         ATDC *first = script.atdc;
@@ -121,7 +122,7 @@ TEST_F(script_tests, test_move_and_back)
         
         //print(script, false);
         
-        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, range, vmax, amax));
 
         //Assert
         ATDC *first = script.atdc;
@@ -234,7 +235,7 @@ TEST_F(script_tests, test_move_forward_twice)
         script.moveto(2.0, 0.0, 0.0, 1.0);
         script.convert(vmax, amax, deviation, period, maxlen);
         
-        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, range, vmax, amax));
 }
 
 TEST_F(script_tests, test_moves_at_90degrees)
@@ -247,7 +248,7 @@ TEST_F(script_tests, test_moves_at_90degrees)
         script.moveto(0.01, 0.01, 0.0, 1.0);
         script.convert(vmax, amax, deviation, period, maxlen);
         
-        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, range, vmax, amax));
 
         // ATDC *first = script.atdc;
         // ATDC *second = first->next;
@@ -274,7 +275,7 @@ TEST_F(script_tests, test_three_small_moves_in_u)
 
         //print(script);
         
-        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, range, vmax, amax));
 
         // ATDC *first = script.atdc;
         // ATDC *second = first->next;
@@ -302,7 +303,7 @@ TEST_F(script_tests, test_reduce_exit_speed)
 
         //print(script, false);
 
-        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, test_amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, range, vmax, test_amax));
 
         // ATDC *first = script.atdc;
         // ATDC *second = first->next;
@@ -327,7 +328,7 @@ TEST_F(script_tests, test_reduce_entry_speed)
 
         // print(script, false);
 
-        ASSERT_EQ(true, is_valid(script, 120.0, xmin, xmax, vmax, test_amax));
+        ASSERT_EQ(true, is_valid(script, 120.0, range, vmax, test_amax));
 
         // ATDC *first = script.atdc;
         // ATDC *second = first->next;

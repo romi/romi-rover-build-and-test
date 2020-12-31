@@ -31,44 +31,40 @@
 
 namespace romi {
         
-        Oquam::Oquam(CNCController *controller,
-                     const double *xmin, const double *xmax,
-                     const double *vmax, const double *amax,
+        Oquam::Oquam(CNCController& controller,
+                     CNCRange& range,
+                     const double *vmax,
+                     const double *amax,
                      const double *scale_meters_to_steps, 
                      double path_max_deviation,
                      double path_slice_interval)
                 : _controller(controller),
                   _file_cabinet(0),
+                  _range(range),
                   _path_max_deviation(path_max_deviation),
                   _path_slice_interval(path_slice_interval)
         {
-                if (_controller == 0)
-                        throw std::runtime_error("Oquam: invalid CNC controller");
-                
-                vcopy(_xmin, xmin);
-                vcopy(_xmax, xmax);
                 vcopy(_vmax, vmax);
                 vcopy(_amax, amax);
                 vcopy(_scale_meters_to_steps, scale_meters_to_steps);
-                _script_count = 0;
                 
-                homing();
+                _script_count = 0;
+
+                if (!homing()) {
+                        r_err("Oquam:: Homing failed!");
+                        throw std::runtime_error("Homing failed");
+                }
         }
                 
         bool Oquam::get_range(CNCRange &range)
         {
-                range._x[0] = _xmin[0];
-                range._x[1] = _xmax[0];
-                range._y[0] = _xmin[1];
-                range._y[1] = _xmax[1];
-                range._z[0] = _xmin[2];
-                range._z[1] = _xmax[2];
+                range = _range;
                 return true;
         }
 
         bool Oquam::get_position(int32_t *position) 
         {
-                return _controller->get_position(position);
+                return _controller.get_position(position);
         }
         
         bool Oquam::get_position(double *position) 
@@ -82,6 +78,14 @@ namespace romi {
                 return success;
         }
 
+        void Oquam::assert_get_position(double *position) 
+        {
+                if (!get_position(position)) {
+                        r_err("Oquam:: get_position failed!");
+                        throw std::runtime_error("get_position failed");
+                }
+        }
+        
         bool Oquam::moveto(double x, double y, double z, double relative_speed)
         {
                 SynchonizedCodeBlock synchronize(_m);
@@ -93,54 +97,95 @@ namespace romi {
                 r_debug("Oquam::moveto_synchronized");
                 bool success = false;
                 
-                if (rel_speed > 0.0 && rel_speed <= 1.0) {
+                try {
+                        do_moveto(x, y, z, rel_speed);
+                        success = true;
                         
-                        double position[3];
-                        get_position(position);
-                
-                        double dx[3] = {0.0, 0.0, 0.0};
-                        if (x != UNCHANGED)
-                                dx[0] = x - position[0];
-                        
-                        if (y != UNCHANGED)
-                                dx[1] = y - position[1];
-                        
-                        if (z != UNCHANGED)
-                                dx[2] = z - position[2];
-                        
-                        if ((dx[0] != 0.0) || (dx[1] != 0.0) || (dx[2] != 0.0)) {
-                                
-                                double v[3];
-                                smul(v, _vmax, rel_speed);
-                
-                                double dt[3];
-                                vabs(dt, dx);
-                                vdiv(dt, dt, v);
-                                
-                                double duration = ::vmax(dt);
-                                double *scale = _scale_meters_to_steps;
-                                
-                                int16_t millis = (int16_t) (1000.0 * duration);
-                                int16_t step_x = (int16_t) (dx[0] * scale[0]);
-                                int16_t step_y = (int16_t) (dx[1] * scale[1]);
-                                int16_t step_z = (int16_t) (dx[2] * scale[2]);
-                                
-                                if (_controller->move(millis, step_x, step_y, step_z)) {
-                                        if (_controller->synchronize(2.0 * duration)) {
-                                                success = true;
-                                        } else {
-                                                r_err("Oquam::moveto_synchronized: synchronize failed");
-                                        }
-                                } else {
-                                        r_err("Oquam::moveto_synchronized: moveto failed");
-                                }
-                        }
-                } else {
-                        r_err("Oquam::moveto_synchronized: invalid speed: %f", rel_speed);
+                } catch (std::runtime_error& e) {
+                        r_err("Oquam::moveto failed: %s", e.what());
                 }
                 return success;
         }
         
+        void Oquam::do_moveto(double x, double y, double z, double rel_speed)
+        {
+                r_debug("Oquam::do_moveto");
+                int16_t params[4];
+                
+                assert_relative_speed(rel_speed);
+                assert_in_range(x, y, z);
+                
+                compute_steps_and_millis(x, y, z, rel_speed, params);
+                if (!is_zero(params)) {
+                        move_and_synchronize(params);
+                } 
+        }
+
+        void Oquam::move_and_synchronize(int16_t *params)
+        {
+                assert_move(params);
+                assert_synchronize(2.0 * get_duration(params));
+        }
+
+        void Oquam::assert_move(int16_t *params)
+        {
+                if (!_controller.move(params[0], params[1], params[2], params[3])) {
+                        r_err("Oquam: move failed");
+                        throw std::runtime_error("Oquam: move failed");
+                }
+        }
+
+        void Oquam::assert_synchronize(double timeout)
+        {
+                if (!_controller.synchronize(timeout)) {
+                        r_err("Oquam: synchronize failed");
+                        throw std::runtime_error("Oquam: synchronize failed");
+                }
+        }
+
+        bool Oquam::is_zero(int16_t *params)
+        {
+                return (params[1] == 0) && (params[2] == 0) && (params[3] == 0.0);
+        }
+
+        double Oquam::get_duration(int16_t *params)
+        {
+                return params[0] / 1000.0;
+        }
+
+        void Oquam::compute_steps_and_millis(double x, double y, double z,
+                                             double rel_speed,
+                                             int16_t *results)
+        {
+                double position[3];
+                assert_get_position(position);
+                
+                double dx[3] = {0.0, 0.0, 0.0};
+                if (x != UNCHANGED)
+                        dx[0] = x - position[0];
+                        
+                if (y != UNCHANGED)
+                        dx[1] = y - position[1];
+                        
+                if (z != UNCHANGED)
+                        dx[2] = z - position[2];
+                        
+                double v[3];
+                smul(v, _vmax, rel_speed);
+                
+                double dt[3];
+                vabs(dt, dx);
+                vdiv(dt, dt, v);
+                                
+                double duration = ::vmax(dt);
+                double *scale = _scale_meters_to_steps;
+                                
+                results[0] = (int16_t) (1000.0 * duration);
+                results[1] = (int16_t) (dx[0] * scale[0]);
+                results[2] = (int16_t) (dx[1] * scale[1]);
+                results[3] = (int16_t) (dx[2] * scale[2]);
+        }
+                
         bool Oquam::spindle(double speed)
         {
                 // TODO
@@ -151,7 +196,7 @@ namespace romi {
         bool Oquam::homing()
         {
                 SynchonizedCodeBlock synchronize(_m);
-                return _controller->homing();
+                return _controller.homing();
         }
                 
         bool Oquam::travel(Path &path, double relative_speed)
@@ -175,18 +220,19 @@ namespace romi {
                 return success;
         }
 
-        double Oquam::get_absolute_speed(double relative_speed) 
-        {
-                double v[3];
-                smul(v, _vmax, relative_speed);
-                double speed_ms = ::vmax(v);
-                return speed_ms;
-        }
-
         void Oquam::assert_relative_speed(double relative_speed) 
         {
                 if (relative_speed <= 0.0 || relative_speed > 1.0)
                         throw std::runtime_error("Oquam: invalid speed");
+        }
+        
+        void Oquam::assert_in_range(double x, double y, double z) 
+        {
+                if (!_range.is_valid(x, y, z)) {
+                        r_warn("Oquam: Point[%d]: out of bounds: "
+                               "(%0.4f, %0.4f, %0.4f)", x, y, z);
+                        throw std::runtime_error("Point out of bounds");
+                }
         }
         
         void Oquam::do_travel(Path &path, double relative_speed) 
@@ -196,7 +242,7 @@ namespace romi {
                 assert_relative_speed(relative_speed); 
                 
                 double start_position[3];
-                get_position(start_position);
+                assert_get_position(start_position);
                         
                 Script script(start_position);
                 
@@ -220,14 +266,8 @@ namespace romi {
                         double y = path[i].y;
                         double z = path[i].z;
 
-                        if (valid_x(x) && valid_y(y) && valid_z(z)) {
-                                script.moveto(x, y, z, speed);
-                                
-                        } else {
-                                r_warn("Oquam: Point[%d]: out of bounds: "
-                                       "(%0.4f, %0.4f, %0.4f)", x, y, z);
-                                throw std::runtime_error("Point out of bounds");
-                        }
+                        assert_in_range(x, y, z); 
+                        script.moveto(x, y, z, speed);
                 }
         }
 
@@ -246,8 +286,7 @@ namespace romi {
                         rprintf(name, 64, "oquam-%04d", _script_count++);
                         
                         IFolder &folder = _file_cabinet->start_new_folder();
-                        membuf_t *svg = plot_to_mem(&script, _xmin, _xmax, _vmax,
-                                                    _amax, _scale_meters_to_steps);
+                        membuf_t *svg = plot_to_mem(&script, _range, _vmax, _amax);
                         if (svg != 0) {
                                 folder.store_svg("path", membuf_data(svg),
                                                  membuf_len(svg));
@@ -265,7 +304,7 @@ namespace romi {
 
         void Oquam::check_script(Script& script, double *vmax) 
         {
-                if (!is_valid(script, 32.0, _xmin, _xmax, vmax, _amax)) {
+                if (!is_valid(script, 32.0, _range, vmax, _amax)) {
                         r_err("Oquam::convert_script: generated script is invalid");
                         throw std::runtime_error("is_valid(script) failed");
                 }
@@ -301,16 +340,15 @@ namespace romi {
                 p1[0] = (int32_t) (section.p1[0] * _scale_meters_to_steps[0]);
                 p1[1] = (int32_t) (section.p1[1] * _scale_meters_to_steps[1]);
                 p1[2] = (int32_t) (section.p1[2] * _scale_meters_to_steps[2]);
+
+                int16_t params[4];
+                params[0] = (int16_t) (1000.0 * section.duration);
+                params[1] = (int16_t) (p1[0] - pos_steps[0]);
+                params[2] = (int16_t) (p1[1] - pos_steps[1]);
+                params[3] = (int16_t) (p1[2] - pos_steps[2]);
                 
-                int16_t dt = (int16_t) (1000.0 * section.duration);
-                int16_t dx = (int16_t) (p1[0] - pos_steps[0]);
-                int16_t dy = (int16_t) (p1[1] - pos_steps[1]);
-                int16_t dz = (int16_t) (p1[2] - pos_steps[2]);
-                
-                if ((dt > 0) && (dx != 0 || dy != 0 || dz != 0)) {
-                        bool success = _controller->move(dt, dx, dy, dz);
-                        if (!success)
-                                throw std::runtime_error("Oquam: move failed");
+                if (!is_zero(params)) {
+                        assert_move(params);
                         
                         // Update the current position
                         pos_steps[0] = p1[0];
@@ -323,13 +361,7 @@ namespace romi {
         {
                 double duration = script_duration(script);
                 double timeout = 60.0 + 1.5 * duration;
-                synchronize(timeout);
-        }
-        
-        void Oquam::synchronize(double timeout) 
-        {
-                if (!_controller->synchronize(timeout)) 
-                        throw std::runtime_error("Oquam: synchronize failed");
+                assert_synchronize(timeout);
         }
 
         double Oquam::script_duration(Script& script)
@@ -340,16 +372,16 @@ namespace romi {
 
         bool Oquam::stop_execution()
         {
-                return _controller->stop_execution();
+                return _controller.stop_execution();
         }
         
         bool Oquam::continue_execution()
         {
-                return _controller->continue_execution();
+                return _controller.continue_execution();
         }
         
         bool Oquam::reset()
         {
-                return _controller->reset();
+                return _controller.reset();
         }
 }

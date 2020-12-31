@@ -25,8 +25,9 @@ protected:
         const double amax[3] =  {0.2, 0.2, 0.2};
         const double scale[3] = {40000, 40000, 100000};
         const double slice_interval = 0.020;
+        CNCRange range;
         
-	oquamstepper_tests() {}
+	oquamstepper_tests() : range(xmin, xmax) {}
 
 	~oquamstepper_tests() override = default;
 
@@ -37,7 +38,7 @@ protected:
 
 TEST_F(oquamstepper_tests, test_homing_romiserial)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         romi_serial.set_debug(debug_romi_serial);
 
@@ -62,7 +63,7 @@ TEST_F(oquamstepper_tests, test_homing_romiserial)
 
 TEST_F(oquamstepper_tests, test_homing_stepper)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         romi_serial.set_debug(debug_romi_serial);
@@ -72,7 +73,7 @@ TEST_F(oquamstepper_tests, test_homing_stepper)
 
 TEST_F(oquamstepper_tests, test_move)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         romi_serial.set_debug(debug_romi_serial);
@@ -82,7 +83,7 @@ TEST_F(oquamstepper_tests, test_move)
 
 TEST_F(oquamstepper_tests, test_get_position)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         romi_serial.set_debug(debug_romi_serial);
@@ -116,28 +117,25 @@ TEST_F(oquamstepper_tests, test_get_position)
 
 TEST_F(oquamstepper_tests, test_oquam_homing)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.01, slice_interval);
-
-        oquam.homing();
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval);
 }
 
 TEST_F(oquamstepper_tests, test_oquam_moveto)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
 
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.01, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval);
 
-        oquam.homing();
         oquam.moveto(0.1, 0.0, 0.0, 0.3);
         oquam.moveto(0.1, 0.1, 0.0, 0.3);
         oquam.moveto(0.0, 0.1, 0.0, 0.3);
@@ -146,14 +144,14 @@ TEST_F(oquamstepper_tests, test_oquam_moveto)
 
 TEST_F(oquamstepper_tests, test_oquam_travel_square)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_square");
 
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.03, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -166,20 +164,20 @@ TEST_F(oquamstepper_tests, test_oquam_travel_square)
         path.push_back(p2);
         path.push_back(p3);
 
-        oquam.homing();
-        oquam.travel(path, 0.3);
+        bool success = oquam.travel(path, 0.3);
+        ASSERT_EQ(success, true);
 }
 
 TEST_F(oquamstepper_tests, test_oquam_travel_square_fast)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_square_fast");
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.03, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -192,24 +190,24 @@ TEST_F(oquamstepper_tests, test_oquam_travel_square_fast)
         path.push_back(p2);
         path.push_back(p3);
 
-        oquam.homing();
-        oquam.travel(path, 1.0);
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
 }
 
 TEST_F(oquamstepper_tests, test_oquam_travel_snake)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_snake");
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 1; i++) {
                 Waypoint p0(i * 0.01, (i-1) * 0.01);
                 path.push_back(p0);
                 Waypoint p1(i * 0.01, i * 0.01);
@@ -219,20 +217,20 @@ TEST_F(oquamstepper_tests, test_oquam_travel_snake)
         Waypoint p(0.0, 0.0);
         path.push_back(p);
 
-        oquam.homing();
-        oquam.travel(path, 1.0);
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
 }
 
 TEST_F(oquamstepper_tests, test_oquam_travel_round_trip)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_round_trip");
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -240,20 +238,20 @@ TEST_F(oquamstepper_tests, test_oquam_travel_round_trip)
         path.push_back(Waypoint(0.1, 0.0));
         path.push_back(Waypoint(0.0, 0.0));
         
-        oquam.homing();
-        oquam.travel(path, 1.0);
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
 }
 
 TEST_F(oquamstepper_tests, test_oquam_travel_collinear)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_collinear");
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -262,20 +260,20 @@ TEST_F(oquamstepper_tests, test_oquam_travel_collinear)
         path.push_back(Waypoint(0.2, 0.0));
         path.push_back(Waypoint(0.0, 0.0));
         
-        oquam.homing();
-        oquam.travel(path, 1.0);
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
 }
 
 TEST_F(oquamstepper_tests, test_oquam_travel_large_displacement)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_displacement");
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -285,13 +283,13 @@ TEST_F(oquamstepper_tests, test_oquam_travel_large_displacement)
         path.push_back(Waypoint(0.2, 0.07));
         path.push_back(Waypoint(0.0, 0.0));
         
-        oquam.homing();
-        oquam.travel(path, 1.0);
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
 }
 
 TEST_F(oquamstepper_tests, test_oquam_travel_small_displacement)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_small_displacement");
@@ -299,7 +297,7 @@ TEST_F(oquamstepper_tests, test_oquam_travel_small_displacement)
         romi_serial.set_debug(debug_romi_serial);
         romi_serial.set_debug(false);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -309,24 +307,20 @@ TEST_F(oquamstepper_tests, test_oquam_travel_small_displacement)
         path.push_back(Waypoint(0.2, 0.04));
         path.push_back(Waypoint(0.0, 0.0));
         
-        oquam.homing();
-        oquam.travel(path, 1.0);
-
-        int32_t position[3];
-        stepper.get_position(position);
-        printf("Position: %d %d", position[0], position[1]);
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
 }
 
 TEST_F(oquamstepper_tests, test_oquam_travel_tiny_displacement)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_tiny_displacement");
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -336,20 +330,20 @@ TEST_F(oquamstepper_tests, test_oquam_travel_tiny_displacement)
         path.push_back(Waypoint(0.2, 0.005));
         path.push_back(Waypoint(0.0, 0.0));
         
-        oquam.homing();
-        oquam.travel(path, 1.0);
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
 }
 
 TEST_F(oquamstepper_tests, test_oquam_travel_zigzag)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_zigzag");
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
         Path path;
@@ -371,8 +365,8 @@ TEST_F(oquamstepper_tests, test_oquam_travel_zigzag)
         
         path.push_back(Waypoint(0.0, 0.0));
 
-        oquam.homing();
-        oquam.travel(path, 1.0);
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
 }
 
 
@@ -388,17 +382,16 @@ void stop_and_continue(Oquam *oquam)
 
 TEST_F(oquamstepper_tests, test_oquam_stop_and_continue)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_snake");
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
 
-        oquam.homing();
         
         std::thread th(stop_and_continue, &oquam);
 
@@ -417,17 +410,15 @@ void stop_and_reset(Oquam *oquam)
 
 TEST_F(oquamstepper_tests, test_oquam_stop_and_reset)
 {
-        RSerial serial("/dev/ttyACM1", 115200, 1);        
+        RSerial serial("/dev/ttyACM0", 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_snake");
         
         romi_serial.set_debug(debug_romi_serial);
         
-        Oquam oquam(&stepper, xmin, xmax, vmax, amax, scale, 0.005, slice_interval);
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
         oquam.set_file_cabinet(&debug);
-
-        oquam.homing();
         
         std::thread th(stop_and_reset, &oquam);
 

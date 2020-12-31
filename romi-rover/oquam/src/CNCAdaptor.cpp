@@ -53,6 +53,15 @@ namespace romi {
                         } else if (rstreq(method, "get-range")) {
                                 handle_get_range(params, result, error);
                                 
+                        } else if (rstreq(method, "stop")) {
+                                handle_stop(params, result, error);
+                                
+                        } else if (rstreq(method, "continue")) {
+                                handle_continue(params, result, error);
+                                
+                        } else if (rstreq(method, "reset")) {
+                                handle_reset(params, result, error);
+                                
                         } else {
                                 error.code = rcom::RPCError::MethodNotFound;
                                 error.message = "Unknown method";
@@ -92,19 +101,24 @@ namespace romi {
                         r_debug("CNCAdaptor::handle_moveto: %s", buffer);
                 }
 
-                try {
+                if (!params.has("x") && !params.has("y") && !params.has("z")) {
+                        r_err("CNCAdaptor::handle_moveto failed: missing parameters");
+                        error.code = rcom::RPCError::InvalidParams;
+                        error.message = "missing x, y, or z parameters";
+                        
+                } else {
+                        
                         double x = params.num("x", CNC::UNCHANGED);
                         double y = params.num("y", CNC::UNCHANGED);
                         double z = params.num("z", CNC::UNCHANGED);
                         double v = params.num("speed", 0.2);
                         
                         r_debug("CNCAdaptor::handle_moveto: %f, %f, %f", x, y, z);
-                        _cnc.moveto(x, y, z, v);
-
-                } catch (JSONError &je) {
-                        r_err("CNCAdaptor::handle_moveto failed: %s", je.what());
-                        error.code = 1;
-                        error.message = je.what();
+                                
+                        if (!_cnc.moveto(x, y, z, v)) {
+                                error.code = 1;
+                                error.message = "moveto failed";
+                        }
                 }
         }
         
@@ -122,7 +136,7 @@ namespace romi {
 
                 } catch (JSONError &je) {
                         r_err("CNCAdaptor::handle_spindle failed: %s", je.what());
-                        error.code = 1;
+                        error.code = rcom::RPCError::InvalidParams;
                         error.message = je.what();
                 }
         }
@@ -144,7 +158,7 @@ namespace romi {
                                 w.z = c.num(2);
                                 path.push_back(w);
                         }
-                        
+
                         if (!_cnc.travel(path, speed)) {
                                 error.code = 1;
                                 error.message = "travel failed";
@@ -152,7 +166,7 @@ namespace romi {
 
                 } catch (JSONError &je) {
                         r_err("CNCAdaptor::handle_spindle failed: %s", je.what());
-                        error.code = 1;
+                        error.code = rcom::RPCError::InvalidParams;
                         error.message = je.what();
                 }
         }

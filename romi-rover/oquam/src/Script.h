@@ -119,10 +119,6 @@ namespace romi {
                              double deviation,
                              double period,
                              double maxlen);
-                
-                bool check_validity(double tmax,
-                                    double *xmin, double *xmax, 
-                                    double *vmax, double *amax);
 
                 size_t count_moves() {
                         return _moves.size();

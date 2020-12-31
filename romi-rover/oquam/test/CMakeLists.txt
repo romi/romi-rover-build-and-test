@@ -22,7 +22,7 @@ set(SRCS_SECTION
   ../src/print.cpp
   )
 add_executable(romi_rover_unit_tests_oquam_section ${SRCS_SECTION})
-target_link_libraries(romi_rover_unit_tests_oquam_section rpp gtest gmock)
+target_link_libraries(romi_rover_unit_tests_oquam_section rpp romirover gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_oquam_section
@@ -48,13 +48,12 @@ set(SRCS_PRINT
   ../src/is_valid.h
   )
 add_executable(romi_rover_unit_tests_oquam_print ${SRCS_PRINT})
-target_link_libraries(romi_rover_unit_tests_oquam_print rpp gtest gmock)
+target_link_libraries(romi_rover_unit_tests_oquam_print rpp romirover gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_oquam_print
     COMMAND romi_rover_unit_tests_oquam_print
 )
-
 
 
 set(SRCS_SCRIPT
@@ -74,11 +73,61 @@ set(SRCS_SCRIPT
   ../src/is_valid.h
   )
 add_executable(romi_rover_unit_tests_oquam_script ${SRCS_SCRIPT})
-target_link_libraries(romi_rover_unit_tests_oquam_script rpp gtest gmock)
+target_link_libraries(romi_rover_unit_tests_oquam_script rpp romirover gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_oquam_script
     COMMAND romi_rover_unit_tests_oquam_script
+)
+
+
+
+set(SRCS_ADAPTOR
+  src/tests_main.cpp
+  src/tests_cncadaptor.cpp
+  ../src/CNCAdaptor.h
+  ../src/CNCAdaptor.cpp
+  )
+add_executable(romi_rover_unit_tests_oquam_cncadaptor ${SRCS_ADAPTOR})
+target_link_libraries(romi_rover_unit_tests_oquam_cncadaptor rpp romirover rcompp gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_oquam_cncadaptor
+    COMMAND romi_rover_unit_tests_oquam_cncadaptor
+)
+
+
+
+set(SRCS_OQUAM
+  src/tests_main.cpp
+  src/tests_oquam.cpp
+  mock/mock_controller.h
+  ../src/CNCController.h
+  ../src/Oquam.h
+  ../src/Oquam.cpp
+  ../src/v.h
+  ../src/v.c
+  ../src/plotter.cpp
+  ../src/plotter.h
+  ../src/print.h
+  ../src/print.cpp
+  ../src/is_valid.cpp
+  ../src/is_valid.h
+  ../src/Section.h
+  ../src/Section.cpp
+  ../src/ATDC.h
+  ../src/ATDC.cpp
+  ../src/Script.h
+  ../src/Script.cpp
+  ../src/Oquam.cpp
+  )
+
+add_executable(romi_rover_unit_tests_oquam_oquam ${SRCS_OQUAM})
+target_link_libraries(romi_rover_unit_tests_oquam_oquam rpp romirover romi gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_oquam_oquam
+    COMMAND romi_rover_unit_tests_oquam_oquam
 )
 
 
@@ -105,7 +154,6 @@ set(SRCS_OQUAMSTEPPER
   ../src/ATDC.cpp
   ../src/Script.h
   ../src/Script.cpp
-  ../src/Oquam.cpp
   ../../arduino_libraries/RomiSerial/IInputStream.h
   ../../arduino_libraries/RomiSerial/IOutputStream.h
   ../../arduino_libraries/RomiSerial/RSerial.h
@@ -126,9 +174,11 @@ if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
             NAME romi_rover_oquam_coverage
             EXECUTABLE ctest -V ${n_cores}
-            EXCLUDE "src/main.cpp" 
+            EXCLUDE "src/main.cpp" "src/FakeCNCController.h"
             DEPENDENCIES romi_rover_unit_tests_oquam_section
                          romi_rover_unit_tests_oquam_script
-                         romi_rover_unit_tests_oquam_print)
+                         romi_rover_unit_tests_oquam_cncadaptor
+                         romi_rover_unit_tests_oquam_print
+                         romi_rover_unit_tests_oquam_oquam)
 endif()
 
