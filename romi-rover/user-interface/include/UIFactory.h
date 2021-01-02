@@ -40,8 +40,6 @@
 #ifndef __ROMI_UI_FACTORY_H
 #define __ROMI_UI_FACTORY_H
 
-
-
 namespace romi {
 
         class UIFactory

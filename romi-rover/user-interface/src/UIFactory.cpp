@@ -76,7 +76,7 @@ namespace romi {
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
-                               "user-interface.display: %s", je.what());
+                               "user-interface.display-classname: %s", je.what());
                         throw std::runtime_error("No display classname defined");
                 }
                 return display_classname;
@@ -132,7 +132,7 @@ namespace romi {
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
-                               "crystal-display.port: %s", je.what());
+                               "ports.crystal-display.port: %s", je.what());
                         throw std::runtime_error("No crystal display device defined");
                 }
                 return device_name;
