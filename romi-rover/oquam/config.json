@@ -1,17 +1,22 @@
 {    
     "oquam": {
         
-        "cnc-range": [[0, 0.560], [0, 0.600], [-0.160, 0]],
+        "cnc-range-xxx": [[0, 0.560], [0, 0.600], [-0.160, 0]],
+        "cnc-range": [[0, 1.0], [0, 1.0], [-0.160, 0]],
+        
+        "path-slice-duration": 0.020,
+        
+        "path-maximum-deviation": 0.01,
 
         "controller-classname": "stepper-controller",
 
-        "stepper-controller": {
-            "steps": { 200.0, 200.0, 200.0 },
-            "gears": { 1.0, 1.0, 1.0 },
-            "rpm": { 300.0, 300.0, 300.0 },
-            "displacement": { 0.04, 0.04, -0.002 },
-            "microsteps": { 8.0, 8.0, 1.0 },
-            "amax": { 0.3, 0.3, 0.03 }
+        "stepper-settings": {
+            "steps-per-revolution": [ 200.0, 200.0, 200.0 ],
+            "microsteps": [ 8.0, 8.0, 1.0 ],
+            "gears-ratio": [ 1.0, 1.0, 1.0 ],
+            "maximum-rpm": [ 300.0, 300.0, 300.0 ],
+            "displacement-per-revolution": [ 0.04, 0.04, -0.002 ],
+            "maximum-acceleration": [ 0.3, 0.3, 0.03 ]
         }
     },
 

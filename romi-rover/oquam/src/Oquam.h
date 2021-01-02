@@ -51,7 +51,8 @@ namespace romi {
                 // continuous path, in m.
                 double _path_max_deviation;
                 double _scale_meters_to_steps[3];
-                double _path_slice_interval;
+                double _path_slice_duration;
+                double _path_max_slice_duration;
                 int _script_count;
                 
         public:
@@ -60,7 +61,7 @@ namespace romi {
                       const double *vmax, const double *amax,
                       const double *scale_meters_to_steps, 
                       double path_max_deviation,
-                      double path_slice_interval);
+                      double path_slice_duration);
                 
                 virtual ~Oquam() = default;
 
@@ -84,30 +85,36 @@ namespace romi {
         protected:
                 
                 bool moveto_synchronized(double x, double y, double z, double rel_speed);
-                void do_moveto(double x, double y, double z, double rel_speed);
+                bool do_moveto(double x, double y, double z, double rel_speed);
+                void moveto_determine_xyz(double x, double y, double z, double *p);
                 bool travel_synchronized(Path &path, double relative_speed);
                 void do_travel(Path &path, double relative_speed);
                 void convert_path_to_script(Path &path, double speed, Script& script); 
                 void convert_script(Script& script, double *vmax);
                 void store_script(Script& script);
+                void store_script_svg(IFolder &folder, Script& script);
+                void store_script_json(IFolder &folder, Script& script);
                 void check_script(Script& script, double *vmax);
                 void execute_script(Script& script);
                 void execute_move(Section& section, int32_t *pos_steps);
                 void wait_end_of_script(Script& script); 
-                double script_duration(Script& script);
                 bool get_position(double *position); 
                 bool get_position(int32_t *position); 
                 void assert_get_position(double *position); 
                 void assert_relative_speed(double relative_speed); 
                 void assert_in_range(double x, double y, double z);
-                void compute_steps_and_millis(double x, double y, double z,
-                                              double rel_speed,
-                                              int16_t *results);
+                // void compute_moveto_parameters(double x, double y, double z,
+                //                                double rel_speed,
+                //                                int16_t *params);
+                // void get_moveto_displacement(double x, double y, double z, double *dx);
+                // double compute_duration(double *dx, double rel_speed);
+
                 bool is_zero(int16_t *params);
-                double get_duration(int16_t *params);
-                void move_and_synchronize(int16_t *params);
+                // double get_duration(int16_t *params);
+                // void assert_move_sync(int16_t *params);
                 void assert_move(int16_t *params);
                 void assert_synchronize(double timeout);
+                void convert_position_to_steps(double *position, int32_t *steps);
         };
 }
 

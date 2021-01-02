@@ -31,16 +31,16 @@ namespace romi {
         struct OquamOptions {
         
                 const char *config_file;
-                const char *serial_device;
                 const char *server_name;
-                const char *cnc_controller;
+                const char *controller_classname;
+                const char *controller_device;
                 const char *output_directory;
 
                 OquamOptions() {
                         config_file = "config.json";
-                        serial_device = "/dev/ttyACM0";
                         server_name = "oquam";
-                        cnc_controller = "oquam";
+                        controller_classname = 0;
+                        controller_device = 0;
                         output_directory = ".";
                 }
 

@@ -30,7 +30,7 @@
 
 namespace romi {
 
-        membuf_t *plot_to_mem(Script *script,
+        membuf_t *plot_to_mem(Script& script,
                               CNCRange& range,
                               double *vmax,
                               double *amax);

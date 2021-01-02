@@ -21,6 +21,7 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#include <r.h>
 #include "OquamOptions.h"
 
 namespace romi {
@@ -28,12 +29,12 @@ namespace romi {
         void OquamOptions::parse(int argc, char** argv)
         {
                 int option_index;
-                static const char *optchars = "C:N:T:D:";
+                static const char *optchars = "C:D:N:c:d:";
                 static struct option long_options[] = {
                         {"config", required_argument, 0, 'C'},
-                        {"device", required_argument, 0, 'D'},
-                        {"navigation-server-name", required_argument, 0, 'N'},
-                        {"cnc-controller", required_argument, 0, 'c'},
+                        {"controller-device", required_argument, 0, 'D'},
+                        {"server-name", required_argument, 0, 'N'},
+                        {"controller-classname", required_argument, 0, 'c'},
                         {"output-directory", required_argument, 0, 'd'},
                         {0, 0, 0, 0}
                 };
@@ -46,14 +47,14 @@ namespace romi {
                         case 'C':
                                 config_file = optarg;
                                 break;
+                        case 'D':
+                                controller_device = optarg;
+                                break;
                         case 'N':
                                 server_name = optarg;
                                 break;
-                        case 'D':
-                                serial_device = optarg;
-                                break;
                         case 'c':
-                                cnc_controller = optarg;
+                                controller_classname = optarg;
                                 break;
                         case 'd':
                                 output_directory = optarg;

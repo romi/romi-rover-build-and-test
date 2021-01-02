@@ -161,45 +161,42 @@ namespace romi {
 #define _X(_r, _v) (((_r)->x1 - (_r)->x0 != 0.0)? (_r)->w * ((_v) - (_r)->x0) / ((_r)->x1 - (_r)->x0) : (_r)->x0)
 #define _Y(_r, _v) (((_r)->y1 - (_r)->y0 != 0.0)? (_r)->h * ((_v) - (_r)->y0) / ((_r)->y1 - (_r)->y0) : (_r)->y0)
 
-        static void print_atdc_ij(plot_t *plot, ATDC *path,
-                                  int i, int j, rect_t *r)
+        
+        static void print_atdc_ij(plot_t *plot, Script& script, int i, int j, rect_t *r)
         {
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
                               r->x, r->y);
         
-                for (ATDC *t0 = path; t0; t0 = t0->next) {
+                for (size_t k = 0; k < script.count_atdc(); k++) {
+                        ATDC& t = script.get_atdc(k);
                         print_line(plot,
-                                   _X(r, t0->accelerate.p0[i]), _Y(r, t0->accelerate.p0[j]),
-                                   _X(r, t0->accelerate.p1[i]), _Y(r, t0->accelerate.p1[j]),
+                                   _X(r, t.accelerate.p0[i]), _Y(r, t.accelerate.p0[j]),
+                                   _X(r, t.accelerate.p1[i]), _Y(r, t.accelerate.p1[j]),
                                    "#00ff00");
                         
                         print_line(plot,
-                                   _X(r, t0->travel.p0[i]), _Y(r, t0->travel.p0[j]),
-                                   _X(r, t0->travel.p1[i]), _Y(r, t0->travel.p1[j]),
+                                   _X(r, t.travel.p0[i]), _Y(r, t.travel.p0[j]),
+                                   _X(r, t.travel.p1[i]), _Y(r, t.travel.p1[j]),
                                    "#ffff00");
                         
                         print_line(plot,
-                                   _X(r, t0->decelerate.p0[i]), _Y(r, t0->decelerate.p0[j]),
-                                   _X(r, t0->decelerate.p1[i]), _Y(r, t0->decelerate.p1[j]),
+                                   _X(r, t.decelerate.p0[i]), _Y(r, t.decelerate.p0[j]),
+                                   _X(r, t.decelerate.p1[i]), _Y(r, t.decelerate.p1[j]),
                                    "#ff0000");
                 
                         membuf_printf(plot->buffer, "        <path d=\"");
-                        print_moveto(plot, _X(r, t0->curve.p0[i]), _Y(r, t0->curve.p0[j]));
+                        print_moveto(plot, _X(r, t.curve.p0[i]), _Y(r, t.curve.p0[j]));
 
-                        int ms = (int) (1000.0 * t0->curve.duration);
+                        int ms = (int) (1000.0 * t.curve.duration);
                         int n = ms / 10;
                         for (int k = 1; k < n; k++) {
                                 double x[3];
-                                double tmp[3];
-                                double t = 10.0 * k * 0.001;
-                                smul(x, t0->curve.v0, t);
-                                smul(tmp, t0->curve.a, 0.5 * t * t);
-                                vadd(x, x, tmp);
-                                vadd(x, x, t0->curve.p0); 
+                                double dt = k * 0.010;
+                                t.curve.get_position_at(dt, x);
                                 print_lineto(plot, _X(r, x[i]), _Y(r, x[j]));
                         }
                 
-                        print_lineto(plot, _X(r, t0->curve.p1[i]), _Y(r, t0->curve.p1[j]));
+                        print_lineto(plot, _X(r, t.curve.p1[i]), _Y(r, t.curve.p1[j]));
                         membuf_printf(plot->buffer, "\" id=\"path\" style=\"fill:none;stroke:#0000ce;"
                                       "stroke-width:0.001;stroke-linecap:butt;"
                                       "stroke-linejoin:miter;stroke-miterlimit:4;"
@@ -209,244 +206,232 @@ namespace romi {
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_atdc(plot_t *plot, ATDC *atdc)
+        static void print_atdc(plot_t *plot, Script& script)
         {
                 membuf_printf(plot->buffer,
                               "    <g inkscape:groupmode=\"layer\" "
                               "inkscape:label=\"atdc\" "
                               "id=\"atdc\">\n");
         
-                print_atdc_ij(plot, atdc, 0, 1, &plot->xy);
-                print_atdc_ij(plot, atdc, 0, 2, &plot->xz);
-                print_atdc_ij(plot, atdc, 1, 2, &plot->yz);
+                print_atdc_ij(plot, script, 0, 1, &plot->xy);
+                print_atdc_ij(plot, script, 0, 2, &plot->xz);
+                print_atdc_ij(plot, script, 1, 2, &plot->yz);
         
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_path_ij(plot_t *plot, Segment *path,
-                                  int i, int j, rect_t *r)
+        static void print_segment_ij(plot_t *plot, Script& script, int i, int j, rect_t *r)
         {
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
                               r->x, r->y);
                 membuf_printf(plot->buffer, "        <path d=\"");
         
-                for (Segment *s0 = path; s0; s0 = s0->next) {
-                        if (s0->prev == NULL)
-                                print_moveto(plot, _X(r, s0->p0[i]), _Y(r, s0->p0[j]));
+                for (size_t k = 0; k < script.count_segments(); k++) {
+                        Segment& segment = script.get_segment(k);
+                        if (k == 0)
+                                print_moveto(plot,
+                                             _X(r, segment.p0[i]),
+                                             _Y(r, segment.p0[j]));
                         else 
-                                print_lineto(plot, _X(r, s0->p0[i]), _Y(r, s0->p0[j]));
-                        print_lineto(plot, _X(r, s0->p1[i]), _Y(r, s0->p1[j]));
+                                print_lineto(plot,
+                                             _X(r, segment.p0[i]),
+                                             _Y(r, segment.p0[j]));
+                        print_lineto(plot,
+                                     _X(r, segment.p1[i]),
+                                     _Y(r, segment.p1[j]));
                 }
         
-                membuf_printf(plot->buffer, "\" id=\"path\" style=\"fill:none;stroke:#000000;"
+                membuf_printf(plot->buffer,
+                              "\" id=\"path\" style=\"fill:none;stroke:#000000;"
                               "stroke-width:0.001;stroke-linecap:butt;"
                               "stroke-linejoin:miter;stroke-miterlimit:4;"
                               "stroke-opacity:1;stroke-dasharray:none\" />\n");
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_path(plot_t *plot, Segment *path)
+        static void print_segments(plot_t *plot, Script& script)
         {
                 membuf_printf(plot->buffer,
                               "    <g inkscape:groupmode=\"layer\" "
                               "inkscape:label=\"paths\" "
                               "id=\"paths\">\n");
         
-                print_path_ij(plot, path, 0, 1, &plot->xy);
-                print_path_ij(plot, path, 0, 2, &plot->xz);        
-                print_path_ij(plot, path, 1, 2, &plot->yz);
+                print_segment_ij(plot, script, 0, 1, &plot->xy);
+                print_segment_ij(plot, script, 0, 2, &plot->xz);        
+                print_segment_ij(plot, script, 1, 2, &plot->yz);
 
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static double atdc_duration(ATDC *atdc)
-        {
-                double t = 0.0;
-                for (ATDC *t0 = atdc; t0; t0 = t0->next) {
-                        t += (t0->accelerate.duration
-                              + t0->travel.duration
-                              + t0->decelerate.duration
-                              + t0->curve.duration);
-                }
-                return t;
-        }
-
-        static void print_path_speed_i(plot_t *plot,
-                                       Segment *path,
-                                       ATDC *atdc,
-                                       int i,
-                                       double duration,
-                                       double *vm)
+        static void print_speed_i(plot_t *plot,
+                                  Script& script,
+                                  int i,
+                                  double duration,
+                                  double *vm)
         {
                 double xscale = plot->v[i].w / duration;
                 double yscale = plot->v[i].h / vmax(vm);
-                Segment *s0 = path;
-                ATDC *a0 = atdc;
                 double t = 0.0;
 
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
                               plot->v[i].x, plot->v[i].y);
 
-                // curve
-                while (s0) {
+                for (size_t k = 0; k < script.count_segments(); k++) {
+                        Segment& segment = script.get_segment(k);
+                        ATDC& atdc = script.get_atdc(k);
+
                         double t0 = t;
-                        double t1 = t + a0->accelerate.duration;
+                        double t1 = t + atdc.accelerate.duration;
                         print_line(plot,
                                    xscale * t0,
-                                   yscale * a0->accelerate.v0[i],
+                                   yscale * atdc.accelerate.v0[i],
                                    xscale * t1,
-                                   yscale * a0->accelerate.v1[i],
+                                   yscale * atdc.accelerate.v1[i],
                                    "#00ff00");
                 
                         t0 = t1;
-                        t1 += a0->travel.duration;
+                        t1 += atdc.travel.duration;
                         print_line(plot,
                                    xscale * t0,
-                                   yscale * a0->travel.v0[i],
+                                   yscale * atdc.travel.v0[i],
                                    xscale * t1,
-                                   yscale * a0->travel.v1[i],
+                                   yscale * atdc.travel.v1[i],
                                    "#ffff00");
                         
                         t0 = t1;
-                        t1 += a0->decelerate.duration;
+                        t1 += atdc.decelerate.duration;
                         print_line(plot,
                                    xscale * t0,
-                                   yscale * a0->decelerate.v0[i],
+                                   yscale * atdc.decelerate.v0[i],
                                    xscale * t1,
-                                   yscale * a0->decelerate.v1[i],
+                                   yscale * atdc.decelerate.v1[i],
                                    "#ff0000");
 
                         t0 = t1;
-                        t1 += a0->curve.duration;
+                        t1 += atdc.curve.duration;
                         print_line(plot,
                                    xscale * t0,
-                                   yscale * a0->curve.v0[i],
+                                   yscale * atdc.curve.v0[i],
                                    xscale * t1,
-                                   yscale * a0->curve.v1[i],
+                                   yscale * atdc.curve.v1[i],
                                    "#0000ce");
                 
                         print_line(plot,
                                    xscale * t,
-                                   yscale * s0->v[i],
+                                   yscale * segment.v[i],
                                    xscale * t1,
-                                   yscale * s0->v[i],
+                                   yscale * segment.v[i],
                                    "#000000");
-               
-                        s0 = s0->next;
-                        a0 = a0->next;
                         t = t1;
                 }
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_path_speeds(plot_t *plot,
-                                      Segment *path,
-                                      ATDC *atdc,
-                                      double duration,
-                                      double *vmax)
+        static void print_speeds(plot_t *plot,
+                                 Script& script,
+                                 double duration,
+                                 double *vmax)
         {
                 for (int i = 0; i < 3; i++)
-                        print_path_speed_i(plot, path, atdc, i, duration, vmax);
+                        print_speed_i(plot, script, i, duration, vmax);
         }
 
-        static void print_path_acceleration_i(plot_t *plot,
-                                              Segment *path,
-                                              ATDC *atdc,
-                                              int i,
-                                              double duration,
-                                              double *amax)
+        static void print_acceleration_i(plot_t *plot,
+                                         Script& script,
+                                         int i,
+                                         double duration,
+                                         double *amax)
         {
                 double xscale = plot->a[i].w / duration;
                 double yscale = plot->a[i].h / vmax(amax);
-                Segment *s0 = path;
-                ATDC *a0 = atdc;
                 double t = 0.0;
 
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
                               plot->a[i].x, plot->a[i].y);
 
                 // curve
-                while (s0) {
+                for (size_t k = 0; k < script.count_segments(); k++) {
+                        //Segment& segment = script.get_segment(k);
+                        ATDC& atdc = script.get_atdc(k);
                         double t0 = t;
-                        double t1 = t + a0->accelerate.duration;
+                        double t1 = t + atdc.accelerate.duration;
                         print_line(plot,
                                    xscale * t0,
-                                   yscale * a0->accelerate.a[i],
+                                   yscale * atdc.accelerate.a[i],
                                    xscale * t1,
-                                   yscale * a0->accelerate.a[i],
+                                   yscale * atdc.accelerate.a[i],
                                    "#00ff00");
                 
                         t0 = t1;
-                        t1 += a0->travel.duration;
+                        t1 += atdc.travel.duration;
                         /* print_line(plot, */
                         /*            xscale * t0, */
-                        /*            yscale * a0->travel.a[i], */
+                        /*            yscale * atdc.travel.a[i], */
                         /*            xscale * t1, */
-                        /*            yscale * a0->travel.a[i], */
+                        /*            yscale * atdc.travel.a[i], */
                         /*            "#ffff00"); */
                         
                         t0 = t1;
-                        t1 += a0->decelerate.duration;
+                        t1 += atdc.decelerate.duration;
                         print_line(plot,
                                    xscale * t0,
-                                   yscale * a0->decelerate.a[i],
+                                   yscale * atdc.decelerate.a[i],
                                    xscale * t1,
-                                   yscale * a0->decelerate.a[i],
+                                   yscale * atdc.decelerate.a[i],
                                    "#ff0000");
 
                         t0 = t1;
-                        t1 += a0->curve.duration;
+                        t1 += atdc.curve.duration;
                         print_line(plot,
                                    xscale * t0,
-                                   yscale * a0->curve.a[i],
+                                   yscale * atdc.curve.a[i],
                                    xscale * t1,
-                                   yscale * a0->curve.a[i],
+                                   yscale * atdc.curve.a[i],
                                    "#0000ce");
-                               
-                        s0 = s0->next;
-                        a0 = a0->next;
                         t = t1;
                 }
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_path_accelerations(plot_t *plot,
-                                             Segment *path,
-                                             ATDC *atdc,
-                                             double duration,
-                                             double *amax)
+        static void print_accelerations(plot_t *plot,
+                                        Script& script,
+                                        double duration,
+                                        double *amax)
         {
                 for (int i = 0; i < 3; i++)
-                        print_path_acceleration_i(plot, path, atdc, i, duration, amax);
+                        print_acceleration_i(plot, script, i, duration, amax);
         }
 
-        static void print_slices_speed_i(plot_t *plot, std::vector<Section>& slices, int i,
+        static void print_slices_speed_i(plot_t *plot, Script& script, int i,
                                          double duration, double *vm)
         {
                 double xscale = plot->v[i].w / duration;
                 double yscale = plot->v[i].h / vmax(vm);
         
-                membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
+                membuf_printf(plot->buffer,
+                              "    <g transform=\"translate(%f %f)\">\n",
                               plot->v[i].x, plot->v[i].y);
 
-                for (size_t k = 0; k < slices.size(); k++) {
-                        Section& section = slices[k];
+                for (size_t k = 0; k < script.count_slices(); k++) {
+                        Section& section = script.get_slice(k);
                         print_line(plot,
-                                   xscale * section.start_time, yscale * section.v0[i],
-                                   xscale * section.end_time(), yscale * section.v1[i], 
+                                   xscale * section.start_time,
+                                   yscale * section.v0[i],
+                                   xscale * section.end_time(),
+                                   yscale * section.v1[i], 
                                    "#ff00ff");
                 }
         
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_slices_ij(plot_t *plot, std::vector<Section>& slices, int i, int j, rect_t *r)
+        static void print_slices_ij(plot_t *plot, Script& script, int i, int j, rect_t *r)
         {
                 membuf_printf(plot->buffer, "    <g transform=\"translate(%f %f)\">\n",
                               r->x, r->y);
 
-                for (size_t k = 0; k < slices.size(); k++) {
-                        Section& section = slices[k];
+                for (size_t k = 0; k < script.count_slices(); k++) {
+                        Section& section = script.get_slice(k);
                         print_line(plot,
                                    _X(r, section.p0[i]), _Y(r, section.p0[j]),
                                    _X(r, section.p1[i]), _Y(r, section.p1[j]),
@@ -456,17 +441,17 @@ namespace romi {
                 membuf_printf(plot->buffer, "    </g>\n");
         }
 
-        static void print_slices(plot_t *plot, std::vector<Section>& slices, double duration, double *vm)
+        static void print_slices(plot_t *plot, Script& script, double duration, double *vm)
         {
                 membuf_printf(plot->buffer,
                               "    <g inkscape:groupmode=\"layer\" "
                               "inkscape:label=\"slices\" "
                               "id=\"slices\">\n");
 
-                print_slices_ij(plot, slices, 0, 1, &plot->xy);
-                print_slices_speed_i(plot, slices, 0, duration, vm);
-                print_slices_speed_i(plot, slices, 1, duration, vm);
-                print_slices_speed_i(plot, slices, 2, duration, vm);
+                print_slices_ij(plot, script, 0, 1, &plot->xy);
+                print_slices_speed_i(plot, script, 0, duration, vm);
+                print_slices_speed_i(plot, script, 1, duration, vm);
+                print_slices_speed_i(plot, script, 2, duration, vm);
 
                 membuf_printf(plot->buffer, "    </g>\n");
         }
@@ -672,24 +657,22 @@ namespace romi {
                 plot_init_a(plot);
         }
         
-        static void plot_draw_graphs(plot_t *plot, Script *script, membuf_t *buffer,
-                            double *vmax_, double *amax)
+        static void plot_draw_graphs(plot_t *plot, Script& script,
+                                     double *vmax_, double *amax)
         {
-                double duration = atdc_duration(script->atdc);
-                print_path(plot, script->segments);
-                print_atdc(plot, script->atdc);
-                print_slices(plot, script->slices, duration, vmax_);
-                print_path_speeds(plot, script->segments, script->atdc,
-                                  duration, vmax_);
-                print_path_accelerations(plot, script->segments, script->atdc,
-                                         duration, amax);
+                double duration = script.get_duration();
+                if (duration > 0) {
+                        print_segments(plot, script);
+                        print_atdc(plot, script);
+                        print_slices(plot, script, duration, vmax_);
+                        print_speeds(plot, script, duration, vmax_);
+                        print_accelerations(plot, script, duration, amax);
+                }
         }
 
-        membuf_t *plot_to_mem(Script *script,
-                              double *xmin,
-                              double *xmax,
-                              double *vmax_,
-                              double *amax)
+        membuf_t *plot_to_mem(Script& script,
+                              double *xmin, double *xmax,
+                              double *vmax_, double *amax)
         {
                 membuf_t *buffer = new_membuf();
                 plot_t *plot = new_plot(buffer);
@@ -697,21 +680,14 @@ namespace romi {
                 plot_init(plot, xmin, xmax);
                 plot_open(plot);
                 print_axes(plot);
-
-                if (script->segments
-                    && script->atdc
-                    && script->slices.size() > 0) {
-                        
-                        plot_draw_graphs(plot, script, buffer, vmax_, amax);
-                }
-                
+                plot_draw_graphs(plot, script, vmax_, amax);
                 plot_close(plot);
                 delete_plot(plot);
 
                 return buffer;
         }
 
-        membuf_t *plot_to_mem(Script *script, CNCRange& range, double *vmax, double *amax)
+        membuf_t *plot_to_mem(Script& script, CNCRange& range, double *vmax, double *amax)
         {
                 double xmin[3];
                 double xmax[3];

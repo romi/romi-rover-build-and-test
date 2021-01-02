@@ -22,9 +22,9 @@ protected:
         const double slice_interval = 0.020;
         CNCRange range;
         MockController controller;
-        DebugWeedingSession debug;
         
-	oquam_tests() : range(xmin, xmax), debug(".", "oquam_tests") {}
+	oquam_tests() : range(xmin, xmax) {
+        }
 
 	~oquam_tests() override = default;
 
@@ -57,7 +57,7 @@ public:
         }
         
         bool move(int16_t millis, int16_t x, int16_t y, int16_t z) {
-                r_debug("move(%d, %d, %d)", x, y, z);
+                r_debug("move(dt=%d, dx=%d, dy=%d, dz=%d)", millis, x, y, z);
                 position[0] += x;
                 position[1] += y;
                 position[2] += z;
@@ -221,8 +221,7 @@ TEST_F(oquam_tests, returns_false_when_moveto_fails)
                 .Times(1)
                 .WillOnce(Return(true));
         EXPECT_CALL(controller, get_position(_))
-                .Times(1)
-                .WillOnce(Return(true));
+                .WillRepeatedly(Invoke(this, &oquam_tests::get_position));
         EXPECT_CALL(controller, move(_,_,_,_))
                 .Times(1)
                 .WillOnce(Return(false));
@@ -238,11 +237,9 @@ TEST_F(oquam_tests, returns_false_when_synchronize_fails)
                 .Times(1)
                 .WillOnce(Return(true));
         EXPECT_CALL(controller, get_position(_))
-                .Times(1)
-                .WillOnce(Return(true));
+                .WillRepeatedly(Invoke(this, &oquam_tests::get_position));
         EXPECT_CALL(controller, move(_,_,_,_))
-                .Times(1)
-                .WillOnce(Return(true));
+                .WillRepeatedly(Return(true));
         EXPECT_CALL(controller, synchronize(_))
                 .Times(1)
                 .WillOnce(Return(false));
@@ -260,11 +257,9 @@ TEST_F(oquam_tests, test_oquam_moveto)
                 .Times(1)
                 .WillOnce(Return(true));
         EXPECT_CALL(controller, get_position(_))
-                .Times(1)
-                .WillOnce(Invoke(this, &oquam_tests::get_position));
+                .WillRepeatedly(Invoke(this, &oquam_tests::get_position));
         EXPECT_CALL(controller, move(_,_,_,_))
-                .Times(1)
-                .WillOnce(Invoke(this, &oquam_tests::move));
+                .WillRepeatedly(Invoke(this, &oquam_tests::move));
         EXPECT_CALL(controller, synchronize(_))
                 .Times(1)
                 .WillOnce(Return(true));
@@ -284,11 +279,9 @@ TEST_F(oquam_tests, test_oquam_moveto_2)
                 .WillOnce(Return(true));
         for (int i = 0; i < 2; i++) {
                 EXPECT_CALL(controller, get_position(_))
-                        .Times(1)
-                        .WillOnce(Invoke(this, &oquam_tests::get_position));
+                        .WillRepeatedly(Invoke(this, &oquam_tests::get_position));
                 EXPECT_CALL(controller, move(_,_,_,_))
-                        .Times(1)
-                        .WillOnce(Invoke(this, &oquam_tests::move));
+                        .WillRepeatedly(Invoke(this, &oquam_tests::move));
                 EXPECT_CALL(controller, synchronize(_))
                         .Times(1)
                         .WillOnce(Return(true));
@@ -296,19 +289,35 @@ TEST_F(oquam_tests, test_oquam_moveto_2)
         
         Oquam oquam(controller, range, vmax, amax, scale, 0.01, slice_interval);
 
-        oquam.moveto(0.1, 0.0, 0.0, 0.3);
-        bool success = oquam.moveto(0.0, 0.0, 0.0, 0.3);
-
+        bool success = oquam.moveto(0.1, 0.0, 0.0, 0.3);
         ASSERT_EQ(success, true);
+        
+        success = oquam.moveto(0.0, 0.0, 0.0, 0.3);
+        ASSERT_EQ(success, true);
+        
         ASSERT_EQ(position[0], 0);        
+}
+
+TEST_F(oquam_tests, test_oquam_travel_empty_path)
+{
+        DebugWeedingSession debug_session(".", "travel_empty");
+        DefaultSetUp();
+
+        Oquam oquam(controller, range, vmax, amax, scale, 0.03, slice_interval);
+        oquam.set_file_cabinet(&debug_session);
+
+        Path path;
+        bool success = oquam.travel(path, 0.3);
+        ASSERT_EQ(success, true);
 }
 
 TEST_F(oquam_tests, test_oquam_travel_square)
 {
+        DebugWeedingSession debug_session(".", "travel_square");
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.03, slice_interval);
-        oquam.set_file_cabinet(&debug);
+        oquam.set_file_cabinet(&debug_session);
 
         Path path;
         Waypoint p0(0.1, 0.0);
@@ -326,10 +335,11 @@ TEST_F(oquam_tests, test_oquam_travel_square)
 
 TEST_F(oquam_tests, test_oquam_travel_square_fast)
 {
+        DebugWeedingSession debug_session(".", "travel_fast");
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.03, slice_interval);
-        oquam.set_file_cabinet(&debug);
+        oquam.set_file_cabinet(&debug_session);
 
         Path path;
         Waypoint p0(0.1, 0.0);
@@ -347,13 +357,15 @@ TEST_F(oquam_tests, test_oquam_travel_square_fast)
 
 TEST_F(oquam_tests, test_oquam_travel_snake)
 {
+        DebugWeedingSession debug_session(".", "travel_snake");
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+        oquam.set_file_cabinet(&debug_session);
 
         Path path;
-        for (int i = 1; i <= 1; i++) {
+        int N = 10;
+        for (int i = 1; i <= N; i++) {
                 Waypoint p0(i * 0.01, (i-1) * 0.01);
                 path.push_back(p0);
                 Waypoint p1(i * 0.01, i * 0.01);
@@ -367,12 +379,43 @@ TEST_F(oquam_tests, test_oquam_travel_snake)
         ASSERT_EQ(success, true);
 }
 
-TEST_F(oquam_tests, test_oquam_travel_round_trip)
+TEST_F(oquam_tests, test_oquam_travel_snake_2)
 {
+        DebugWeedingSession debug_session(".", "travel_snake_2");
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+        oquam.set_file_cabinet(&debug_session);
+
+        int N = 11;
+        Path path;
+        double x = 0.0;
+        double y = 0.0;
+        for (int i = 1; i <= N; i++) {
+                int n = N + 1 - i;
+                double len = 0.001 * n;
+                Waypoint p0(x + len, y);
+                path.push_back(p0);
+                Waypoint p1(x + len, y + len);
+                path.push_back(p1);
+                x += len;
+                y += len;
+        }
+        
+        Waypoint p(0.0, 0.0);
+        path.push_back(p);
+
+        bool success = oquam.travel(path, 1.0);
+        ASSERT_EQ(success, true);
+}
+
+TEST_F(oquam_tests, test_oquam_travel_round_trip)
+{
+        DebugWeedingSession debug_session(".", "travel_round_trip");
+        DefaultSetUp();
+
+        Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
+        oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(Waypoint(0.0, 0.0));
@@ -385,10 +428,11 @@ TEST_F(oquam_tests, test_oquam_travel_round_trip)
 
 TEST_F(oquam_tests, test_oquam_travel_collinear)
 {
+        DebugWeedingSession debug_session(".", "travel_round_collinear");
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+        oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(Waypoint(0.0, 0.0));
@@ -402,10 +446,11 @@ TEST_F(oquam_tests, test_oquam_travel_collinear)
 
 TEST_F(oquam_tests, test_oquam_travel_large_displacement)
 {
+        DebugWeedingSession debug_session(".", "travel_large_displacement");
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+        oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(Waypoint(0.0, 0.0));
@@ -420,10 +465,11 @@ TEST_F(oquam_tests, test_oquam_travel_large_displacement)
 
 TEST_F(oquam_tests, test_oquam_travel_small_displacement)
 {
+        DebugWeedingSession debug_session(".", "travel_small_displacement");
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+        oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(Waypoint(0.0, 0.0));
@@ -438,10 +484,11 @@ TEST_F(oquam_tests, test_oquam_travel_small_displacement)
 
 TEST_F(oquam_tests, test_oquam_travel_tiny_displacement)
 {
+        DebugWeedingSession debug_session(".", "travel_tiny_displacement");
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+        oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(Waypoint(0.0, 0.0));
@@ -456,10 +503,11 @@ TEST_F(oquam_tests, test_oquam_travel_tiny_displacement)
 
 TEST_F(oquam_tests, test_oquam_travel_zigzag)
 {
+        DebugWeedingSession debug_session(".", "travel_zigzag");
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+        oquam.set_file_cabinet(&debug_session);
 
         Path path;
         Waypoint p(0.0, 0.0);

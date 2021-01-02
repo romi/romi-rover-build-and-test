@@ -75,7 +75,8 @@ namespace romi {
                          const double *v0, const double *v1,
                          const double *a);
 
-                void slice(std::vector<Section>& slices, double interval, double max_duration);
+                void slice(std::vector<Section>& slices, double interval,
+                           double max_duration);
                 void get_position_at(double t_from_start, double *p);
                 void get_speed_at(double t_from_start, double *v);
 

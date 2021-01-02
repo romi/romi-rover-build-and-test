@@ -331,4 +331,17 @@ namespace romi {
                         vcopy(scaled_v, v);
                 }
         }
+        
+        void ATDC::slow_down_curve(double factor)
+        {
+                smul(curve.v0, curve.v0, factor);
+                smul(curve.v1, curve.v1, factor);
+                smul(curve.a, curve.a, factor * factor);
+                curve.duration /= factor;
+        }
+
+        double ATDC::get_end_time()
+        {
+                return curve.end_time();
+        }
 }

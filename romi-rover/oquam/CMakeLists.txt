@@ -14,6 +14,8 @@ set(SOURCES
   src/CNCController.h
   src/StepperController.cpp
   src/StepperController.h
+  src/StepperSettings.cpp
+  src/StepperSettings.h
   src/v.c
   src/v.h
   src/Section.cpp
@@ -32,6 +34,8 @@ set(SOURCES
   src/Oquam.h
   src/OquamOptions.cpp
   src/OquamOptions.h
+  src/OquamFactory.cpp
+  src/OquamFactory.h
   src/CNCAdaptor.h
   src/CNCAdaptor.cpp
   )

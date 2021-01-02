@@ -31,7 +31,7 @@ namespace romi {
         {
                 bool nan = false;
                 if (::isnan(value[index])) {
-                        r_warn("Section (%s): %s[%d] is NaN", name, param, index);
+                        r_warn("is_valid: section (%s): %s[%d] is NaN", name, param, index);
                         nan = true;
                 }
                 return nan;
@@ -43,7 +43,8 @@ namespace romi {
                 bool out_of_range = true;
                 if (value < minimum - epsilon
                     || value > maximum + epsilon) {
-                        r_warn("Section (%s): %s is out of range: %.6f < value=%.6f < %.6f",
+                        r_warn("is_valid: section (%s): %s is out of range: "
+                               "%.6f < value=%.6f < %.6f",
                                name, param, minimum, value, maximum);
                 } else {
                         out_of_range = false;
@@ -57,38 +58,44 @@ namespace romi {
                 for (int i = 0; i < 3; i++) {
                         if (is_nan(name, param, p, i)) {
                                 return false;
-                        } else if (is_out_of_range(name, param, p[i], xmin[i], xmax[i], 0.001)) {
+                        } else if (is_out_of_range(name, param, p[i],
+                                                   xmin[i], xmax[i], 0.001)) {
                                 return false;
                         }
                 }
                 return true;
         }
 
-        static bool is_valid_vector(const char *name, const char *param, double *v, const double *vmax)
+        static bool is_valid_vector(const char *name, const char *param,
+                                    double *v, const double *vmax)
         {
                 for (int i = 0; i < 3; i++) {
                         if (is_nan(name, param, v, i)) {
                                 return false;
-                        } else if (is_out_of_range(name, param, v[i], -vmax[i], vmax[i], 0.01)) {
+                        } else if (is_out_of_range(name, param, v[i],
+                                                   -vmax[i], vmax[i], 0.01)) {
                                 return false;
                         }
                 }
                 return true;
         }
 
-        static bool has_valid_positions(Section& section, const char *name, const double *xmin, const double *xmax)
+        static bool has_valid_positions(Section& section, const char *name,
+                                        const double *xmin, const double *xmax)
         {
                 return (is_valid_position(name, "p0", section.p0, xmin, xmax)
                         && is_valid_position(name, "p1", section.p1, xmin, xmax));
         }
 
-        static bool has_valid_speeds(Section& section, const char *name, const double *vmax)
+        static bool has_valid_speeds(Section& section, const char *name,
+                                     const double *vmax)
         {
                 return (is_valid_vector(name, "v0", section.v0, vmax)
                         && is_valid_vector(name, "v1", section.v1, vmax));
         }
 
-        static bool has_valid_acceleration(Section& section, const char *name, const double *amax)
+        static bool has_valid_acceleration(Section& section, const char *name,
+                                           const double *amax)
         {
                 return is_valid_vector(name, "a", section.a, amax);
         }
@@ -106,8 +113,8 @@ namespace romi {
                 
                 bool ok = norm(e) < 0.001;
                 if (!ok) {
-                        r_warn("Section (%s): |(v0+a.t)-v1|>0.001", name);
-                        r_warn("Section (%s): v1=(%f,%f,%f), v0+a.t=(%f,%f,%f)",
+                        r_warn("is_valid: section (%s): |(v0+a.t)-v1|>0.001", name);
+                        r_warn("is_valid: section (%s): v1=(%f,%f,%f), v0+a.t=(%f,%f,%f)",
                                name,
                                section.v1[0], section.v1[1], section.v1[2],
                                v[0], v[1], v[2]);
@@ -134,8 +141,8 @@ namespace romi {
                 
                 bool ok = norm(e) < 0.001;
                 if (!ok) {
-                        r_warn("Section (%s): |(p0+v0.t+a.t²/2)-p1|>0.001", name);
-                        r_warn("Section (%s): p1=(%f,%f,%f), p=(%f,%f,%f)",
+                        r_warn("is_valid: section (%s): |(p0+v0.t+a.t²/2)-p1|>0.001", name);
+                        r_warn("is_valid: section (%s): p1=(%f,%f,%f), p=(%f,%f,%f)",
                                name,
                                section.p1[0], section.p1[1], section.p1[2],
                                p[0], p[1], p[2]);
@@ -153,7 +160,7 @@ namespace romi {
         {
                 bool valid = false;
                 if (section.start_time < 0.0) {
-                        r_warn("Section (%s): start_time=%f < 0",
+                        r_warn("is_valid: section (%s): start_time=%f < 0",
                                name, section.start_time);
                 } else {
                         valid = true;
@@ -165,7 +172,7 @@ namespace romi {
         {
                 bool valid = true;
                 if (is_out_of_range(name, "duration", section.duration, 0.0, tmax, 0.0)) {
-                        r_warn("Section (%s): duration=%f > max=%f",
+                        r_warn("is_valid: section (%s): duration=%f > max=%f",
                                name, section.duration, tmax);
                         valid = false;
                 }
@@ -191,8 +198,8 @@ namespace romi {
                 bool match = (vnear(first.p1, second.p0, 0.001)
                               && vnear(first.v1, second.v0, 0.001));
                 if (!match) {
-                        r_err("consecutive points and speeds don't match: %s -> %s",
-                              first_name, second_name);
+                        r_err("is_valid: consecutive points and speeds don't match: "
+                              "%s -> %s", first_name, second_name);
                 }
                 return match;
         }
@@ -226,25 +233,35 @@ namespace romi {
                         && points_and_speeds_match(atdc));
         }
 
+        static bool start_positions_match(Script& script)
+        {
+                bool matches = true;
+                if (script.count_atdc() > 0) {
+                        double start_position[3];
+                        script.get_start_position(start_position);
+                        matches = veq(start_position, script.get_atdc(0).accelerate.p0);
+                }
+                if (!matches) {
+                        r_warn("is_valid: start positions don't match");
+                }
+                return matches;
+        }
+        
         bool is_valid(Script& script, double tmax,
                       double *xmin, double *xmax, 
                       double *vmax, double *amax)
         {
                 bool valid = true;
-                ATDC *t0 = script.atdc;
-                int atdc_count = 0;
-        
-                while (t0) {
-                        if (!is_valid(*t0, tmax, xmin, xmax, vmax, amax)) {
+                for (size_t i = 0; i < script.count_atdc(); i++) {
+                        if (!is_valid(script.get_atdc(i), tmax, xmin, xmax, vmax, amax)) {
                                 valid = false;
-                                r_warn("compute_accelerations: invalid atdc: "
-                                       "atdc %d", atdc_count);
-                                print(t0);
+                                r_warn("is_valid: invalid atdc: atdc %d", i);
+                                print(script.get_atdc(i));
                         }
-                        t0 = t0->next;
-                        atdc_count++;
                 }
-                
+                if (valid) {
+                        valid = start_positions_match(script);
+                }
                 return valid;
         }
 
@@ -261,5 +278,6 @@ namespace romi {
                 xmax[2] = range._z[1];
                 return is_valid(script, tmax, xmin, xmax, vmax, amax);
         }
+        
 
 }

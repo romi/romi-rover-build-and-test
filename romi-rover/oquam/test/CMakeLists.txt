@@ -5,6 +5,21 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../../arduino_libraries/RomiSerial" )
 
 
+set(SRCS_STEPPERSETTINGS
+  src/tests_main.cpp
+  src/tests_steppersettings.cpp
+  ../src/StepperSettings.h
+  ../src/StepperSettings.cpp
+  )
+add_executable(romi_rover_unit_tests_oquam_steppersettings ${SRCS_STEPPERSETTINGS})
+target_link_libraries(romi_rover_unit_tests_oquam_steppersettings rpp romirover gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_oquam_steppersettings
+    COMMAND romi_rover_unit_tests_oquam_steppersettings
+)
+
+
 set(SRCS_SECTION
   src/tests_main.cpp
   src/tests_section.cpp
@@ -28,6 +43,7 @@ add_test(
     NAME romi_rover_unit_tests_oquam_section
     COMMAND romi_rover_unit_tests_oquam_section
 )
+
 
 
 
@@ -132,9 +148,93 @@ add_test(
 
 
 
-set(SRCS_OQUAMSTEPPER
+set(SRCS_OQUAMOPTIONS
   src/tests_main.cpp
-  src/tests_oquamstepper.cpp
+  src/tests_oquamoptions.cpp
+  ../src/OquamOptions.h
+  ../src/OquamOptions.cpp
+  )
+
+add_executable(romi_rover_unit_tests_oquam_options ${SRCS_OQUAMOPTIONS})
+target_link_libraries(romi_rover_unit_tests_oquam_options rpp romirover romi gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_oquam_options
+    COMMAND romi_rover_unit_tests_oquam_options
+)
+
+
+set(SRCS_OQUAMFACTORY
+  src/tests_main.cpp
+  src/tests_oquamfactory.cpp
+  ../src/OquamFactory.h
+  ../src/OquamFactory.cpp
+  ../src/CNCController.h
+  ../src/FakeCNCController.h
+  ../src/StepperController.h
+  ../src/StepperController.cpp
+  ../../arduino_libraries/RomiSerial/IInputStream.h
+  ../../arduino_libraries/RomiSerial/IOutputStream.h
+  ../../arduino_libraries/RomiSerial/RSerial.h
+  ../../arduino_libraries/RomiSerial/RSerial.cpp
+  ../../arduino_libraries/RomiSerial/CRC8.h
+  ../../arduino_libraries/RomiSerial/EnvelopeParser.h
+  ../../arduino_libraries/RomiSerial/EnvelopeParser.cpp
+  ../../arduino_libraries/RomiSerial/RomiSerialClient.h
+  ../../arduino_libraries/RomiSerial/RomiSerialClient.cpp
+  )
+
+add_executable(romi_rover_unit_tests_oquam_factory ${SRCS_OQUAMFACTORY})
+target_link_libraries(romi_rover_unit_tests_oquam_factory rpp romirover romi gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_oquam_factory
+    COMMAND romi_rover_unit_tests_oquam_factory
+)
+
+
+
+#set(SRCS_OQUAMSTEPPER
+#  src/tests_main.cpp
+#  src/tests_oquamstepper.cpp
+#  ../src/CNCController.h
+#  ../src/StepperController.h
+#  ../src/StepperController.cpp
+#  ../src/Oquam.h
+#  ../src/Oquam.cpp
+#  ../src/v.h
+#  ../src/v.c
+#  ../src/plotter.cpp
+#  ../src/plotter.h
+#  ../src/print.h
+#  ../src/print.cpp
+#  ../src/is_valid.cpp
+#  ../src/is_valid.h
+#  ../src/Section.h
+#  ../src/Section.cpp
+#  ../src/ATDC.h
+#  ../src/ATDC.cpp
+#  ../src/Script.h
+#  ../src/Script.cpp
+#  ../../arduino_libraries/RomiSerial/IInputStream.h
+#  ../../arduino_libraries/RomiSerial/IOutputStream.h
+#  ../../arduino_libraries/RomiSerial/RSerial.h
+#  ../../arduino_libraries/RomiSerial/RSerial.cpp
+#  ../../arduino_libraries/RomiSerial/CRC8.h
+#  ../../arduino_libraries/RomiSerial/EnvelopeParser.h
+#  ../../arduino_libraries/RomiSerial/EnvelopeParser.cpp
+#  ../../arduino_libraries/RomiSerial/RomiSerialClient.h
+#  ../../arduino_libraries/RomiSerial/RomiSerialClient.cpp
+#  )
+#
+#add_executable(romi_rover_hardware_tests_oquam ${SRCS_OQUAMSTEPPER})
+#target_link_libraries(romi_rover_hardware_tests_oquam rpp romirover romi gtest gmock)
+
+
+
+set(SRCS_HARDWARE
+  src/tests_main.cpp
+  src/tests_hardware.cpp
   ../src/CNCController.h
   ../src/StepperController.h
   ../src/StepperController.cpp
@@ -165,7 +265,7 @@ set(SRCS_OQUAMSTEPPER
   ../../arduino_libraries/RomiSerial/RomiSerialClient.cpp
   )
 
-add_executable(romi_rover_hardware_tests_oquam ${SRCS_OQUAMSTEPPER})
+add_executable(romi_rover_hardware_tests_oquam ${SRCS_HARDWARE})
 target_link_libraries(romi_rover_hardware_tests_oquam rpp romirover romi gtest gmock)
 
 
@@ -176,9 +276,12 @@ if(BUILD_COVERAGE)
             EXECUTABLE ctest -V ${n_cores}
             EXCLUDE "src/main.cpp" "src/FakeCNCController.h"
             DEPENDENCIES romi_rover_unit_tests_oquam_section
+                         romi_rover_unit_tests_oquam_steppersettings
                          romi_rover_unit_tests_oquam_script
                          romi_rover_unit_tests_oquam_cncadaptor
                          romi_rover_unit_tests_oquam_print
-                         romi_rover_unit_tests_oquam_oquam)
+                         romi_rover_unit_tests_oquam_oquam
+                         romi_rover_unit_tests_oquam_options
+                         romi_rover_unit_tests_oquam_factory)
 endif()
 

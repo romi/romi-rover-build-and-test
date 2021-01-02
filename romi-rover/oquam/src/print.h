@@ -32,8 +32,8 @@ namespace romi {
         void print(Section& section, membuf_t *text, int indent = 0);
         void print(Section& section);
 
-        void print(ATDC *atdc, membuf_t *text, int indent = 0);
-        void print(ATDC *atdc);
+        void print(ATDC& atdc, membuf_t *text, int indent = 0);
+        void print(ATDC& atdc);
         
         void print(Script& script, membuf_t *text, bool include_slices = true);
         void print(Script& script, bool include_slices = true);

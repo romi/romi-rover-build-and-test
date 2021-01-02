@@ -78,36 +78,36 @@ namespace romi {
                 delete_membuf(text);
         }
 
-        void print(ATDC *atdc, membuf_t *text, int indent)
+        void print(ATDC& atdc, membuf_t *text, int indent)
         {
                 indent_text(text, indent);
                 membuf_printf(text, "{\n");
                 
                 indent_text(text, indent+2);
                 membuf_printf(text, "\"accelerate\":\n");
-                print(atdc->accelerate, text, indent+2);
+                print(atdc.accelerate, text, indent+2);
                 membuf_printf(text, ",\n");
                 
                 indent_text(text, indent+2);
                 membuf_printf(text, "\"travel\":\n");
-                print(atdc->travel, text, indent+2);
+                print(atdc.travel, text, indent+2);
                 membuf_printf(text, ",\n");
                 
                 indent_text(text, indent+2);
                 membuf_printf(text, "\"decelerate\":\n");
-                print(atdc->decelerate, text, indent+2);
+                print(atdc.decelerate, text, indent+2);
                 membuf_printf(text, ",\n");
                 
                 indent_text(text, indent+2);
                 membuf_printf(text, "\"curve\":\n");
-                print(atdc->curve, text, indent+2);
+                print(atdc.curve, text, indent+2);
                 membuf_printf(text, "\n");
                 
                 indent_text(text, indent);
                 membuf_printf(text, "}");
         }
 
-        void print(ATDC *atdc)
+        void print(ATDC& atdc)
         {
                 membuf_t *buf = new_membuf();
                 print(atdc, buf);
@@ -160,12 +160,11 @@ namespace romi {
 
         void print_segments(Script& script, membuf_t *text)
         {
-                Segment *s = script.segments;
                 membuf_printf(text, "  \"segments\": [\n");
-                while (s != NULL) {
-                        print(*s, text, 4);
-                        s = s->next;
-                        if (s) 
+                for (size_t i = 0; i < script.count_segments(); i++) {
+                        Segment& segment = script.get_segment(i);
+                        print(segment, text, 4);
+                        if (i < script.count_segments() - 1) 
                                 membuf_printf(text, ",\n");
                         else 
                                 membuf_printf(text, "\n");
@@ -175,12 +174,10 @@ namespace romi {
         
         void print_atdc(Script& script, membuf_t *text)
         {
-                ATDC *s = script.atdc;
                 membuf_printf(text, "  \"atdc\": [\n");
-                while (s != NULL) {
-                        print(s, text, 4);
-                        s = s->next;
-                        if (s) 
+                for (size_t i = 0; i < script.count_atdc(); i++) {
+                        print(script.get_atdc(i), text, 4);
+                        if (i < script.count_atdc() - 1) 
                                 membuf_printf(text, ",\n");
                         else 
                                 membuf_printf(text, "\n");
@@ -191,9 +188,9 @@ namespace romi {
         void print_slices(Script& script, membuf_t *text)
         {
                 membuf_printf(text, "  \"slices\": [\n");
-                for (size_t k = 0; k < script.slices.size(); k++) {
-                        print(script.slices[k], text, 4);
-                        if (k == script.slices.size() - 1) 
+                for (size_t k = 0; k < script.count_slices(); k++) {
+                        print(script.get_slice(k), text, 4);
+                        if (k == script.count_slices() - 1) 
                                 membuf_printf(text, "\n");
                         else 
                                 membuf_printf(text, ",\n");

@@ -51,10 +51,12 @@ namespace romi {
 
                 ATDC() : prev(0), next(0) {}
                 
-                void update_start_times(double at);
                 void compute_accelerations(double *p0, double *p1,
                                            double *v0, double *v, double *v1,
                                            double *amax);
+                void update_start_times(double at);
+                double get_end_time();
+                void slow_down_curve(double factor);
 
         private:
                 

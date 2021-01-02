@@ -50,25 +50,15 @@ namespace romi {
         }
 
         
-        Script::~Script()
+        Script::Script(double *start_position)
         {
-                if (segments) {
-                        Segment *list = segments;
-                        while (list != NULL) {
-                                Segment *next = list->next;
-                                delete list;
-                                list = next;
-                        }
-                }
-        
-                if (atdc) {
-                        ATDC *list = atdc;
-                        while (list != NULL) {
-                                ATDC *next = list->next;
-                                delete list;
-                                list = next;
-                        }
-                }
+                vcopy(_start_position, start_position);
+                set_current_position(start_position);
+        }
+
+        void Script::set_current_position(double *p)
+        {
+                vcopy(_current_position, p);
         }
 
         void Script::moveto(double x, double y, double z, double v)
@@ -79,48 +69,205 @@ namespace romi {
                 }
                 _moves.push_back(Move(x, y, z, v));
         }
-
-        void Script::slice(ATDC *atdc, double period, double maxlen)
+        
+        void Script::convert(double *vmax, double *amax, double deviation,
+                             double slice_duration, double max_slice_duration)
         {
-                atdc->accelerate.slice(slices, period, maxlen);
-                atdc->travel.slice(slices, period, maxlen);
-                atdc->decelerate.slice(slices, period, maxlen);
-                atdc->curve.slice(slices, period, maxlen);
+                assert_vmax(vmax);
+                assert_amax(amax);
+                assert_deviation(deviation);
+                assert_slice_duration(slice_duration, max_slice_duration);
+                    
+                convert_moves_to_segments();
+                if (count_segments() > 0) {
+                        check_max_speeds(vmax);
+                        convert_segments_to_atdc(deviation, vmax, amax);
+                        slice(slice_duration, max_slice_duration);
+                }
         }
 
-        void Script::slice(double period, double maxlen)
+        void Script::assert_vmax(double *vmax)
         {
-                ATDC *s = atdc;
-                while (s != NULL) {
-                        slice(s, period, maxlen);
-                        s = s->next;
+                double vn = norm(vmax);
+                if (vn == 0 || vn > 10.0) { // 10 m/s = 36 km/h
+                        r_err("Invalid maximum speed: (%f, %f, %f)",
+                              vmax[0], vmax[1], vmax[2]);
+                        throw std::runtime_error("Invalid maximum speed");
+                }
+        }
+
+        void Script::assert_amax(double *amax)
+        {
+                double an = norm(amax);
+                if (an == 0 || an > 10.0) { // 10 m/s² = 0 -> 36 km/h in 1 sec
+                        r_err("Invalid maximum accelerate: (%f, %f, %f)",
+                              amax[0], amax[1], amax[2]);
+                        throw std::runtime_error("Invalid maximum acceleration");
+                }
+        }
+
+        void Script::assert_deviation(double deviation)
+        {
+                // deviation can be zero
+                if (deviation < 0.0 || deviation > 1.0) {
+                        r_err("Invalid deviation: %f", deviation);
+                        throw std::runtime_error("Invalid deviation");
+                }
+        }
+
+        void Script::assert_slice_duration(double duration, double max_duration)
+        {
+                if (duration <= 0.0 || duration > 0.100) {
+                        r_err("Invalid slice duration: %f", duration);
+                        throw std::runtime_error("Invalid slice duration");
+                }
+                if (max_duration < duration || max_duration > 120.0) {
+                        r_err("Invalid max_duration slice duration: %f", max_duration);
+                        throw std::runtime_error("Invalid max slice duration");
                 }
         }
         
-        void Script::compute_curve(Segment *s0, ATDC *t0, double deviation, double *amax)
+        void Script::convert_moves_to_segments()
         {
-                if (s0->next == NULL) {
-                        no_curve(s0, t0);
+                for (size_t i = 0; i < _moves.size(); i++) {
+                        Move& move = _moves[i];
+                        double d[3];
+                        vsub(d, move.p, _current_position);
+                        
+                        /* If the displacement is less then 0.1 mm,
+                         * skip it. */
+                        if (norm(d) > 0.0001) {
+                                convert_segment(move);
+                                set_current_position(move.p); 
+                        }                        
+                }
+        }
+
+        void Script::convert_segment(Move& move)
+        {
+                Segment segment;
+                init_segment_positions(segment, move);
+                init_segment_speed(segment, move);
+                _segments.push_back(segment);
+        }
+
+        void Script::init_segment_positions(Segment& segment, Move& move)
+        {
+                vcopy(segment.p0, _current_position); 
+                vcopy(segment.p1, move.p); 
+        }
+
+        void Script::init_segment_speed(Segment& segment, Move& move)
+        {
+                double d[3];
+                vsub(d, segment.p1, segment.p0);
+                normalize(d, d);
+                smul(segment.v, d, move.v);
+        }
+
+        void Script::check_max_speeds(double *vmax)
+        {
+                for (size_t i = 0; i < count_segments(); i++) {
+                        check_max_speed(i, vmax);
+                }
+        }
+
+        void Script::check_max_speed(size_t index, double *vmax)
+        {
+                double s = 1.0;
+                Segment& segment = _segments[index];
+                
+                for (int i = 0; i < 3; i++) {
+                        if (segment.v[i] != 0.0)
+                                s = std::min(s, vmax[i] / fabs(segment.v[i]));
+                }
+                smul(segment.v, segment.v, s);
+        }
+        
+        void Script::convert_segments_to_atdc(double d, double *vmax, double *amax)
+        {
+                create_atdc();
+                copy_start_position_to_atdc();
+                compute_curves_and_speeds(d, amax);
+                compute_accelerations(amax);
+                update_start_times();
+        }
+
+        void Script::create_atdc()
+        {
+                for (size_t i = 0; i < _segments.size(); i++) {
+                        _atdc.push_back(ATDC());
+                }
+        }        
+
+        void Script::copy_start_position_to_atdc()
+        {
+                /* The entry points (p0) of the accelerate sections of
+                 * the ATDC are set by compute_curve(), except for the
+                 * first one. That one is set explicitly here. */
+                vcopy(_atdc[0].accelerate.p0, _start_position);                
+        }
+
+        void Script::compute_curves_and_speeds(double deviation, double *amax)
+        {
+                for (size_t i = 0; i < _segments.size(); i++) {
+                        
+                        // r_debug("compute_curves_and_speeds: %d", i);
+                        // if (i == 12) 
+                        //         r_debug("compute_curves_and_speeds: reached %d", i);
+                        
+                        compute_curve_and_speeds(i, deviation, amax);
+                }
+        }
+        
+        /**
+         *  Computes the curve at the end of the segment. This function may
+         *  adjust the entry speed of the segment to assure that the curve
+         *  isn't entered with too high a speed.
+         *
+         *  s0: The current segment.
+         *  amax: The maximum acceleration that the machine tolerates. 
+         */
+        void Script::compute_curve_and_speeds(size_t index, double deviation, double *amax)
+        {
+                compute_curve(index, deviation, amax);
+                
+                if (update_speeds_if_needed(index, amax)) {
+                        assert_not_first(index);
+                        back_propagate_speed_change(index-1, amax);
+                }
+                
+                initialize_next_acceleration(index);
+        }
+                
+        void Script::compute_curve(size_t index, double deviation, double *amax)
+        {
+                if (!has_next_segment(index)) {
+                        no_curve(index);
                 } else {
-                        default_curve(s0, s0->next, t0, deviation, amax);
+                        default_curve(index, deviation, amax);
                 }
         }
 
-        void Script::no_curve(Segment *s0, ATDC *t0)
+        void Script::no_curve(size_t index)
         {
-                t0->curve.zero();
-                vcopy(t0->curve.p0, s0->p1);
-                vcopy(t0->curve.p1, s0->p1);
+                Segment& s = _segments[index];
+                ATDC& t = _atdc[index];
+                t.curve.zero();
+                vcopy(t.curve.p0, s.p1);
+                vcopy(t.curve.p1, s.p1);
         }
         
-        void Script::default_curve(Segment *s0, Segment *s1, ATDC *t0,
-                                   double deviation, double *amax)
+        void Script::default_curve(size_t index, double deviation, double *amax)
         {
                 // The speeds and their directions before and after the curve.
                 double w;
                 double w0[3];
                 double w1[3];
 
+                Segment& s0 = _segments[index];
+                Segment& s1 = _segments[index+1];
+                
                 w = get_curve_speed_magnitude(s0, s1);
                 get_curve_speed_vector(s0, w, w0);
                 get_curve_speed_vector(s1, w, w1);
@@ -273,7 +420,8 @@ namespace romi {
                 compute_curve_exit_point(s1, distance, p1);
                 smul(a, ey, am);
                 
-                t0->curve.set(duration, 0, p0, p1, w0, w1, a);
+                ATDC& t0 = _atdc[index];
+                t0.curve.set(duration, 0, p0, p1, w0, w1, a);
         }
         
         static void define_unit_vectors(double *w0, double *w1,
@@ -350,38 +498,38 @@ namespace romi {
                 normalize(ey, ey);
         }
 
-        double Script::get_curve_speed_magnitude(Segment *s0, Segment *s1)
+        double Script::get_curve_speed_magnitude(Segment& s0, Segment& s1)
         {
                 // Set the entry and exit speed of the curve to smallest speed
                 // before and after the junction.
-                return std::min(norm(s0->v), norm(s1->v));
+                return std::min(norm(s0.v), norm(s1.v));
         }
         
-        void Script::get_curve_speed_vector(Segment *segment, double magnitude, double *w)
+        void Script::get_curve_speed_vector(Segment& segment, double magnitude, double *w)
         {
                 double dir[3];
-                segment->direction(dir);
+                segment.direction(dir);
                 smul(w, dir, magnitude);
         }
         
-        void Script::compute_curve_entry_point(Segment *segment, double distance, double *p)
+        void Script::compute_curve_entry_point(Segment& segment, double distance, double *p)
         {
                 double dir[3];
-                segment->direction(dir);
+                segment.direction(dir);
                 // Compute a vector along the segment with length 'distance'
                 smul(p, dir, distance);
                 // Substract the vector from the end point. 
-                vsub(p, segment->p1, p);
+                vsub(p, segment.p1, p);
         }
         
-        void Script::compute_curve_exit_point(Segment *segment, double distance, double *p)
+        void Script::compute_curve_exit_point(Segment& segment, double distance, double *p)
         {
                 double dir[3];
-                segment->direction(dir);
+                segment.direction(dir);
                 // Compute a vector along the segment with length 'distance'
                 smul(p, dir, distance);
                 // Add the vector to the start point. 
-                vadd(p, segment->p0, p);
+                vadd(p, segment.p0, p);
         }
         
         double Script::scale_speed(double am, double deviation, double speed)
@@ -400,7 +548,7 @@ namespace romi {
                 return scale;
         }
 
-        double Script::scale_distance(double distance, Segment *s0, Segment *s1)
+        double Script::scale_distance(double distance, Segment& s0, Segment& s1)
         {
                 double scale = 1.0;
                 double len = shortest_length(s0, s1);
@@ -410,24 +558,25 @@ namespace romi {
                 return scale;
         }
 
-        double Script::shortest_length(Segment *s0, Segment *s1)
+        double Script::shortest_length(Segment& s0, Segment& s1)
         {
-                double len0 = s0->length();
-                double len1 = s1->length();
+                double len0 = s0.length();
+                double len1 = s1.length();
                 return std::min(len0, len1);
         }
 
-        bool Script::update_speeds_if_needed(ATDC *t, double *amax)
+        bool Script::update_speeds_if_needed(size_t index, double *amax)
         {
                 bool must_backpropagate = false;
-                
+                ATDC& t = _atdc[index];
+
                 /* Compare the speeds at the start of the segments and at the
                    entry of the curve. Check whether there is enough space to
                    accelerate/decelerate. If not, adapt one of the two
                    speeds. */
                 
                 /* The available path length */
-                double segment_length = vdist(t->accelerate.p0, t->curve.p0);
+                double segment_length = vdist(t.accelerate.p0, t.curve.p0);
                 double required_length = required_acceleration_path_length(t, amax);
 
                 if (required_length > segment_length) {
@@ -437,20 +586,20 @@ namespace romi {
                 return must_backpropagate;
         }
         
-        double Script::required_acceleration_path_length(ATDC *t, double *amax)
+        double Script::required_acceleration_path_length(ATDC& t, double *amax)
         {
                 double length = 0.0;
                 double displacement[3];
                 
-                vsub(displacement, t->curve.p0, t->accelerate.p0);
+                vsub(displacement, t.curve.p0, t.accelerate.p0);
 
                 if (norm(displacement) == 0) {
-                        length = required_acceleration_path_length(t->accelerate.v0,
-                                                                   t->curve.v0,
+                        length = required_acceleration_path_length(t.accelerate.v0,
+                                                                   t.curve.v0,
                                                                    amax);
                 } else {
-                        length = required_acceleration_path_length(t->accelerate.v0,
-                                                                   t->curve.v0,
+                        length = required_acceleration_path_length(t.accelerate.v0,
+                                                                   t.curve.v0,
                                                                    displacement,
                                                                    amax);
                 }
@@ -458,7 +607,8 @@ namespace romi {
                 return length;
         }
         
-        double Script::required_acceleration_path_length(double *v0, double *v1, double *amax)
+        double Script::required_acceleration_path_length(double *v0, double *v1,
+                                                         double *amax)
         {
                 double v0n = norm(v0);
                 double v1n = norm(v1);
@@ -483,14 +633,14 @@ namespace romi {
                 return dx;
         }
 
-        bool Script::adjust_speeds(ATDC *t, double *amax)
+        bool Script::adjust_speeds(ATDC& t, double *amax)
         {
                 /* We know that the segment length is smaller than the
                  * required length to accelerate or slow down to the
                  * desired speed. */
-
-                double v0 = norm(t->accelerate.v0);
-                double v1 = norm(t->curve.v0);
+                
+                double v0 = norm(t.accelerate.v0);
+                double v1 = norm(t.curve.v0);
 
                 bool must_backpropagate = false;
                 
@@ -514,7 +664,21 @@ namespace romi {
                 return must_backpropagate;
         }
 
-        void Script::reduce_entry_speed(ATDC *t, double *amax)
+        void Script::reduce_entry_speed(ATDC& t, double *amax)
+        {
+                double displacement[3];
+                vsub(displacement, t.curve.p0, t.accelerate.p0);
+                
+                double v1 = norm(t.curve.v0);                
+                double v0max = maximum_entry_speed(displacement, v1, amax);
+                
+                double v0 = norm(t.accelerate.v0);
+                double factor = v0max / v0;
+                
+                smul(t.accelerate.v0, t.accelerate.v0, factor);
+        }
+
+        double Script::maximum_entry_speed(double *displacement, double v1, double *amax)
         {
                 /*  v1 < v0 and a > 0 and t > 0
                     v1 = v0 - at  => t = (v0 - v1) / a    (1)
@@ -522,282 +686,171 @@ namespace romi {
                     (1,2) => L = (v1² - v0²) / 2a
                           => v0 = sqrt(v1² + 2aL)
                  */
-                double displacement[3];
-                vsub(displacement, t->curve.p0, t->accelerate.p0);
-                
-                double length = norm(displacement);
-                double v0 = norm(t->accelerate.v0);
-                double v1 = norm(t->curve.v0);
                 double a = 0.0;
-                if (norm(displacement) > 0.0) 
+                double length = norm(displacement);
+                if (length > 0.0) 
                         a = amax_in_direction(amax, displacement);
-                double v0s = sqrt(v1 * v1 + 2 * a * length);
-                double factor = v0s / v0;
-                smul(t->accelerate.v0, t->accelerate.v0, factor);
+                return sqrt(v1 * v1 + 2 * a * length);
+        }
+        
+        void Script::reduce_exit_speed(ATDC& t, double *amax)
+        {
+                double displacement[3];
+                vsub(displacement, t.curve.p0, t.accelerate.p0);
+                
+                double v0 = norm(t.accelerate.v0);
+                double v1max = maximum_exit_speed(displacement, v0, amax);
+                
+                double v1 = norm(t.curve.v0);
+                double factor = v1max / v1;
+                
+                t.slow_down_curve(factor);
         }
 
-        void Script::reduce_exit_speed(ATDC *t, double *amax)
+        double Script::maximum_exit_speed(double *displacement, double v0, double *amax)
         {
                 /*  L = v0.t + at²/2                      (1)
                     v1 = v0 + at  => t = (v1 - v0) / a    (2)
                     (1,2) => L = (v1² - v0²) / 2a
                           => v1 = sqrt(v0² + 2aL)
                  */
-                double displacement[3];
-                vsub(displacement, t->curve.p0, t->accelerate.p0);
-                
+                double a = 0.0;
                 double length = norm(displacement);
-                double v0 = norm(t->accelerate.v0);
-                double v1 = norm(t->curve.v0);
-                double a = amax_in_direction(amax, displacement);
-                double v1s = sqrt(v0 * v0 + 2.0 * a * length);
-                double factor = v1s / v1;
-                
-                slow_down_curve(t, factor);
-        }
-
-        void Script::back_propagate_speed_change(Segment *s0, ATDC *t, double *amax)
-        {
-                /* This fuctions is called recursively to propagate
-                 * changes from the end of the path back to the
-                 * front. We may have been called because the next
-                 * segment had to slow down. If so, update the exit
-                 * speed of the current segement. */
-
-                if (update_curve_speed_if_needed(t)
-                    && update_speeds_if_needed(t, amax)) {
-                        assert_not_first(s0, t);
-                        back_propagate_speed_change(s0->prev, t->prev, amax);
-                }                        
-        }
-
-        void Script::assert_not_first(Segment *s, ATDC *t)
-        {
-                if (s->prev == NULL || t->prev == NULL) {
-                        r_err("check_curve_speed_forward: pushing speed change "
-                              "backwards but we're at the first segment?!");
-                        throw std::runtime_error("assert_not_first failed");
-                }
+                if (length > 0.0) 
+                        a = amax_in_direction(amax, displacement);
+                return sqrt(v0 * v0 + 2.0 * a * length);
         }
         
-        bool Script::update_curve_speed_if_needed(ATDC *t)
+        bool Script::update_curve_speed_if_needed(size_t index)
         {
+                
                 bool changed = false;
-                if (t->next) {
-                        double v1 = norm(t->curve.v0);
-                        double v0_next = norm(t->next->accelerate.v0);
+                if (has_next_atdc(index)) {
+                        ATDC& t0 = _atdc[index];
+                        ATDC& t1 = _atdc[index+1];
+                        double v1 = norm(t0.curve.v0);
+                        double v0_next = norm(t1.accelerate.v0);
                         if (v1 != v0_next) {
                                 // The next segment lowered its entry speed. Slow down the
                                 // curve.
-                                slow_down_curve(t, v0_next / v1);
+                                t0.slow_down_curve(v0_next / v1);
                                 changed = true;
                         }
                 }
                 return changed;
         }
         
-        void Script::slow_down_curve(ATDC *t, double factor)
+        void Script::back_propagate_speed_change(size_t index, double *amax)
         {
-                smul(t->curve.v0, t->curve.v0, factor);
-                smul(t->curve.v1, t->curve.v1, factor);
-                smul(t->curve.a, t->curve.a, factor * factor);
-                t->curve.duration /= factor;
-        }
-        
-        /**
-         *  Computes the curve at the end of the segment. This function may
-         *  adjust the entry speed of the segment to assure that the curve
-         *  isn't entered with too high a speed.
-         *
-         *  s0: The current segment.
-         *  amax: The maximum acceleration that the machine tolerates. 
-         */
-        void Script::compute_curve_and_speeds(Segment *s, ATDC *t,
-                                              double deviation, double *amax)
-        {
-                compute_curve(s, t, deviation, amax);
+                /* This fuctions is called recursively to propagate
+                 * changes from the end of the path back to the
+                 * front. We may have been called because the next
+                 * segment had to slow down. If so, update the exit
+                 * speed of the current segement. */
                 
-                if (update_speeds_if_needed(t, amax)) {
-                        assert_not_first(s, t);
-                        back_propagate_speed_change(s->prev, t->prev, amax);
+                if (update_curve_speed_if_needed(index)
+                    && update_speeds_if_needed(index, amax)) {
+                        assert_not_first(index);
+                        back_propagate_speed_change(index-1, amax);
+                }                        
+        }
+
+        void Script::assert_not_first(size_t index)
+        {
+                if (index == 0) {
+                        r_err("check_curve_speed_forward: pushing speed change "
+                              "backwards but we're at the first segment?!");
+                        throw std::runtime_error("assert_not_first failed");
                 }
-                
-                initialize_next_acceleration(t);
         }
         
-        void Script::initialize_next_acceleration(ATDC *t0)
+        void Script::initialize_next_acceleration(size_t index)
         {
-                ATDC *t1 = t0->next;
-                if (t1) {
-                        vcopy(t1->accelerate.v0, t0->curve.v1);
-                        vcopy(t1->accelerate.p0, t0->curve.p1);
+                if (has_next_atdc(index)) {
+                        ATDC& t0 = _atdc[index];
+                        ATDC& t1 = _atdc[index+1];
+                        vcopy(t1.accelerate.v0, t0.curve.v1);
+                        vcopy(t1.accelerate.p0, t0.curve.p1);
                 }
         }
-
-        void Script::check_max_speed(Segment *segment, double *vmax)
-        {
-                double s = 1.0;
-
-                for (int i = 0; i < 3; i++) {
-                        if (segment->v[i] != 0.0)
-                                s = std::min(s, vmax[i] / fabs(segment->v[i]));
-                }
         
-                smul(segment->v, segment->v, s);
-        }
-
-        void Script::compute_curves_and_speeds(double deviation, double *amax)
+        void Script::compute_accelerations(double *amax)
         {
-                Segment *segment = segments;
-                ATDC *t = atdc;
-        
-                while (segment) {
-                        compute_curve_and_speeds(segment, t, deviation, amax);
-                        segment = segment->next;
-                        t = t->next;
+                for (size_t i = 0; i < _segments.size(); i++) {
+                        compute_accelerations(i, amax);
                 }
         }
 
-        void Script::compute_accelerations(Segment *s0, ATDC *t0, double *amax)
+        void Script::compute_accelerations(size_t index, double *amax)
         {
                 double from[3];
                 double to[3];
                 double start_speed[3];
                 double target_speed[3];
                 double arrival_speed[3];
-
+                
+                Segment& s0 = _segments[index];
+                ATDC& t0 = _atdc[index];
+                
                 // Make copies because the sections may get
                 // reinitialized.
-                vcopy(from, t0->accelerate.p0);
-                vcopy(to, t0->curve.p0);
-                vcopy(start_speed, t0->accelerate.v0);
-                vcopy(target_speed, s0->v);
-                vcopy(arrival_speed, t0->curve.v0);
                 
-                t0->compute_accelerations(from, to, start_speed,
-                                          target_speed, arrival_speed,
-                                          amax);
-        }
-        
-        void Script::compute_accelerations(double *amax)
-        {
-                Segment *s0 = segments;
-                ATDC *t0 = atdc;
-        
-                while (s0) {
-                        compute_accelerations(s0, t0, amax);
-                        s0 = s0->next;
-                        t0 = t0->next;
-                }
+                vcopy(from, t0.accelerate.p0);
+                vcopy(to, t0.curve.p0);
+                vcopy(start_speed, t0.accelerate.v0);
+                vcopy(target_speed, s0.v);
+                vcopy(arrival_speed, t0.curve.v0);
+                
+                t0.compute_accelerations(from, to, start_speed,
+                                         target_speed, arrival_speed,
+                                         amax);
         }
 
         void Script::update_start_times()
         {
-                ATDC *t0 = atdc;
                 double at = 0.0;
-        
-                while (t0) {
-                        t0->update_start_times(at);
-                        at = t0->curve.end_time();
-                        t0 = t0->next;
+                for (size_t i = 0; i < count_atdc(); i++) {
+                        _atdc[i].update_start_times(at);
+                        at = _atdc[i].get_end_time();
                 }
         }
 
-        void Script::check_max_speeds(double *vmax)
+        void Script::slice(double period, double max_slice_duration)
         {
-                for (Segment *segment = segments; segment != NULL; segment = segment->next)
-                        check_max_speed(segment, vmax);
+                for (size_t i = 0; i < count_atdc(); i++)
+                        slice(get_atdc(i), period, max_slice_duration);
         }
 
-        void Script::copy_segments_to_atdc()
+        void Script::slice(ATDC& atdc, double period, double max_slice_duration)
         {
-                ATDC *first = NULL;
-                ATDC *prev = NULL;
-        
-                for (Segment *segment = segments; segment != NULL; segment = segment->next) {
-                        ATDC *atdc = new ATDC();
-                
-                        // Append to double-linked list
-                        if (first == NULL)
-                                first = atdc;
-                        if (prev != NULL) {
-                                prev->next = atdc;
-                                atdc->prev = prev;
-                        }
-                        prev = atdc;
+                atdc.accelerate.slice(_slices, period, max_slice_duration);
+                atdc.travel.slice(_slices, period, max_slice_duration);
+                atdc.decelerate.slice(_slices, period, max_slice_duration);
+                atdc.curve.slice(_slices, period, max_slice_duration);
+        }
+
+        bool Script::has_next_segment(size_t index)
+        {
+                return index < _segments.size() - 1;
+        }
+
+        bool Script::has_next_atdc(size_t index)
+        {
+                return index < _atdc.size() - 1;
+        }
+
+        double Script::get_duration()
+        {
+                double duration = 0.0;
+                if (count_atdc() > 0) {
+                        size_t last = count_atdc() -1;
+                        duration = _atdc[last].get_end_time();
                 }
-
-                atdc = first;
+                return duration;
         }
 
-        void Script::convert_to_atdc(double d, double *vmax, double *amax)
+        void Script::get_start_position(double *p)
         {
-                check_max_speeds(vmax);
-                copy_segments_to_atdc();
-                compute_curves_and_speeds(d, amax);
-                compute_accelerations(amax);
-                update_start_times();
-        }
-
-        void Script::init_segment_positions(Segment& segment, Move& move)
-        {
-                vcopy(segment.p0, _position); 
-                vcopy(segment.p1, move.p); 
-        }
-
-        void Script::init_segment_speed(Segment& segment, Move& move)
-        {
-                double d[3];
-                vsub(d, segment.p1, segment.p0);
-                normalize(d, d);
-                smul(segment.v, d, move.v);
-        }
-        
-        void Script::convert_to_segments()
-        {
-                Segment *first = NULL;
-                Segment *prev = NULL;
-
-                for (size_t i = 0; i < _moves.size(); i++) {
-                
-                        Move& move = _moves[i];
-                
-                        /* If the displacement is less then 0.1 mm, skip it. */
-                        double d[3];
-                        vsub(d, move.p, _position); 
-                        if (norm(d) > 0.0001) {
-                                Segment *segment = new Segment();
-
-                                // chain the segment
-                                segment->prev = prev;
-                                if (prev == NULL) 
-                                        first = segment;
-                                else 
-                                        prev->next = segment;
-                                prev = segment;
-
-                                init_segment_positions(*segment, move);
-                                init_segment_speed(*segment, move);
-
-                                // update current position
-                                vcopy(_position, move.p); 
-                        }                        
-                }
-        
-                segments = first;
-        }
-
-        void Script::set_position(double *p)
-        {
-                vcopy(_position, p);
-        }
-
-        void Script::convert(double *vmax, double *amax,
-                             double deviation, double period,
-                             double maxlen)
-        {
-                convert_to_segments();
-                convert_to_atdc(deviation, vmax, amax);
-                slice(period, maxlen);
+                vcopy(p, _start_position);
         }
 }

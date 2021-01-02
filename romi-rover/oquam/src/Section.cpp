@@ -85,7 +85,8 @@ namespace romi {
                 return start_time + duration;
         }
 
-        void Section::compute_slice(std::vector<Section>& slices, double offset, double slice_duration)
+        void Section::compute_slice(std::vector<Section>& slices,
+                                    double offset, double slice_duration)
         {
                 double t0 = offset;
                 double t1 = offset + slice_duration;
@@ -106,7 +107,8 @@ namespace romi {
                                          slice_v0, slice_v1, a));
         }
 
-        void Section::slice(std::vector<Section>& slices, double interval, double max_duration)
+        void Section::slice(std::vector<Section>& slices, double interval,
+                            double max_duration)
         {
                 double offset = 0.0;
                 double used_interval = interval;
