@@ -192,12 +192,6 @@ bool EnvelopeParser::process(char c)
                         
                         _crc_metadata = 16 * _crc_metadata + hex_to_int(c);
                         if (_crc_metadata == crc) {
-#if defined(ARDUINO)
-                                Serial.print("#!");
-                                Serial.print("crc=");
-                                Serial.print(crc, HEX);
-                                Serial.println(":xxxx");
-#endif
                                 _state = expect_end_envelope;
                         } else {
                                 set_error(c, romiserial_envelope_crc_mismatch);
