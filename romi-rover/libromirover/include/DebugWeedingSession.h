@@ -154,49 +154,21 @@ namespace romi {
                 std::string _basename;
                 DebugWeedingFolder _folder;
                 ErrorFolder _error_folder; // FIXME
+                int _count;
                 
-                bool make_folder(std::string &path) {
-                        bool success = false;
-                        struct stat st;
-                        memset(&st, 0, sizeof(st));
-                        if (stat(path.c_str(), &st) == -1) {
-                                if (mkdir(path.c_str(), 0770) == 0)
-                                        success = true;
-                        } else {
-                                success = true;
-                        }
-                        return success;
-                }
-
-                void make_path(std::string &path) {
-                        static char timestamp[128];
-                        path = _directory;
-                        path += "/";
-                        path += _basename;
-                        path += "-";
-                        path += clock_datetime_compact(timestamp, sizeof(timestamp));
-                }
+                bool make_folder(std::string &path);
+                void make_path(std::string &path);
 
         public:
                 
                 DebugWeedingSession(const char *basedir,
                                     const char *basename)
-                        : _directory(basedir), _basename(basename) {
-                        start_new_folder();
+                        : _directory(basedir), _basename(basename), _count(0) {
                 }
                 
                 virtual ~DebugWeedingSession() override = default;
                 
-                IFolder &start_new_folder() override {
-                        std::string path;
-                        make_path(path);
-                        if (make_folder(path)) {
-                                _folder.set_directory(path);
-                                return _folder;
-                        } else {
-                                return _error_folder;
-                        }
-                }
+                IFolder &start_new_folder();
         };
         
 }

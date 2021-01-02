@@ -56,6 +56,11 @@ namespace romi {
                 _y[1] = xmax[1];
                 _z[1] = xmax[2];
         }
+        
+        CNCRange::CNCRange(JsonCpp& range)
+        {
+                init(range);
+        }
                 
         void CNCRange::init(JsonCpp& range)
         {

@@ -36,6 +36,7 @@ namespace romi {
                 double _z[2];
                 
                 CNCRange();
+                CNCRange(JsonCpp &range);
                 CNCRange(double x0, double x1,
                          double y0, double y1,
                          double z0, double z1);

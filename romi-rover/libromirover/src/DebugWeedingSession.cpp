@@ -35,6 +35,44 @@
 #include <stdlib.h>
 
 namespace romi {
+
+        IFolder &DebugWeedingSession::start_new_folder()
+        {
+                std::string path;
+                make_path(path);
+                if (make_folder(path)) {
+                        _folder.set_directory(path);
+                        return _folder;
+                } else {
+                        return _error_folder;
+                }
+        }
+
+        void DebugWeedingSession::make_path(std::string &path)
+        {
+                static char timestamp[128];
+                path = _directory;
+                path += "/";
+                path += _basename;
+                path += "-";
+                path += clock_datetime_compact(timestamp, sizeof(timestamp));
+                path += "-";
+                path += std::to_string(_count++);
+        }
+
+        bool DebugWeedingSession::make_folder(std::string &path)
+        {
+                bool success = false;
+                struct stat st;
+                memset(&st, 0, sizeof(st));
+                if (stat(path.c_str(), &st) == -1) {
+                        if (mkdir(path.c_str(), 0770) == 0)
+                                success = true;
+                } else {
+                        success = true;
+                }
+                return success;
+        }
         
         std::string DebugWeedingFolder::make_filename(const char* name,
                                                        const char *extension)
@@ -278,4 +316,5 @@ namespace romi {
                 file.close();
         }
         
+
 }
