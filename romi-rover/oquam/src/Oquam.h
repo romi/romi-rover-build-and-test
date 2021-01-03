@@ -44,8 +44,8 @@ namespace romi {
                 std::mutex _m;
 
                 CNCRange _range;
-                double _vmax[3]; // in m/s
-                double _amax[3]; // in m/s²
+                v3 _vmax; // in m/s
+                v3 _amax; // in m/s²
 
                 // The maximum deviation allowed when computed a
                 // continuous path, in m.
@@ -86,32 +86,25 @@ namespace romi {
                 
                 bool moveto_synchronized(double x, double y, double z, double rel_speed);
                 bool do_moveto(double x, double y, double z, double rel_speed);
-                void moveto_determine_xyz(double x, double y, double z, double *p);
+                v3 moveto_determine_xyz(double x, double y, double z);
                 bool travel_synchronized(Path &path, double relative_speed);
                 void do_travel(Path &path, double relative_speed);
                 void convert_path_to_script(Path &path, double speed, Script& script); 
-                void convert_script(Script& script, double *vmax);
+                void convert_script(Script& script, v3& vmax);
                 void store_script(Script& script);
                 void store_script_svg(IFolder &folder, Script& script);
                 void store_script_json(IFolder &folder, Script& script);
-                void check_script(Script& script, double *vmax);
+                void check_script(Script& script, v3& vmax);
                 void execute_script(Script& script);
                 void execute_move(Section& section, int32_t *pos_steps);
                 void wait_end_of_script(Script& script); 
-                bool get_position(double *position); 
+                bool get_position(v3& position); 
                 bool get_position(int32_t *position); 
-                void assert_get_position(double *position); 
+                v3 assert_get_position(); 
                 void assert_relative_speed(double relative_speed); 
-                void assert_in_range(double x, double y, double z);
-                // void compute_moveto_parameters(double x, double y, double z,
-                //                                double rel_speed,
-                //                                int16_t *params);
-                // void get_moveto_displacement(double x, double y, double z, double *dx);
-                // double compute_duration(double *dx, double rel_speed);
+                void assert_in_range(v3 p);
 
                 bool is_zero(int16_t *params);
-                // double get_duration(int16_t *params);
-                // void assert_move_sync(int16_t *params);
                 void assert_move(int16_t *params);
                 void assert_synchronize(double timeout);
                 void convert_position_to_steps(double *position, int32_t *steps);

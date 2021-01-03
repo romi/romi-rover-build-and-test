@@ -41,13 +41,13 @@ namespace romi {
                 : _controller(controller),
                   _file_cabinet(0),
                   _range(range),
+                  _vmax(vmax),
+                  _amax(amax),
                   _path_max_deviation(path_max_deviation),
                   _path_slice_duration(path_slice_duration)
         {
                 _path_max_slice_duration = 32.0;
                 
-                vcopy(_vmax, vmax);
-                vcopy(_amax, amax);
                 vcopy(_scale_meters_to_steps, scale_meters_to_steps);
                 
                 _script_count = 0;
@@ -69,23 +69,26 @@ namespace romi {
                 return _controller.get_position(position);
         }
         
-        bool Oquam::get_position(double *position) 
+        bool Oquam::get_position(v3& position) 
         {
                 int32_t p[3];
                 bool success = get_position(p);
                 if (success) {
-                        for (int i = 0; i < 3; i++)
-                                position[i] = (double) p[i] / _scale_meters_to_steps[i];
+                        position.set(p[0] / _scale_meters_to_steps[0],
+                                     p[1] / _scale_meters_to_steps[1],
+                                     p[2] / _scale_meters_to_steps[2]);
                 }
                 return success;
         }
 
-        void Oquam::assert_get_position(double *position) 
+        v3 Oquam::assert_get_position() 
         {
+                v3 position;
                 if (!get_position(position)) {
                         r_err("Oquam:: get_position failed!");
                         throw std::runtime_error("get_position failed");
                 }
+                return position;
         }
         
         bool Oquam::moveto(double x, double y, double z, double relative_speed)
@@ -108,18 +111,21 @@ namespace romi {
         bool Oquam::do_moveto(double x, double y, double z, double rel_speed)
         {
                 Path path;
-                double p[3];
-                moveto_determine_xyz(x, y, z, p);
-                path.push_back(Waypoint(p[0], p[1], p[2]));
+                v3 p = moveto_determine_xyz(x, y, z);
+                path.push_back(p);
                 return travel_synchronized(path, rel_speed);
         }
         
-        void Oquam::moveto_determine_xyz(double x, double y, double z, double *p)
+        v3 Oquam::moveto_determine_xyz(double x, double y, double z)
         {
-                assert_get_position(p);
-                p[0] = (x == UNCHANGED)? p[0] : x;
-                p[1] = (y == UNCHANGED)? p[1] : y;
-                p[2] = (z == UNCHANGED)? p[2] : z;
+                v3 p = assert_get_position();
+                if (x != UNCHANGED)
+                        p.x() = x;
+                if (y != UNCHANGED)
+                        p.y() = y;
+                if (z != UNCHANGED)
+                        p.z() = z;
+                return p;
         }
         
         bool Oquam::is_zero(int16_t *params)
@@ -167,11 +173,11 @@ namespace romi {
                         throw std::runtime_error("Oquam: invalid speed");
         }
         
-        void Oquam::assert_in_range(double x, double y, double z) 
+        void Oquam::assert_in_range(v3 p) 
         {
-                if (!_range.is_valid(x, y, z)) {
+                if (!_range.is_inside(p)) {
                         r_warn("Oquam: Point[%d]: out of bounds: "
-                               "(%0.4f, %0.4f, %0.4f)", x, y, z);
+                               "(%0.4f, %0.4f, %0.4f)", p.x(), p.y(), p.z());
                         throw std::runtime_error("Point out of bounds");
                 }
         }
@@ -180,15 +186,13 @@ namespace romi {
         {
                 assert_relative_speed(relative_speed); 
                 
-                double start_position[3];
-                assert_get_position(start_position);
-                        
+                v3 start_position = assert_get_position();
                 Script script(start_position);
                 
-                double vmax[3];
-                smul(vmax, _vmax, relative_speed);
+                v3 vmax;
+                vmax = _vmax * relative_speed;
                 
-                double speed_ms = norm(vmax);
+                double speed_ms = norm(_vmax * relative_speed);
                 
                 convert_path_to_script(path, speed_ms, script);
                 convert_script(script, vmax);
@@ -201,18 +205,14 @@ namespace romi {
         void Oquam::convert_path_to_script(Path &path, double speed, Script& script) 
         {
                 for (size_t i = 0; i < path.size(); i++) {
-                        double x = path[i].x;
-                        double y = path[i].y;
-                        double z = path[i].z;
-
-                        assert_in_range(x, y, z); 
-                        script.moveto(x, y, z, speed);
+                        assert_in_range(path[i]); 
+                        script.moveto(path[i], speed);
                 }
         }
 
-        void Oquam::convert_script(Script& script, double *vmax) 
+        void Oquam::convert_script(Script& script, v3& vmax) 
         {
-                script.convert(vmax, _amax, _path_max_deviation,
+                script.convert(vmax.values(), _amax.values(), _path_max_deviation,
                                _path_slice_duration, _path_max_slice_duration); 
         }
 
@@ -227,7 +227,7 @@ namespace romi {
 
         void Oquam::store_script_svg(IFolder &folder, Script& script) 
         {
-                membuf_t *svg = plot_to_mem(script, _range, _vmax, _amax);
+                membuf_t *svg = plot_to_mem(script, _range, _vmax.values(), _amax.values());
                 if (svg != 0) {
                         folder.store_svg("path", membuf_data(svg), membuf_len(svg));
                         delete_membuf(svg);
@@ -244,9 +244,10 @@ namespace romi {
                 delete_membuf(text);
         }
 
-        void Oquam::check_script(Script& script, double *vmax) 
+        void Oquam::check_script(Script& script, v3& vmax) 
         {
-                if (!is_valid(script, _path_max_slice_duration, _range, vmax, _amax)) {
+                if (!is_valid(script, _path_max_slice_duration, _range,
+                              vmax.values(), _amax.values())) {
                         r_err("Oquam::convert_script: generated script is invalid");
                         throw std::runtime_error("is_valid(script) failed");
                 }

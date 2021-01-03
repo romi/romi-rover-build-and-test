@@ -36,7 +36,7 @@ protected:
 TEST_F(script_tests, test_constructor)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
         
         //Assert
@@ -49,7 +49,7 @@ TEST_F(script_tests, test_constructor)
 TEST_F(script_tests, test_moveto)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         script.moveto(1.0, 0.0, 0.0, 1.0);
@@ -115,7 +115,7 @@ TEST_F(script_tests, test_moveto)
 TEST_F(script_tests, test_move_and_back)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         script.moveto(1.0, 0.0, 0.0, 1.0);
@@ -223,7 +223,7 @@ TEST_F(script_tests, test_move_and_back)
 TEST_F(script_tests, test_move_forward_twice)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         script.moveto(1.0, 0.0, 0.0, 1.0);
@@ -238,7 +238,7 @@ TEST_F(script_tests, test_move_forward_twice)
 TEST_F(script_tests, test_moves_at_90degrees)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         script.moveto(0.01, 0.00, 0.0, 1.0);
@@ -253,7 +253,7 @@ TEST_F(script_tests, test_moves_at_90degrees)
 TEST_F(script_tests, test_three_small_moves_in_u)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         // Three successive short moves are 90°. The first move will
@@ -274,7 +274,7 @@ TEST_F(script_tests, test_three_small_moves_in_u)
 TEST_F(script_tests, test_reduce_exit_speed)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         double test_amax[3] = { 0.5, 0.5, 0.5};
@@ -293,7 +293,7 @@ TEST_F(script_tests, test_reduce_exit_speed)
 TEST_F(script_tests, test_reduce_entry_speed)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         double test_amax[3] = { 0.5, 0.5, 0.5};
@@ -312,7 +312,7 @@ TEST_F(script_tests, test_reduce_entry_speed)
 TEST_F(script_tests, moveto_throws_exception_if_negative_speed_1)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         try {
@@ -329,7 +329,7 @@ TEST_F(script_tests, moveto_throws_exception_if_negative_speed_1)
 TEST_F(script_tests, moveto_throws_exception_if_negative_speed_2)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         try {
@@ -347,7 +347,7 @@ TEST_F(script_tests, moveto_throws_exception_if_negative_speed_2)
 TEST_F(script_tests, test_zero_acceleration)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         double amax_[3] = {0, 0, 0};
@@ -366,7 +366,7 @@ TEST_F(script_tests, test_zero_acceleration)
 TEST_F(script_tests, test_zero_max_speed)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         double vmax_[3] = {0, 0, 0};
@@ -385,7 +385,7 @@ TEST_F(script_tests, test_zero_max_speed)
 TEST_F(script_tests, test_negative_deviation)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         try {
@@ -402,7 +402,7 @@ TEST_F(script_tests, test_negative_deviation)
 TEST_F(script_tests, test_zero_deviation)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
 
         try {

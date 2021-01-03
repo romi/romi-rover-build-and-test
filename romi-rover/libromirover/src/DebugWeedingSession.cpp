@@ -310,8 +310,8 @@ namespace romi {
                 
                 Path::iterator ptr; 
                 for (ptr = path.begin(); ptr < path.end(); ptr++)  {
-                        Waypoint p = *ptr;
-                        file << p.x << "\t" << p.y << std::endl;
+                        v3 p = *ptr;
+                        file << p.x() << "\t" << p.y() << std::endl;
                 }
                 file.close();
         }

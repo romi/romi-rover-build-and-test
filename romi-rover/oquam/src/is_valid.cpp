@@ -111,7 +111,7 @@ namespace romi {
                 double e[3];
                 vsub(e, v, section.v1);
                 
-                bool ok = norm(e) < 0.001;
+                bool ok = vnorm(e) < 0.001;
                 if (!ok) {
                         r_warn("is_valid: section (%s): |(v0+a.t)-v1|>0.001", name);
                         r_warn("is_valid: section (%s): v1=(%f,%f,%f), v0+a.t=(%f,%f,%f)",
@@ -139,7 +139,7 @@ namespace romi {
                 double e[3];
                 vsub(e, p, section.p1);
                 
-                bool ok = norm(e) < 0.001;
+                bool ok = vnorm(e) < 0.001;
                 if (!ok) {
                         r_warn("is_valid: section (%s): |(p0+v0.t+a.t²/2)-p1|>0.001", name);
                         r_warn("is_valid: section (%s): p1=(%f,%f,%f), p=(%f,%f,%f)",
@@ -237,9 +237,9 @@ namespace romi {
         {
                 bool matches = true;
                 if (script.count_atdc() > 0) {
-                        double start_position[3];
-                        script.get_start_position(start_position);
-                        matches = veq(start_position, script.get_atdc(0).accelerate.p0);
+                        v3 start_position = script.get_start_position();
+                        matches = veq(start_position.values(),
+                                      script.get_atdc(0).accelerate.p0);
                 }
                 if (!matches) {
                         r_warn("is_valid: start positions don't match");
@@ -268,15 +268,8 @@ namespace romi {
         bool is_valid(Script& script, double tmax, CNCRange& range, 
                       double *vmax, double *amax)
         {
-                double xmin[3];
-                double xmax[3];
-                xmin[0] = range._x[0];
-                xmin[1] = range._y[0];
-                xmin[2] = range._z[0];
-                xmax[0] = range._x[1];
-                xmax[1] = range._y[1];
-                xmax[2] = range._z[1];
-                return is_valid(script, tmax, xmin, xmax, vmax, amax);
+                return is_valid(script, tmax, range.min.values(),
+                                range.max.values(), vmax, amax);
         }
         
 

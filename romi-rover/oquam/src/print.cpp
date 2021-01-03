@@ -120,7 +120,7 @@ namespace romi {
         {
                 membuf_printf(text,
                               "{\"x\": %.5f, \"y\": %.5f, \"z\": %.5f, \"v\": %.5f}",
-                              move.p[0], move.p[1], move.p[2], move.v);
+                              move.p.x(), move.p.y(), move.p.z(), move.v);
         }
         
         void print_moves(Script& script, membuf_t *text)

@@ -19,10 +19,13 @@ set(SOURCES
   include/Navigation.h
   include/JSONConfiguration.h
   include/Path.h 
+  include/v.h
   include/Weeder.h
   src/CNCRange.cpp
   src/DebugWeedingSession.cpp
   src/image_impl.c
+  src/Path.cpp
+  src/v.cpp
 )
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/include" )
@@ -40,10 +43,10 @@ target_link_libraries(romirover
                         png
                         m)
                       
-#if(BUILD_TESTS)
-#    add_subdirectory(test)
-#endif()
-#
+if(BUILD_TESTS)
+    add_subdirectory(test)
+endif()
+
 #INSTALL(TARGETS romi DESTINATION "lib")
 #INSTALL (
 #    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/

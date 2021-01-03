@@ -34,13 +34,16 @@
 namespace romi {
         
         struct Move {
-                double p[3];
+                v3 p;
                 double v;
 
                 Move(double x, double y, double z, double speed) {
-                        p[0] = x;
-                        p[1] = y;
-                        p[2] = z;
+                        p.set(x, y, z);
+                        v = speed;
+                }
+                
+                Move(v3 p_, double speed) {
+                        p = p_;
                         v = speed;
                 }
         };
@@ -69,7 +72,7 @@ namespace romi {
                 double length() {
                         double d[3];
                         displacement(d);
-                        return norm(d);
+                        return vnorm(d);
                 }
                 
                 double *direction(double *d) {
@@ -102,18 +105,19 @@ namespace romi {
                  * constant speeds. */
                 std::vector<Section> _slices;
                 
-                double _start_position[3];
-                double _current_position[3];
+                v3 _start_position;
+                v3 _current_position;
                 
         public:
                                 
-                Script(double *start_position);
+                Script(v3 start_position);
                 virtual ~Script() = default;
                 
                 /* Move to absolute position (x,y,z) in meters at an
                  * absolute speed of v, in m/s.
                  */
                 void moveto(double x, double y, double z, double v);
+                void moveto(v3 p, double v);
 
                 void convert(double *vmax,
                              double *amax,
@@ -154,11 +158,11 @@ namespace romi {
                 }
 
                 double get_duration();
-                void get_start_position(double *p);
+                v3 get_start_position();
                 
         protected:
                 
-                void set_current_position(double *p);
+                void set_current_position(v3 p);
                 void convert_moves_to_segments();
                 void convert_segment(Move& move);
                 void init_segment_positions(Segment& segment, Move& move);

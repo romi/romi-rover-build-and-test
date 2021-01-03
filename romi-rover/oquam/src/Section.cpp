@@ -117,7 +117,7 @@ namespace romi {
                  * the speed and position at small intervals. We can therefore
                  * sample at speeds and positions at 'max_duration' instead of
                  * 'interval'. */
-                if (norm(a) == 0)
+                if (vnorm(a) == 0)
                         used_interval = max_duration;
 
                 while (offset < duration) {
@@ -139,7 +139,7 @@ namespace romi {
         {
                 double d[3];
                 displacement(d);
-                return norm(d);
+                return vnorm(d);
         }
 
         double *Section::direction(double *d)

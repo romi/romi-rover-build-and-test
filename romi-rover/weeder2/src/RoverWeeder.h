@@ -47,11 +47,10 @@ namespace romi {
                 IFileCabinet &_filecabinet;
                 
                 void scale_to_range(Path &path);
-                void shift_to_first_point(Path &path, Path &out);
+                void rotate_path_to_starting_point(Path &path, Path &out);
                 void adjust_path(Path &path, Path &out);
-                bool path_in_range(Path &path);
                 bool move_arm_to_camera_position();
-                bool move_arm_to_start_position(Waypoint p);
+                bool move_arm_to_start_position(v3 p);
                 bool stop_spindle_and_move_arm_up();
                 bool do_hoe(Path &som_path);
 

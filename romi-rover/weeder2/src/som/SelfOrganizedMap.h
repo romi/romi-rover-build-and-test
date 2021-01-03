@@ -321,8 +321,7 @@ namespace romi {
                         for (int i = 0; i < _path_length; i++) {
                                 double x = rtod(_px[i]);
                                 double y = rtod(_py[i]);
-                                Waypoint p(x, y);
-                                path.push_back(p);
+                                path.push_back(v3(x, y, 0));
                         }
                 }
                 

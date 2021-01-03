@@ -689,14 +689,7 @@ namespace romi {
 
         membuf_t *plot_to_mem(Script& script, CNCRange& range, double *vmax, double *amax)
         {
-                double xmin[3];
-                double xmax[3];
-                xmin[0] = range._x[0];
-                xmin[1] = range._y[0];
-                xmin[2] = range._z[0];
-                xmax[0] = range._x[1];
-                xmax[1] = range._y[1];
-                xmax[2] = range._z[1];
-                return plot_to_mem(script, xmin, xmax, vmax, amax);
+                return plot_to_mem(script, range.min.values(),
+                                   range.max.values(), vmax, amax);
         }
 }

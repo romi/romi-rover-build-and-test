@@ -31,27 +31,30 @@ namespace romi {
         {
                 bool success = false;
                 if (stop_spindle_and_move_arm_up()) {
-                        if (_cnc->moveto(0.0, _range._y[1], 0.0, 0.8)) {
+                        if (_cnc->moveto(0.0, _range.max.y(), 0.0, 0.8)) {
                                 success = true;
                         } else {
-                                r_warn("RoverWeeder::move_arm_to_camera_position: moveto failed");
+                                r_warn("RoverWeeder::move_arm_to_camera_position: "
+                                       "moveto failed");
                         }
                 } else {
-                        r_warn("RoverWeeder::move_arm_to_camera_position: stop_spindle_and_move_arm_up failed");
+                        r_warn("RoverWeeder::move_arm_to_camera_position: "
+                               "stop_spindle_and_move_arm_up failed");
                 }        
                 return success;
         }
 
-        bool RoverWeeder::move_arm_to_start_position(Waypoint p)
+        bool RoverWeeder::move_arm_to_start_position(v3 p)
         {
                 bool success = false;
                 r_debug("RoverWeeder::move_arm_to_start_position");
                 success = (stop_spindle_and_move_arm_up()
-                           && _cnc->moveto(p.x, p.y, 0.0, 0.8)
+                           && _cnc->moveto(p.x(), p.y(), 0.0, 0.8)
                            && _cnc->spindle(1.0)
-                           && _cnc->moveto(p.x, p.y, _z0, 0.8));
+                           && _cnc->moveto(p.x(), p.y(), _z0, 0.8));
                 if (!success) {
-                        r_warn("RoverWeeder::move_arm_to_start_position: stop_spindle_and_move_arm_up, "
+                        r_warn("RoverWeeder::move_arm_to_start_position: "
+                               "stop_spindle_and_move_arm_up, "
                                "moveto or spindle failed");
                 } 
                 return success;
@@ -67,62 +70,13 @@ namespace romi {
                                          0.0, 0.8)) {
                                 success = true;
                         } else {
-                                r_warn("RoverWeeder::stop_spindle_and_move_arm_up: moveto failed");
+                                r_warn("RoverWeeder::stop_spindle_and_move_arm_up: "
+                                       "moveto failed");
                         }
                 } else {
                         r_warn("RoverWeeder::stop_spindle_and_move_arm_up: spindle failed");
                 }
                 return success;
-        }
-        
-        bool RoverWeeder::path_in_range(Path &path)
-        {
-                r_debug("RoverWeeder::path_in_range");
-                bool valid = true;
-                for (size_t i = 0; i < path.size(); i++) {
-                        double x = path[i].x;
-                        double y = path[i].y;
-                        double z = path[i].z;
-                        
-                        if (!_range.is_valid(x, y, z)) {
-                                
-                                r_err("Point: %.3f, %.3f, %.3f: "
-                                      "*** Out of range ***: (%.3f, %.3f), "
-                                      "(%.3f, %.3f), (%.3f, %.3f)",
-                                      x, y, z,
-                                      _range._x[0], _range._x[1],
-                                      _range._y[0], _range._y[1],
-                                      _range._z[0], _range._z[1]);
-                        
-                                if (_range.error(x, y, z) < 0.01) {
-                                        // Small error: clip
-                                        // TODO: call cnc_range to do this
-                                        if (x < _range._x[0])
-                                                x = _range._x[0];
-                                        if (x > _range._x[1])
-                                                x = _range._x[1];
-                                        if (y < _range._y[0])
-                                                y = _range._y[0];
-                                        if (y > _range._y[1])
-                                                y = _range._y[1];
-                                        if (z < _range._z[0])
-                                                z = _range._z[0];
-                                        if (z > _range._z[1])
-                                                z = _range._z[1];
-
-                                        path[i].x = x;
-                                        path[i].y = y;
-                                        path[i].z = z;
-                                        
-                                } else {
-                                        r_err("Computed point out of range: "
-                                              "%.3f, %.3f, %.3f", x, y, z);
-                                        valid = false;
-                                        break;
-                                } 
-                        }
-                }
-                return valid;
         }
 
         void RoverWeeder::scale_to_range(Path &path)
@@ -131,36 +85,35 @@ namespace romi {
 
                 // The y-axis of the rover is inverted with respect to
                 // the image coordinates.
-                path_invert_y(path);
+                path.invert_y();
 
                 // The path has x,y coordinates in the range [0,1].
                 // Map these coordinates to the physical dimensions of
                 // the workspace.
-                path_scale(path, _range._x[1] - _range._x[0],
-                           _range._y[1] - _range._y[0], 1.0);
-                path_translate(path, _range._x[0], _range._y[0], 0.0);
+                path.scale(_range.dimensions());
+                path.translate(_range.min);
+                path.set_z(_z0);
                 
-                path_set_z(path, _z0);
-                
-                if (!path_in_range(path))
+                if (!path.clamp(_range, 0.01))
                         throw std::runtime_error("Computed path out of range");
         }
         
-        void RoverWeeder::shift_to_first_point(Path &path, Path &out)
+        void RoverWeeder::rotate_path_to_starting_point(Path &path, Path &out)
         {
-                r_debug("RoverWeeder::shift_to_first_point");
-                size_t start_point = path_closest_point(path, 0.0, _range._y[1], _z0);
-                path_shift(path, out, start_point);
+                r_debug("RoverWeeder::rotate_path_to_starting_point");
+                v3 starting_point(0.0, _range.max.y(), _z0);
+                int closest_index = path.closest_point(starting_point);
+                path.rotate(out, closest_index);
         }
         
         void RoverWeeder::adjust_path(Path &path, Path &out)
         {
                 r_debug("RoverWeeder::adjust_path");
                 scale_to_range(path);
-                shift_to_first_point(path, out);
+                rotate_path_to_starting_point(path, out);
                 
                 for (size_t i = 0; i < out.size(); i++) {
-                        r_debug("Point: %.3f, %.3f, %.3f", out[i].x, out[i].y, out[i].z);
+                        r_debug("Point: %.3f, %.3f, %.3f", out[i].x(), out[i].y(), out[i].z());
                 }
         }
         

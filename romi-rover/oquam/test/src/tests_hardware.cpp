@@ -173,10 +173,10 @@ TEST_F(hardware_tests, test_oquam_travel_square)
         oquam.set_file_cabinet(&debug);
 
         Path path;
-        Waypoint p0(0.1, 0.0);
-        Waypoint p1(0.1, 0.1);
-        Waypoint p2(0.0, 0.1);
-        Waypoint p3(0.0, 0.0);
+        v3 p0(0.1, 0.0, 0.0);
+        v3 p1(0.1, 0.1, 0.0);
+        v3 p2(0.0, 0.1, 0.0);
+        v3 p3(0.0, 0.0, 0.0);
         path.push_back(p0);
         path.push_back(p1);
         path.push_back(p2);
@@ -199,10 +199,10 @@ TEST_F(hardware_tests, test_oquam_travel_square_fast)
         oquam.set_file_cabinet(&debug);
 
         Path path;
-        Waypoint p0(0.1, 0.0);
-        Waypoint p1(0.1, 0.1);
-        Waypoint p2(0.0, 0.1);
-        Waypoint p3(0.0, 0.0);
+        v3 p0(0.1, 0.0, 0.0);
+        v3 p1(0.1, 0.1, 0.0);
+        v3 p2(0.0, 0.1, 0.0);
+        v3 p3(0.0, 0.0, 0.0);
         path.push_back(p0);
         path.push_back(p1);
         path.push_back(p2);
@@ -227,13 +227,13 @@ TEST_F(hardware_tests, test_oquam_travel_snake)
         Path path;
         int N = 10;
         for (int i = 1; i <= N; i++) {
-                Waypoint p0(i * 0.01, (i-1) * 0.01);
+                v3 p0(i * 0.01, (i-1) * 0.01, 0.0);
                 path.push_back(p0);
-                Waypoint p1(i * 0.01, i * 0.01);
+                v3 p1(i * 0.01, i * 0.01, 0.0);
                 path.push_back(p1);
         }
         
-        Waypoint p(0.0, 0.0);
+        v3 p(0.0, 0.0, 0.0);
         path.push_back(p);
 
         bool success = oquam.travel(path, 1.0);
@@ -259,15 +259,15 @@ TEST_F(hardware_tests, test_oquam_travel_snake_2)
         for (int i = 1; i <= N; i++) {
                 int n = N + 1 - i;
                 double len = 0.001 * n;
-                Waypoint p0(x + len, y);
+                v3 p0(x + len, y, 0.0);
                 path.push_back(p0);
-                Waypoint p1(x + len, y + len);
+                v3 p1(x + len, y + len, 0.0);
                 path.push_back(p1);
                 x += len;
                 y += len;
         }
         
-        Waypoint p(0.0, 0.0);
+        v3 p(0.0, 0.0, 0.0);
         path.push_back(p);
 
         bool success = oquam.travel(path, 1.0);
@@ -287,9 +287,9 @@ TEST_F(hardware_tests, test_oquam_travel_round_trip)
         oquam.set_file_cabinet(&debug);
 
         Path path;
-        path.push_back(Waypoint(0.0, 0.0));
-        path.push_back(Waypoint(0.1, 0.0));
-        path.push_back(Waypoint(0.0, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
+        path.push_back(v3(0.1, 0.0, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
         
         bool success = oquam.travel(path, 1.0);
         ASSERT_EQ(success, true);
@@ -308,10 +308,10 @@ TEST_F(hardware_tests, test_oquam_travel_collinear)
         oquam.set_file_cabinet(&debug);
 
         Path path;
-        path.push_back(Waypoint(0.0, 0.0));
-        path.push_back(Waypoint(0.1, 0.0));
-        path.push_back(Waypoint(0.2, 0.0));
-        path.push_back(Waypoint(0.0, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
+        path.push_back(v3(0.1, 0.0, 0.0));
+        path.push_back(v3(0.2, 0.0, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
         
         bool success = oquam.travel(path, 1.0);
         ASSERT_EQ(success, true);
@@ -330,11 +330,11 @@ TEST_F(hardware_tests, test_oquam_travel_large_displacement)
         oquam.set_file_cabinet(&debug);
 
         Path path;
-        path.push_back(Waypoint(0.0, 0.0));
-        path.push_back(Waypoint(0.1, 0.0));
-        path.push_back(Waypoint(0.1, 0.07));
-        path.push_back(Waypoint(0.2, 0.07));
-        path.push_back(Waypoint(0.0, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
+        path.push_back(v3(0.1, 0.0, 0.0));
+        path.push_back(v3(0.1, 0.07, 0.0));
+        path.push_back(v3(0.2, 0.07, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
         
         bool success = oquam.travel(path, 1.0);
         ASSERT_EQ(success, true);
@@ -353,11 +353,11 @@ TEST_F(hardware_tests, test_oquam_travel_small_displacement)
         oquam.set_file_cabinet(&debug);
 
         Path path;
-        path.push_back(Waypoint(0.0, 0.0));
-        path.push_back(Waypoint(0.1, 0.0));
-        path.push_back(Waypoint(0.1, 0.04));
-        path.push_back(Waypoint(0.2, 0.04));
-        path.push_back(Waypoint(0.0, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
+        path.push_back(v3(0.1, 0.0, 0.0));
+        path.push_back(v3(0.1, 0.04, 0.0));
+        path.push_back(v3(0.2, 0.04, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
         
         bool success = oquam.travel(path, 1.0);
         ASSERT_EQ(success, true);
@@ -376,11 +376,11 @@ TEST_F(hardware_tests, test_oquam_travel_tiny_displacement)
         oquam.set_file_cabinet(&debug);
 
         Path path;
-        path.push_back(Waypoint(0.0, 0.0));
-        path.push_back(Waypoint(0.1, 0.0));
-        path.push_back(Waypoint(0.1, 0.005));
-        path.push_back(Waypoint(0.2, 0.005));
-        path.push_back(Waypoint(0.0, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
+        path.push_back(v3(0.1, 0.0, 0.0));
+        path.push_back(v3(0.1, 0.005, 0.0));
+        path.push_back(v3(0.2, 0.005, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
         
         bool success = oquam.travel(path, 1.0);
         ASSERT_EQ(success, true);
@@ -399,23 +399,23 @@ TEST_F(hardware_tests, test_oquam_travel_zigzag)
         oquam.set_file_cabinet(&debug);
 
         Path path;
-        Waypoint p(0.0, 0.0);
+        v3 p(0.0, 0.0, 0.0);
         
         for (int i = 1; i <= 3; i++) {
-                p.y += 0.01;
+                p.y() += 0.01;
                 path.push_back(p);
                 
-                p.x += 0.1;
+                p.x() += 0.1;
                 path.push_back(p);
                 
-                p.y += 0.01;
+                p.y() += 0.01;
                 path.push_back(p);
 
-                p.x -= 0.1;
+                p.x() -= 0.1;
                 path.push_back(p);
         }
         
-        path.push_back(Waypoint(0.0, 0.0));
+        path.push_back(v3(0.0, 0.0, 0.0));
 
         bool success = oquam.travel(path, 1.0);
         ASSERT_EQ(success, true);

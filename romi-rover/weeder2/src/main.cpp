@@ -207,9 +207,9 @@ void init_cnc_range(CNC *cnc, CNCRange &range)
         for (int attempt = 1; attempt <= 10; attempt++) {
                 if (cnc->get_range(range)) {
                         r_debug("init_cnc_range: [%f, %f],[%f, %f],[%f, %f]",
-                                range._x[0], range._x[1],
-                                range._y[0], range._y[1],
-                                range._z[0], range._z[1]);
+                                range.min.x(), range.max.x(),
+                                range.min.y(), range.max.y(),
+                                range.min.z(), range.max.z());
                         success = true;
                         break; 
                 }

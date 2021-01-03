@@ -29,8 +29,6 @@ set(SRCS_SECTION
   ../src/Script.cpp
   ../src/ATDC.h
   ../src/ATDC.cpp
-  ../src/v.h
-  ../src/v.c
   ../src/is_valid.cpp
   ../src/is_valid.h
   ../src/print.h
@@ -56,8 +54,6 @@ set(SRCS_PRINT
   ../src/ATDC.cpp
   ../src/Section.h
   ../src/Section.cpp
-  ../src/v.h
-  ../src/v.c
   ../src/print.h
   ../src/print.cpp
   ../src/is_valid.cpp
@@ -81,8 +77,6 @@ set(SRCS_SCRIPT
   ../src/ATDC.cpp
   ../src/Section.h
   ../src/Section.cpp
-  ../src/v.h
-  ../src/v.c
   ../src/print.h
   ../src/print.cpp
   ../src/is_valid.cpp
@@ -121,8 +115,6 @@ set(SRCS_OQUAM
   ../src/CNCController.h
   ../src/Oquam.h
   ../src/Oquam.cpp
-  ../src/v.h
-  ../src/v.c
   ../src/plotter.cpp
   ../src/plotter.h
   ../src/print.h
@@ -202,8 +194,6 @@ add_test(
 #  ../src/StepperController.cpp
 #  ../src/Oquam.h
 #  ../src/Oquam.cpp
-#  ../src/v.h
-#  ../src/v.c
 #  ../src/plotter.cpp
 #  ../src/plotter.h
 #  ../src/print.h
@@ -240,8 +230,6 @@ set(SRCS_HARDWARE
   ../src/StepperController.cpp
   ../src/Oquam.h
   ../src/Oquam.cpp
-  ../src/v.h
-  ../src/v.c
   ../src/plotter.cpp
   ../src/plotter.h
   ../src/print.h

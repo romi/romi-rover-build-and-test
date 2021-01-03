@@ -16,8 +16,6 @@ set(SOURCES
   src/StepperController.h
   src/StepperSettings.cpp
   src/StepperSettings.h
-  src/v.c
-  src/v.h
   src/Section.cpp
   src/Section.h
   src/ATDC.cpp

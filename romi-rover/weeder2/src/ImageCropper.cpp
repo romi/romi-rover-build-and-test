@@ -70,9 +70,9 @@ namespace romi {
 
         double ImageCropper::map_meters_to_pixels(double meters)
         {
-                printf("x[0]=%f, x[1]=%f\n", _range._x[0], _range._x[1]);
-                double width_meters = fabs(_range._x[1] - _range._x[0]);
-                double meters_to_pixels = (double) _width / width_meters;
+                printf("x[0]=%f, x[1]=%f\n", _range.min.x(), _range.max.x());
+                v3 dimensions = _range.dimensions();
+                double meters_to_pixels = (double) _width / dimensions.x();
                 return meters * meters_to_pixels;
         }
 

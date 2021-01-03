@@ -33,7 +33,7 @@ protected:
 TEST_F(print_tests, test_valid_json_without_slices)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
         script.moveto(0.10, 0.00, 0.0, 1.0);
         script.moveto(0.00, 0.00, 0.0, 1.0);
@@ -58,7 +58,7 @@ TEST_F(print_tests, test_valid_json_without_slices)
 TEST_F(print_tests, test_valid_json_with_slices)
 {
         // Arrange
-        double start_position[3] = {0, 0, 0};
+        v3 start_position(0, 0, 0);
         Script script(start_position);
         script.moveto(0.10, 0.00, 0.0, 1.0);
         script.moveto(0.00, 0.00, 0.0, 1.0);

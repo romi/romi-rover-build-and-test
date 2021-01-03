@@ -26,77 +26,76 @@
 
 namespace romi {
         
-        CNCRange::CNCRange()
-        {
-                for (int i = 0; i < 2; i++) {
-                        _x[i] = 0.0;
-                        _y[i] = 0.0;
-                        _z[i] = 0.0;
-                }
-        }
-
-        CNCRange::CNCRange(double x0, double x1,
-                           double y0, double y1,
-                           double z0, double z1)
-        {
-                _x[0] = x0;
-                _x[1] = x1;
-                _y[0] = y0;
-                _y[1] = y1;
-                _z[0] = z0;
-                _z[1] = z1;
+        CNCRange::CNCRange() : min(0.0), max(0.0) {
         }
         
         CNCRange::CNCRange(const double *xmin, const double *xmax)
-        {
-                _x[0] = xmin[0];
-                _y[0] = xmin[1];
-                _z[0] = xmin[2];
-                _x[1] = xmax[0];
-                _y[1] = xmax[1];
-                _z[1] = xmax[2];
+                : min(xmin), max(xmax) {
         }
         
-        CNCRange::CNCRange(JsonCpp& range)
-        {
-                init(range);
+        CNCRange::CNCRange(v3 xmin, v3 xmax)
+                : min(xmin), max(xmax) {
         }
-                
-        void CNCRange::init(JsonCpp& range)
+        
+        CNCRange::CNCRange(JsonCpp& json)
         {
-                for (int i = 0; i < 2; i++) {
-                        _x[i] = range.array(0).num(i);
-                        _y[i] = range.array(1).num(i);
-                        _z[i] = range.array(2).num(i);
+                init(json);
+        }
+        
+        void CNCRange::init(JsonCpp& json)
+        {
+                for (int i = 0; i < 3; i++) {
+                        min.set(i, json.array(i).num(0));
+                        max.set(i, json.array(i).num(1));
                 }
         }
 
-        bool CNCRange::is_valid(double x, double y, double z)
+        v3 CNCRange::dimensions()
         {
-                return ((x >= _x[0]) && (x <= _x[1])
-                        && (y >= _y[0]) && (y <= _y[1])
-                        && (z >= _z[0]) && (z <= _z[1]));
+                return max - min;
+        }
+        
+        bool CNCRange::is_inside(double x, double y, double z)
+        {
+                return ((x >= min.x()) && (x <= max.x())
+                        && (y >= min.y()) && (y <= max.y())
+                        && (z >= min.z()) && (z <= max.z()));
+        }
+
+        bool CNCRange::is_inside(v3 p)
+        {
+                return is_inside(p.x(), p.y(), p.z());
         }
         
         double CNCRange::error(double x, double y, double z)
         {
-                double dx = 0.0;
-                double dy = 0.0;
-                double dz = 0.0;
+                double dx[3] = { 0.0, 0.0, 0.0 };
         
-                if (x < _x[0])
-                        dx = _x[0] - x;
-                if (x > _x[1])
-                        dx = x - _x[1];
-                if (y < _y[0])
-                        dy = _y[0] - y;
-                if (y > _y[1])
-                        dy = y - _y[1];
-                if (z < _z[0])
-                        dz = _z[0] - z;
-                if (z > _z[1])
-                        dz = z - _z[1];
+                if (x < min.x())
+                        dx[0] = min.x() - x;
+                else if (x > max.x())
+                        dx[0] = x - max.x();
+                
+                if (y < min.y())
+                        dx[1] = min.y() - y;
+                else if (y > max.y())
+                        dx[1] = y - max.y();
+                
+                if (z < min.z())
+                        dx[2] = min.z() - z;
+                else if (z > max.z())
+                        dx[2] = z - max.z();
         
-                return std::sqrt(dx * dx + dy * dy + dz * dz);
+                return vnorm(dx);
+        }
+
+        double CNCRange::error(v3 v)
+        {
+                return error(v.x(), v.y(), v.z());
+        }
+        
+        v3 CNCRange::clamp(v3 p)
+        {
+                return p.clamp(min, max);
         }
 }

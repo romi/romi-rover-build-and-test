@@ -26,30 +26,33 @@
 #define __ROMI_CNC_RANGE_H
 
 #include "JsonCpp.h"
+#include "v.h"
 
 namespace romi {
         
         struct CNCRange
         {
-                double _x[2];
-                double _y[2];
-                double _z[2];
+                v3 min;
+                v3 max;
                 
                 CNCRange();
                 CNCRange(JsonCpp &range);
-                CNCRange(double x0, double x1,
-                         double y0, double y1,
-                         double z0, double z1);
-                CNCRange(const double *xmin, const double *xmax);
+                CNCRange(const double *min, const double *max);
+                CNCRange(v3 min, v3 max);
                 
                 void init(JsonCpp &range);
-
-                // Returns true if the point lies in the range
-                bool is_valid(double x, double y, double z);
+                
+                v3 dimensions();
+                
+                bool is_inside(double x, double y, double z);
+                bool is_inside(v3 p);
                 
                 // Computes the distance of a point that lies outside
                 // the range to the border of the range.
                 double error(double x, double y, double z);
+                double error(v3 p);
+
+                v3 clamp(v3 p);
         };
 }
 

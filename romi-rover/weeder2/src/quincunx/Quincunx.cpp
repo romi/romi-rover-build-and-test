@@ -378,8 +378,7 @@ namespace romi {
                                 
                                 for (list_t *l = path; l != NULL; l = list_next(l)) {
                                         point_t *p = list_get(l, point_t);
-                                        Waypoint waypoint(p->x, p->y);
-                                        waypoints.push_back(waypoint);
+                                        waypoints.push_back(v3(p->x, p->y, 0));
                                         delete_point(p);
                                 }
                                 delete_list(path);

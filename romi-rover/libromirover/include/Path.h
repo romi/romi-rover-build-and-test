@@ -26,80 +26,27 @@
 #define __ROMI_PATH_H
 
 #include <vector>
+#include "v.h"
+#include "CNCRange.h"
 
 namespace romi {
-        
-        struct Waypoint {
-                double x;
-                double y;
-                double z;
 
-                Waypoint() : x(0), y(0), z(0) {}
-                Waypoint(double x_, double y_) : x(x_), y(y_), z(0.0) {}
-                Waypoint(float x_, float y_) : x(x_), y(y_), z(0.0f) {}
+        class Path : public std::vector<v3>
+        {
+        protected:
+                bool clamp(CNCRange& range, size_t index, double allowed_error);
+
+        public:
+                virtual ~Path() = default;
                 
-                Waypoint(double x_, double y_, double z_) : x(x_), y(y_), z(z_) {}
-                Waypoint(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {}
+                void set_z(double z);
+                int closest_point(v3 p);
+                void invert_y();
+                void scale(v3 scale);
+                void translate(v3 t);
+                void rotate(Path &out, int start_index);
+                bool clamp(CNCRange& range, double allowed_error);
         };
-
-        using Path = std::vector<Waypoint>;
-
-        inline void path_set_z(Path &path, double z) {
-                for (size_t i = 0; i < path.size(); i++)
-                        path[i].z = z;
-        }
-
-        inline int path_closest_point(Path &path, double x, double y, double z) {
-                int r = -1;
-                if (path.size() > 0) {
-                        r = 0;
-                        double dmin = (path[0].x * path[0].x
-                                       + path[0].y * path[0].y
-                                       + path[0].z * path[0].z);
-                        for (size_t i = 1; i < path.size(); i++) {
-                                double d = (path[i].x * path[i].x
-                                            + path[i].y * path[i].y
-                                            + path[i].z * path[i].z);
-                                if (d < dmin) {
-                                        r = i;
-                                        dmin = d;
-                                }
-                        }
-                }
-                return r;
-        }
-
-        inline void path_invert_y(Path &path) {
-                for (size_t i = 0; i < path.size(); i++) {
-                        path[i].y = 1.0 - path[i].y;
-                }
-        }
-
-        inline void path_scale(Path &path, double ax, double ay, double az) {
-                for (size_t i = 0; i < path.size(); i++) {
-                        path[i].x *= ax;
-                        path[i].y *= ay;
-                        path[i].z *= az;
-                }
-        }
-
-        inline void path_translate(Path &path, double tx, double ty, double tz) {
-                for (size_t i = 0; i < path.size(); i++) {
-                        path[i].x += tx;
-                        path[i].y += ty;
-                        path[i].z += tz;
-                }
-        }
-        
-        inline void path_shift(Path &in, Path &out, size_t shift) {
-                if (shift < in.size()) {
-                        for (size_t i = 0; i < in.size(); i++) {
-                                size_t index = (shift + i) % in.size();
-                                Waypoint p = in[index];
-                                out.push_back(p);
-                        }
-                }
-        }
 }
 
 #endif // __ROMI_PATH_H

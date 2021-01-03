@@ -46,14 +46,14 @@ namespace romi {
                 
                 double a[3];
                 vmul(a, e, amax);
-                return norm(a);
+                return vnorm(a);
         }
 
         void assert_equal_speeds(double *v0, double *v1)
         {
                 double dv[3];
                 vsub(dv, v1, v0);
-                if (norm(dv) > 0.00001) {
+                if (vnorm(dv) > 0.00001) {
                         r_err("section with zero length but different speeds");
                         throw std::runtime_error("section with zero length "
                                                  "but different speeds");
@@ -76,7 +76,7 @@ namespace romi {
                 //vsub(dx, curve.p0, accelerate.p0);
                 vsub(dx, p1, p0);
 
-                if (norm(dx) == 0.0) {
+                if (vnorm(dx) == 0.0) {
                         assert_equal_speeds(v0, v1);
                         curve_only(p0, v0);
                 
@@ -131,7 +131,7 @@ namespace romi {
                 double len, len_a, len_d, len_t;
 
                 vsub(dx, curve.p0, accelerate.p0);
-                len = norm(dx);
+                len = vnorm(dx);
                 len_a = accelerate.length();
                 len_d = decelerate.length();
                 len_t = len - len_a - len_d;
@@ -148,7 +148,7 @@ namespace romi {
                 double dv[3];
                 vsub(dv, v1, v0);
                         
-                if (norm(dv) == 0) {
+                if (vnorm(dv) == 0) {
                         zero_acceleration(p0, v0);
                 } else {
                         normal_acceleration(p0, v0, v1, amax);
@@ -195,7 +195,7 @@ namespace romi {
                 double dv[3];
                 vsub(dv, v0, v1);
                         
-                if (norm(dv) == 0) {
+                if (vnorm(dv) == 0) {
                         zero_deceleration(p1, v1);
                 } else {
                         normal_deceleration(p1, v0, v1, amax);
@@ -242,7 +242,7 @@ namespace romi {
                 double dx[3];
                 vsub(dx, p1, p0);
                 
-                if (norm(dx) < 0.00001) {
+                if (vnorm(dx) < 0.00001) {
                         zero_travel(p0, v);
                 } else {
                         normal_travel(p0, p1, v);
@@ -268,7 +268,7 @@ namespace romi {
                 vzero(travel.a);
                 
                 double len = travel.length();
-                double vn = norm(v);
+                double vn = vnorm(v);
                 travel.duration = len / vn; 
         }
 
@@ -290,11 +290,11 @@ namespace romi {
                 vsub(dx, p1, p0);
 
                 // The length of the segment
-                double len = norm(dx);
+                double len = vnorm(dx);
 
-                double v_target = norm(v);
-                double v0n = norm(accelerate.v0);
-                double v1n = norm(curve.v0);
+                double v_target = vnorm(v);
+                double v0n = vnorm(accelerate.v0);
+                double v1n = vnorm(curve.v0);
 
                 assert_speeds(v0n, v_target, v1n);
                 

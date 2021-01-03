@@ -50,15 +50,15 @@ namespace romi {
         }
 
         
-        Script::Script(double *start_position)
+        Script::Script(v3 start_position)
         {
-                vcopy(_start_position, start_position);
+                _start_position = start_position;
                 set_current_position(start_position);
         }
 
-        void Script::set_current_position(double *p)
+        void Script::set_current_position(v3 p)
         {
-                vcopy(_current_position, p);
+                _current_position = p;
         }
 
         void Script::moveto(double x, double y, double z, double v)
@@ -69,7 +69,16 @@ namespace romi {
                 }
                 _moves.push_back(Move(x, y, z, v));
         }
-        
+
+        void Script::moveto(v3 p, double v)
+        {
+                if (v <= 0.0f) {
+                        r_warn("script_moveto: speed must be positive");
+                        throw std::runtime_error("Script::moveto: invalid speed");
+                }
+                _moves.push_back(Move(p, v));
+        }
+
         void Script::convert(double *vmax, double *amax, double deviation,
                              double slice_duration, double max_slice_duration)
         {
@@ -88,7 +97,7 @@ namespace romi {
 
         void Script::assert_vmax(double *vmax)
         {
-                double vn = norm(vmax);
+                double vn = vnorm(vmax);
                 if (vn == 0 || vn > 10.0) { // 10 m/s = 36 km/h
                         r_err("Invalid maximum speed: (%f, %f, %f)",
                               vmax[0], vmax[1], vmax[2]);
@@ -98,7 +107,7 @@ namespace romi {
 
         void Script::assert_amax(double *amax)
         {
-                double an = norm(amax);
+                double an = vnorm(amax);
                 if (an == 0 || an > 10.0) { // 10 m/s² = 0 -> 36 km/h in 1 sec
                         r_err("Invalid maximum accelerate: (%f, %f, %f)",
                               amax[0], amax[1], amax[2]);
@@ -131,12 +140,11 @@ namespace romi {
         {
                 for (size_t i = 0; i < _moves.size(); i++) {
                         Move& move = _moves[i];
-                        double d[3];
-                        vsub(d, move.p, _current_position);
+                        v3 d = move.p - _current_position;
                         
                         /* If the displacement is less then 0.1 mm,
                          * skip it. */
-                        if (norm(d) > 0.0001) {
+                        if (d.norm() > 0.0001) {
                                 convert_segment(move);
                                 set_current_position(move.p); 
                         }                        
@@ -153,8 +161,8 @@ namespace romi {
 
         void Script::init_segment_positions(Segment& segment, Move& move)
         {
-                vcopy(segment.p0, _current_position); 
-                vcopy(segment.p1, move.p); 
+                vcopy(segment.p0, _current_position.values()); 
+                vcopy(segment.p1, move.p.values()); 
         }
 
         void Script::init_segment_speed(Segment& segment, Move& move)
@@ -205,7 +213,7 @@ namespace romi {
                 /* The entry points (p0) of the accelerate sections of
                  * the ATDC are set by compute_curve(), except for the
                  * first one. That one is set explicitly here. */
-                vcopy(_atdc[0].accelerate.p0, _start_position);                
+                vcopy(_atdc[0].accelerate.p0, _start_position.values());                
         }
 
         void Script::compute_curves_and_speeds(double deviation, double *amax)
@@ -440,8 +448,8 @@ namespace romi {
                  * checking whether the cross product is zero.  */
                 double c[3];
                 vcross(c, w0, w1);
-                double w = norm(w0);
-                double cww = norm(c) / (w * w);
+                double w = vnorm(w0);
+                double cww = vnorm(c) / (w * w);
                 return (cww < 0.001);
         }
 
@@ -502,7 +510,7 @@ namespace romi {
         {
                 // Set the entry and exit speed of the curve to smallest speed
                 // before and after the junction.
-                return std::min(norm(s0.v), norm(s1.v));
+                return std::min(vnorm(s0.v), vnorm(s1.v));
         }
         
         void Script::get_curve_speed_vector(Segment& segment, double magnitude, double *w)
@@ -593,7 +601,7 @@ namespace romi {
                 
                 vsub(displacement, t.curve.p0, t.accelerate.p0);
 
-                if (norm(displacement) == 0) {
+                if (vnorm(displacement) == 0) {
                         length = required_acceleration_path_length(t.accelerate.v0,
                                                                    t.curve.v0,
                                                                    amax);
@@ -610,17 +618,17 @@ namespace romi {
         double Script::required_acceleration_path_length(double *v0, double *v1,
                                                          double *amax)
         {
-                double v0n = norm(v0);
-                double v1n = norm(v1);
-                double a = norm(amax);
+                double v0n = vnorm(v0);
+                double v1n = vnorm(v1);
+                double a = vnorm(amax);
                 return required_acceleration_path_length(v0n, v1n, a);
         }
 
         double Script::required_acceleration_path_length(double *v0, double *v1,
                                                          double *d, double *amax)
         {
-                double v0n = norm(v0);
-                double v1n = norm(v1);
+                double v0n = vnorm(v0);
+                double v1n = vnorm(v1);
                 double a = amax_in_direction(amax, d);
                 return required_acceleration_path_length(v0n, v1n, a);
         }
@@ -639,8 +647,8 @@ namespace romi {
                  * required length to accelerate or slow down to the
                  * desired speed. */
                 
-                double v0 = norm(t.accelerate.v0);
-                double v1 = norm(t.curve.v0);
+                double v0 = vnorm(t.accelerate.v0);
+                double v1 = vnorm(t.curve.v0);
 
                 bool must_backpropagate = false;
                 
@@ -669,10 +677,10 @@ namespace romi {
                 double displacement[3];
                 vsub(displacement, t.curve.p0, t.accelerate.p0);
                 
-                double v1 = norm(t.curve.v0);                
+                double v1 = vnorm(t.curve.v0);                
                 double v0max = maximum_entry_speed(displacement, v1, amax);
                 
-                double v0 = norm(t.accelerate.v0);
+                double v0 = vnorm(t.accelerate.v0);
                 double factor = v0max / v0;
                 
                 smul(t.accelerate.v0, t.accelerate.v0, factor);
@@ -687,7 +695,7 @@ namespace romi {
                           => v0 = sqrt(v1² + 2aL)
                  */
                 double a = 0.0;
-                double length = norm(displacement);
+                double length = vnorm(displacement);
                 if (length > 0.0) 
                         a = amax_in_direction(amax, displacement);
                 return sqrt(v1 * v1 + 2 * a * length);
@@ -698,10 +706,10 @@ namespace romi {
                 double displacement[3];
                 vsub(displacement, t.curve.p0, t.accelerate.p0);
                 
-                double v0 = norm(t.accelerate.v0);
+                double v0 = vnorm(t.accelerate.v0);
                 double v1max = maximum_exit_speed(displacement, v0, amax);
                 
-                double v1 = norm(t.curve.v0);
+                double v1 = vnorm(t.curve.v0);
                 double factor = v1max / v1;
                 
                 t.slow_down_curve(factor);
@@ -715,7 +723,7 @@ namespace romi {
                           => v1 = sqrt(v0² + 2aL)
                  */
                 double a = 0.0;
-                double length = norm(displacement);
+                double length = vnorm(displacement);
                 if (length > 0.0) 
                         a = amax_in_direction(amax, displacement);
                 return sqrt(v0 * v0 + 2.0 * a * length);
@@ -728,8 +736,8 @@ namespace romi {
                 if (has_next_atdc(index)) {
                         ATDC& t0 = _atdc[index];
                         ATDC& t1 = _atdc[index+1];
-                        double v1 = norm(t0.curve.v0);
-                        double v0_next = norm(t1.accelerate.v0);
+                        double v1 = vnorm(t0.curve.v0);
+                        double v0_next = vnorm(t1.accelerate.v0);
                         if (v1 != v0_next) {
                                 // The next segment lowered its entry speed. Slow down the
                                 // curve.
@@ -849,8 +857,8 @@ namespace romi {
                 return duration;
         }
 
-        void Script::get_start_position(double *p)
+        v3 Script::get_start_position()
         {
-                vcopy(p, _start_position);
+                return _start_position;
         }
 }

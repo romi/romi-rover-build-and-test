@@ -80,9 +80,9 @@ namespace romi {
                 CNCRange range;
                 if (_cnc.get_range(range)) {
                         result = JsonCpp::construct("[[%f,%f],[%f,%f],[%f,%f]]",
-                                                    range._x[0], range._x[1],
-                                                    range._y[0], range._y[1],
-                                                    range._z[0], range._z[1]);
+                                                    range.min.x(), range.max.x(),
+                                                    range.min.y(), range.max.y(),
+                                                    range.min.z(), range.max.z());
                 } else {
                         r_err("CNCAdaptor::handle_get_range failed");
                         error.code = 1;
@@ -151,12 +151,10 @@ namespace romi {
                         double speed = params.num("speed", 0.1);
                         JsonCpp p = params.array("path");
                         for (int i = 0; i < p.length(); i++) {
-                                Waypoint w;
-                                JsonCpp c = p.array(i);
-                                w.x = c.num(0);
-                                w.y = c.num(1);
-                                w.z = c.num(2);
-                                path.push_back(w);
+                                v3 pt;
+                                JsonCpp a = p.array(i);
+                                pt.set(a.num(0), a.num(1), a.num(2));
+                                path.push_back(pt);
                         }
 
                         if (!_cnc.travel(path, speed)) {

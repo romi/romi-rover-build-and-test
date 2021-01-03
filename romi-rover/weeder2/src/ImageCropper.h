@@ -46,9 +46,6 @@ namespace romi {
                 
                 void set_range(CNCRange &range) override {
                         _range = range;
-
-                        r_debug("range: %f, %f", range._x[0], range._x[1]);
-                        r_debug("_range: %f, %f", _range._x[0], _range._x[1]);
                 }
 
                 double map_meters_to_pixels(double meters) override;

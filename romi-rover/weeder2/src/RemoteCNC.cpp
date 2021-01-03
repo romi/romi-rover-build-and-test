@@ -135,9 +135,9 @@ namespace romi {
                 json_object_t points = json_array_create();
                 for (size_t i = 0; i < path.size(); i++) {
                         json_object_t pt = json_array_create();                
-                        json_array_setnum(pt, path[i].x, 0);
-                        json_array_setnum(pt, path[i].y, 1);
-                        json_array_setnum(pt, path[i].z, 2);
+                        json_array_setnum(pt, path[i].x(), 0);
+                        json_array_setnum(pt, path[i].y(), 1);
+                        json_array_setnum(pt, path[i].z(), 2);
                         json_array_push(points, pt);
                         json_unref(pt);
                 }
