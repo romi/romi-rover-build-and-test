@@ -22,7 +22,6 @@
 
  */
 
-#include "DebugWeedingSession.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -33,6 +32,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "DebugWeedingSession.h"
+#include "ImageIO.h"
 
 namespace romi {
 
@@ -90,39 +91,17 @@ namespace romi {
 
         void DebugWeedingFolder::store(const char* name, Image &image)
         {
-                store(name, image.ptr());
+                ImageIO::store_jpg(image, name);
         }
 
         void DebugWeedingFolder::store_jpg(const char* name, Image &image)
         {
-                store_jpg(name, image.ptr());
+                ImageIO::store_jpg(image, name);
         }
         
         void DebugWeedingFolder::store_png(const char* name, Image &image)
         {
-                store_png(name, image.ptr());
-        }
-
-        void DebugWeedingFolder::store(const char* name, image_t *image)
-        {
-                if (image)
-                        store_jpg(name, image);
-        }
-        
-        void DebugWeedingFolder::store_jpg(const char* name, image_t *image)
-        {
-                if (image) {
-                        std::string filename = make_filename(name, "jpg");
-                        image_store(image, filename.c_str(), "jpg");
-                }
-        }
-        
-        void DebugWeedingFolder::store_png(const char* name, image_t *image)
-        {
-                if (image) {
-                        std::string filename = make_filename(name, "png");
-                        image_store(image, filename.c_str(), "png");
-                }
+                ImageIO::store_png(image, name);
         }
 
         void DebugWeedingFolder::store_svg(const char* name, const char *body, int len)

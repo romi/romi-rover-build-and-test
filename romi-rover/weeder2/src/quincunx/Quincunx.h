@@ -42,27 +42,6 @@ namespace romi {
                 int set_distance_rows(json_object_t value);
                 int set_radius_zones(json_object_t value);
                 int set_threshold(json_object_t value);
-
-                list_t *compute_positions(IFolder &session,
-                                          image_t *mask,
-                                          double meters_to_pixels,
-                                          float *confidence);
-                
-                float estimate_pattern_position(image_t *p_map, float d_plants,
-                                                float d_rows, point_t *pos);
-
-                list_t *adjust_positions(image_t *p_map,
-                                         float distance_plants_px,
-                                         float distance_rows_px,
-                                         point_t *ptn_pos,
-                                         float delta);
-                
-                image_t *compute_convolution(image_t *image, int w, float *avg);
-
-                list_t *boustrophedon(float x0, float x1, 
-                                      float y0, float y1,
-                                      float dx, float radius,
-                                      list_t *positions);
                 
         public:
                 Quincunx() {}

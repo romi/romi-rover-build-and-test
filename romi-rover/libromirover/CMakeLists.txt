@@ -15,7 +15,7 @@ set(SOURCES
   include/IFileCabinet.h
   include/IFolder.h
   include/Image.h
-  include/image_impl.h
+  include/ImageIO.h
   include/Navigation.h
   include/JSONConfiguration.h
   include/Path.h 
@@ -23,7 +23,8 @@ set(SOURCES
   include/Weeder.h
   src/CNCRange.cpp
   src/DebugWeedingSession.cpp
-  src/image_impl.c
+  src/Image.cpp
+  src/ImageIO.cpp
   src/Path.cpp
   src/v.cpp
 )

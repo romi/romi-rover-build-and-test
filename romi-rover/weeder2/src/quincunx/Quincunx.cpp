@@ -22,6 +22,7 @@
 
  */
 
+#include <math.h>
 #include "IFolder.h"
 #include "Quincunx.h"
 
@@ -34,6 +35,12 @@ namespace romi {
                               list_t *positions,
                               double radius_zones,
                               double scale);
+        
+        static list_t *boustrophedon(float x0, float x1, 
+                                     float y0, float y1,
+                                     float dx, 
+                                     float radius,
+                                     list_t *positions);
 
         int Quincunx::set_distance_plants(json_object_t value)
         {
@@ -123,25 +130,27 @@ namespace romi {
                 return r;
         }
         
-        static float image_convolution(image_t* image, image_t* mask, int x0, int y0)
+        static float convolution(Image& image, Image& mask, ssize_t x0, ssize_t y0)
         {
                 float r = 0.0;
-                int xi_min = x0;
-                int xi_max = x0 + mask->width;
-                int yi_min = y0;
-                int yi_max = y0 + mask->height;
-                int xm_min = 0;
-                int ym_min = 0;
+                ssize_t xi_min = x0;
+                ssize_t xi_max = x0 + mask.width();
+                ssize_t yi_min = y0;
+                ssize_t yi_max = y0 + mask.height();
+                size_t xm_min = 0;
+                size_t ym_min = 0;
+                float *data1 = image.data();
+                float *data2 = mask.data();
 
-                if (image->type != IMAGE_BW || mask->type != IMAGE_BW) {
-                        fprintf(stderr, "image_convolution: Can only handle BW images\n");
+                if (image.type() != Image::BW || mask.type() != Image::BW) {
+                        r_err("Quincunx: convolution: Can only handle BW images");
                         return 0.0f;
                 }
         
                 if (xi_max < 0
                     || yi_max < 0
-                    || xi_min >= image->width
-                    || yi_min >= image->height)
+                    || xi_min >= (ssize_t) image.width()
+                    || yi_min >= (ssize_t) image.height())
                         return 0.0f;
 
                 if (x0 < 0) {
@@ -152,63 +161,105 @@ namespace romi {
                         yi_min = 0;
                         ym_min = -y0;
                 }
-                if (xi_max > image->width)
-                        xi_max = image->width;
-                if (yi_max > image->height)
-                        yi_max = image->height;
+                
+                if (xi_max > (ssize_t) image.width())
+                        xi_max = image.width();
+                
+                if (yi_max > (ssize_t) image.height())
+                        yi_max = image.height();
 
                 float area = (xi_max - xi_min) * (yi_max - yi_min);
 
-                for (int yi = yi_min, ym = ym_min; yi < yi_max; yi++, ym++) {
-                        int yi_off = yi * image->width;
-                        int ym_off = ym * mask->width;
-                        for (int xi = xi_min, xm = xm_min; xi < xi_max; xi++, xm++) {
-                                float c1 = image->data[yi_off + xi];
-                                float c2 = mask->data[ym_off + xm];
+                for (size_t yi = yi_min, ym = ym_min; yi < (size_t) yi_max; yi++, ym++) {
+                        
+                        size_t yi_off = yi * image.width();
+                        size_t ym_off = ym * mask.width();
+                        
+                        for (size_t xi = xi_min, xm = xm_min; xi < (size_t) xi_max; xi++, xm++) {
+                                float c1 = data1[yi_off + xi];
+                                float c2 = data2[ym_off + xm];
                                 r += c1 * c2;
                         }
                 }
                 return r / area;
         }
 
-        image_t *Quincunx::compute_convolution(image_t *image, int w, float *avg)
+        static void fill_bell(Image& image, float xc, float yc, float stddev)
         {
-                image_t *bell = new_image_bw(w, w);
-                image_fill(bell, 0, 0.0f);
-                image_bell(bell, w/2, w/2, w/6);
-
-                image_t *corr = NULL;
-                //
-                if (1) {
-                        corr = new_image_bw(image->width, image->height);
-                        float corr_avg = 0.0f;
-                        float corr_max = 0.0f;
-                        for (int x = 0; x < corr->width; x++) {
-                                for (int y = 0; y < corr->height; y++) {
-                                        float v = image_convolution(image, bell,
-                                                                    x - bell->width/2,
-                                                                    y - bell->height/2);
-                                        corr_avg += v;
-                                        if (v > corr_max)
-                                                corr_max = v;
-                                        image_set(corr, x, y, 0, v);
-                                }
-                        }
-                        corr_avg /= (corr->width * corr->height);
-                        *avg = corr_avg;
-
-                } else {
-                        corr = image_clone(image);
-                }
+                float r = 3 * stddev;
+                int ymin = ceilf(yc - r);
+                int ymax = floorf(yc + r);
+                float var = stddev * stddev;
+                float r2 = r * r;
+                int width = image.width();
+                int height = image.height();
+                
+                if (ymin >= height || ymax < 0)
+                        return;
+                if (xc - r >= width || xc + r < 0)
+                        return;
+                
+                if (ymin < 0)
+                        ymin = 0;
+                if (ymax >= height)
+                        ymax = height - 1;
         
-                delete_image(bell);
-                return corr;
+                for (int y = ymin; y <= ymax; y++) {
+                        float _y = (float) y - yc;
+                        float _x = sqrtf(r2 - (float) (_y * _y));
+                        int xmin = (int) roundf(xc - _x);
+                        int xmax = (int) roundf(xc + _x);
+                
+                        if (xmin >= width || xmax < 0)
+                                continue;
+                        if (xmin < 0)
+                                xmin = 0;
+                        if (xmax >= width)
+                                xmax = width - 1;
+                
+                        for (int x = xmin; x <= xmax; x++) {
+                                // For normalised values, the color
+                                // value should be divided by
+                                // 2.pi.variance. I leave it as is so
+                                // that the maximum color is white.
+                                _x = (float) x - xc;
+                                float color = expf(-(_x * _x + _y * _y) / (2.0f * var));
+                                image.set(0, x, y, color);
+                        }
+                }
+        }
+        
+        static void compute_convolution(Image& image, size_t w, float *avg, Image& out)
+        {
+                Image bell(Image::BW, w, w);
+                bell.fill(0, 0.0f);
+                fill_bell(bell, w/2, w/2, w/6);
+
+                size_t width = image.width();
+                size_t height = image.height();
+                
+                out.init(Image::BW, width, height);
+                
+                float corr_avg = 0.0f;
+                float corr_max = 0.0f;
+                
+                for (size_t x = 0; x < width; x++) {
+                        for (size_t y = 0; y < height; y++) {
+                                float v = convolution(image, bell,
+                                                      x - bell.width()/2,
+                                                      y - bell.height()/2);
+                                corr_avg += v;
+                                if (v > corr_max)
+                                        corr_max = v;
+                                out.set(0, x, y, v);
+                        }
+                }
+                corr_avg /= (width * height);
+                *avg = corr_avg;
         }
 
-        float Quincunx::estimate_pattern_position(image_t *p_map,
-                                                  float d_plants,
-                                                  float d_rows,
-                                                  point_t *pos)
+        static float estimate_pattern_position(Image& map, float d_plants,
+                                               float d_rows, point_t *pos)
         {
                 int x_max = 0;
                 int y_max = 0;
@@ -221,18 +272,18 @@ namespace romi {
 
                 for (int y = 0; y < h; y++) {
                         for (int x = 0; x < w; x++) {
-                                float v = (image_get(p_map, x, y, 0)
-                                           + image_get(p_map, x, y + dp, 0)
-                                           + image_get(p_map, x, y + 2 * dp, 0)
+                                float v = (map.get(0, x, y)
+                                           + map.get(0, x, y + dp)
+                                           + map.get(0, x, y + 2 * dp)
                                    
-                                           + image_get(p_map, x + dr, y - dp / 2, 0)
-                                           + image_get(p_map, x + dr, y - dp / 2 + dp, 0)
-                                           + image_get(p_map, x + dr, y - dp / 2 + 2 * dp, 0)
-                                           + image_get(p_map, x + dr, y - dp / 2 + 3 * dp, 0)
+                                           + map.get(0, x + dr, y - dp / 2)
+                                           + map.get(0, x + dr, y - dp / 2 + dp)
+                                           + map.get(0, x + dr, y - dp / 2 + 2 * dp)
+                                           + map.get(0, x + dr, y - dp / 2 + 3 * dp)
                                    
-                                           + image_get(p_map, x + 2 * dr, y, 0)
-                                           + image_get(p_map, x + 2 * dr, y + dp, 0)
-                                           + image_get(p_map, x + 2 * dr, y + 2 * dp, 0));
+                                           + map.get(0, x + 2 * dr, y)
+                                           + map.get(0, x + 2 * dr, y + dp)
+                                           + map.get(0, x + 2 * dr, y + 2 * dp));
                         
                                 if (v > p_max) {
                                         p_max = v;
@@ -247,11 +298,11 @@ namespace romi {
                 return p_max;
         }
 
-        list_t *Quincunx::adjust_positions(image_t *p_map,
-                                           float distance_plants_px,
-                                           float distance_rows_px,
-                                           point_t *ptn_pos,
-                                           float delta)
+        static list_t *adjust_positions(Image& map,
+                                        float distance_plants_px,
+                                        float distance_rows_px,
+                                        point_t *ptn_pos,
+                                        float delta)
         {
                 list_t *positions = 0;
 
@@ -277,11 +328,15 @@ namespace romi {
                         int count = 0;
 
                         // TODO: factorize
-                        for (int y = (int) (pos[n].y - delta); y < (int) (pos[n].y + delta); y++) {
-                                for (int x = (int) (pos[n].x - delta); x < (int) (pos[n].x + delta); x++) {
-                                        if (image_contains(p_map, x, y)) {
+                        for (int y = (int) (pos[n].y - delta);
+                             y < (int) (pos[n].y + delta);
+                             y++) {
+                                for (int x = (int) (pos[n].x - delta);
+                                     x < (int) (pos[n].x + delta);
+                                     x++) {
+                                        if (map.contains(x, y)) {
                                                 count++;
-                                                float v = image_get(p_map, x, y, 0);
+                                                float v = map.get(0, x, y);
                                                 sum += v;
                                                 sum_px += v * x;
                                                 sum_py += v * y;
@@ -306,22 +361,25 @@ namespace romi {
                 return positions;
         }
         
-        list_t *Quincunx::compute_positions(IFolder &session,
-                                            image_t *mask,
-                                            double meters_to_pixels,
-                                            float *confidence)
+        static list_t *compute_positions(IFolder &session,
+                                         Image& mask,
+                                         double distance_plants,
+                                         double distance_rows,
+                                         double meters_to_pixels,
+                                         float *confidence)
         {
                 list_t *positions = 0;
-                float dpx_plants = (float) (_distance_plants * meters_to_pixels);
-                float dpx_rows = (float) (_distance_rows * meters_to_pixels);
+                float dpx_plants = (float) (distance_plants * meters_to_pixels);
+                float dpx_rows = (float) (distance_rows * meters_to_pixels);
                 point_t ptn_pos;
                 float p_max = -1.0f;
                 float average_prob = 0.0f;
                 
                 // 
-                int w = (int) (0.1 * meters_to_pixels);
+                size_t w = (size_t) (0.1 * meters_to_pixels);
                 
-                image_t *p_map = compute_convolution(mask, w, &average_prob);
+                Image p_map;
+                compute_convolution(mask, w, &average_prob, p_map);
 
                 // find best match for quincunx pattern                
                 p_max = estimate_pattern_position(p_map, dpx_plants, dpx_rows, &ptn_pos);
@@ -336,14 +394,12 @@ namespace romi {
                 // adjust the positions of the points.
                 float delta = (float) (0.04 * meters_to_pixels);
                 positions = adjust_positions(p_map, dpx_plants, dpx_rows, &ptn_pos, delta);
-                
-                delete_image(p_map);
         
                 return positions;
         }
                 
         bool Quincunx::trace_path(IFolder &session,
-                                  Image &in,
+                                  Image &mask,
                                   double tool_diameter,
                                   double meters_to_pixels,
                                   Path &waypoints)
@@ -356,23 +412,24 @@ namespace romi {
                 float diameter_tool_px;
                 float border_px;
 
-                image_t *mask = in.ptr();
-
                 radius_zones_px = (float) (meters_to_pixels * _radius_zones);
                 diameter_tool_px = (float) (meters_to_pixels * tool_diameter);
                 border_px = diameter_tool_px / 2.0f;
 
-                positions = compute_positions(session, mask, meters_to_pixels, &confidence);
+                positions = compute_positions(session, mask,
+                                              _distance_plants,
+                                              _distance_rows,
+                                              meters_to_pixels, &confidence);
 
                 if (positions != 0) {
                 
-                        path = boustrophedon(border_px, mask->width - border_px,
-                                             border_px, mask->height - border_px, 
+                        path = boustrophedon(border_px, mask.width() - border_px,
+                                             border_px, mask.height() - border_px, 
                                              diameter_tool_px, radius_zones_px,
                                              positions);
                         if (path != 0) {
 
-                                store_svg(session, mask->width, mask->height, 
+                                store_svg(session, mask.width(), mask.height(), 
                                           "scaled.jpg", path, positions,
                                           radius_zones_px, 1.0f);
                                 
@@ -574,11 +631,11 @@ namespace romi {
 
         // We're in pixel coordinates: X from left to right, Y from top to
         // bottom.
-        list_t *Quincunx::boustrophedon(float x0, float x1, 
-                                        float y0, float y1,
-                                        float dx, 
-                                        float radius,
-                                        list_t *positions)
+        static list_t *boustrophedon(float x0, float x1, 
+                                     float y0, float y1,
+                                     float dx, 
+                                     float radius,
+                                     list_t *positions)
         {
                 list_t *path = NULL;
                 float x, y, z;

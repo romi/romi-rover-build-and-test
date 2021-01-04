@@ -25,9 +25,9 @@
 #ifndef __ROMI_I_FOLDER_H
 #define __ROMI_I_FOLDER_H
 
+#include <r.h>
 #include "Path.h"
 #include "Image.h"
-#include "image_impl.h"
 
 namespace romi {
         
@@ -39,11 +39,6 @@ namespace romi {
                 virtual void store(const char* name, Image &image) = 0;
                 virtual void store_jpg(const char* name, Image &image) = 0;
                 virtual void store_png(const char* name, Image &image) = 0;
-
-                
-                virtual void store(const char* name, image_t *image) = 0;
-                virtual void store_jpg(const char* name, image_t *image) = 0;
-                virtual void store_png(const char* name, image_t *image) = 0;
                 
                 virtual void store_svg(const char* name, const char *body, int len) = 0;
                 virtual void store_txt(const char* name, const char *body, int len) = 0;

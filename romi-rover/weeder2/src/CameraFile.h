@@ -26,6 +26,7 @@
 #define __ROMI_CAMERA_FILE_H
 
 #include <string>
+#include "ImageIO.h"
 #include "Camera.h"
 
 namespace romi {
@@ -54,10 +55,8 @@ namespace romi {
                 bool open() override {
                         bool success = false;
                         try {
-                                // Will throw an exception if it
-                                // failed to load the image file.
-                                _image.load_from_file(_filename.c_str());
-                                success = true;
+                                success = ImageIO::load(_image, _filename.c_str());
+
                         } catch (std::runtime_error &e) {
                                 r_err("Failed to load the file: %s", _filename.c_str());
                         }

@@ -26,120 +26,91 @@
 #define __ROMI_IMAGE_H
 
 #include <stdexcept>
-#include "image_impl.h"
 
 namespace romi {
-        
+
+        class ImageIO;
+
         class Image
         {
-        protected:
-                image_t *_image;
-                
         public:
-                Image() : _image(0) {}
+                enum ImageType { BW, RGB }; 
                 
-                Image(int type, int width, int height) {
-                        _image = new_image(type, width, height);
-                }
+        protected:
+                size_t _width;
+                size_t _height;
+                ImageType _type;
+                size_t _channels;
+                float *_data;
 
-                Image(const unsigned char *data, int len) {
-                        _image = image_load_from_mem(data, len);
-                        if (_image == 0)
-                                throw std::runtime_error("Failed to load the image");
+                void resize_data();
+                void free_data();
+                void alloc_data();
+                void import_data(const uint8_t *data);
+                void do_init(ImageType type, size_t width, size_t height);
+
+        public:
+                Image();
+                Image(ImageType type, size_t width, size_t height);
+                Image(ImageType type, const uint8_t *data, size_t width, size_t height);
+                
+                virtual ~Image();
+
+                // Accessors
+                ImageType type() {
+                        return _type;
                 }
                 
-                virtual ~Image() {
-                        if (_image) 
-                                delete_image(_image);
+                size_t width() {
+                        return _width;
                 }
-
-                Image &operator= (const Image &rhs) {
-                        if (_image) 
-                                delete_image(_image);
-                        _image = image_clone(rhs._image);
-                        return *this;
+                
+                size_t height() {
+                        return _height;
                 }
-
-                int type() {
-                        return _image? _image->type : -1;
+                
+                size_t channels() {
+                        return _channels;
                 }
-
+                
                 float *data() {
-                        return _image? _image->data : NULL;
-                }
-
-                int width() {
-                        return _image? _image->width : 0;
-                }
-
-                int height() {
-                        return _image? _image->height : 0;
+                        return _data;
                 }
                 
-                void moveto(image_t *image) {
-                        if (_image) 
-                                delete_image(_image);
-                        _image = image;
+                bool contains(size_t x, size_t y) {
+                        return (x < width() && y < height());
                 }
 
-                void load_from_file(const char *filename) {
-                        if (_image) 
-                                delete_image(_image);
-                        _image = image_load(filename);
-                        if (_image == 0)
-                                throw std::runtime_error("Failed to load the image");
+                size_t offset(size_t channel, size_t x, size_t y) {
+                        return (y * channels() * width() + x * channels() + channel);
                 }
 
-                void load_from_mem(const unsigned char *data, int len) {
-                        if (_image) 
-                                delete_image(_image);
-                        _image = image_load_from_mem(data, len);
-                        if (_image == 0)
-                                throw std::runtime_error("Failed to load the image");
-                }
-
-                bool import_rgb(uint8_t* rgb, int width, int height) {
-                        bool success = false;
-                        if (_image == 0) {
-                                _image = convert_to_image(rgb, width, height);
-                                success = (_image != 0);
-                        } else if (width != image_width(_image)
-                                   || height != image_height(_image)
-                                   || IMAGE_RGB != _image->type) {
-                                delete_image(_image);
-                                _image = convert_to_image(rgb, width, height);
-                                success = (_image != 0);
-                        } else {
-                                image_import(_image, rgb);
-                                success = true;
+                void set(size_t channel, size_t x, size_t y, float color) {
+                        if (contains(x, y)) {
+                                _data[offset(channel, x, y)] = color;
                         }
-                        return success;
-                }
-
-                bool to_jpeg(membuf_t *out) {
-                        bool success = false;
-                        if (_image) 
-                                success = (image_store_to_mem(_image, out, "jpg") == 0);
-                        return success;
                 }
                 
-                void crop(int x0, int y0, int width, int height, Image &out) {
-                        image_t *cropped = FIXME_image_crop(_image, x0, y0, width, height);
-                        if (cropped == 0)
-                                throw std::runtime_error("Failed to crop the image");
-                        out.moveto(cropped);
-                }
-
-                void scale(int n, Image &out) {
-                        image_t *scaled = FIXME_image_scale(_image, n);
-                        out.moveto(scaled);
+                float get(size_t channel, size_t x, size_t y) {
+                        float value = 0.0f;
+                        if (contains(x, y)) {
+                                value = _data[offset(channel, x, y)];
+                        }
+                        return value;
                 }
                 
-                // FIXME: this method is temporary
-                image_t *ptr() {
-                        return _image;
-                }
+                // Operations
+                void init(ImageType type, size_t width, size_t height);
+                void import(ImageType type, const uint8_t *data,
+                            size_t width, size_t height);
+                void fill(size_t channel, float color);
+                void crop(size_t x, size_t y, size_t width, size_t height, Image &out);
+                void scale(size_t n, Image &out);
 
+                void copy_to(Image &to);
+
+                size_t length();
+                size_t byte_length();
         };
 }
 

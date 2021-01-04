@@ -84,11 +84,11 @@ namespace romi {
                 if (_width > 0 && _height > 0) {
 
                         double diameter = map_meters_to_pixels(tool_diameter);
-                        int border = (int) (diameter / 2.0);
-                        int x0 = _x0 - border;
-                        int width = _width + 2 * border;
-                        int y0 = camera.height() - _y0 - _height - border;
-                        int height = _height + 2 * border;
+                        size_t border = (size_t) (diameter / 2.0);
+                        ssize_t x0 = _x0 - border;
+                        size_t width = _width + 2 * border;
+                        ssize_t y0 = camera.height() - _y0 - _height - border;
+                        size_t height = _height + 2 * border;
 
                         session.store("camera", camera);
 

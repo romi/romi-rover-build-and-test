@@ -22,6 +22,7 @@
 
  */
 
+#include "ImageIO.h"
 #include "CameraServer.h"
 
 namespace romi {
@@ -62,9 +63,17 @@ namespace romi {
         void CameraServer::send_image(response_t *response)
         {
                 if (_camera.grab(_image)) {
-                        if (!_image.to_jpeg(response_body(response))) {
+                        
+                        bytevector out;
+                        
+                        if (ImageIO::store_jpg(_image, out)) {
+                                membuf_t *b = response_body(response);
+                                membuf_append(b, (const char *) &out[0], out.size());
+                                        
+                        } else {
                                 r_err("CameraServer::send_image: _image.to_jpeg failed");
-                                response_set_status(response, HTTP_Status_Internal_Server_Error);
+                                response_set_status(response,
+                                                    HTTP_Status_Internal_Server_Error);
                         }
                         
                 } else {

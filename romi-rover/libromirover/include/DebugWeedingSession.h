@@ -52,10 +52,6 @@ namespace romi {
                 void store(const char* name, Image &image) override;
                 void store_jpg(const char* name, Image &image);
                 void store_png(const char* name, Image &image);
-                
-                void store(const char* name, image_t *image) override;
-                void store_jpg(const char* name, image_t *image) override;
-                void store_png(const char* name, image_t *image) override;
                 void store_svg(const char* name, const char *body, int len) override;
                 void store_txt(const char* name, const char *body, int len) override;
 
@@ -100,15 +96,7 @@ namespace romi {
                 void store_png(const char* name, Image &image) {
                         print_error_message(name);
                 }
-                void store(const char* name, image_t *image) override {
-                        print_error_message(name);
-                }
-                void store_jpg(const char* name, image_t *image) override {
-                        print_error_message(name);
-                }
-                void store_png(const char* name, image_t *image) override {
-                        print_error_message(name);
-                }
+                
                 void store_svg(const char* name, const char *body, int len) override {
                         print_error_message(name);
                 }

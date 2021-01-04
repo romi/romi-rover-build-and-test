@@ -27,6 +27,7 @@
 
 #include <string>
 #include <r.h>
+#include <mutex>
 #include "Camera.h"
 #include "Image.h"
 #include "JsonCpp.h"
@@ -41,42 +42,19 @@ namespace romi {
                 std::string _device;
                 uint32_t _width;
                 uint32_t _height;
-                mutex_t *_mutex;
+                std::mutex _mutex;
                 thread_t *_thread;
                 bool _done;
+                Image _image;
                 
                 void close();
-
-                static void _run(void* data) {
-                        USBCamera *camera = (USBCamera*) data;
-                        camera->run();
-                }
-
-                void run() {
-                        while (!_done) {
-                                mutex_lock(_mutex);
-                                camera_capture(_camera);
-                                mutex_unlock(_mutex);
-                                clock_sleep(0.040);
-                        }
-                }
+                void grab_from_camera();
+                void run();
+                static void _run(void* data);
                         
         public:
-                USBCamera() : _camera(0), _width(0), _height(0), _thread(0), _done(false) {
-                        _mutex = new_mutex();
-                }
-                
-                virtual ~USBCamera() override {
-                        if (_thread) {
-                                _done = true;
-                                thread_join(_thread);
-                                delete_thread(_thread);
-                        }
-                        if (_camera)
-                                delete_camera(_camera);
-                        if (_mutex)
-                                delete_mutex(_mutex);
-               }
+                USBCamera();
+                virtual ~USBCamera() override;
                 
                 int set_parameter(const char *name, JsonCpp value) override;
                 bool open() override;

@@ -22,35 +22,32 @@
 
  */
 
-#ifndef __ROMI_CAMERA_PROXY_H
-#define __ROMI_CAMERA_PROXY_H
+#ifndef __ROMI_IMAGEIO_H
+#define __ROMI_IMAGEIO_H
 
-#include <string>
-#include <rcom.h>
-#include "Camera.h"
-#include <mutex>
+#include <vector>
+#include "Image.h"
 
 namespace romi {
 
-        class CameraProxy : public Camera {
-        protected:
-                std::string _name;
-                std::string _resource;
-                std::mutex _m;
-
-                void assert_name();
-                void assert_ressource();
-                void download_jpg_data(response_t **response);
-                void convert_jpg_data(response_t *response, Image& image);
-                
+        using bytevector = std::vector<uint8_t>;
+        
+        class ImageIO
+        {
         public:
-                CameraProxy() {}
-                virtual ~CameraProxy() override = default;
+                static bool store_jpg(Image& image, const char *path);
+                static bool store_jpg(Image& image, bytevector& out);
+                static bool store_png(Image& image, const char *path);
                 
-                int set_parameter(const char *name, JsonCpp value) override;
-                bool open() override;
-                bool grab(Image &image) override;
+                static bool load(Image& image, const char *filename);
+                static bool load_jpg(Image& image, const uint8_t *data, size_t len);
+
+        protected:
+                static bool is_png(const char *filename);
+                static bool is_jpg(const char *filename);
+                static bool load_jpg(Image& image, const char *filename);
+                static bool load_png(Image& image, const char *filename);
         };
 }
 
-#endif // __ROMI_CAMERA_PROXY_H
+#endif // __ROMI_IMAGEIO_H

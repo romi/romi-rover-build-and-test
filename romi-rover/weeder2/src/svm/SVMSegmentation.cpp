@@ -54,22 +54,22 @@ namespace romi {
 
         void SVMSegmentation::segment(IFolder &session, Image &image, Image &mask) 
         {
-                if (image.type() != IMAGE_RGB)
+                if (image.type() != Image::RGB)
                         throw std::runtime_error("SVMSegmentation::segment: "
                                                  "Expected an RGB input image");
 
-                image_t *out = new_image(IMAGE_BW, image.width(), image.height());
+                mask.init(Image::BW, image.width(), image.height());
+                
                 int len = image.width() * image.height();
                 float *a = image.data();
+                float *r = mask.data();
                 
                 for (int i = 0, j = 0; i < len; i++, j += 3) {
                         float x = (255.0 * a[j] * _a[0]
                                    + 255.0 * a[j+1] * _a[1]
                                    + 255.0 * a[j+2] * _a[2]
                                    + _b);
-                        out->data[i] = (x > 0.0f)? 1.0f : 0.0f;
+                        r[i] = (x > 0.0f)? 1.0f : 0.0f;
                 }
-
-                mask.moveto(out);
         }
 }
