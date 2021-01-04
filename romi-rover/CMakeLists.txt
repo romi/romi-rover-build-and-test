@@ -36,8 +36,8 @@ endif()
 
 ############################################################
 
-option(WITH_REALSENSE "Compile the realsense app" OFF)
-option(WITH_PICAMERA "Compile the picamera app" OFF)
+#option(WITH_REALSENSE "Compile the realsense app" OFF)
+#option(WITH_PICAMERA "Compile the picamera app" OFF)
 
 add_subdirectory(weeder2)
 add_subdirectory(user-interface)
