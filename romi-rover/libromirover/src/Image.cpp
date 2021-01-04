@@ -154,8 +154,8 @@ namespace romi {
                 if (n == 0)
                         n = 1;
                 
-                size_t width = _width / n;
-                size_t height = _height / n;
+                size_t width = (_width + n - 1) / n;
+                size_t height = (_height + n - 1) / n;
                 
                 out.init(_type, width, height);
 

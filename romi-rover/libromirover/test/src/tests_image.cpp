@@ -187,7 +187,6 @@ TEST_F(image_tests, test_crop_1)
         Image crop;
         image.crop(1, 1, 2, 2, crop);
 
-        
         ASSERT_EQ(crop.type(), Image::BW);
         ASSERT_EQ(crop.width(), 2);
         ASSERT_EQ(crop.height(), 2);
@@ -209,7 +208,6 @@ TEST_F(image_tests, test_crop_2)
         Image crop;
         image.crop(3, 3, 2, 2, crop);
 
-        
         ASSERT_EQ(crop.type(), Image::BW);
         ASSERT_EQ(crop.width(), 1);
         ASSERT_EQ(crop.height(), 1);
@@ -228,7 +226,6 @@ TEST_F(image_tests, test_crop_3)
         Image crop;
         image.crop(4, 4, 2, 2, crop);
 
-        
         ASSERT_EQ(crop.type(), Image::BW);
         ASSERT_EQ(crop.width(), 0);
         ASSERT_EQ(crop.height(), 0);
@@ -245,7 +242,6 @@ TEST_F(image_tests, test_scale_1)
         Image image(Image::BW, data, 4, 4);
         Image scale;
         image.scale(2, scale);
-
         
         ASSERT_EQ(scale.type(), Image::BW);
         ASSERT_EQ(scale.width(), 2);
@@ -263,10 +259,21 @@ TEST_F(image_tests, test_scale_2)
         Image scale;
         image.scale(0, scale);
 
-        
         ASSERT_EQ(scale.type(), Image::BW);
         ASSERT_EQ(scale.width(), 4);
         ASSERT_EQ(scale.height(), 4);
+        ASSERT_EQ(scale.channels(), 1);
+}
+
+TEST_F(image_tests, test_scale_3)
+{
+        Image image(Image::BW, 4, 4);
+        Image scale;
+        image.scale(3, scale);
+
+        ASSERT_EQ(scale.type(), Image::BW);
+        ASSERT_EQ(scale.width(), 2);
+        ASSERT_EQ(scale.height(), 2);
         ASSERT_EQ(scale.channels(), 1);
 }
 
@@ -280,7 +287,6 @@ TEST_F(image_tests, test_copy_to_bw)
         Image image(Image::BW, data, 4, 4);
         Image copy;
         image.copy_to(copy);
-
         
         ASSERT_EQ(copy.type(), Image::BW);
         ASSERT_EQ(copy.width(), 4);
@@ -304,7 +310,6 @@ TEST_F(image_tests, test_copy_to_rgb)
         Image copy(Image::BW, 2, 2);
         image.copy_to(copy);
 
-        
         ASSERT_EQ(copy.type(), Image::RGB);
         ASSERT_EQ(copy.width(), 4);
         ASSERT_EQ(copy.height(), 4);

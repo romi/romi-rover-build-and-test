@@ -37,14 +37,14 @@ namespace romi {
                 struct jpeg_error_mgr jerr;
                 FILE* outfile;	 
                 JSAMPLE* buffer;
-        
-                cinfo.err = jpeg_std_error(&jerr);
-                jpeg_create_compress(&cinfo);
 
                 if ((outfile = fopen(filename, "wb")) == NULL) {
                         r_err("Failed to open the file: %s\n", filename);
                         return false;
                 }
+        
+                cinfo.err = jpeg_std_error(&jerr);
+                jpeg_create_compress(&cinfo);
                 
                 jpeg_stdio_dest(&cinfo, outfile);
 
@@ -56,7 +56,7 @@ namespace romi {
                         cinfo.in_color_space = JCS_GRAYSCALE;
                 } else { 
                         cinfo.input_components = 3;	
-                        cinfo.in_color_space = JCS_RGB; // FIXME: HSV images!!!
+                        cinfo.in_color_space = JCS_RGB;
                 }
         
                 jpeg_set_defaults(&cinfo);
@@ -127,7 +127,7 @@ namespace romi {
                 png_set_IHDR(png_ptr, info_ptr,
                              image.width(), image.height(), 
                              8, 
-                             (image.type() == Image::BW)? PNG_COLOR_TYPE_GRAY : PNG_COLOR_TYPE_RGB, // FIXME: HSV images?
+                             (image.type() == Image::BW)? PNG_COLOR_TYPE_GRAY : PNG_COLOR_TYPE_RGB,
                              PNG_INTERLACE_NONE,
                              PNG_COMPRESSION_TYPE_DEFAULT,
                              PNG_FILTER_TYPE_DEFAULT);
