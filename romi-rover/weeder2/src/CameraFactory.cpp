@@ -23,8 +23,7 @@
  */
 
 #include "CameraFactory.h"
-#include "CameraProxy.h"
-#include "CameraFile.h"
+#include "FileCamera.h"
 #include "USBCamera.h"
 
 namespace romi {
@@ -40,11 +39,9 @@ namespace romi {
         Camera *CameraFactory::create(const char *name, JsonCpp config)
         {
                 Camera *camera = 0;
-                if (rstreq(name, "camera-file")) {
-                        camera = new CameraFile();
-                } else if (rstreq(name, "camera-proxy")) {
-                        camera = new CameraProxy();
-                } else if (rstreq(name, "camera-usb")) {
+                if (rstreq(name, "file-camera")) {
+                        camera = new FileCamera();
+                } else if (rstreq(name, "usb-camera")) {
                         camera = new USBCamera();
                 } else {
                         r_warn("Failed to find the image class: %s", name);

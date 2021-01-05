@@ -87,6 +87,24 @@ add_test(
 )
 
 
+set(SRCS_ROVEROPTIONS
+  src/tests_main.cpp
+  src/tests_roveroptions.cpp
+  ../include/GetOpt.h
+  ../include/RoverOptions.h
+  ../src/GetOpt.cpp
+  ../src/RoverOptions.cpp
+  )
+add_executable(romi_rover_unit_tests_libromirover_roveroptions ${SRCS_ROVEROPTIONS})
+target_link_libraries(romi_rover_unit_tests_libromirover_roveroptions rpp gtest gmock)
+
+add_test(
+    NAME romi_rover_unit_tests_libromirover_roveroptions
+    COMMAND romi_rover_unit_tests_libromirover_roveroptions
+)
+
+
+
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
             NAME romi_rover_libromirover_coverage
@@ -95,6 +113,7 @@ if(BUILD_COVERAGE)
                          romi_rover_unit_tests_libromirover_cncrange
                          romi_rover_unit_tests_libromirover_path
                          romi_rover_unit_tests_libromirover_image
-                         romi_rover_unit_tests_libromirover_imageio)
+                         romi_rover_unit_tests_libromirover_imageio
+                         romi_rover_unit_tests_libromirover_roveroptions)
 endif()
 

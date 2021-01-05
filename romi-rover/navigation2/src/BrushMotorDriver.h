@@ -25,8 +25,7 @@
 #define __ROMI_BRUSH_MOTORDRIVER_H
 
 #include <stdexcept>
-#include "IMotorDriver.h"
-#include "IConfiguration.h"
+#include "MotorDriver.h"
 #include "RomiSerialClient.h"
 
 namespace romi {
@@ -50,7 +49,7 @@ namespace romi {
                 }
         };
         
-        class BrushMotorDriver : public IMotorDriver
+        class BrushMotorDriver : public MotorDriver
         {
         protected:
                 IRomiSerialClient &_serial;

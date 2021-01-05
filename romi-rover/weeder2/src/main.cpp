@@ -22,123 +22,44 @@
 
  */
 #include <exception>
+#include <stdexcept>
 #include <string.h>
-#include <getopt.h>
 
+#include <rcom.h>
 #include <RPCServer.h>
+#include <RoverOptions.h>
+#include <DebugWeedingSession.h>
+#include <RPCClient.h>
 
 #include "FakeCNC.h"
-#include "ConfigurationFile.h"
 #include "CameraFactory.h"
 #include "CameraServer.h"
 #include "RoverWeeder.h"
 #include "Pipeline.h"
-#include "DebugWeedingSession.h"
-#include "RPCClient.h"
 #include "RemoteCNC.h"
 
 using namespace romi;
 using namespace rcom;
 
-struct Options {
-        
-        const char *config_file;
-        const char *server_name;
-        const char *camera_topic;
-        const char *weeder_topic;
-        const char *output_directory;
-        const char *cnc_class;
-        const char *cnc_name;
-        const char *camera_class;
-
-        Options() {
-                config_file = "config.json";
-                server_name = "weeder";
-                camera_topic = "topcam";
-                weeder_topic = "weeder";
-                output_directory = ".";
-                cnc_class = 0;
-                cnc_name = "oquam";
-                camera_class = 0;
-        }
-
-        void parse(int argc, char** argv) {
-                int option_index;
-                static const char *optchars = "C:N:W:T:d:c:n:a:";
-                static struct option long_options[] = {
-                        {"config", required_argument, 0, 'C'},
-                        {"server-name", required_argument, 0, 'N'},
-                        {"camera-topic", required_argument, 0, 'T'},
-                        {"weeder-topic", required_argument, 0, 'W'},
-                        {"output-directory", required_argument, 0, 'd'},
-                        {"cnc-class", required_argument, 0, 'c'},
-                        {"cnc-name", required_argument, 0, 'n'},
-                        {"camera", required_argument, 0, 'a'},
-                        {0, 0, 0, 0}
-                };
-        
-                while (1) {
-                        int c = getopt_long(argc, argv, optchars,
-                                            long_options, &option_index);
-                        if (c == -1) break;
-                        switch (c) {
-                        case 'C':
-                                config_file = optarg;
-                                break;
-                        case 'N':
-                                server_name = optarg;
-                                break;
-                        case 'T':
-                                camera_topic = optarg;
-                                break;
-                        case 'W':
-                                weeder_topic = optarg;
-                                break;
-                        case 'd':
-                                output_directory = optarg;
-                                break;
-                        case 'c':
-                                cnc_class = optarg;
-                                break;
-                        case 'n':
-                                cnc_name = optarg;
-                                break;
-                        case 'a':
-                                camera_class = optarg;
-                                break;
-                        }
-                }
-        }
-};
-
 static CNC *cnc = 0;
 static RPCClient *rpc_client = 0;
 static Camera *camera = 0;
 
-const char *get_camera_class(Options &options, IConfiguration &config)
+const char *get_camera_class(Options &options, JsonCpp &config)
 {
-        const char *camera_class = options.camera_class;
+        const char *camera_class = options.get_value("weeder-camera-classname");
         if (camera_class == 0) {
                 try {
-                        camera_class = config.get("weeder").str("camera");
+                        camera_class = config["weeder"]["camera-classname"];
                 } catch (JSONError &je) {
-                        r_warn("Failed to get the value for weeder.camera: %s", je.what());
+                        r_warn("Failed to get the value for "
+                               "weeder.camera-classname: %s", je.what());
                 }
         }
         return camera_class;
 }
 
-void get_camera_config(const char *camera_class, IConfiguration &config, JsonCpp &camera_config)
-{
-        if (config.get().has("weeder")
-            && config.get("weeder").has(camera_class))
-                camera_config = config.get("weeder").get(camera_class);
-        else 
-                r_warn("Configuration does not have a '%s' camera section",
-                       camera_class);  
-}
-
-Camera *create_camera(Options &options, IConfiguration &config)
+Camera *create_camera(Options &options, JsonCpp &config)
 {
         const char *camera_class = get_camera_class(options, config);
         if (camera_class == 0)
@@ -146,7 +67,6 @@ Camera *create_camera(Options &options, IConfiguration &config)
                                          "or in the configuration file.");
         
         JsonCpp camera_config;
-        get_camera_config(camera_class, config, camera_config);
         
         Camera *camera = CameraFactory::create(camera_class, camera_config);
         if (camera == 0) {
@@ -156,12 +76,12 @@ Camera *create_camera(Options &options, IConfiguration &config)
         return camera;
 }
 
-const char *get_cnc_class(Options &options, IConfiguration &config)
+const char *get_cnc_class(Options &options, JsonCpp &config)
 {
-        const char *cnc_class = options.cnc_class;
+        const char *cnc_class = options.get_value("weeder-cnc-classname");
         if (cnc_class == 0) {
                 try {
-                        cnc_class = config.get("weeder").str("cnc");
+                        cnc_class = config["weeder"]["cnc-classname"];
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for weeder.cnc: %s", je.what());
                 }
@@ -169,7 +89,7 @@ const char *get_cnc_class(Options &options, IConfiguration &config)
         return cnc_class;
 }
 
-CNC *create_cnc(Options &options, IConfiguration &config)
+CNC *create_cnc(Options &options, JsonCpp &config)
 {
         const char *cnc_class = get_cnc_class(options, config);
         if (cnc_class == 0)
@@ -180,16 +100,15 @@ CNC *create_cnc(Options &options, IConfiguration &config)
         
         if (rstreq(cnc_class, FakeCNC::ClassName)) {
                 try {
-                        cnc = new FakeCNC(config);
+                        JsonCpp range_data = config["oquam"]["cnc-range"];
+                        cnc = new FakeCNC(range_data);
+                        
                 } catch (JSONError &je) {
                         r_warn("Failed to configure FakeCNC: %s", je.what());
                 }
                 
         } else if (rstreq(cnc_class, RemoteCNC::ClassName)) {
-                const char *name = options.cnc_name;
-                if (name == 0)
-                        name = "oquam";
-                rpc_client = new RPCClient(name, "cnc");
+                rpc_client = new RPCClient("oquam", "cnc");
                 cnc = new RemoteCNC(rpc_client);
         }
 
@@ -201,37 +120,20 @@ CNC *create_cnc(Options &options, IConfiguration &config)
         return cnc;
 }
 
-void init_cnc_range(CNC *cnc, CNCRange &range)
-{
-        bool success = false;
-        for (int attempt = 1; attempt <= 10; attempt++) {
-                if (cnc->get_range(range)) {
-                        r_debug("init_cnc_range: [%f, %f],[%f, %f],[%f, %f]",
-                                range.min.x(), range.max.x(),
-                                range.min.y(), range.max.y(),
-                                range.min.z(), range.max.z());
-                        success = true;
-                        break; 
-                }
-                clock_sleep(1.0);
-        }
-        if (!success) {
-                r_err("Failed to obtain the CNC range.");
-                throw std::runtime_error("Failed to obtain the CNC range.");
-        }
-}
-
 int main(int argc, char** argv)
 {
         int retval = 1;
-        Options options;
+
+        GetOpt options(rover_options, rover_options_length);
         options.parse(argc, argv);
         
         app_init(&argc, argv);
         
         try {
-                r_debug("Weeder: Using configuration file: '%s'", options.config_file);
-                ConfigurationFile config(options.config_file);
+                r_debug("Weeder: Using configuration file: '%s'",
+                        options.get_value("config-file"));
+                
+                JsonCpp config = JsonCpp::load(options.get_value("config-file"));
 
                 // Instantiate the camera
                 Camera *camera = create_camera(options, config);
@@ -239,22 +141,26 @@ int main(int argc, char** argv)
                 // Instantiate the CNC
                 CNC *cnc = create_cnc(options, config);
 
+                JsonCpp config_range = config["oquam"]["cnc-range"];
+                
                 CNCRange range;
-                init_cnc_range(cnc, range);
+                if (!cnc->get_range(range)) 
+                        throw std::runtime_error("Failed to get the CNC range");
                                
-                Pipeline pipeline(range, config.get());
+                Pipeline pipeline(range, config);
                 
-                DebugWeedingSession session(options.output_directory, "weeder");
+                DebugWeedingSession session(options.get_value("session-directory"),
+                                            "weeder");
+
                 
-                RoverWeeder weeder(&config, camera, &pipeline, cnc, range, session);
+                double z0 = config["weeder"]["z0"];
+                RoverWeeder weeder(camera, &pipeline, cnc, range, z0, session);
                 
-                RPCServer weeder_server(weeder,
-                                        options.server_name,
-                                        options.weeder_topic);
+                RPCServer weeder_server(weeder, "weeder", "weeder");
                 
                 // Make the camera accessible over HTTP 
-                CameraServer camera_server(*camera, options.server_name,
-                                           options.camera_topic);
+                CameraServer camera_server(*camera, "weeder", "topcam");
+                
                 while (!app_quit())
                         clock_sleep(0.1);
 

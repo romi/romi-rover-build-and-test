@@ -21,33 +21,30 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_JSON_CONFIGURATION_H
-#define __ROMI_JSON_CONFIGURATION_H
-
-#include "IConfiguration.h"
+#ifndef __ROMI_MOTORDRIVER_H
+#define __ROMI_MOTORDRIVER_H
 
 namespace romi {
         
-        class JSONConfiguration : public IConfiguration
+        class MotorDriver
         {
-        protected:
-                JsonCpp _obj;
-                
         public:
-                JSONConfiguration() {}
-                JSONConfiguration(JsonCpp obj) : _obj(obj) {}                
-                 ~JSONConfiguration() override = default;
                 
-                JsonCpp get() override {
-                        return _obj;
-                }
-                JsonCpp get(const char *key) override {
-                        return _obj.get(key);
-                }
-                void set(JsonCpp& obj) {
-                        _obj = obj;
-                }
+                virtual ~MotorDriver() = default;
+
+                /** The left and right speed are relative speeds. They
+                 * must have a value between -1 and 1, and indicate
+                 * the fraction of the maximum allowed speed. */
+                virtual bool moveat(double left, double right) = 0;
+
+                /** Stop as quick as possible. */
+                virtual bool stop() = 0;
+
+                /** Returns the values of the encoders. The timestamp
+                 * is in seconds. */
+                virtual bool get_encoder_values(double &left, double &right,
+                                                double &timestamp) = 0;
         };
 }
 
-#endif // __ROMI_JSON_CONFIGURATION_H
+#endif // __ROMI_MOTORDRIVER_H

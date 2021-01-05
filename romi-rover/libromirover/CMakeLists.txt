@@ -6,26 +6,28 @@ set(libromirover_VERSION_MINOR 1)
 
 set(SOURCES
   include/CNCRange.h
-  include/ConfigurationFile.h
   include/DebugWeedingSession.h
   include/Camera.h
   include/CNC.h
   include/FakeWeeder.h
-  include/IConfiguration.h
+  include/GetOpt.h
   include/IFileCabinet.h
   include/IFolder.h
   include/Image.h
   include/ImageIO.h
   include/Navigation.h
-  include/JSONConfiguration.h
+  include/Options.h
   include/Path.h 
+  include/RoverOptions.h
   include/v.h
   include/Weeder.h
   src/CNCRange.cpp
   src/DebugWeedingSession.cpp
+  src/GetOpt.cpp
   src/Image.cpp
   src/ImageIO.cpp
   src/Path.cpp
+  src/RoverOptions.cpp
   src/v.cpp
 )
 

@@ -22,28 +22,29 @@
 
  */
 
-#ifndef __ROMI_CAMERA_FILE_H
-#define __ROMI_CAMERA_FILE_H
+#ifndef __ROMI_FILE_CAMERA_H
+#define __ROMI_FILE_CAMERA_H
 
 #include <string>
+#include <r.h>
 #include "ImageIO.h"
 #include "Camera.h"
 
 namespace romi {
 
-        class CameraFile : public Camera {
+        class FileCamera : public Camera {
         protected:
                 std::string _filename;
                 Image _image;
                 
         public:
-                CameraFile() : _image() {}
+                FileCamera() : _image() {}
                 
-                CameraFile(const char *filename) : _filename(filename), _image() {
+                FileCamera(const char *filename) : _filename(filename), _image() {
                         open();
                 }
                 
-                virtual ~CameraFile() override = default;
+                virtual ~FileCamera() override = default;
                 
                 int set_parameter(const char *name, JsonCpp value) override {
                         int r = 0;
@@ -70,4 +71,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_CAMERA_FILE_H
+#endif // __ROMI_FILE_CAMERA_H

@@ -3,7 +3,6 @@
 #include "../mock/mock_navigation.h"
 #include "DefaultSpeedController.h"
 #include "SpeedConverter.h"
-#include "JSONConfiguration.h"
 
 using namespace std;
 using namespace testing;

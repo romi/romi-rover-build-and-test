@@ -28,7 +28,7 @@
 #include "Display.h"
 #include "InputDevice.h"
 
-#include "UIOptions.h"
+#include "Options.h"
 #include "JsonCpp.h"
 #include "LinuxJoystick.h"
 #include "UIEventMapper.h"
@@ -60,41 +60,37 @@ namespace romi {
                 
 
                 // Display
-                void instantiate_display(UIOptions &options, JsonCpp &config);
+                void instantiate_display(Options &options, JsonCpp &config);
                 void instantiate_display(const char *display_classname,
-                                        UIOptions &options,
+                                        Options &options,
                                         JsonCpp &config);
-                const char *get_display_classname(UIOptions& options, JsonCpp& config);
+                const char *get_display_classname(Options& options, JsonCpp& config);
                 const char *get_display_classname_in_config(JsonCpp &config);
                 void instantiate_fake_display();
-                void instantiate_crystal_display(UIOptions &options, JsonCpp &config);
-                const char *get_crystal_display_device(UIOptions &options,
+                void instantiate_crystal_display(Options &options, JsonCpp &config);
+                const char *get_crystal_display_device(Options &options,
                                                        JsonCpp &config);
                 const char *get_crystal_display_device_in_config(JsonCpp &config);
 
                 
                 // Navigation
-                void instantiate_navigation(UIOptions &options, JsonCpp &config);
-                void instantiate_navigation(const char *classname, UIOptions &options,
+                void instantiate_navigation(Options &options, JsonCpp &config);
+                void instantiate_navigation(const char *classname, Options &options,
                                            JsonCpp &config);
-                const char *get_navigation_classname(UIOptions& options, JsonCpp& config);
+                const char *get_navigation_classname(Options& options, JsonCpp& config);
                 const char *get_navigation_classname_in_config(JsonCpp &config);
                 void instantiate_fake_navigation();
-                void instantiate_remote_navigation(UIOptions &options, JsonCpp &config);
-                const char *get_remote_navigation_server(UIOptions &options,
-                                                         JsonCpp &config);
-                const char *get_remote_navigation_server_in_config(JsonCpp &config);
-                        
+                void instantiate_remote_navigation(Options &options, JsonCpp &config);
 
                 // Input device / joystick
-                const char *get_input_device_classname(UIOptions &options,
+                const char *get_input_device_classname(Options &options,
                                                        JsonCpp &config);
                 const char *get_input_device_classname_in_config(JsonCpp &config);
-                void instantiate_input_device(const char *classname, UIOptions& options,
+                void instantiate_input_device(const char *classname, Options& options,
                                              JsonCpp& config);
                 void instantiate_fake_input_device();
-                void instantiate_joystick(UIOptions& options, JsonCpp& config);
-                const char *get_joystick_device(UIOptions& options, JsonCpp& config);
+                void instantiate_joystick(Options& options, JsonCpp& config);
+                const char *get_joystick_device(Options& options, JsonCpp& config);
                 const char *get_joystick_device_in_config(JsonCpp& config);
 
                 
@@ -105,17 +101,10 @@ namespace romi {
                 UIFactory();
                 virtual ~UIFactory();
                 
-                Display& create_display(UIOptions& options,
-                                        JsonCpp& config);
-
-                Navigation& create_navigation(UIOptions& options,
-                                              JsonCpp& config);
-                
-                InputDevice& create_input_device(UIOptions& options,
-                                                 JsonCpp& config);
-                
-                const char *get_script_file(UIOptions &options,
-                                             JsonCpp &config);
+                Display& create_display(Options& options, JsonCpp& config);
+                Navigation& create_navigation(Options& options, JsonCpp& config);
+                InputDevice& create_input_device(Options& options, JsonCpp& config);
+                const char *get_script_file(Options &options, JsonCpp &config);
         };
 }
 

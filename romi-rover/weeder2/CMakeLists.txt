@@ -7,8 +7,6 @@ set(CMAKE_BUILD_TYPE Debug)
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/src" )
 
 add_executable(weeder2
-  src/CameraProxy.h
-  src/CameraProxy.cpp
   src/CameraServer.h
   src/CameraServer.cpp
   src/IImageCropper.h
@@ -49,8 +47,6 @@ target_link_libraries(weeder2 rcompp rpp romirover)
 
 
 add_executable(weeder2_eval
-  src/CameraProxy.h
-  src/CameraProxy.cpp
   src/IImageCropper.h
   src/ImageCropperFactory.h
   src/ImageCropperFactory.cpp

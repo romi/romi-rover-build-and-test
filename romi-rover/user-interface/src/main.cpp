@@ -26,10 +26,9 @@
 #include <string.h>
 #include <rcom.h>
 
-#include "UIOptions.h"
+#include "RoverOptions.h"
 #include "UIFactory.h"
 #include "DefaultSpeedController.h"
-#include "ConfigurationFile.h"
 #include "UserInterface.h"
 #include "DefaultEventTimer.h"
 #include "ScriptList.h"
@@ -45,18 +44,19 @@ using namespace romi;
 int main(int argc, char** argv)
 {
         int retval = 1;
-        UIOptions options;
+        
+        GetOpt options(rover_options, rover_options_length);
         options.parse(argc, argv);
         
         app_init(&argc, argv);
         app_set_name("user-interface");
 
         r_debug("UserInterface: Using configuration file: '%s'",
-                options.config_file);
+                options.get_value("config-file"));
 
         try {
                 UIFactory ui_factory;
-                JsonCpp config = JsonCpp::load(options.config_file);
+                JsonCpp config = JsonCpp::load(options.get_value("config-file"));
 
                 InputDevice& input_device = ui_factory.create_input_device(options,
                                                                            config);

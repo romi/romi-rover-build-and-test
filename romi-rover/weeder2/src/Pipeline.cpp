@@ -62,7 +62,7 @@ namespace romi {
         
         void Pipeline::build(CNCRange &range, JsonCpp config)
         {
-                JsonCpp weeder = config.get("weeder");
+                JsonCpp weeder = config["weeder"];
                 build_cropper(range, weeder);
                 build_segmentation(weeder);
                 build_planner(weeder);

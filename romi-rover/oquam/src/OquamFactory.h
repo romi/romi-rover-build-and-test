@@ -26,7 +26,7 @@
 #define __OQUAM_FACTORY_H
 
 #include <memory>
-#include "OquamOptions.h"
+#include "Options.h"
 #include "CNCController.h"
 #include "RomiSerialClient.h"
 #include "RSerial.h"
@@ -40,17 +40,16 @@ namespace romi {
                 std::unique_ptr<RomiSerialClient> _romi_serial;
                 std::unique_ptr<CNCController> _controller;
                 
-                void instantiate_controller(OquamOptions &options, JsonCpp &config);
+                void instantiate_controller(Options &options, JsonCpp &config);
                 void instantiate_controller(const char *controller_classname,
-                                        OquamOptions &options,
-                                        JsonCpp &config);
-                const char *get_controller_classname(OquamOptions& options,
+                                            Options &options, JsonCpp &config);
+                const char *get_controller_classname(Options& options,
                                                      JsonCpp& config);
                 const char *get_controller_classname_in_config(JsonCpp &config);
                 void instantiate_fake_controller();
-                void instantiate_stepper_controller(OquamOptions &options, JsonCpp &config);
-                const char *get_stepper_controller_device(OquamOptions &options,
-                                                       JsonCpp &config);
+                void instantiate_stepper_controller(Options &options, JsonCpp &config);
+                const char *get_stepper_controller_device(Options &options,
+                                                          JsonCpp &config);
                 const char *get_stepper_controller_device_in_config(JsonCpp &config);
 
         public:
@@ -58,8 +57,7 @@ namespace romi {
                 OquamFactory();
                 virtual ~OquamFactory();
                 
-                CNCController& create_controller(OquamOptions& options,
-                                                 JsonCpp& config);
+                CNCController& create_controller(Options& options, JsonCpp& config);
 
         };
 }

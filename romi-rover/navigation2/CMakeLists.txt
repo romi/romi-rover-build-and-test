@@ -8,11 +8,10 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../arduino_libraries/RomiSeria
 
 add_executable(navigation2
   src/main.cpp
-  src/IMotorDriver.h
   src/BrushMotorDriver.h
   src/BrushMotorDriver.cpp
-  src/IConfiguration.h
-  src/ConfigurationFile.h
+  src/FakeMotorDriver.h
+  src/MotorDriver.h
   src/WheelOdometry.h
   src/WheelOdometry.cpp
   src/RoverNavigation.h

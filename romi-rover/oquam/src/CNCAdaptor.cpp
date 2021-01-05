@@ -21,6 +21,7 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#include <r.h>
 #include "CNCAdaptor.h"
 
 namespace romi {

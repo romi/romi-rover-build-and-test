@@ -80,7 +80,6 @@ add_test(
 set(SRCS_UIFACTORY 
   src/tests_main.cpp
   src/tests_uifactory.cpp
-  ../include/UIOptions.h
   ../include/UIFactory.h
   ../src/UIFactory.cpp
   ../include/FakeDisplay.h

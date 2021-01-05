@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "BrushMotorDriver.h"
-#include "JSONConfiguration.h"
 #include "../mock/mock_romiserialclient.h"
 
 using namespace std;

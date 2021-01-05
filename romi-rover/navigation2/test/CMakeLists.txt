@@ -24,7 +24,7 @@ add_test(
 set(SRCS_MOTORCONTROLLER 
   src/tests_main.cpp
   src/tests_brushmotordriver.cpp
-  ../src/IMotorDriver.h
+  ../src/MotorDriver.h
   ../src/BrushMotorDriver.cpp
   ../src/BrushMotorDriver.h
   ../../arduino_libraries/RomiSerial/MessageParser.h
@@ -73,7 +73,7 @@ set(SRCS_NAVIGATION
   ../src/RoverNavigation.cpp
   ../src/WheelOdometry.h
   ../src/WheelOdometry.cpp
-  ../src/IMotorDriver.h
+  ../src/MotorDriver.h
   )
 
 add_executable(romi_rover_unit_tests_navigation_navigation ${SRCS_NAVIGATION})
@@ -107,28 +107,14 @@ add_test(
 
 
 
-set(SRCS_CONFIGURATION 
-  src/tests_main.cpp
-  src/tests_configuration.cpp
-  ../src/JSONConfiguration.h
-  ../src/ConfigurationFile.h
-  )
-
-add_executable(romi_rover_unit_tests_navigation_configuration ${SRCS_CONFIGURATION})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_navigation_configuration rpp rcompp gtest gmock)
-
-add_test(
-    NAME romi_rover_unit_tests_navigation_configuration
-    COMMAND romi_rover_unit_tests_navigation_configuration
-)
-
-
-
 if(BUILD_COVERAGE)
     SETUP_TARGET_FOR_COVERAGE_LCOV(
             NAME romi_rover_navigation_coverage
             EXECUTABLE ctest -V ${n_cores}
-            DEPENDENCIES romi_rover_unit_tests_navigation_motorcontroller romi_rover_unit_tests_navigation_roverconfiguration romi_rover_unit_tests_navigation_wheelodometry  romi_rover_unit_tests_navigation_navigation romi_rover_unit_tests_navigation_rpcnavigation romi_rover_unit_tests_navigation_configuration)
+            DEPENDENCIES romi_rover_unit_tests_navigation_motorcontroller
+                         romi_rover_unit_tests_navigation_roverconfiguration
+                         romi_rover_unit_tests_navigation_wheelodometry
+                         romi_rover_unit_tests_navigation_navigation
+                         romi_rover_unit_tests_navigation_rpcnavigation)
 endif()
 

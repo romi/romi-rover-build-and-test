@@ -21,33 +21,19 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_CONFIGURATION_FILE_H
-#define __ROMI_CONFIGURATION_FILE_H
 
-#include "IConfiguration.h"
+#ifndef __ROMI_ROVER_OPTIONS_H
+#define __ROMI_ROVER_OPTIONS_H
+
+#include "GetOpt.h"
 
 namespace romi {
         
-        class ConfigurationFile : public IConfiguration
-        {
-        protected:
-                JsonCpp _config;
-                
-        public:
-                ConfigurationFile(const char *path) {
-                        _config = JsonCpp::load(path);
-                }
-                
-                virtual ~ConfigurationFile() override = default;
-                
-                JsonCpp get() override {
-                        return _config;
-                }
-                
-                JsonCpp get(const char *key) override {
-                        return _config.get(key);
-                }
-        };
+        extern Option *rover_options;
+        extern size_t rover_options_length;
+
+        //void rover_print_usage();
 }
 
-#endif // __ROMI_CONFIGURATION_FILE_H
+#endif // __ROMI_ROVER_OPTIONS_H
+

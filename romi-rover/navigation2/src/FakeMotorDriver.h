@@ -1,7 +1,7 @@
 /*
   romi-rover
 
-  Copyright (C) 2019-2020 Sony Computer Science Laboratories
+  Copyright (C) 2019 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
   romi-rover is collection of applications for the Romi Rover.
@@ -21,39 +21,40 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_DEBUG_NAVIGATION_H
-#define __ROMI_DEBUG_NAVIGATION_H
+#ifndef __ROMI_FAKE_MOTORDRIVER_H
+#define __ROMI_FAKE_MOTORDRIVER_H
 
-#include <r.h>
-#include "Navigation.h"
+#include "r.h"
+#include "MotorDriver.h"
 
 namespace romi {
-
-        class FakeNavigation : public Navigation
+        
+        class FakeMotorDriver : public MotorDriver
         {
         public:
-                static constexpr const char *ClassName = "fake-navigation";
                 
-                FakeNavigation() {}
-                virtual ~FakeNavigation() override = default;
-                
-                bool moveat(double left, double right) override {
-                        r_debug("FakeNavigation: moveat(left=%0.3f, right=%0.3f)",
-                                left, right);
-                        return true;
-                }
+                virtual ~FakeMotorDriver() override = default;
 
-                bool move(double distance, double speed) override {
-                        r_debug("FakeNavigation: move(distance=%0.3f, speed=%0.3f)",
-                                distance, speed);
+                // TODO: simulate displacements over time
+                bool moveat(double left, double right) override {
+                        r_debug("FakeMotorDriver::moveat (%.3f,%.3f)", left, right);
                         return true;
                 }
 
                 bool stop() override {
-                        r_debug("FakeNavigation: stop");
+                        return true;
+                }
+
+                // TODO: simulate displacements over time
+                bool get_encoder_values(double &left, double &right,
+                                        double &timestamp) override {
+                        r_debug("FakeMotorDriver::get_encoder_values");
+                        left = 0; 
+                        right = 0;
+                        timestamp = 0.0;
                         return true;
                 }
         };
 }
 
-#endif // __ROMI_DEBUG_NAVIGATION_H
+#endif // __ROMI_FAKE_MOTORDRIVER_H

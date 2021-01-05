@@ -33,7 +33,7 @@ namespace romi {
         class RemoteCNC : public CNC
         {
         public:
-                static constexpr const char *ClassName = "rpc-cnc";
+                static constexpr const char *ClassName = "remote-cnc";
                 
         protected:                
                 rcom::IRPCHandler *_client;

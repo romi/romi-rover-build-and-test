@@ -24,7 +24,6 @@
 #ifndef __ROMI_FAKE_CNC_H
 #define __ROMI_FAKE_CNC_H
 
-#include "IConfiguration.h"
 #include "CNC.h"
 
 namespace romi {
@@ -38,9 +37,8 @@ namespace romi {
                 CNCRange _range;
                 
         public:
-                FakeCNC(IConfiguration &config) {
+                FakeCNC(JsonCpp& range) {
                         //_range.init(config.get("cnc").get("range"));
-                        JsonCpp range = config.get("cnc").get("range");
                         _range.init(range);
                 }
                 

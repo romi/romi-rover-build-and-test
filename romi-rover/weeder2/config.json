@@ -1,9 +1,8 @@
 {
-    "cnc": {
-        "range": [[0, 0.560], [0, 0.600], [-0.160, 0]]
-    }, 
     "weeder": {
         "z0": -0.110,
+        "camera-classname": "usb-camera",
+        "cnc-classname": "remote-cnc",
         "cropper": "imagecropper",
         "segmentation": "svm",
         "path": "som",

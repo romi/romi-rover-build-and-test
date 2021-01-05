@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
-#include "IMotorDriver.h"
+#include "MotorDriver.h"
 
-class MockMotorDriver : public romi::IMotorDriver
+class MockMotorDriver : public romi::MotorDriver
 {
 public:
         MOCK_METHOD(bool, moveat, (double left, double right), (override));

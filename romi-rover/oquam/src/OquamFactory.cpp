@@ -40,7 +40,7 @@ namespace romi {
                         delete _serial;
         }
         
-        CNCController& OquamFactory::create_controller(OquamOptions &options,
+        CNCController& OquamFactory::create_controller(Options &options,
                                                        JsonCpp &config)
         {
                 if (_controller == 0)
@@ -48,16 +48,16 @@ namespace romi {
                 return *_controller;
         }
 
-        void OquamFactory::instantiate_controller(OquamOptions &options, JsonCpp &config)
+        void OquamFactory::instantiate_controller(Options &options, JsonCpp &config)
         {
                 const char *classname = get_controller_classname(options, config);
                 instantiate_controller(classname, options, config);
         }
         
-        const char *OquamFactory::get_controller_classname(OquamOptions &options,
+        const char *OquamFactory::get_controller_classname(Options &options,
                                                            JsonCpp &config)
         {
-                const char *controller_classname = options.controller_classname;
+                const char *controller_classname = options.get_value("oquam-controller-classname");
                 if (controller_classname == 0) {
                         controller_classname = get_controller_classname_in_config(config);
                 } 
@@ -79,7 +79,7 @@ namespace romi {
         }
         
         void OquamFactory::instantiate_controller(const char *classname,
-                                                  OquamOptions &options,
+                                                  Options &options,
                                                   JsonCpp &config)
         {
                 r_info("create_controller: Creating an instance of '%s'", classname);
@@ -101,7 +101,7 @@ namespace romi {
                 _controller = std::unique_ptr<CNCController>(new FakeCNCController());
         }
         
-        void OquamFactory::instantiate_stepper_controller(OquamOptions &options,
+        void OquamFactory::instantiate_stepper_controller(Options &options,
                                                           JsonCpp &config)
         {
                 const char *device = get_stepper_controller_device(options, config);
@@ -111,10 +111,10 @@ namespace romi {
                 _controller = std::unique_ptr<CNCController>(new StepperController(*_romi_serial));
         }
 
-        const char *OquamFactory::get_stepper_controller_device(OquamOptions &options,
+        const char *OquamFactory::get_stepper_controller_device(Options &options,
                                                                 JsonCpp &config)
         {
-                const char *device_name = options.controller_device;
+                const char *device_name = options.get_value("oquam-controller-device");
                 if (device_name == 0) {
                         device_name = get_stepper_controller_device_in_config(config);
                 }

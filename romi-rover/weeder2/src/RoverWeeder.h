@@ -28,7 +28,6 @@
 #include <string>
 #include <IRPCHandler.h>
 #include "Camera.h"
-#include "IConfiguration.h"
 #include "CNC.h"
 #include "IPipeline.h"
 #include "IFileCabinet.h"
@@ -55,15 +54,14 @@ namespace romi {
                 bool do_hoe(Path &som_path);
 
         public:
-                RoverWeeder(IConfiguration *configuration,
-                            Camera *camera,
+                RoverWeeder(Camera *camera,
                             IPipeline *pipeline,
                             CNC *cnc,
                             CNCRange &range,
+                            double z0,
                             IFileCabinet &filecabinet)
-                        : _camera(camera), _pipeline(pipeline),
-                        _cnc(cnc), _range(range), _filecabinet(filecabinet) {
-                        _z0 = configuration->get("weeder").num("z0");
+                        : _camera(camera), _pipeline(pipeline), _cnc(cnc),
+                          _range(range), _z0(z0), _filecabinet(filecabinet) {
                 }
                 
                 virtual ~RoverWeeder() override = default;

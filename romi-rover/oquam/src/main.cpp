@@ -10,6 +10,7 @@
 #include "RPCServer.h"
 #include "CNCAdaptor.h"
 #include "StepperSettings.h"
+#include "RoverOptions.h"
 
 using namespace romi;
 
@@ -21,15 +22,16 @@ static inline double sign(double v)
 int main(int argc, char** argv)
 {
         int retval = 1;
-        OquamOptions options;
+
+        GetOpt options(rover_options, rover_options_length);
         options.parse(argc, argv);
         
         app_init(&argc, argv);
-        app_set_name(options.server_name);
+        app_set_name("oquam");
 
         try {
                 OquamFactory factory;
-                JsonCpp config = JsonCpp::load(options.config_file);
+                JsonCpp config = JsonCpp::load(options.get_value("config"));
                 
                 JsonCpp r = config["oquam"]["cnc-range"];
                 CNCRange range(r);
@@ -49,12 +51,11 @@ int main(int argc, char** argv)
                             maximum_deviation,
                             slice_duration);
 
-                DebugWeedingSession debug(options.output_directory, "oquam");
+                DebugWeedingSession debug(options.get_value("session-directory"), "oquam");
                 oquam.set_file_cabinet(&debug);
                 
                 CNCAdaptor adaptor(oquam);
-                rcom::RPCServer server(adaptor, options.server_name, "cnc");
-
+                rcom::RPCServer server(adaptor, "oquam", "cnc");
                 
                 while (!app_quit())
                         clock_sleep(0.1);

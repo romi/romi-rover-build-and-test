@@ -23,90 +23,41 @@
  */
 #include <exception>
 #include <string.h>
-#include <getopt.h>
 
 #include <rcom.h>
 #include <RPCServer.h>
 
 #include "BrushMotorDriver.h"
-#include "ConfigurationFile.h"
 #include "RomiSerialClient.h"
 #include "RSerial.h"
-#include "ConfigurationFile.h"
 #include "RPCNavigationServerAdaptor.h"
 #include "RoverNavigation.h"
 #include "RoverConfiguration.h"
+#include "RoverOptions.h"
 
 using namespace romi;
 using namespace rcom;
-
-struct Options {
-        
-        const char *config_file;
-        const char *serial_device;
-        const char *server_name;
-        const char *server_topic;
-
-        Options() {
-                config_file = "config.json";
-                serial_device = "/dev/ttyACM0";
-                server_name = "navigation";
-                server_topic = "navigation";
-        }
-
-        void parse(int argc, char** argv) {
-                int option_index;
-                static const char *optchars = "C:N:T:D:";
-                static struct option long_options[] = {
-                        {"config", required_argument, 0, 'C'},
-                        {"device", required_argument, 0, 'D'},
-                        {"server-name", required_argument, 0, 'N'},
-                        {"server-topic", required_argument, 0, 'T'},
-                        {0, 0, 0, 0}
-                };
-        
-                while (1) {
-                        int c = getopt_long(argc, argv, optchars,
-                                            long_options, &option_index);
-                        if (c == -1) break;
-                        switch (c) {
-                        case 'C':
-                                config_file = optarg;
-                                break;
-                        case 'N':
-                                server_name = optarg;
-                                break;
-                        case 'T':
-                                server_topic = optarg;
-                                break;
-                        case 'D':
-                                serial_device = optarg;
-                                break;
-                        }
-                }
-        }
-};
         
 int main(int argc, char** argv)
 {
-        Options options;
+        GetOpt options(rover_options, rover_options_length);
         options.parse(argc, argv);
         
         app_init(&argc, argv);
         
         try {
-                r_debug("Weeder: Using configuration file: '%s'", options.config_file);
-                ConfigurationFile config(options.config_file);
+                r_debug("Weeder: Using configuration file: '%s'",
+                        options.get_value("config-file"));
+                
+                JsonCpp config = JsonCpp::load(options.get_value("config-file"));
 
-                JsonCpp navigation_settings = config.get("navigation");
-
-                JsonCpp rover_settings = navigation_settings.get("rover");
+                JsonCpp rover_settings = config["navigation"]["rover"];
                 RoverConfiguration rover(rover_settings);
                 
-                JsonCpp driver_settings = navigation_settings.get("brush-motor-driver");
+                JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 
                 // TODO: check for serial_device in config
-                RSerial serial(options.serial_device, 115200, 1);        
+                RSerial serial(options.get_value("navigation-driver-device"), 115200, 1);
                 RomiSerialClient romi_serial(&serial, &serial);
                 romi_serial.set_debug(true);
                 
@@ -118,9 +69,7 @@ int main(int argc, char** argv)
                 RoverNavigation navigation(driver, rover);
                 
                 RPCNavigationServerAdaptor adaptor(navigation);
-                RPCServer server(adaptor,
-                                 options.server_name,
-                                 options.server_topic);
+                RPCServer server(adaptor, "navigation", "navigation");
                 
                 while (!app_quit())
                         clock_sleep(0.1);

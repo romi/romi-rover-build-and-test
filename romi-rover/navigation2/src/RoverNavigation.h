@@ -27,7 +27,7 @@
 #include "Navigation.h" 
 #include "SynchronizedCodeBlock.h" 
 #include "RoverConfiguration.h"
-#include "IMotorDriver.h"
+#include "MotorDriver.h"
 #include "WheelOdometry.h" 
 
 namespace romi {
@@ -38,7 +38,7 @@ namespace romi {
 
                 enum { ROVER_MOVEAT_CAPABLE, ROVER_MOVING };
                 
-                IMotorDriver &_driver;
+                MotorDriver &_driver;
                 RoverConfiguration &_rover;
                 mutex_t *_mutex;
                 int _status;
@@ -51,7 +51,7 @@ namespace romi {
                                         
         public:
                 
-                RoverNavigation(IMotorDriver &driver, RoverConfiguration &rover) :
+                RoverNavigation(MotorDriver &driver, RoverConfiguration &rover) :
                         _driver(driver), _rover(rover), _status(ROVER_MOVEAT_CAPABLE) {
                         _mutex = new_mutex();
                 }

@@ -21,35 +21,24 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_CONFIGURATION_FILE_H
-#define __ROMI_CONFIGURATION_FILE_H
 
-#include <r.h>
-#include "IConfiguration.h"
-#include "JsonCpp.h"
+#ifndef __ROMI_OPTIONS_H
+#define __ROMI_OPTIONS_H
 
 namespace romi {
         
-        class ConfigurationFile : public IConfiguration
+        class Options
         {
-        protected:
-                JsonCpp _config;
-                
         public:
-                ConfigurationFile(const char *path) {
-                        _config = JsonCpp::load(path);
-                }
+                virtual ~Options() = default;
                 
-                virtual ~ConfigurationFile() override = default;
-                
-                JsonCpp get() override {
-                        return _config;
-                }
-                
-                JsonCpp get(const char *key) override {
-                        return _config.get(key);
-                }
+                virtual void parse(int argc, char **argv) = 0;
+                virtual bool get_flag(const char *name) = 0;
+                virtual const char *get_value(const char *name) = 0;
+                virtual bool is_help_requested() = 0;
+                virtual void print_usage() = 0;
         };
 }
 
-#endif // __ROMI_CONFIGURATION_FILE_H
+#endif // __ROMI_OPTIONS_H
+
