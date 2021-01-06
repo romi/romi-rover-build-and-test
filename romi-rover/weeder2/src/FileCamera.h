@@ -32,42 +32,23 @@
 
 namespace romi {
 
-        class FileCamera : public Camera {
+        class FileCamera : public Camera
+        {
+        public:
+                static constexpr const char *ClassName = "file-camera";
+                
         protected:
                 std::string _filename;
                 Image _image;
+
+                bool open();
                 
         public:
-                FileCamera() : _image() {}
                 
-                FileCamera(const char *filename) : _filename(filename), _image() {
-                        open();
-                }
-                
+                FileCamera(const char *filename);
                 virtual ~FileCamera() override = default;
-                
-                int set_parameter(const char *name, JsonCpp value) override {
-                        int r = 0;
-                        if (rstreq(name, "file"))
-                                _filename = value.str();
-                        return r;
-                }
-
-                bool open() override {
-                        bool success = false;
-                        try {
-                                success = ImageIO::load(_image, _filename.c_str());
-
-                        } catch (std::runtime_error &e) {
-                                r_err("Failed to load the file: %s", _filename.c_str());
-                        }
-                        return success;
-                }
         
-                bool grab(Image &image) override {
-                        image = _image;
-                        return true;
-                }
+                bool grab(Image &image) override;
         };
 }
 

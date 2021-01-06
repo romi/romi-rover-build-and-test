@@ -86,6 +86,8 @@ set(SRCS_UIFACTORY
   ../include/FakeNavigation.h
   ../include/RemoteNavigation.h
   ../src/RemoteNavigation.cpp
+  ../include/RemoteWeeder.h
+  ../src/RemoteWeeder.cpp
   ../include/CrystalDisplay.h
   ../src/CrystalDisplay.cpp
   ../include/UIEventMapper.h

@@ -63,7 +63,8 @@ namespace romi {
                 _event = (success)? _finished_event : _error_event;
                 _send_event = true;
                 
-                r_debug("RoverScriptEngine::run_script: finished '%s'", script.title.c_str());
+                r_debug("RoverScriptEngine::run_script: finished '%s'",
+                        script.title.c_str());
         }
                 
         bool RoverScriptEngine::execute_action(Action& action)

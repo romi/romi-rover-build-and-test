@@ -59,8 +59,7 @@ namespace romi {
 
                 void init_settings();
                 void start_synth();
-                void get_sound_font_file(JsonCpp& config, std::string& path);
-                void load_sound_font(std::string& path);
+                void load_sound_font(const char *soundfont);
                 void clean_up();
                 void add_sound(const char *name, int preset, int volume);
                 void add_sounds(JsonCpp& config);
@@ -70,7 +69,7 @@ namespace romi {
                 void play(const char *name);
 
         public:
-                FluidSoundNotifications(JsonCpp& config);
+                FluidSoundNotifications(const char *soundfont, JsonCpp& sounds);
                 virtual ~FluidSoundNotifications();
                         
                 void notify(const char *name) override;

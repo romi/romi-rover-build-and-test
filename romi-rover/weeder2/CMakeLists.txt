@@ -9,6 +9,8 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/src" )
 add_executable(weeder2
   src/CameraServer.h
   src/CameraServer.cpp
+  src/FileCamera.h
+  src/FileCamera.cpp
   src/IImageCropper.h
   src/ImageCropperFactory.h
   src/ImageCropperFactory.cpp
@@ -35,7 +37,6 @@ add_executable(weeder2
   src/IPipeline.h
   src/Pipeline.h
   src/Pipeline.cpp
-  src/CameraFactory.cpp
   src/RoverWeeder.h
   src/RoverWeeder.cpp
   src/USBCamera.h
@@ -47,6 +48,8 @@ target_link_libraries(weeder2 rcompp rpp romirover)
 
 
 add_executable(weeder2_eval
+  src/FileCamera.h
+  src/FileCamera.cpp
   src/IImageCropper.h
   src/ImageCropperFactory.h
   src/ImageCropperFactory.cpp
@@ -73,7 +76,6 @@ add_executable(weeder2_eval
   src/IPipeline.h
   src/Pipeline.h
   src/Pipeline.cpp
-  src/CameraFactory.cpp
   src/RoverWeeder.h
   src/RoverWeeder.cpp
   src/USBCamera.h

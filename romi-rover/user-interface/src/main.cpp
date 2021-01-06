@@ -41,6 +41,28 @@
 
 using namespace romi;
 
+
+const char *get_sound_font_in_config(JsonCpp& config)
+{
+        try {
+                return config["user-interface"]["fluid-sounds"]["sound-font"];
+                
+        } catch (JSONError& je) {
+                r_err("FluidSoundNotification: Failed to read the config: %s",
+                      je.what());
+                throw std::runtime_error("No soundfont in the config file");
+        }
+}
+
+const char *get_sound_font_file(Options& options, JsonCpp& config)
+{
+        const char *file = options.get_value("notifications-sound-font");
+        if (file == 0)
+                file = get_sound_font_in_config(config);
+
+        return file;
+}
+
 int main(int argc, char** argv)
 {
         int retval = 1;
@@ -51,12 +73,12 @@ int main(int argc, char** argv)
         app_init(&argc, argv);
         app_set_name("user-interface");
 
-        r_debug("UserInterface: Using configuration file: '%s'",
-                options.get_value("config-file"));
-
         try {
+                r_debug("UserInterface: Using configuration file: '%s'",
+                        options.get_value("config"));
+
                 UIFactory ui_factory;
-                JsonCpp config = JsonCpp::load(options.get_value("config-file"));
+                JsonCpp config = JsonCpp::load(options.get_value("config"));
 
                 InputDevice& input_device = ui_factory.create_input_device(options,
                                                                            config);
@@ -74,9 +96,11 @@ int main(int argc, char** argv)
                 RoverScriptEngine script_engine(scripts, event_script_finished,
                                                 event_script_error);
 
-                FluidSoundNotifications notifications(config);
+                const char *soundfont = get_sound_font_file(options, config);
+                JsonCpp sound_setup = config["user-interface"]["fluid-sounds"]["sounds"];
+                FluidSoundNotifications notifications(soundfont, sound_setup);
 
-                FakeWeeder weeder;
+                Weeder& weeder = ui_factory.create_weeder(options, config);
                 
                 Rover rover(input_device,
                             display,

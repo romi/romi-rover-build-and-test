@@ -37,6 +37,29 @@
 
 using namespace romi;
 using namespace rcom;
+
+const char *get_brush_motor_device_in_config(JsonCpp& config)
+{
+        const char *brush_motor_device = 0;
+        try {
+                brush_motor_device = config["ports"]["brush-motor-driver"]["port"];
+                        
+        } catch (JSONError &je) {
+                r_warn("Failed to get the value for "
+                       "ports.brush_motor.port: %s", je.what());
+                throw std::runtime_error("No brush_motor device specified");
+        }
+        return brush_motor_device;
+}
+
+const char *get_brush_motor_device(Options& options, JsonCpp& config)
+{
+        const char *brush_motor_device = options.get_value("navigation-driver-device");
+        if (brush_motor_device == 0) {
+                brush_motor_device = get_brush_motor_device_in_config(config);
+        }
+        return brush_motor_device;
+}
         
 int main(int argc, char** argv)
 {
@@ -44,20 +67,21 @@ int main(int argc, char** argv)
         options.parse(argc, argv);
         
         app_init(&argc, argv);
+        app_set_name("navigation");
         
         try {
-                r_debug("Weeder: Using configuration file: '%s'",
-                        options.get_value("config-file"));
+                r_debug("Navigation: Using configuration file: '%s'",
+                        options.get_value("config"));
                 
-                JsonCpp config = JsonCpp::load(options.get_value("config-file"));
+                JsonCpp config = JsonCpp::load(options.get_value("config"));
 
                 JsonCpp rover_settings = config["navigation"]["rover"];
                 RoverConfiguration rover(rover_settings);
                 
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 
-                // TODO: check for serial_device in config
-                RSerial serial(options.get_value("navigation-driver-device"), 115200, 1);
+                const char *device = get_brush_motor_device(options, config);
+                RSerial serial(device, 115200, 1);
                 RomiSerialClient romi_serial(&serial, &serial);
                 romi_serial.set_debug(true);
                 

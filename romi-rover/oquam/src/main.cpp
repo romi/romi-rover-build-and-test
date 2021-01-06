@@ -30,6 +30,9 @@ int main(int argc, char** argv)
         app_set_name("oquam");
 
         try {
+                r_debug("Oquam: Using configuration file: '%s'",
+                        options.get_value("config"));
+                
                 OquamFactory factory;
                 JsonCpp config = JsonCpp::load(options.get_value("config"));
                 

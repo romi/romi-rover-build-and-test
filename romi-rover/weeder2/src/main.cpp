@@ -32,7 +32,8 @@
 #include <RPCClient.h>
 
 #include "FakeCNC.h"
-#include "CameraFactory.h"
+#include "FileCamera.h"
+#include "USBCamera.h"
 #include "CameraServer.h"
 #include "RoverWeeder.h"
 #include "Pipeline.h"
@@ -44,6 +45,68 @@ using namespace rcom;
 static CNC *cnc = 0;
 static RPCClient *rpc_client = 0;
 static Camera *camera = 0;
+
+const char *get_camera_image(Options &options, JsonCpp &config)
+{
+        const char *filename = options.get_value("weeder-camera-image");
+        if (filename == 0)
+                throw std::runtime_error("Missing filename for camera image");
+        return filename;
+}
+
+Camera *instantiate_file_camera(Options &options, JsonCpp &config)
+{
+        return new FileCamera(get_camera_image(options, config));
+}
+
+const char *get_camera_device_in_config(JsonCpp &config)
+{
+        try {
+                return config["ports"]["usb-camera"]["port"];
+                
+        } catch (JSONError& je) {
+                r_err("get_camera_device_in_config: Failed to get value "
+                      "of ports.usb-camera.port");
+                throw std::runtime_error("Missing device name for camera in config");
+        }
+}
+
+const char *get_camera_device(Options &options, JsonCpp &config)
+{
+        const char *device = options.get_value("weeder-camera-device");
+        if (device == 0)
+                device = get_camera_device_in_config(config);
+        return device;
+}
+
+Camera *instantiate_usb_camera(Options &options, JsonCpp &config)
+{
+        try {
+                const char *device = get_camera_device(options, config);
+                double width = config["weeder"]["usb-camera"]["width"];
+                double height = config["weeder"]["usb-camera"]["height"];
+                return new USBCamera(device, (size_t) width, (size_t) height);
+                
+        } catch (JSONError& je) {
+                r_err("instantiate_usb_camera: Failed to get width and height of "
+                      "the camera in the config");
+                throw std::runtime_error("Missing width or heidth for the USB camera");
+        }
+}
+
+Camera *instantiate_camera(const char *camera_class, Options &options, JsonCpp &config)
+{
+        if (rstreq(camera_class, FileCamera::ClassName)) {
+                return instantiate_file_camera(options, config);
+
+        } else if (rstreq(camera_class, USBCamera::ClassName)) {
+                return instantiate_usb_camera(options, config);
+
+        } else {
+                r_err("instantiate_camera: Unknown camera classname: %s", camera_class);
+                throw std::runtime_error("Unknown camera classname");
+        }
+}
 
 const char *get_camera_class(Options &options, JsonCpp &config)
 {
@@ -65,15 +128,7 @@ Camera *create_camera(Options &options, JsonCpp &config)
         if (camera_class == 0)
                 throw std::runtime_error("No camera class was defined in the options "
                                          "or in the configuration file.");
-        
-        JsonCpp camera_config;
-        
-        Camera *camera = CameraFactory::create(camera_class, camera_config);
-        if (camera == 0) {
-                r_err("Failed to create the camera '%s'", camera_class);
-                throw std::runtime_error("Failed to create the camera");
-        }
-        return camera;
+        return instantiate_camera(camera_class, options, config);
 }
 
 const char *get_cnc_class(Options &options, JsonCpp &config)
@@ -128,18 +183,19 @@ int main(int argc, char** argv)
         options.parse(argc, argv);
         
         app_init(&argc, argv);
+        app_set_name("weeder");
         
         try {
                 r_debug("Weeder: Using configuration file: '%s'",
-                        options.get_value("config-file"));
+                        options.get_value("config"));
                 
-                JsonCpp config = JsonCpp::load(options.get_value("config-file"));
+                JsonCpp config = JsonCpp::load(options.get_value("config"));
 
                 // Instantiate the camera
-                Camera *camera = create_camera(options, config);
+                camera = create_camera(options, config);
                 
                 // Instantiate the CNC
-                CNC *cnc = create_cnc(options, config);
+                cnc = create_cnc(options, config);
 
                 JsonCpp config_range = config["oquam"]["cnc-range"];
                 

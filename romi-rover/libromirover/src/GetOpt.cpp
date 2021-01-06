@@ -84,10 +84,14 @@ namespace romi {
         void GetOpt::set_option(int index, const char *value)
         {
                 const char *name = _long_options[index].name;
-                if (_long_options[index].has_arg == required_argument)
+
+                if (_long_options[index].has_arg == required_argument) {
+                        r_debug("GetOpt: set value %s=%s", name, value);
                         _values[name] = value;
-                else
+                } else {
+                        r_debug("GetOpt: set flag %s", name, value);
                         _flags[name] = true;
+                }
         }
         
         bool GetOpt::get_flag(const char *name)

@@ -21,27 +21,30 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _ROMI_FAKE_WEEDER_H_
-#define _ROMI_FAKE_WEEDER_H_
+#ifndef _ROMI_REMOTE_WEEDER_H_
+#define _ROMI_REMOTE_WEEDER_H_
 
-#include <r.h>
+#include "IRPCClient.h"
 #include "Weeder.h"
 
 namespace romi {
         
-        class FakeWeeder : public Weeder
+        class RemoteWeeder : public Weeder
         {
         public:
-                static constexpr const char *ClassName = "fake-weeder";
+                static constexpr const char *ClassName = "remote-weeder";
                 
-                FakeWeeder() {}
-                virtual ~FakeWeeder() override = default;
+        protected:
+                rcom::IRPCHandler &_client;
+                
+                void execute(const char *method, JsonCpp& params, rcom::RPCError& error);
+                
+        public:
+                RemoteWeeder(rcom::IRPCHandler &client);
+                virtual ~RemoteWeeder() override = default;
 
-                bool hoe() override {
-                        r_debug("FakeWeeder::hoe");
-                        return true;
-                }
+                bool hoe() override;
         };
 }
 
-#endif // _ROMI_FAKE_WEEDER_H_
+#endif // _ROMI_REMOTE_WEEDER_H_

@@ -30,6 +30,8 @@
 #include "CrystalDisplay.h"
 #include "JoystickInputDevice.h"
 #include "FakeInputDevice.h"
+#include "FakeWeeder.h"
+#include "RemoteWeeder.h"
 
 using namespace std;
 using namespace rcom;
@@ -109,7 +111,8 @@ namespace romi {
         {
                 const char *device = get_crystal_display_device(options, config);
                 _serial = new RSerial(device, 115200, 1);
-                _romi_serial = unique_ptr<RomiSerialClient>(new RomiSerialClient(_serial, _serial));
+                _romi_serial = unique_ptr<RomiSerialClient>(new RomiSerialClient(_serial,
+                                                                                 _serial));
                 _romi_serial->set_debug(true);
                 _display = std::unique_ptr<Display>(new CrystalDisplay(*_romi_serial));
         }
@@ -200,12 +203,10 @@ namespace romi {
 
         void UIFactory::instantiate_remote_navigation(Options &options, JsonCpp &config)
         {
-                _rpc_client = unique_ptr<RPCClient>(new RPCClient("navigation",
+                _navigation_client = unique_ptr<RPCClient>(new RPCClient("navigation",
                                                                   "navigation"));
-                _navigation = unique_ptr<Navigation>(new RemoteNavigation(*_rpc_client));
+                _navigation = unique_ptr<Navigation>(new RemoteNavigation(*_navigation_client));
         }
-        
-
         
         InputDevice& UIFactory::create_input_device(Options& options, JsonCpp& config)
         {
@@ -309,9 +310,83 @@ namespace romi {
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
-                               "user-interface.rover-script-engine.script-file: %s", je.what());
+                               "user-interface.rover-script-engine.script-file: %s",
+                               je.what());
                         throw std::runtime_error("No script file");
                 }
                 return path;
         }
+
+        // Notifications& create_notifications(Options& options, JsonCpp& config)
+        // {
+        // }
+
+
+        Weeder& UIFactory::create_weeder(Options &options, JsonCpp &config)
+        {
+                if (_weeder == 0) {
+                        instantiate_weeder(options, config);
+                }
+                return *_weeder;
+        }
+        
+        void UIFactory::instantiate_weeder(Options &options, JsonCpp &config)
+        {
+                const char *classname = get_weeder_classname(options, config);
+                instantiate_weeder(classname, options, config);
+        }
+        
+        const char *UIFactory::get_weeder_classname(Options &options,
+                                                        JsonCpp &config)
+        {
+                const char *classname = options.get_value("weeder-classname");
+                if (classname == 0) {
+                        classname = get_weeder_classname_in_config(config);
+                }
+                return classname;
+        }
+        
+        const char *UIFactory::get_weeder_classname_in_config(JsonCpp &config)
+        {
+                const char *classname = 0;
+                try {
+                        classname = config["user-interface"]["weeder-classname"];
+                } catch (JSONError &je) {
+                        r_warn("Failed to get the value for "
+                               "user-interface.weeder-classname: %s", je.what());
+                        throw std::runtime_error("No weeder classname defined");
+                }
+                return classname;
+        }
+        
+        void UIFactory::instantiate_weeder(const char *classname,
+                                              Options &options,
+                                              JsonCpp &config)
+        {
+                r_info("Create an instance of weeder '%s'", classname);
+                
+                if (rstreq(classname, FakeWeeder::ClassName)) {
+                        instantiate_fake_weeder();
+
+                } else if (rstreq(classname, RemoteWeeder::ClassName)) {
+                        instantiate_remote_weeder(options, config);
+                        
+                } else {
+                        r_err("Unknown weeder class: '%s'", classname);
+                        throw std::runtime_error("Failed to create the weeder module");
+                }
+        }
+                
+        void UIFactory::instantiate_fake_weeder()
+        {
+                _weeder = unique_ptr<Weeder>(new FakeWeeder());
+        }
+
+        void UIFactory::instantiate_remote_weeder(Options &options, JsonCpp &config)
+        {
+                _weeder_client = unique_ptr<RPCClient>(new RPCClient("weeder",
+                                                                     "weeder"));
+                _weeder = unique_ptr<Weeder>(new RemoteWeeder(*_weeder_client));
+        }
+        
 }

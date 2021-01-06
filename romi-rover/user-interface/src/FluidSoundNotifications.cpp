@@ -29,17 +29,15 @@
 
 namespace romi {
 
-        FluidSoundNotifications::FluidSoundNotifications(JsonCpp& config)
+        FluidSoundNotifications::FluidSoundNotifications(const char *soundfont,
+                                                         JsonCpp& sounds)
                 : _settings(0), _synth(0), _adriver(0)
         {
-                std::string sound_font_file;
-
                 try {
                         init_settings();
                         start_synth();
-                        get_sound_font_file(config, sound_font_file);
-                        load_sound_font(sound_font_file);
-                        try_add_sounds(config);
+                        load_sound_font(soundfont);
+                        try_add_sounds(sounds);
                  
                 } catch (std::runtime_error& e) {
                         r_err("FluidSoundNotification: init failed: %s", e.what());
@@ -78,32 +76,21 @@ namespace romi {
                 _adriver = new_fluid_audio_driver(_settings, _synth);
         }
 
-        void FluidSoundNotifications::get_sound_font_file(JsonCpp& config, std::string& path)
+        void FluidSoundNotifications::load_sound_font(const char *soundfont)
         {
-                try {
-                        path = (const char *) config["user-interface"]["fluid-sounds"]["sound-font"];
-                } catch (JSONError& je) {
-                        r_err("FluidSoundNotification: Failed to read the config: %s",
-                              je.what());
-                        throw je;
-                }
-        }
-
-        void FluidSoundNotifications::load_sound_font(std::string& path)
-        {
-                r_info("FluidSoundNotification: loading soundfont %s", path.c_str());
+                r_info("FluidSoundNotification: loading soundfont %s", soundfont);
                 
-                _sfont_id = fluid_synth_sfload(_synth, path.c_str(), 1);
+                _sfont_id = fluid_synth_sfload(_synth, soundfont, 1);
                 if (_sfont_id == FLUID_FAILED) {
-                        r_err("Failed to load the soundfont: %s", path.c_str());
+                        r_err("Failed to load the soundfont: %s", soundfont);
                         throw std::runtime_error("Failed to load the soundfont");
                 }
         }
 
-        void FluidSoundNotifications::try_add_sounds(JsonCpp& config)
+        void FluidSoundNotifications::try_add_sounds(JsonCpp& sounds)
         {
                 try {
-                        add_sounds(config);
+                        add_sounds(sounds);
                         
                 } catch (JSONError& je) {
                         r_err("FluidSoundNotification: Failed to get "
@@ -112,9 +99,8 @@ namespace romi {
                 }
         }
         
-        void FluidSoundNotifications::add_sounds(JsonCpp& config)
+        void FluidSoundNotifications::add_sounds(JsonCpp& sounds)
         {
-                JsonCpp sounds = config["user-interface"]["fluid-sounds"]["sounds"];
                 sounds.foreach(add_sound, this);
         }
         

@@ -21,27 +21,32 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef _ROMI_FAKE_WEEDER_H_
-#define _ROMI_FAKE_WEEDER_H_
 
-#include <r.h>
-#include "Weeder.h"
+#include "FileCamera.h"
 
 namespace romi {
-        
-        class FakeWeeder : public Weeder
+
+        FileCamera::FileCamera(const char *filename)
+                : _filename(filename), _image()
         {
-        public:
-                static constexpr const char *ClassName = "fake-weeder";
+                if (_filename.length() == 0)
+                        throw std::runtime_error("FileCamera: Invalid filename");
                 
-                FakeWeeder() {}
-                virtual ~FakeWeeder() override = default;
-
-                bool hoe() override {
-                        r_debug("FakeWeeder::hoe");
-                        return true;
+                if (!open()) {
+                        r_err("Failed to load the file: %s", _filename.c_str());
+                        throw std::runtime_error("FileCamera::open failed");
                 }
-        };
-}
+        }
 
-#endif // _ROMI_FAKE_WEEDER_H_
+        bool FileCamera::open()
+        {
+                return ImageIO::load(_image, _filename.c_str());
+        }
+        
+        bool FileCamera::grab(Image &image)
+        {
+                _image.copy_to(image);
+                return true;
+        }
+
+}

@@ -33,8 +33,6 @@ namespace romi {
         class Camera {
         public:
                 virtual ~Camera() = default;
-                virtual int set_parameter(const char *name, JsonCpp value) = 0;
-                virtual bool open() = 0;
                 virtual bool grab(Image &image) = 0;
         };
 }

@@ -30,6 +30,7 @@ set(SOURCES
   include/Menu.h
   include/Notifications.h
   include/RemoteNavigation.h
+  include/RemoteWeeder.h
   include/ScriptEngine.h
   include/Rover.h
   include/ScriptMenu.h
@@ -51,6 +52,7 @@ set(SOURCES
   src/LinuxJoystick.cpp
   src/main.cpp
   src/RemoteNavigation.cpp
+  src/RemoteWeeder.cpp
   src/Rover.cpp
   src/ScriptMenu.cpp
   src/ScriptList.cpp

@@ -28,8 +28,21 @@ namespace romi {
         
         using SynchonizedCodeBlock = std::lock_guard<std::mutex>;
 
-        USBCamera::USBCamera()
-                : _camera(0), _width(0), _height(0), _thread(0), _done(false) {
+        USBCamera::USBCamera(const char *device, size_t width, size_t height)
+                : _camera(0), _device(device),
+                  _thread(0), _done(false)
+        {
+                if (_device.length() == 0)
+                        throw std::runtime_error("USBCamera: Invalid device");
+                        
+                if (width <= 10 || width > 10000)
+                        throw std::runtime_error("USBCamera: Invalid width");
+                        
+                if (height <= 10 || height > 10000)
+                        throw std::runtime_error("USBCamera: Invalid height");
+                
+                if (!open(width, height))
+                        throw std::runtime_error("USBCamera::open failed");
         }
 
         USBCamera::~USBCamera()
@@ -43,45 +56,30 @@ namespace romi {
                         delete_camera(_camera);
         }
 
-        int USBCamera::set_parameter(const char *name, JsonCpp value)
-        {
-                if (_camera != 0) {
-                        throw std::runtime_error("USBCamera::set_parameter called "
-                                                 "AFTER open");                        
-                }
-                
-                if (rstreq(name, "device")) {
-                        _device = value.str();
-                        
-                } else if (rstreq(name, "width")) {
-                        _width = (uint32_t) value.num();
-                        if (_width <= 10 || _width > 10000)
-                                throw std::runtime_error("USBCamera: Invalid width");
-                        
-                } else if (rstreq(name, "height")) {
-                        _height = (uint32_t) value.num();
-                        if (_height <= 10 || _height > 10000)
-                                throw std::runtime_error("USBCamera: Invalid height");
-                }
-                return 0;
-        }
-
-        bool USBCamera::open()
+        bool USBCamera::open(size_t width, size_t height)
         {
                 bool success = false;
-                if (_camera == 0 && _device.length() > 0
-                    && _width > 0 && _height > 0) {
-                        
-                        _camera = new_camera(_device.c_str(), IO_METHOD_MMAP,
-                                             _width, _height);
-                        if (_camera != 0) {
-                                _thread = new_thread(USBCamera::_run, this);
-                                success = true;
-                        }
+                
+                r_info("USBCamera::open: %s, %ux%u", _device.c_str(),
+                       width, height);
+
+                _camera = new_camera(_device.c_str(), IO_METHOD_MMAP,
+                                     width, height);
+                if (_camera != 0) {
+                        start_capture_thread();
+                        success = true;
+                } else {
+                        r_err("USBCamera::open: failed to create the camera");
                 }
+                
                 return success;
         }
 
+        void USBCamera::start_capture_thread()
+        {
+                _thread = new_thread(USBCamera::_run, this);
+        }
+        
         void USBCamera::_run(void* data)
         {
                 USBCamera *camera = (USBCamera*) data;
@@ -102,7 +100,10 @@ namespace romi {
                 
                 if (camera_capture(_camera) == 0) {
                         uint8_t *rgb = camera_getimagebuffer(_camera);
-                        _image.import(Image::RGB, rgb, _width, _height);
+                        int width = camera_width(_camera);
+                        int height = camera_height(_camera);
+                        _image.import(Image::RGB, rgb, width, height);
+                        
                 } else {
                         r_warn("USBCamera: camera_capture failed");
                 }

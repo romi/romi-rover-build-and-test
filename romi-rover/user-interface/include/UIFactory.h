@@ -27,6 +27,8 @@
 #include "Navigation.h"
 #include "Display.h"
 #include "InputDevice.h"
+#include "Notifications.h"
+#include "Weeder.h"
 
 #include "Options.h"
 #include "JsonCpp.h"
@@ -51,12 +53,15 @@ namespace romi {
                 
                 RSerial *_serial;
                 std::unique_ptr<RomiSerialClient> _romi_serial;
-                std::unique_ptr<rcom::RPCClient> _rpc_client; 
+                std::unique_ptr<rcom::RPCClient> _navigation_client; 
+                std::unique_ptr<rcom::RPCClient> _weeder_client; 
                 std::unique_ptr<LinuxJoystick> _joystick;
 
                 std::unique_ptr<Display> _display;
                 std::unique_ptr<Navigation> _navigation;
                 std::unique_ptr<InputDevice> _input_device;
+                std::unique_ptr<Notifications> _notifications;
+                std::unique_ptr<Weeder> _weeder;
                 
 
                 // Display
@@ -93,7 +98,17 @@ namespace romi {
                 const char *get_joystick_device(Options& options, JsonCpp& config);
                 const char *get_joystick_device_in_config(JsonCpp& config);
 
-                
+                // Weeder
+                void instantiate_weeder(Options &options, JsonCpp &config);
+                void instantiate_weeder(const char *classname, Options &options,
+                                           JsonCpp &config);
+                const char *get_weeder_classname(Options& options, JsonCpp& config);
+                const char *get_weeder_classname_in_config(JsonCpp &config);
+                void instantiate_fake_weeder();
+                void instantiate_remote_weeder(Options &options, JsonCpp &config);
+
+
+                // Script
                 const char *get_script_file_in_config(JsonCpp &config);
                 
         public:
@@ -104,6 +119,8 @@ namespace romi {
                 Display& create_display(Options& options, JsonCpp& config);
                 Navigation& create_navigation(Options& options, JsonCpp& config);
                 InputDevice& create_input_device(Options& options, JsonCpp& config);
+                Weeder& create_weeder(Options& options, JsonCpp& config);
+                // Notifications& create_notifications(Options& options, JsonCpp& config);
                 const char *get_script_file(Options &options, JsonCpp &config);
         };
 }

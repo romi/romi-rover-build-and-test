@@ -36,28 +36,32 @@
 
 namespace romi {
 
-        class USBCamera : public Camera {
+        class USBCamera : public Camera
+        {
+        public:
+                static constexpr const char *ClassName = "usb-camera";
+
         protected:
                 camera_t* _camera;
                 std::string _device;
-                uint32_t _width;
-                uint32_t _height;
                 std::mutex _mutex;
                 thread_t *_thread;
                 bool _done;
                 Image _image;
                 
+                bool open(size_t width, size_t height);
                 void close();
                 void grab_from_camera();
+                void start_capture_thread();
                 void run();
                 static void _run(void* data);
-                        
+
+
         public:
-                USBCamera();
+                
+                USBCamera(const char *device, size_t width, size_t height);
                 virtual ~USBCamera() override;
                 
-                int set_parameter(const char *name, JsonCpp value) override;
-                bool open() override;
                 bool grab(Image &image) override;
         };
 }

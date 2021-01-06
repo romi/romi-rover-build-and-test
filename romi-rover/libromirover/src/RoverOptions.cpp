@@ -64,6 +64,13 @@ namespace romi {
                 { "display-device", true, 0,
                   "The path of the system device for the display "},
 
+                { "notifications-sound-font", true, 0,
+                  "The path of the soundfont for the sound notification "},
+
+                { "weeder-classname", true, 0,
+                  "The classname of the weeder module used by the user interface "
+                  "Options: weeder, fake-weeder "},
+
                 // Weeder
 
                 {"weeder-cnc-classname", true, 0, 
@@ -76,6 +83,9 @@ namespace romi {
                 
                 {"weeder-camera-image", true, 0, 
                   "The path of the image file for the file camera."},
+                
+                {"weeder-camera-device", true, 0, 
+                  "The device path for the USB camera."},
                 
                 // Oquam
                 

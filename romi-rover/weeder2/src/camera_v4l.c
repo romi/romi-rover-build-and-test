@@ -178,6 +178,12 @@ camera_t* new_camera(const char* dev,
         camera->rgb_buffer_size = 0;
         camera->state = CAMERA_CLEAN;
 
+        if (camera_prepare(camera) != 0) {
+                r_err("Camera: Failed to prepare the camera");
+                delete_camera(camera);
+                return NULL;
+        }
+        
         return camera;
 }
 
