@@ -84,7 +84,8 @@ int main(int argc, char** argv)
                                                                            config);
 
                 Display& display = ui_factory.create_display(options, config);
-                
+                display.show(0, "Initializing");
+
                 Navigation& navigation = ui_factory.create_navigation(options,
                                                                       config);
                 

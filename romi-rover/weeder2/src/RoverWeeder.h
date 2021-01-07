@@ -52,6 +52,7 @@ namespace romi {
                 bool move_arm_to_start_position(v3 p);
                 bool stop_spindle_and_move_arm_up();
                 bool do_hoe(Path &som_path);
+                void try_hoe(rcom::RPCError &error);
 
         public:
                 RoverWeeder(Camera *camera,

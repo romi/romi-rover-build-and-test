@@ -130,7 +130,10 @@ namespace romi {
         
         bool Oquam::is_zero(int16_t *params)
         {
-                return (params[1] == 0) && (params[2] == 0) && (params[3] == 0.0);
+                return (params[0] == 0)
+                        || ((params[1] == 0)
+                            && (params[2] == 0)
+                            && (params[3] == 0.0));
         }
         
         bool Oquam::spindle(double speed)

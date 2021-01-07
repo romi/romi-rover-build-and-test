@@ -274,10 +274,12 @@ namespace romi {
 
         void assert_speeds(double v0, double v_target, double v1)
         {
-                if (v_target < v0 || v_target < v1) {
+                if (v0 - v_target > 0.0001 || v1 - v_target > 0.0001) {
                         // Should not happen! Throw an exception if it does.
-                        r_err("scale_target_speed: v_target < v0 || v_target < v1");
-                        throw std::runtime_error("scale_target_speed: v_target < v0 || v_target < v1");
+                        r_err("scale_target_speed: v_target < v0 || v_target < v1: "
+                              "v_target=%.4f, v0=%.4f, v1=%.4f", v_target, v0, v1);
+                        throw std::runtime_error("scale_target_speed: "
+                                                 "v_target < v0 || v_target < v1");
                 }
         }
 

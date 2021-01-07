@@ -180,23 +180,27 @@ namespace romi {
                 
                 return success;
         }
+
+        void RoverWeeder::try_hoe(rcom::RPCError &error)
+        {
+                try {
+                        hoe();
+                        error.code = 0;
+                                
+                } catch (std::exception& e) {
+                        r_debug("RoverWeeder::exception: catched exception: %s", e.what());
+                        error.code = 0;
+                        error.message = e.what();
+                }
+        }
         
         void RoverWeeder::execute(const char *method, JsonCpp& params,
-                             JsonCpp& result, rcom::RPCError &error)
+                                  JsonCpp& result, rcom::RPCError &error)
         {
                 r_debug("RoverWeeder::execute");
                 
                 if (rstreq(method, "hoe")) {
-                        
-                        try {
-                                hoe();
-                                error.code = 0;
-                                
-                        } catch (std::exception& e) {
-                                r_debug("RoverWeeder::exception: catched exception: %s", e.what());
-                                error.code = 0;
-                                error.message = e.what();
-                        }
+                        try_hoe(error);
                         
                 } else {
                         error.code = rcom::RPCError::MethodNotFound;

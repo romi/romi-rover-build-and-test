@@ -36,6 +36,8 @@ namespace romi {
         {
                 JsonCpp result; // Not returned to callers. 
 
+                r_debug("RemoteWeeder::execute: %s", method);
+                
                 _client.execute(method, params, result, error);
                 
                 if (error.code != 0) {
@@ -46,6 +48,7 @@ namespace romi {
         
         bool RemoteWeeder::hoe()
         {
+                r_debug("RemoteWeeder::hoe");
                 rcom::RPCError error;
                 JsonCpp params; // = No params
                 execute("hoe", params, error);
