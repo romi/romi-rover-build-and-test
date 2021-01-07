@@ -163,7 +163,7 @@ CNC *create_cnc(Options &options, JsonCpp &config)
                 }
                 
         } else if (rstreq(cnc_class, RemoteCNC::ClassName)) {
-                rpc_client = new RPCClient("oquam", "cnc");
+                rpc_client = new RPCClient("oquam", "cnc", 60.0);
                 cnc = new RemoteCNC(rpc_client);
         }
 

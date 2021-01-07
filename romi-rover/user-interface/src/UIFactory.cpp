@@ -204,7 +204,8 @@ namespace romi {
         void UIFactory::instantiate_remote_navigation(Options &options, JsonCpp &config)
         {
                 _navigation_client = unique_ptr<RPCClient>(new RPCClient("navigation",
-                                                                  "navigation"));
+                                                                         "navigation",
+                                                                         10.0));
                 _navigation = unique_ptr<Navigation>(new RemoteNavigation(*_navigation_client));
         }
         
@@ -385,7 +386,7 @@ namespace romi {
         void UIFactory::instantiate_remote_weeder(Options &options, JsonCpp &config)
         {
                 _weeder_client = unique_ptr<RPCClient>(new RPCClient("weeder",
-                                                                     "weeder"));
+                                                                     "weeder", 60.0));
                 _weeder = unique_ptr<Weeder>(new RemoteWeeder(*_weeder_client));
         }
         
