@@ -34,10 +34,10 @@
 #include "ScriptList.h"
 #include "ScriptMenu.h"
 #include "FluidSoundNotifications.h"
-#include "FakeWeeder.h"
 #include "RoverScriptEngine.h"
 #include "RoverStateMachine.h"
 #include "Rover.h"
+#include "fake/FakeWeeder.h"
 
 using namespace romi;
 

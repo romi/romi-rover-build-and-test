@@ -3,13 +3,13 @@
 #include "../mock/mock_navigation.h"
 #include "GetOpt.h"
 #include "UIFactory.h"
-#include "FakeDisplay.h"
 #include "CrystalDisplay.h"
-#include "FakeNavigation.h"
 #include "rpc/RemoteNavigation.h"
-#include "FakeInputDevice.h"
 #include "JoystickInputDevice.h"
 #include "RoverOptions.h"
+#include "fake/FakeDisplay.h"
+#include "fake/FakeInputDevice.h"
+#include "fake/FakeNavigation.h"
 
 using namespace std;
 using namespace testing;

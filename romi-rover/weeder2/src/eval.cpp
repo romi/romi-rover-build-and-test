@@ -29,10 +29,10 @@
 #include <RoverOptions.h>
 #include <DebugWeedingSession.h>
 
-#include "FakeCNC.h"
 #include "FileCamera.h"
 #include "RoverWeeder.h"
 #include "weeder/PipelineFactory.h"
+#include "fake/FakeCNC.h"
 
 using namespace romi;
 

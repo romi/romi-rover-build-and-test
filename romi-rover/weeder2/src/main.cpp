@@ -32,7 +32,6 @@
 #include <DebugWeedingSession.h>
 #include <RPCClient.h>
 
-#include "FakeCNC.h"
 #include "FileCamera.h"
 #include "USBCamera.h"
 #include "CameraServer.h"
@@ -40,6 +39,7 @@
 #include "weeder/PipelineFactory.h"
 #include "rpc/WeederAdaptor.h"
 #include "rpc/RemoteCNC.h"
+#include "fake/FakeCNC.h"
 
 using namespace romi;
 using namespace rcom;
