@@ -1,9 +1,11 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+
 #include "OquamFactory.h"
-#include "FakeCNCController.h"
-#include "StepperController.h"
 #include "GetOpt.h"
+
+#include "oquam/FakeCNCController.h"
+#include "oquam/StepperController.h"
 
 using namespace std;
 using namespace testing;

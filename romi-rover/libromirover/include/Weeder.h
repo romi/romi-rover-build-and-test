@@ -24,14 +24,17 @@
 #ifndef _ROMI_WEEDER_H_
 #define _ROMI_WEEDER_H_
 
+#include "Activity.h"
+
 namespace romi {
         
-        class Weeder
+        class Weeder : public Activity
         {
         public:
                 virtual ~Weeder() = default;
 
                 virtual bool hoe() = 0;
+                virtual bool stop() = 0;
         };
 }
 

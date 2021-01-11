@@ -6,82 +6,12 @@ set(CMAKE_BUILD_TYPE Debug)
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/src" )
 
-add_executable(weeder2
-  src/CameraServer.h
-  src/CameraServer.cpp
-  src/FileCamera.h
-  src/FileCamera.cpp
-  src/IImageCropper.h
-  src/ImageCropperFactory.h
-  src/ImageCropperFactory.cpp
-  src/ImageCropper.h
-  src/ImageCropper.cpp  
-  src/IImageSegmentation.h
-  src/ImageSegmentationFactory.h
-  src/ImageSegmentationFactory.cpp
-  src/RemoteCNC.h
-  src/RemoteCNC.cpp
-  src/svm/SVMSegmentation.h
-  src/svm/SVMSegmentation.cpp
-  src/quincunx/Quincunx.h
-  src/quincunx/Quincunx.cpp
-  src/quincunx/point.h
-  src/quincunx/point.c
-  src/som/SOM.cpp 
-  src/som/Superpixels.cpp 
-  src/som/slic.cpp 
-  src/som/fixed.c 
-  src/IPathPlanner.h
-  src/PathPlannerFactory.h
-  src/PathPlannerFactory.cpp
-  src/IPipeline.h
-  src/Pipeline.h
-  src/Pipeline.cpp
-  src/RoverWeeder.h
-  src/RoverWeeder.cpp
-  src/USBCamera.h
-  src/USBCamera.cpp
-  src/camera_v4l.c
-  src/main.cpp)
+add_executable(weeder2 src/main.cpp)
 
 target_link_libraries(weeder2 rcompp rpp romirover)
 
 
-add_executable(weeder2_eval
-  src/FileCamera.h
-  src/FileCamera.cpp
-  src/IImageCropper.h
-  src/ImageCropperFactory.h
-  src/ImageCropperFactory.cpp
-  src/ImageCropper.h
-  src/ImageCropper.cpp  
-  src/IImageSegmentation.h
-  src/ImageSegmentationFactory.h
-  src/ImageSegmentationFactory.cpp
-  src/RemoteCNC.h
-  src/RemoteCNC.cpp
-  src/svm/SVMSegmentation.h
-  src/svm/SVMSegmentation.cpp
-  src/quincunx/Quincunx.h
-  src/quincunx/Quincunx.cpp
-  src/quincunx/point.h
-  src/quincunx/point.c
-  src/som/SOM.cpp 
-  src/som/Superpixels.cpp 
-  src/som/slic.cpp 
-  src/som/fixed.c 
-  src/IPathPlanner.h
-  src/PathPlannerFactory.h
-  src/PathPlannerFactory.cpp
-  src/IPipeline.h
-  src/Pipeline.h
-  src/Pipeline.cpp
-  src/RoverWeeder.h
-  src/RoverWeeder.cpp
-  src/USBCamera.h
-  src/USBCamera.cpp
-  src/camera_v4l.c
-  src/eval.cpp)
+add_executable(weeder2_eval src/eval.cpp)
 
 target_link_libraries(weeder2_eval rcompp rpp romirover m)
 

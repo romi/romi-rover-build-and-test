@@ -41,6 +41,23 @@ namespace romi {
                         r_debug("FakeWeeder::hoe");
                         return true;
                 }
+
+                bool stop() override {
+                        r_debug("FakeWeeder::stop");
+                        return true;
+                }
+                
+                bool pause_activity() override {
+                        return true;
+                }
+                
+                bool continue_activity() override {
+                        return true;
+                }
+                
+                bool reset_activity() override {
+                        return true;
+                }
         };
 }
 

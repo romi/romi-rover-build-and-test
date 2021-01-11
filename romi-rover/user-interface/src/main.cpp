@@ -36,7 +36,7 @@
 #include "FluidSoundNotifications.h"
 #include "FakeWeeder.h"
 #include "RoverScriptEngine.h"
-#include "UIStateMachine.h"
+#include "RoverStateMachine.h"
 #include "Rover.h"
 
 using namespace romi;
@@ -45,7 +45,7 @@ using namespace romi;
 const char *get_sound_font_in_config(JsonCpp& config)
 {
         try {
-                return config["user-interface"]["fluid-sounds"]["sound-font"];
+                return config["user-interface"]["fluid-sounds"]["soundfont"];
                 
         } catch (JSONError& je) {
                 r_err("FluidSoundNotification: Failed to read the config: %s",
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
                             notifications,
                             weeder);
 
-                UIStateMachine state_machine(rover);
+                RoverStateMachine state_machine(rover);
                 UserInterface user_interface(rover, state_machine);
 
                 state_machine.handle_event(event_start);

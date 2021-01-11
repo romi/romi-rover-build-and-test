@@ -26,13 +26,13 @@
 
 #include "Path.h"
 #include "CNCRange.h"
+#include "Activity.h"
 
 namespace romi {
         
-        class CNC
+        class CNC : public Activity
         {
         public:
-
                 static constexpr double UNCHANGED = -999999.0;
                 
                 virtual ~CNC() = default;
@@ -50,10 +50,6 @@ namespace romi {
                 virtual bool spindle(double speed) = 0;
                 virtual bool travel(Path &path, double relative_speed = 0.1) = 0;
                 virtual bool homing() = 0;
-
-                virtual bool stop_execution() = 0;
-                virtual bool continue_execution() = 0;
-                virtual bool reset() = 0;
         };
 }
 

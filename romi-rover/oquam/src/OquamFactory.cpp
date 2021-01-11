@@ -22,9 +22,9 @@
 
  */
 #include <stdexcept>
+#include "oquam/FakeCNCController.h"
+#include "oquam/StepperController.h"
 #include "OquamFactory.h"
-#include "FakeCNCController.h"
-#include "StepperController.h"
 
 using namespace std;
 

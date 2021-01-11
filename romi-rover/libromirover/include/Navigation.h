@@ -24,9 +24,11 @@
 #ifndef __ROMI_NAVIGATION_H
 #define __ROMI_NAVIGATION_H
 
+#include "Activity.h"
+
 namespace romi {
         
-        class Navigation
+        class Navigation : public Activity
         {
         public:
                 

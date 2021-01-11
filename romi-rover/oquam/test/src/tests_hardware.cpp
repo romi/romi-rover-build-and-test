@@ -3,11 +3,14 @@
 #include <thread>
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "StepperController.h"
-#include "RSerial.h"
-#include "RomiSerialClient.h"
-#include "Oquam.h"
+
+#include <RSerial.h>
+#include <RomiSerialClient.h>
+
 #include "DebugWeedingSession.h"
+
+#include "oquam/Oquam.h"
+#include "oquam/StepperController.h"
 
 using namespace std;
 using namespace testing;
@@ -426,9 +429,9 @@ void stop_and_continue(Oquam *oquam)
 {
         for (int i = 0; i < 4; i++) {
                 clock_sleep(1.0);
-                oquam->stop_execution();
+                oquam->pause_activity();
                 clock_sleep(1.0);
-                oquam->continue_execution();
+                oquam->continue_activity();
         }
 } 
 
@@ -455,9 +458,9 @@ TEST_F(hardware_tests, test_oquam_stop_and_continue)
 void stop_and_reset(Oquam *oquam) 
 {
         clock_sleep(1.0);
-        oquam->stop_execution();
+        oquam->pause_activity();
         clock_sleep(1.0);
-        oquam->reset();
+        oquam->reset_activity();
 } 
 
 TEST_F(hardware_tests, test_oquam_stop_and_reset)

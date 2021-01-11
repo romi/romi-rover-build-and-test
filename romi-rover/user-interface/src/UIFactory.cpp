@@ -25,13 +25,14 @@
 #include <stdexcept>
 #include "UIFactory.h"
 #include "FakeNavigation.h"
-#include "RemoteNavigation.h"
 #include "FakeDisplay.h"
 #include "CrystalDisplay.h"
 #include "JoystickInputDevice.h"
 #include "FakeInputDevice.h"
 #include "FakeWeeder.h"
-#include "RemoteWeeder.h"
+#include "RoverOptions.h"
+#include "rpc/RemoteNavigation.h"
+#include "rpc/RemoteWeeder.h"
 
 using namespace std;
 using namespace rcom;
@@ -296,7 +297,7 @@ namespace romi {
 
         const char *UIFactory::get_script_file(Options &options, JsonCpp &config)
         {
-                const char *path = options.get_value("script-file");
+                const char *path = options.get_value(script_option);
                 if (path == 0) {
                         path = get_script_file_in_config(config);
                 }
@@ -307,7 +308,7 @@ namespace romi {
         {
                 const char *path = 0;
                 try {
-                        path = config["user-interface"]["rover-script-engine"]["script-file"];
+                        path = config["user-interface"]["script-engine"]["script"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "

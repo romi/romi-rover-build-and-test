@@ -47,8 +47,9 @@
     
     "weeder": {
         "z0": -0.110,
+        "speed": 0.8,
         
-        "camera-classname": "usb-camera",
+        "camera-classname": "file-camera",
         "cnc-classname": "remote-cnc",
         
         "cropper": "imagecropper",
@@ -77,7 +78,7 @@
             "alpha": 0.2,
             "beta": 1.2,
             "epsilon": 0.01,
-            "print": 0.0
+            "print": false
         } 
     },
     
@@ -113,41 +114,41 @@
         },
 
         "fluid-sounds": {
-            "sound-font": "notifications.sf2",
+            "soundfont": "notifications.sf2",
             "sounds": {
-                "notify-startup": {
+                "startup": {
                     "preset": 4,
                     "volume": 90
                 },
-                "notify-confirm-menu-mode": {
+                "confirm-menu-mode": {
                     "preset": 22,
                     "volume": 90
                 },
-                "notify-leave-menu-mode": {
+                "leave-menu-mode": {
                     "preset": 21,
                     "volume": 90
                 },
-                "notify-change-menu": {
+                "change-menu": {
                     "preset": 1,
                     "volume": 90
                 },
-                "notify-menu-confirmed": {
+                "menu-confirmed": {
                     "preset": 22,
                     "volume": 90
                 },
-                "notify-menu-finished": {
+                "script-finished": {
                     "preset": 10,
                     "volume": 90
                 },
-                "notify-confirm-navigation-mode": {
+                "confirm-navigation-mode": {
                     "preset": 16,
                     "volume": 90
                 },
-                "notify-leave-navigation-mode": {
+                "leave-navigation-mode": {
                     "preset": 21,
                     "volume": 90
                 },
-                "notify-moving": {
+                "moving": {
                     "preset": 7,
                     "volume": 90
                 }

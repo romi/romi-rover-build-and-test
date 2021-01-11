@@ -26,10 +26,11 @@
 #define __OQUAM_FACTORY_H
 
 #include <memory>
+#include <RomiSerialClient.h>
+#include <RSerial.h>
+
 #include "Options.h"
-#include "CNCController.h"
-#include "RomiSerialClient.h"
-#include "RSerial.h"
+#include "oquam/CNCController.h"
 
 namespace romi {
 

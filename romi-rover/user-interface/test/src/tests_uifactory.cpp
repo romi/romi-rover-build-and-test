@@ -6,7 +6,7 @@
 #include "FakeDisplay.h"
 #include "CrystalDisplay.h"
 #include "FakeNavigation.h"
-#include "RemoteNavigation.h"
+#include "rpc/RemoteNavigation.h"
 #include "FakeInputDevice.h"
 #include "JoystickInputDevice.h"
 

@@ -26,14 +26,14 @@
 
 #include <rcom.h>
 #include <RPCServer.h>
+#include <RomiSerialClient.h>
+#include <RSerial.h>
 
 #include "BrushMotorDriver.h"
-#include "RomiSerialClient.h"
-#include "RSerial.h"
-#include "RPCNavigationServerAdaptor.h"
 #include "RoverNavigation.h"
 #include "RoverConfiguration.h"
 #include "RoverOptions.h"
+#include "rpc/NavigationAdaptor.h"
 
 using namespace romi;
 using namespace rcom;
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
 
                 RoverNavigation navigation(driver, rover);
                 
-                RPCNavigationServerAdaptor adaptor(navigation);
+                NavigationAdaptor adaptor(navigation);
                 RPCServer server(adaptor, "navigation", "navigation");
                 
                 while (!app_quit())

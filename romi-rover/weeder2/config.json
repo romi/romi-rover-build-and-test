@@ -23,7 +23,7 @@
             "alpha": 0.2,
             "beta": 1.2,
             "epsilon": 0.01,
-            "print": 0.0
+            "print": false
         } 
     }
 }

@@ -28,6 +28,12 @@
 #include "GetOpt.h"
 
 namespace romi {
+
+        static constexpr const char* config_option = "config";
+        static constexpr const char* script_option = "script";
+        static constexpr const char* soundfont_option = "soundfont";
+        static constexpr const char* camera_image_option = "camera-image";
+        static constexpr const char* session_directory_option = "session-directory";
         
         extern Option *rover_options;
         extern size_t rover_options_length;

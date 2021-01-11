@@ -3,14 +3,14 @@
 #include <string.h>
 #include <rcom.h>
 
-#include "Oquam.h"
-#include "OquamOptions.h"
+#include <RPCServer.h>
+
 #include "OquamFactory.h"
 #include "DebugWeedingSession.h"
-#include "RPCServer.h"
-#include "CNCAdaptor.h"
-#include "StepperSettings.h"
 #include "RoverOptions.h"
+#include "rpc/CNCAdaptor.h"
+#include "oquam/Oquam.h"
+#include "oquam/StepperSettings.h"
 
 using namespace romi;
 

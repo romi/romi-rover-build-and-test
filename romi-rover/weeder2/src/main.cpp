@@ -36,8 +36,9 @@
 #include "USBCamera.h"
 #include "CameraServer.h"
 #include "RoverWeeder.h"
-#include "Pipeline.h"
-#include "RemoteCNC.h"
+#include "weeder/PipelineFactory.h"
+#include "rpc/WeederAdaptor.h"
+#include "rpc/RemoteCNC.h"
 
 using namespace romi;
 using namespace rcom;
@@ -164,7 +165,7 @@ CNC *create_cnc(Options &options, JsonCpp &config)
                 
         } else if (rstreq(cnc_class, RemoteCNC::ClassName)) {
                 rpc_client = new RPCClient("oquam", "cnc", 60.0);
-                cnc = new RemoteCNC(rpc_client);
+                cnc = new RemoteCNC(*rpc_client);
         }
 
         if (cnc == 0) {
@@ -203,16 +204,18 @@ int main(int argc, char** argv)
                 if (!cnc->get_range(range)) 
                         throw std::runtime_error("Failed to get the CNC range");
                                
-                Pipeline pipeline(range, config);
+                PipelineFactory factory;
+                IPipeline& pipeline = factory.build(range, config);
                 
                 DebugWeedingSession session(options.get_value("session-directory"),
                                             "weeder");
 
                 
                 double z0 = config["weeder"]["z0"];
-                RoverWeeder weeder(camera, &pipeline, cnc, range, z0, session);
-                
-                RPCServer weeder_server(weeder, "weeder", "weeder");
+                double speed = config["weeder"]["speed"];
+                RoverWeeder weeder(*camera, pipeline, *cnc, z0, speed, session);
+                WeederAdaptor adaptor(weeder);
+                RPCServer weeder_server(adaptor, "weeder", "weeder");
                 
                 // Make the camera accessible over HTTP 
                 CameraServer camera_server(*camera, "weeder", "topcam");

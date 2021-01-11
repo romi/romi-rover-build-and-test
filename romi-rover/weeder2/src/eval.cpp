@@ -32,7 +32,7 @@
 #include "FakeCNC.h"
 #include "FileCamera.h"
 #include "RoverWeeder.h"
-#include "Pipeline.h"
+#include "weeder/PipelineFactory.h"
 
 using namespace romi;
 
@@ -53,13 +53,15 @@ int main(int argc, char** argv)
                 cnc.get_range(range);
                 
                 FileCamera camera(options.get_value("weeder-camera-image"));
-                
-                Pipeline pipeline(range, config);
+
+                PipelineFactory factory;
+                IPipeline& pipeline = factory.build(range, config);
                 DebugWeedingSession session(options.get_value("session-directory"),
                                             "weeder");
 
                 double z0 = config["weeder"]["z0"];
-                RoverWeeder weeder(&camera, &pipeline, &cnc, range, z0, session);
+                double speed = config["weeder"]["speed"];
+                RoverWeeder weeder(camera, pipeline, cnc, z0, speed, session);
                 
                 weeder.hoe();
                 
