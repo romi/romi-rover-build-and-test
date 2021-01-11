@@ -70,8 +70,7 @@ namespace romi {
                 void instantiate_display(const char *display_classname,
                                         Options &options,
                                         JsonCpp &config);
-                const char *get_display_classname(Options& options, JsonCpp& config);
-                const char *get_display_classname_in_config(JsonCpp &config);
+                const char *get_display_classname(JsonCpp &config);
                 void instantiate_fake_display();
                 void instantiate_crystal_display(Options &options, JsonCpp &config);
                 const char *get_crystal_display_device(Options &options,
@@ -83,15 +82,12 @@ namespace romi {
                 void instantiate_navigation(Options &options, JsonCpp &config);
                 void instantiate_navigation(const char *classname, Options &options,
                                            JsonCpp &config);
-                const char *get_navigation_classname(Options& options, JsonCpp& config);
-                const char *get_navigation_classname_in_config(JsonCpp &config);
+                const char *get_navigation_classname(JsonCpp &config);
                 void instantiate_fake_navigation();
                 void instantiate_remote_navigation(Options &options, JsonCpp &config);
 
                 // Input device / joystick
-                const char *get_input_device_classname(Options &options,
-                                                       JsonCpp &config);
-                const char *get_input_device_classname_in_config(JsonCpp &config);
+                const char *get_input_device_classname(JsonCpp &config);
                 void instantiate_input_device(const char *classname, Options& options,
                                              JsonCpp& config);
                 void instantiate_fake_input_device();
@@ -103,8 +99,7 @@ namespace romi {
                 void instantiate_weeder(Options &options, JsonCpp &config);
                 void instantiate_weeder(const char *classname, Options &options,
                                            JsonCpp &config);
-                const char *get_weeder_classname(Options& options, JsonCpp& config);
-                const char *get_weeder_classname_in_config(JsonCpp &config);
+                const char *get_weeder_classname(JsonCpp &config);
                 void instantiate_fake_weeder();
                 void instantiate_remote_weeder(Options &options, JsonCpp &config);
 

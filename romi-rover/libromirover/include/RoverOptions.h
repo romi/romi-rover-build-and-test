@@ -29,16 +29,30 @@
 
 namespace romi {
 
-        static constexpr const char* config_option = "config";
-        static constexpr const char* script_option = "script";
-        static constexpr const char* soundfont_option = "soundfont";
-        static constexpr const char* camera_image_option = "camera-image";
-        static constexpr const char* session_directory_option = "session-directory";
-        
-        extern Option *rover_options;
-        extern size_t rover_options_length;
+        class RoverOptions : public GetOpt
+        {
+        public:
+                static constexpr const char* config = "config";
+                static constexpr const char* script = "script";
+                static constexpr const char* soundfont = "soundfont";
+                static constexpr const char* camera_image = "camera-image";
+                static constexpr const char* session_directory = "session-directory";
+                static constexpr const char* joystick_device = "joystick-device";
+                static constexpr const char* camera_device = "camera-device";
+                static constexpr const char* display_device = "display-device";
+                static constexpr const char* cnc_device = "cnc-device";
+                static constexpr const char* navigation_device = "navigation-device";
 
-        //void rover_print_usage();
+
+                RoverOptions();
+                ~RoverOptions() override = default;
+                
+                void exit_if_help_requested();
+                
+                //const char *get_config_file(Options& options);
+
+        protected:
+        };
 }
 
 #endif // __ROMI_ROVER_OPTIONS_H

@@ -21,6 +21,7 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#include <stdexcept>
 #include <r.h>
 #include "RoverOptions.h"
 
@@ -34,85 +35,64 @@ namespace romi {
 
                 // File paths
                 
-                { config_option, true, "config.json",
+                { RoverOptions::config, true, "config.json",
                   "Path of the config file" },
 
-                { script_option, true, "script.json",
+                { RoverOptions::script, true, "script.json",
                   "The path of the file containing the scripts and menus" },
                 
-                { session_directory_option, true, ".",
+                { RoverOptions::session_directory, true, ".",
                   "The session directory where the output "
                   "files are stored (logs, images...)"},
                 
-                { camera_image_option, true, 0, 
+                { RoverOptions::camera_image, true, 0, 
                   "The path of the image file for the file camera."},
                 
-                { soundfont_option, true, 0,
+                { RoverOptions::soundfont, true, 0,
                   "The path of the soundfont for the sound notification "},
 
-                
-                // User interface
-                
-                { "input-device-classname", true, 0,
-                  "The classname of the input device. "
-                  "Options: joystick, fake-input-device"},
-                
-                { "joystick-device", true, 0,
+                { RoverOptions::joystick_device, true, 0,
                   "The path of the system device for the input device" },
                 
-                { "navigation-classname", true, 0,
-                  "The classname of the navigation module. "
-                  "Options: remote-navigation, fake-navigation"},
-                
-                { "display-classname", true, 0,
-                  "The classname of the display module"
-                  "Options: crystal-display, fake-display" },
-                
-                { "display-device", true, 0,
+                { RoverOptions::display_device, true, 0,
                   "The path of the system device for the display "},
-
-                { "weeder-classname", true, 0,
-                  "The classname of the weeder module used by the user interface "
-                  "Options: weeder, fake-weeder "},
-
-                // Weeder
-
-                {"weeder-cnc-classname", true, 0, 
-                  "The classname of the CNC module. "
-                  "Options: remote-cnc, fake-cnc"},
                 
-                {"weeder-camera-classname", true, 0, 
-                  "The classname of the camera. "
-                  "Options: usb-camera-usb, file-camera"},
-                
-                {"weeder-camera-device", true, 0, 
+                { RoverOptions::camera_device, true, 0, 
                   "The device path for the USB camera."},
                 
-                // Oquam
-                
-                { "oquam-controller-classname", true, 0,
-                  "The classname of oquam's low-level CNC controller. "
-                  "Options: stepper-controller, fake-controller"
-                },
-                
-                { "oquam-controller-device", true, 0,
+                { RoverOptions::cnc_device, true, 0,
                   "The stepper controller's serial device "},
-
-                // Navigation
                 
-                { "navigation-driver-classname", true, 0,
-                  "The classname of navigation's low-level driver. "
-                  "Options: brush-motor-driver, fake-driver"
-                },
-                
-                { "navigation-driver-device", true, 0,
+                { RoverOptions::navigation_device, true, 0,
                   "The brush motor driver's serial device"
                 },
         };
         
-        Option *rover_options = _options;
+        static Option *rover_options = _options;
+        static size_t rover_options_length = (sizeof(_options) / sizeof(Option));
 
-        size_t rover_options_length = (sizeof(_options) / sizeof(Option));
+
+        RoverOptions::RoverOptions()
+                : GetOpt(rover_options, rover_options_length)
+        {}
+        
+        void RoverOptions::exit_if_help_requested()
+        {
+                if (is_help_requested()) {
+                        print_usage();
+                        exit(0);
+                }
+        }
+
+        // const char *RoverOptions::get_config_file()
+        // {
+        //         const char *file = get_value(RoverOptions::config);
+        //         if (file == 0) {
+        //                 throw std::runtime_error("No configuration file was given "
+        //                                          "(can't run without one...).");
+        //         }
+        //         return file;
+        // }
 
 }
 

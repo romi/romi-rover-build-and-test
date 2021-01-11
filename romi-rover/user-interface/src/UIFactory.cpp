@@ -58,20 +58,11 @@ namespace romi {
 
         void UIFactory::instantiate_display(Options &options, JsonCpp &config)
         {
-                const char *classname = get_display_classname(options, config);
+                const char *classname = get_display_classname(config);
                 instantiate_display(classname, options, config);
         }
         
-        const char *UIFactory::get_display_classname(Options &options, JsonCpp &config)
-        {
-                const char *display_classname = options.get_value("display-classname");
-                if (display_classname == 0) {
-                        display_classname = get_display_classname_in_config(config);
-                } 
-                return display_classname;
-        }
-        
-        const char *UIFactory::get_display_classname_in_config(JsonCpp &config)
+        const char *UIFactory::get_display_classname(JsonCpp &config)
         {
                 const char *display_classname = 0;
                 try {
@@ -152,21 +143,11 @@ namespace romi {
         
         void UIFactory::instantiate_navigation(Options &options, JsonCpp &config)
         {
-                const char *classname = get_navigation_classname(options, config);
+                const char *classname = get_navigation_classname(config);
                 instantiate_navigation(classname, options, config);
         }
         
-        const char *UIFactory::get_navigation_classname(Options &options,
-                                                        JsonCpp &config)
-        {
-                const char *classname = options.get_value("navigation-classname");
-                if (classname == 0) {
-                        classname = get_navigation_classname_in_config(config);
-                }
-                return classname;
-        }
-        
-        const char *UIFactory::get_navigation_classname_in_config(JsonCpp &config)
+        const char *UIFactory::get_navigation_classname(JsonCpp &config)
         {
                 const char *classname = 0;
                 try {
@@ -212,22 +193,12 @@ namespace romi {
         
         InputDevice& UIFactory::create_input_device(Options& options, JsonCpp& config)
         {
-                const char *classname = get_input_device_classname(options, config);
+                const char *classname = get_input_device_classname(config);
                 instantiate_input_device(classname, options, config);
                 return *_input_device;
         }
-
-        const char *UIFactory::get_input_device_classname(Options &options,
-                                                        JsonCpp &config)
-        {
-                const char *classname = options.get_value("input-device-classname");
-                if (classname == 0) {
-                        classname = get_input_device_classname_in_config(config);
-                }
-                return classname;
-        }
         
-        const char *UIFactory::get_input_device_classname_in_config(JsonCpp &config)
+        const char *UIFactory::get_input_device_classname(JsonCpp &config)
         {
                 const char *classname = 0;
                 try {
@@ -297,7 +268,7 @@ namespace romi {
 
         const char *UIFactory::get_script_file(Options &options, JsonCpp &config)
         {
-                const char *path = options.get_value(script_option);
+                const char *path = options.get_value(RoverOptions::script);
                 if (path == 0) {
                         path = get_script_file_in_config(config);
                 }
@@ -334,21 +305,11 @@ namespace romi {
         
         void UIFactory::instantiate_weeder(Options &options, JsonCpp &config)
         {
-                const char *classname = get_weeder_classname(options, config);
+                const char *classname = get_weeder_classname(config);
                 instantiate_weeder(classname, options, config);
         }
         
-        const char *UIFactory::get_weeder_classname(Options &options,
-                                                        JsonCpp &config)
-        {
-                const char *classname = options.get_value("weeder-classname");
-                if (classname == 0) {
-                        classname = get_weeder_classname_in_config(config);
-                }
-                return classname;
-        }
-        
-        const char *UIFactory::get_weeder_classname_in_config(JsonCpp &config)
+        const char *UIFactory::get_weeder_classname(JsonCpp &config)
         {
                 const char *classname = 0;
                 try {

@@ -155,7 +155,7 @@
             }
         },
         
-        "rover-script-engine": {
+        "script-engine": {
             "script-file": "scripts.json"
         }
     },

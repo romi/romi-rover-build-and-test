@@ -44,8 +44,6 @@ namespace romi {
                 void instantiate_controller(Options &options, JsonCpp &config);
                 void instantiate_controller(const char *controller_classname,
                                             Options &options, JsonCpp &config);
-                const char *get_controller_classname(Options& options,
-                                                     JsonCpp& config);
                 const char *get_controller_classname_in_config(JsonCpp &config);
                 void instantiate_fake_controller();
                 void instantiate_stepper_controller(Options &options, JsonCpp &config);

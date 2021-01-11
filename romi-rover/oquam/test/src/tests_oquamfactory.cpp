@@ -81,26 +81,7 @@ TEST_F(oquamfactory_tests, create_controller_fails_unknown_classname_2)
         }
 }
 
-TEST_F(oquamfactory_tests, successfully_create_fake_controller_1)
-{
-        static Option option = { "oquam-controller-classname", true,
-                                 FakeCNCController::ClassName, "" };
-        GetOpt getopt(&option, 1); 
-        JsonCpp config = JsonCpp::parse("{'oquam': {}}");
-        
-        OquamFactory factory;
-
-        try {
-                factory.create_controller(getopt, config);
-                
-        } catch (std::runtime_error& re) {
-                FAIL() << "Expected successful creation";
-        } catch (...) {
-                FAIL() << "Expected successful creation";
-        }
-}
-
-TEST_F(oquamfactory_tests, successfully_create_fake_controller_2)
+TEST_F(oquamfactory_tests, successfully_create_fake_controller)
 {
         GetOpt getopt(0, 0); 
         JsonCpp config = JsonCpp::construct("{'oquam': {'controller-classname': '%s'}}",

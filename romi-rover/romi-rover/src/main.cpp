@@ -65,39 +65,89 @@ using namespace rcom;
 using namespace romi;
 
 
-const char *get_sound_font_file(Options& options, JsonCpp& config)
+const char *get_config_file(Options& options)
 {
-        const char *file = options.get_value(soundfont_option);
-        if (file == 0)
-                file = config["user-interface"]["fluid-sounds"]["soundfont"];
+        const char *file = options.get_value(RoverOptions::config);
+        if (file == 0) {
+                throw std::runtime_error("No configuration file was given (can't run without one...).");
+        }
         return file;
 }
 
 const char *get_script_file(Options& options, JsonCpp& config)
 {
-        const char *file = options.get_value(script_option);
-        if (file == 0)
-                file = config["user-interface"]["script-engine"]["script"];
+        const char *file = options.get_value(RoverOptions::script);
+        if (file == 0) {
+                file = config["user-interface"]["script-engine"]["script-file"];
+        }
         return file;
 }
 
+const char *get_sound_font_file(Options& options, JsonCpp& config)
+{
+        const char *file = options.get_value(RoverOptions::soundfont);
+        if (file == 0)
+                file = config["user-interface"]["fluid-sounds"]["soundfont"];
+        return file;
+}
 
+const char *get_session_directory(Options& options, JsonCpp& config)
+{
+        const char *dir = options.get_value(RoverOptions::session_directory);
+        if (dir == 0) {
+                // TODO: to be finalized: get seesion dir from config
+                // file, add the current date to the path, and create
+                // a new directory.
+                dir = ".";
+        }
+        return dir;
+}
+
+const char *get_camera_image(Options& options, JsonCpp& config)
+{
+        const char *path = options.get_value(RoverOptions::camera_image);
+        if (path == 0) {
+                path = config["weeder"]["file-camera"]["image"];
+        }
+        return path;
+}
+
+const char *get_camera_device_in_config(JsonCpp& config)
+{
+        try {
+                return config["ports"]["usb-camera"]["port"];
+                
+        } catch (JSONError& je) {
+                r_err("get_camera_device_in_config: Failed to get value "
+                      "of ports.usb-camera.port");
+                throw std::runtime_error("Missing device name for camera in config");
+        }
+}
+
+const char *get_camera_device(Options& options, JsonCpp& config)
+{
+        const char *device = options.get_value(RoverOptions::camera_device);
+        if (device == 0)
+                device = get_camera_device_in_config(config);
+        return device;
+}
 
 int main(int argc, char** argv)
 {
         int retval = 1;
         
-        GetOpt options(rover_options, rover_options_length);
+        RoverOptions options;
         options.parse(argc, argv);
+        options.exit_if_help_requested();
+        
         
         app_init(&argc, argv);
         app_set_name("romi-rover");
 
         try {
-                r_debug("Romi Rover: Using configuration file: '%s'",
-                        options.get_value(config_option));
-
-                JsonCpp config = JsonCpp::load(options.get_value(config_option));
+                const char *config_file = get_config_file(options);
+                r_info("Romi Rover: Using configuration file: '%s'", config_file);
+                JsonCpp config = JsonCpp::load(config_file);
 
                 // Display
                 const char *display_device = config["ports"]["crystal-display"]["port"];
@@ -134,23 +184,20 @@ int main(int argc, char** argv)
                             maximum_deviation,
                             slice_duration);
                 
-                DebugWeedingSession debug(options.get_value(session_directory_option),
-                                          "oquam");
+                DebugWeedingSession debug(get_session_directory(options, config),
+                                          "romi-rover");
                 oquam.set_file_cabinet(&debug);
 
                 // Camera
                 unique_ptr<Camera> camera;
                 const char *camera_classname = config["weeder"]["camera-classname"];
                 if (rstreq(camera_classname, FileCamera::ClassName)) {
-                        const char *image_file = options.get_value(camera_image_option);
-                        if (image_file == 0)
-                                throw std::runtime_error("Missing image file for "
-                                                         "file camera");
+                        const char *image_file = get_camera_image(options, config);
                         r_info("Loading image %s", image_file);
                         camera = make_unique<FileCamera>(image_file);
                         
                 } else {
-                        const char *camera_device = config["ports"]["usb-camera"]["port"];
+                        const char *camera_device = get_camera_device(options, config);
                         double width = config["weeder"]["usb-camera"]["width"];
                         double height = config["weeder"]["usb-camera"]["height"];
                         camera = make_unique<USBCamera>(camera_device, width, height);

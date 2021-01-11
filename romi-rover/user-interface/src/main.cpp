@@ -63,22 +63,33 @@ const char *get_sound_font_file(Options& options, JsonCpp& config)
         return file;
 }
 
+const char *get_config_file(Options& options)
+{
+        const char *file = options.get_value(RoverOptions::config);
+        if (file == 0) {
+                throw std::runtime_error("No configuration file was given (can't run without one...).");
+        }
+        return file;
+}
+
+
 int main(int argc, char** argv)
 {
         int retval = 1;
         
-        GetOpt options(rover_options, rover_options_length);
+        RoverOptions options;
         options.parse(argc, argv);
+        options.exit_if_help_requested();
         
         app_init(&argc, argv);
         app_set_name("user-interface");
 
         try {
-                r_debug("UserInterface: Using configuration file: '%s'",
-                        options.get_value("config"));
+                const char *config_file = get_config_file(options);
+                r_info("User-interface: Using configuration file: '%s'", config_file);
+                JsonCpp config = JsonCpp::load(config_file);
 
                 UIFactory ui_factory;
-                JsonCpp config = JsonCpp::load(options.get_value("config"));
 
                 InputDevice& input_device = ui_factory.create_input_device(options,
                                                                            config);

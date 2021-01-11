@@ -25,6 +25,7 @@
 #include "oquam/FakeCNCController.h"
 #include "oquam/StepperController.h"
 #include "OquamFactory.h"
+#include "RoverOptions.h"
 
 using namespace std;
 
@@ -50,18 +51,8 @@ namespace romi {
 
         void OquamFactory::instantiate_controller(Options &options, JsonCpp &config)
         {
-                const char *classname = get_controller_classname(options, config);
+                const char *classname = get_controller_classname_in_config(config);
                 instantiate_controller(classname, options, config);
-        }
-        
-        const char *OquamFactory::get_controller_classname(Options &options,
-                                                           JsonCpp &config)
-        {
-                const char *controller_classname = options.get_value("oquam-controller-classname");
-                if (controller_classname == 0) {
-                        controller_classname = get_controller_classname_in_config(config);
-                } 
-                return controller_classname;
         }
         
         const char *OquamFactory::get_controller_classname_in_config(JsonCpp &config)
@@ -114,7 +105,7 @@ namespace romi {
         const char *OquamFactory::get_stepper_controller_device(Options &options,
                                                                 JsonCpp &config)
         {
-                const char *device_name = options.get_value("oquam-controller-device");
+                const char *device_name = options.get_value(RoverOptions::cnc_device);
                 if (device_name == 0) {
                         device_name = get_stepper_controller_device_in_config(config);
                 }

@@ -38,7 +38,7 @@ using namespace romi;
 
 int main(int argc, char** argv)
 {
-        GetOpt options(rover_options, rover_options_length);
+        RoverOptions options;
         options.parse(argc, argv);
         
         app_init(&argc, argv);

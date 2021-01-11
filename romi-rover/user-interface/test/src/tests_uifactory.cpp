@@ -9,6 +9,7 @@
 #include "rpc/RemoteNavigation.h"
 #include "FakeInputDevice.h"
 #include "JoystickInputDevice.h"
+#include "RoverOptions.h"
 
 using namespace std;
 using namespace testing;
@@ -29,23 +30,7 @@ protected:
 	}
 };
 
-TEST_F(uifactory_tests, create_display_uses_options_first)
-{
-        Option option = { "display-classname", true, FakeDisplay::ClassName, "" };
-        GetOpt options(&option, 1);
-        
-        JsonCpp config = JsonCpp::parse("{'user-interface': {'display-classname': 'none'}}");
-        
-        try {
-                UIFactory factory;
-                factory.create_display(options, config);
-                
-        } catch (...) {
-                FAIL() << "Expected successful creation";
-        }
-}
-
-TEST_F(uifactory_tests, create_display_uses_config_second)
+TEST_F(uifactory_tests, create_display_uses_config)
 {
         GetOpt options(0, 0);
         JsonCpp config = JsonCpp::construct("{'user-interface': {'display-classname': '%s'}}",
@@ -76,22 +61,6 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_display_classname_1)
 }
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_display_classname_2)
-{
-        Option option = { "display-classname", true, "foo", "" };
-        GetOpt options(&option, 1);
-        JsonCpp config = JsonCpp::parse("{}");
-        
-        try {
-                UIFactory factory;
-                factory.create_display(options, config);
-                FAIL() << "Expected an exception";
-                
-        } catch (...) {
-                // NOP
-        }
-}
-
-TEST_F(uifactory_tests, throws_exception_on_unknown_display_classname_3)
 {
         GetOpt options(0, 0);
         JsonCpp config = JsonCpp::parse("{'user-interface': {'display-classname': 'foo'}}");
@@ -160,22 +129,7 @@ TEST_F(uifactory_tests, throws_exception_on_invalid_crystal_display_device_2)
         }
 }
 
-TEST_F(uifactory_tests, create_navigation_uses_options_first)
-{
-        Option option = { "navigation-classname", true, FakeNavigation::ClassName, "" };
-        GetOpt options(&option, 1);
-        JsonCpp config = JsonCpp::parse("{'user-interface': {'navigation-classname': 'none'}}");
-        
-        try {
-                UIFactory factory;
-                factory.create_navigation(options, config);
-                
-        } catch (...) {
-                FAIL() << "Expected successful creation";
-        }
-}
-
-TEST_F(uifactory_tests, create_navigation_uses_config_second)
+TEST_F(uifactory_tests, create_navigation_uses_config)
 {
         GetOpt options(0, 0);
         JsonCpp config = JsonCpp::construct("{'user-interface': "
@@ -208,22 +162,6 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_navigation_type_1)
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_navigation_type_2)
 {
-        Option option = { "navigation-classname", true, "foo", "" };
-        GetOpt options(&option, 1);
-        JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
-        
-        try {
-                UIFactory factory;
-                factory.create_navigation(options, config);
-                FAIL() << "Expected an exception";
-                
-        } catch (...) {
-                // NOP
-        }
-}
-
-TEST_F(uifactory_tests, throws_exception_on_unknown_navigation_type_3)
-{
         GetOpt options(0, 0);
         JsonCpp config = JsonCpp::parse("{'user-interface': "
                                         "{'navigation-classname': 'foo'}}");
@@ -255,24 +193,7 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_remote_navigation_server_1)
         }
 }
 
-
-TEST_F(uifactory_tests, create_input_device_uses_options_first)
-{
-        Option option = { "input-device-classname", true, FakeInputDevice::ClassName, "" };
-        GetOpt options(&option, 1);
-        JsonCpp config = JsonCpp::parse("{'user-interface': "
-                                        "{'input-device-classname': 'none'}}");
-        
-        try {
-                UIFactory factory;
-                factory.create_input_device(options, config);
-                
-        } catch (...) {
-                FAIL() << "Expected successful creation";
-        }
-}
-
-TEST_F(uifactory_tests, create_input_device_uses_config_second)
+TEST_F(uifactory_tests, create_input_device_uses_config)
 {
         GetOpt options(0, 0);
         JsonCpp config = JsonCpp::construct("{'user-interface': "
@@ -305,9 +226,8 @@ TEST_F(uifactory_tests, throws_exception_on_missing_input_type)
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_input_type)
 {
-        Option option = { "input-device-classname", true, "foo", "" };
-        GetOpt options(&option, 1);
-        JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
+        GetOpt options(0, 0);
+        JsonCpp config = JsonCpp::parse("{'user-interface': {'input-device-classname':'foo'}}");
         
         try {
                 UIFactory factory;
@@ -354,7 +274,7 @@ TEST_F(uifactory_tests, throws_exception_on_invalid_joystick_device)
 
 TEST_F(uifactory_tests, successfully_uses_script_file_from_options)
 {
-        Option option = { "script-file", true, "/foo/bar", "" };
+        Option option = { RoverOptions::script, true, "/foo/bar", "" };
         GetOpt options(&option, 1);
         JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
         
@@ -372,8 +292,9 @@ TEST_F(uifactory_tests, successfully_uses_script_file_from_options)
 TEST_F(uifactory_tests, successfully_uses_script_file_from_config)
 {
         GetOpt options(0, 0);
-        JsonCpp config = JsonCpp::parse("{'user-interface': {'rover-script-engine': "
-                                        "{'script-file':'/bar/foo'}}}");
+        JsonCpp config = JsonCpp::construct("{'user-interface': {'script-engine': "
+                                            "{'%s':'/bar/foo'}}}",
+                                            RoverOptions::script);
         
         try {
                 UIFactory factory;

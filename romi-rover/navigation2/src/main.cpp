@@ -54,26 +54,35 @@ const char *get_brush_motor_device_in_config(JsonCpp& config)
 
 const char *get_brush_motor_device(Options& options, JsonCpp& config)
 {
-        const char *brush_motor_device = options.get_value("navigation-driver-device");
+        const char *brush_motor_device = options.get_value(RoverOptions::navigation_device);
         if (brush_motor_device == 0) {
                 brush_motor_device = get_brush_motor_device_in_config(config);
         }
         return brush_motor_device;
 }
+
+const char *get_config_file(Options& options)
+{
+        const char *file = options.get_value(RoverOptions::config);
+        if (file == 0) {
+                throw std::runtime_error("No configuration file was given (can't run without one...).");
+        }
+        return file;
+}
         
 int main(int argc, char** argv)
 {
-        GetOpt options(rover_options, rover_options_length);
+        RoverOptions options;
         options.parse(argc, argv);
+        options.exit_if_help_requested();
         
         app_init(&argc, argv);
         app_set_name("navigation");
         
         try {
-                r_debug("Navigation: Using configuration file: '%s'",
-                        options.get_value("config"));
-                
-                JsonCpp config = JsonCpp::load(options.get_value("config"));
+                const char *config_file = get_config_file(options);
+                r_info("Navigation: Using configuration file: '%s'", config_file);
+                JsonCpp config = JsonCpp::load(config_file);
 
                 JsonCpp rover_settings = config["navigation"]["rover"];
                 RoverConfiguration rover(rover_settings);

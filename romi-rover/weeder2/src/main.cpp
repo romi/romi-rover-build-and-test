@@ -27,6 +27,7 @@
 
 #include <rcom.h>
 #include <RPCServer.h>
+
 #include <RoverOptions.h>
 #include <DebugWeedingSession.h>
 #include <RPCClient.h>
@@ -47,11 +48,32 @@ static CNC *cnc = 0;
 static RPCClient *rpc_client = 0;
 static Camera *camera = 0;
 
+const char *get_config_file(Options& options)
+{
+        const char *file = options.get_value(RoverOptions::config);
+        if (file == 0) {
+                throw std::runtime_error("No configuration file was given (can't run without one...).");
+        }
+        return file;
+}
+
+const char *get_camera_image_in_config(JsonCpp &config)
+{
+        try {
+                return config["weeder"]["file-camera"]["image"];
+                
+        } catch (JSONError& je) {
+                r_err("get_camera_image_in_config: Failed to get value "
+                      "of weeder.file-camera.image");
+                throw std::runtime_error("Missing image file for camera");
+        }
+}
+
 const char *get_camera_image(Options &options, JsonCpp &config)
 {
-        const char *filename = options.get_value("weeder-camera-image");
+        const char *filename = options.get_value(RoverOptions::camera_image);
         if (filename == 0)
-                throw std::runtime_error("Missing filename for camera image");
+                filename = get_camera_image_in_config(config);
         return filename;
 }
 
@@ -111,47 +133,37 @@ Camera *instantiate_camera(const char *camera_class, Options &options, JsonCpp &
 
 const char *get_camera_class(Options &options, JsonCpp &config)
 {
-        const char *camera_class = options.get_value("weeder-camera-classname");
-        if (camera_class == 0) {
-                try {
-                        camera_class = config["weeder"]["camera-classname"];
-                } catch (JSONError &je) {
-                        r_warn("Failed to get the value for "
-                               "weeder.camera-classname: %s", je.what());
-                }
+        try {
+                return config["weeder"]["camera-classname"];
+                
+        } catch (JSONError& je) {
+                r_err("get_camera_class: Failed to get value "
+                      "of weeder.camera-classname");
+                throw std::runtime_error("Missing camera class in config");
         }
-        return camera_class;
 }
 
 Camera *create_camera(Options &options, JsonCpp &config)
 {
         const char *camera_class = get_camera_class(options, config);
-        if (camera_class == 0)
-                throw std::runtime_error("No camera class was defined in the options "
-                                         "or in the configuration file.");
         return instantiate_camera(camera_class, options, config);
 }
 
 const char *get_cnc_class(Options &options, JsonCpp &config)
 {
-        const char *cnc_class = options.get_value("weeder-cnc-classname");
-        if (cnc_class == 0) {
-                try {
-                        cnc_class = config["weeder"]["cnc-classname"];
-                } catch (JSONError &je) {
-                        r_warn("Failed to get the value for weeder.cnc: %s", je.what());
-                }
+        try {
+                return config["weeder"]["cnc-classname"];
+                
+        } catch (JSONError& je) {
+                r_err("get_cnc_class: Failed to get value "
+                      "of weeder.cnc-classname");
+                throw std::runtime_error("Missing CNC class in config");
         }
-        return cnc_class;
 }
 
 CNC *create_cnc(Options &options, JsonCpp &config)
 {
         const char *cnc_class = get_cnc_class(options, config);
-        if (cnc_class == 0)
-                throw std::runtime_error("No CNC class was defined in the options "
-                                         "or in the configuration file.");
-        
         CNC *cnc = 0;
         
         if (rstreq(cnc_class, FakeCNC::ClassName)) {
@@ -180,17 +192,17 @@ int main(int argc, char** argv)
 {
         int retval = 1;
 
-        GetOpt options(rover_options, rover_options_length);
+        RoverOptions options;
         options.parse(argc, argv);
+        options.exit_if_help_requested();
         
         app_init(&argc, argv);
         app_set_name("weeder");
         
         try {
-                r_debug("Weeder: Using configuration file: '%s'",
-                        options.get_value("config"));
-                
-                JsonCpp config = JsonCpp::load(options.get_value("config"));
+                const char *config_file = get_config_file(options);
+                r_info("Weeder: Using configuration file: '%s'", config_file);
+                JsonCpp config = JsonCpp::load(config_file);
 
                 // Instantiate the camera
                 camera = create_camera(options, config);

@@ -263,7 +263,7 @@ TEST_F(rpcnavigation_tests, test_stop_returns_ok)
         EXPECT_CALL(navigation, stop())
                 .WillOnce(Return(true));
 
-        adaptor.execute(MethodsActivity::activity_pause, params, result, error);
+        adaptor.execute(MethodsNavigation::stop, params, result, error);
 
         ASSERT_EQ(error.code, 0);
 }
@@ -279,7 +279,7 @@ TEST_F(rpcnavigation_tests, test_stop_returns_error_when_stop_fails)
         EXPECT_CALL(navigation, stop())
                 .WillOnce(Return(false));
 
-        adaptor.execute(MethodsActivity::activity_pause, params, result, error);
+        adaptor.execute(MethodsNavigation::stop, params, result, error);
 
         ASSERT_NE(error.code, 0);
         ASSERT_NE(error.message.length(), 0);
