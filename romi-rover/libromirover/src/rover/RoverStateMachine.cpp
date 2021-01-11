@@ -629,20 +629,35 @@ namespace romi {
         
         void RoverStateMachine::init_script_execution_transitions()
         {
-                add(state_executing_script,
-                    event_stop,
-                    pause_script,
-                    state_script_paused);
+                if (1) {
+                        
+                        // exec -[stop-event]-> paused
+                        // paused -[stop-event]-> reset
+                        // paused -[select-event]-> continue
+                        
+                        add(state_executing_script,
+                            event_stop,
+                            pause_script,
+                            state_script_paused);
                 
-                add(state_script_paused,
-                    event_stop,
-                    reset_script,
-                    state_menu);
+                        add(state_script_paused,
+                            event_stop,
+                            reset_script,
+                            state_menu);
                 
-                add(state_script_paused,
-                    event_select,
-                    continue_script,
-                    state_executing_script);
+                        add(state_script_paused,
+                            event_select,
+                            continue_script,
+                            state_executing_script);
+                } else {
+                        
+                        // exec -[stop-event]-> reset
+                
+                        add(state_executing_script,
+                            event_stop,
+                            reset_script,
+                            state_menu);
+                }
                 
                 add(state_executing_script,
                     event_script_finished,

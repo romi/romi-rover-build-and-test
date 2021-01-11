@@ -217,6 +217,6 @@ namespace romi {
         bool StepperController::reset_activity()
         {
                 _activity_helper.reset_activity();
-                return true;
+                return send_command_without_interruption("r");
         }
 }

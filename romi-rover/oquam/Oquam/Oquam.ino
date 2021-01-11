@@ -48,7 +48,7 @@ void handle_moveto(RomiSerial *romiSerial, int16_t *args, const char *string_arg
 void handle_move(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_moveat(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_pause(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
-void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_reset(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void send_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void send_idle(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_homing(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
@@ -60,6 +60,7 @@ const static MessageHandler handlers[] = {
         { 'V', 4, false, handle_moveat },
         { 'p', 0, false, handle_pause },
         { 'c', 0, false, handle_continue },
+        { 'r', 0, false, handle_reset },
         { 'P', 0, false, send_position },
         { 'I', 0, false, send_idle },
         { 'H', 0, false, handle_homing },
@@ -214,6 +215,7 @@ void handle_moveat(RomiSerial *romiSerial, int16_t *args, const char *string_arg
 
 void handle_pause(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
+        Serial.print("#!PAUSE:xxxx");
         if (controller_state == STATE_RUNNING) {
                 disable_stepper_timer();
                 controller_state = STATE_PAUSED;
@@ -227,11 +229,28 @@ void handle_pause(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 
 void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
+        Serial.print("#!CONTINUE:xxxx");
         if (controller_state == STATE_PAUSED) {
                 controller_state = STATE_RUNNING;
                 enable_stepper_timer();
                 romiSerial->send_ok();  
         } else if (controller_state == STATE_RUNNING) {
+                romiSerial->send_ok();  
+        } else {
+                romiSerial->send_error(101, "Invalid state");  
+        }
+}
+
+void handle_reset(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        Serial.print("#!RESET:xxxx");
+        if (controller_state == STATE_PAUSED) {
+                controller_state = STATE_RUNNING;
+                reset();
+                enable_stepper_timer();
+                romiSerial->send_ok();  
+        } else if (controller_state == STATE_RUNNING) {
+                reset();
                 romiSerial->send_ok();  
         } else {
                 romiSerial->send_error(101, "Invalid state");  

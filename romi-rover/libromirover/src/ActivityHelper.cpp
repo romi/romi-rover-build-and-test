@@ -35,8 +35,10 @@ namespace romi {
                         r_debug("ActivityHelper::check: condition.wait");
                         _continue_condition.wait(lock,
                                                  [this]{ return this->_state != Paused; });
+                        r_debug("ActivityHelper::check: condition.wait: done waiting");
                 }
-                if (_state == Reset) {
+                int state = _state;
+                if (state == Reset) {
                         _state = Running;
                         r_debug("ActivityHelper::check: throw ActivityResetException");
                         throw ActivityResetException();
