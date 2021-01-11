@@ -21,13 +21,6 @@ set(SOURCES
   include/EventsAndStates.h
   include/EventSource.h
   include/EventTimer.h
-  include/FakeCNC.h
-  include/FakeDisplay.h
-  include/FakeInputDevice.h
-  include/FakeMotorDriver.h
-  include/FakeNavigation.h
-  include/FakeNotifications.h
-  include/FakeWeeder.h
   include/FileCamera.h
   include/FluidSoundNotifications.h
   include/GetOpt.h
@@ -65,7 +58,15 @@ set(SOURCES
   include/v.h
   include/Weeder.h
   include/WheelOdometry.h
-  
+
+  include/fake/FakeCNC.h
+  include/fake/FakeDisplay.h
+  include/fake/FakeInputDevice.h
+  include/fake/FakeMotorDriver.h
+  include/fake/FakeNavigation.h
+  include/fake/FakeNotifications.h
+  include/fake/FakeWeeder.h
+
   include/oquam/ATDC.h
   include/oquam/CNCController.h
   include/oquam/FakeCNCController.h
