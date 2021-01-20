@@ -71,13 +71,21 @@ namespace romi {
                             double z0, double speed, IFileCabinet &filecabinet);
                 
                 virtual ~DefaultWeeder() override = default;
-                
+
+                // Weeder interface
                 bool hoe() override;
                 bool stop() override;
                 
+                // Activity interface
                 bool pause_activity() override;
                 bool continue_activity() override;
                 bool reset_activity() override;
+
+                // Power device interface
+                bool power_up() override;
+                bool power_down() override;
+                bool stand_by() override;
+                bool wake_up() override;
         };
 }
 

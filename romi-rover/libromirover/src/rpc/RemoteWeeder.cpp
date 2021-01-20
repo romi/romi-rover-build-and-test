@@ -59,4 +59,28 @@ namespace romi {
                 r_debug("RemoteWeeder::reset");
                 return execute_simple_request(MethodsActivity::activity_reset);
         }
+
+        bool RemoteWeeder::power_up()
+        {
+                r_debug("RemoteWeeder::power_up");
+                return execute_simple_request(MethodsPowerDevice::power_up);
+        }
+        
+        bool RemoteWeeder::power_down()
+        {
+                r_debug("RemoteWeeder::power_down");
+                return execute_simple_request(MethodsPowerDevice::power_down);
+        }
+        
+        bool RemoteWeeder::stand_by()
+        {
+                r_debug("RemoteWeeder::stand_by");
+                return execute_simple_request(MethodsPowerDevice::stand_by);
+        }
+        
+        bool RemoteWeeder::wake_up()
+        {
+                r_debug("RemoteWeeder::wake_up");
+                return execute_simple_request(MethodsPowerDevice::wake_up);
+        }
 }

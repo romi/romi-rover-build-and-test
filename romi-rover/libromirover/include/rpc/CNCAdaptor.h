@@ -42,14 +42,15 @@ namespace romi {
                                      rcom::RPCError &error);
                 void execute_travel(JsonCpp& params, JsonCpp& result,
                                     rcom::RPCError &error);
-                void execute_homing(JsonCpp& params, JsonCpp& result,
-                                    rcom::RPCError &error);
-                void execute_pause(JsonCpp& params, JsonCpp& result,
-                                   rcom::RPCError &error);
-                void execute_continue(JsonCpp& params, JsonCpp& result,
-                                      rcom::RPCError &error);
-                void execute_reset(JsonCpp& params, JsonCpp& result,
-                                   rcom::RPCError &error);
+                void execute_homing(rcom::RPCError &error);
+                void execute_pause(rcom::RPCError &error);
+                void execute_continue(rcom::RPCError &error);
+                void execute_reset(rcom::RPCError &error);
+                void execute_power_up(rcom::RPCError &error);
+                void execute_power_down(rcom::RPCError &error);
+                void execute_stand_by(rcom::RPCError &error);
+                void execute_wake_up(rcom::RPCError &error);
+
 
         public:
                 CNCAdaptor(CNC &cnc) : _cnc(cnc) {}

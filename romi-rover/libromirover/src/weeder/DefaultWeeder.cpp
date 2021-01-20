@@ -226,4 +226,24 @@ namespace romi {
         {
                 return _cnc.reset_activity();
         }
+
+        bool DefaultWeeder::power_up()
+        {
+                return _cnc.power_up();
+        }
+        
+        bool DefaultWeeder::power_down()
+        {
+                return _cnc.power_down();
+        }
+        
+        bool DefaultWeeder::stand_by()
+        {
+                return _cnc.stand_by();
+        }
+        
+        bool DefaultWeeder::wake_up()
+        {
+                return _cnc.wake_up();
+        }
 }

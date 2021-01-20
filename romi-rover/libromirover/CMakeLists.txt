@@ -50,6 +50,7 @@ set(SOURCES
   include/api/Navigation.h
   include/api/Notifications.h
   include/api/Path.h
+  include/api/PowerDevice.h
   include/api/StateMachine.h
   include/api/Weeder.h
 

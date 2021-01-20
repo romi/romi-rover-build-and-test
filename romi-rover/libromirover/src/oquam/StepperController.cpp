@@ -220,4 +220,22 @@ namespace romi {
                 _activity_helper.reset_activity();
                 return send_command_without_interruption("r");
         }
+
+        bool StepperController::enable()
+        {
+                return send_command_without_interruption("e[1]");
+        }
+        
+        bool StepperController::disable()
+        {
+                return send_command_without_interruption("e[0]");
+        }
+        
+        bool StepperController::configure_homing(AxisIndex axis1, AxisIndex axis2,
+                                                 AxisIndex axis3)
+        {
+                char command[64];
+                rprintf(command, 64, "h[%d,%d,%d]", axis1, axis2, axis3);
+                return send_command_without_interruption(command);
+        }
 }

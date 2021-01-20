@@ -58,6 +58,22 @@ namespace romi {
                 bool reset_activity() override {
                         return true;
                 }
+                
+                bool power_up() override {
+                        return true;
+                }
+                
+                bool power_down() override {
+                        return true;
+                }
+
+                bool stand_by() override {
+                        return true;
+                }
+
+                bool wake_up() override {
+                        return true;
+                }
         };
 }
 

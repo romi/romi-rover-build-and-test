@@ -33,6 +33,11 @@
 #define FREQUENCY_STEPPER  25000
 #define INTERRUPTS_PER_MILLISECOND 25
 
+#define PIN_LIMIT_SWITCH_X   9
+#define PIN_LIMIT_SWITCH_Y   10
+#define PIN_LIMIT_SWITCH_Z   11
+#define PIN_SPINLDE          12
+
 /* 
  * The STEP_ and DIRECTION_ defines below are taken from Grbl.
  */

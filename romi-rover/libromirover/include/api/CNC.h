@@ -24,13 +24,14 @@
 #ifndef __ROMI_CNC_H
 #define __ROMI_CNC_H
 
-#include "Path.h"
-#include "CNCRange.h"
-#include "Activity.h"
+#include "api/Path.h"
+#include "api/CNCRange.h"
+#include "api/Activity.h"
+#include "api/PowerDevice.h"
 
 namespace romi {
         
-        class CNC : public Activity
+        class CNC : public Activity, public PowerDevice
         {
         public:
                 static constexpr double UNCHANGED = -999999.0;

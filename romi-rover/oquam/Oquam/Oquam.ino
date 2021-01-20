@@ -52,6 +52,9 @@ void handle_reset(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 void send_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void send_idle(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_homing(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_set_homing(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_enable(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_spindle(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 
 const static MessageHandler handlers[] = {
@@ -64,6 +67,9 @@ const static MessageHandler handlers[] = {
         { 'P', 0, false, send_position },
         { 'I', 0, false, send_idle },
         { 'H', 0, false, handle_homing },
+        { 'h', 3, false, handle_set_homing },
+        { 'e', 1, false, handle_enable },
+        { 'S', 1, false, handle_spindle },
         { '?', 0, false, send_info },
 };
 
@@ -74,6 +80,9 @@ RomiSerial romiSerial(handlers, sizeof(handlers) / sizeof(MessageHandler));
 extern int32_t accumulation_error[3];
 
 static char reply_string[80];
+static int8_t homing_axes[3] =  {-1, -1, -1};
+static uint8_t limit_switches[3] = {0, 0, 0};
+
 
 void reset()
 {
@@ -114,7 +123,7 @@ void setup()
         init_output_pins();
         init_encoders();
         
-        enable_driver();
+        //enable_driver();
 
         // FIXME: don't belong here
         for (int i = 0; i < 3; i++) {
@@ -215,7 +224,6 @@ void handle_moveat(RomiSerial *romiSerial, int16_t *args, const char *string_arg
 
 void handle_pause(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        Serial.print("#!PAUSE:xxxx");
         if (controller_state == STATE_RUNNING) {
                 disable_stepper_timer();
                 controller_state = STATE_PAUSED;
@@ -229,7 +237,6 @@ void handle_pause(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 
 void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        Serial.print("#!CONTINUE:xxxx");
         if (controller_state == STATE_PAUSED) {
                 controller_state = STATE_RUNNING;
                 enable_stepper_timer();
@@ -243,7 +250,6 @@ void handle_continue(RomiSerial *romiSerial, int16_t *args, const char *string_a
 
 void handle_reset(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        Serial.print("#!RESET:xxxx");
         if (controller_state == STATE_PAUSED) {
                 controller_state = STATE_RUNNING;
                 reset();
@@ -324,28 +330,52 @@ int move(int dt, int dx, int dy, int dz)
         return err;
 }
 
-int homing_wait_xy_switches_toggle(int dt, int dx, int dy, int state)
+void update_limit_switches()
+{
+        limit_switches[0] = digitalRead(PIN_LIMIT_SWITCH_X);
+        limit_switches[1] = digitalRead(PIN_LIMIT_SWITCH_Y);
+        limit_switches[2] = digitalRead(PIN_LIMIT_SWITCH_Z);
+}
+
+int homing_move(int dt, int delta, int axis)
+{
+        int r;
+        if (axis == 0)
+                r = move(dt, delta, 0, 0);
+        else if (axis == 1)
+                r = move(dt, 0, delta, 0);
+        else if (axis == 2)
+                r = move(dt, 0, 0, delta);
+        return r;
+}
+
+int homing_moveat(int dt, int v, int axis)
+{
+        int r;
+        if (axis == 0)
+                r = moveat(dt, v, 0, 0);
+        else if (axis == 1)
+                r = moveat(dt, 0, v, 0);
+        else if (axis == 2)
+                r = moveat(dt, 0, 0, v);
+        return r;
+}
+
+int homing_wait_switch(int dt, int v, int axis, int state)
 {
         int err = 0;
-        
-        err = moveat(dt, dx, dy, 0);
-        if (err != 0) return err;
+        int dx, dy, dz;
+
+        err = homing_moveat(dt, v, axis);
+        if (err != 0)
+                return err;
         
         while (1) {
-                int x_limit_status = digitalRead(9);
-                int y_limit_status = digitalRead(10);
+                update_limit_switches();
                 
-                if (x_limit_status == state && y_limit_status == state) {
+                if (limit_switches[axis] == state) {
                         err = move(0, 0, 0, 0); // This will stop the moveat
                         break;
-                        
-                } else if (x_limit_status == state) {
-                        err = moveat(dt, 0, dy, 0);
-                        if (err != 0) break;
-                        
-                } else if (y_limit_status == state) {
-                        err = moveat(dt, dx, 0, 0); 
-                        if (err != 0) break;
                 }
                 
                 romiSerial.handle_input();
@@ -354,27 +384,40 @@ int homing_wait_xy_switches_toggle(int dt, int dx, int dy, int state)
         return err;
 }
 
-int homing_moveto_xy_switches_pressed()
+int homing_moveto_switch_pressed(int axis)
 {
-        return homing_wait_xy_switches_toggle(1000, -1000, -1000, LOW);
+        return homing_wait_switch(1000, -1000, axis, LOW);
 }
 
-int homing_moveto_xy_switches_released()
+int homing_moveto_switch_released(int axis)
 {
-        return homing_wait_xy_switches_toggle(300, 1000, 1000, HIGH);
+        return homing_wait_switch(300, 1000, axis, HIGH);
 }
 
-bool do_homing()
+bool do_homing_axis(int axis)
 {
         bool success = false; 
-        if (homing_moveto_xy_switches_pressed() == 0 
-            && homing_moveto_xy_switches_released() == 0
-            && move(100, 100, 100, 0) == 0) {
+        if (homing_moveto_switch_pressed(axis) == 0 
+            && homing_moveto_switch_released(axis) == 0
+            && homing_move(100, 100, axis) == 0) {
                 // Don't remove the RUNNING because wait() depends on
                 // it!
                 controller_state = STATE_RUNNING;
                 wait();
                 success = true;
+        }
+        return success;
+}
+
+bool do_homing()
+{
+        bool success = true;
+        for (int i = 0; i < 3; i++) {
+                if (homing_axes[i] >= 0 && homing_axes[i] < 3) {
+                        success = do_homing_axis(homing_axes[i]);
+                        if (!success)
+                                break;
+                }
         }
         return success;
 }
@@ -399,6 +442,33 @@ void handle_homing(RomiSerial *romiSerial, int16_t *args, const char *string_arg
         } else {
                 controller_state = STATE_ERROR;
         }
+}
+
+void handle_set_homing(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        for (int i = 0; i < 3; i++)
+                homing_axes[i] = args[i];        
+        romiSerial->send_ok();
+}
+
+void handle_enable(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        if (args[0] == 0) {
+                disable_driver();
+        } else {
+                enable_driver()
+        }
+        romiSerial->send_ok();
+}
+
+void handle_spindle(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        if (args[0] == 0) {
+                digitalWrite(PIN_SPINLDE, LOW);
+        } else {
+                digitalWrite(PIN_SPINLDE, HIGH);
+        }
+        romiSerial->send_ok();
 }
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)

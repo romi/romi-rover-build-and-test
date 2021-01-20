@@ -63,8 +63,7 @@ namespace romi {
                       const double *vmax, const double *amax,
                       const double *scale_meters_to_steps, 
                       double path_max_deviation,
-                      double path_slice_duration,
-                      bool do_homing = true);
+                      double path_slice_duration);
                 
                 virtual ~Oquam() = default;
 
@@ -72,8 +71,7 @@ namespace romi {
                         _file_cabinet = cabinet;
                 }
                 
-
-                // See CNC.h for more info
+                // CNC interface, See CNC.h for more info
                 bool moveto(double x, double y, double z,
                             double relative_speed = 0.1) override;
                 bool travel(Path &path, double relative_speed = 0.1) override;
@@ -81,9 +79,16 @@ namespace romi {
                 bool homing() override;
                 bool get_range(CNCRange &range) override;
 
+                // Activity interface
                 bool pause_activity() override;
                 bool continue_activity() override;
                 bool reset_activity() override;
+
+                // Power device interface
+                bool power_up() override;
+                bool power_down() override;
+                bool stand_by() override;
+                bool wake_up() override;
 
         protected:
                 
@@ -111,6 +116,9 @@ namespace romi {
                 void assert_move(int16_t *params);
                 void assert_synchronize(double timeout);
                 void convert_position_to_steps(double *position, int32_t *steps);
+
+                bool enable_driver();
+                bool disable_driver();
         };
 }
 

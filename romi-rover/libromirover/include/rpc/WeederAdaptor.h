@@ -36,8 +36,15 @@ namespace romi {
         protected:
                 Weeder& _weeder;
 
-                void try_hoe(rcom::RPCError &error);
-                void try_stop(rcom::RPCError &error);
+                void execute_hoe(rcom::RPCError &error);
+                void execute_stop(rcom::RPCError &error);
+                void execute_pause(rcom::RPCError &error);
+                void execute_continue(rcom::RPCError &error);
+                void execute_reset(rcom::RPCError &error);
+                void execute_power_up(rcom::RPCError &error);
+                void execute_power_down(rcom::RPCError &error);
+                void execute_stand_by(rcom::RPCError &error);
+                void execute_wake_up(rcom::RPCError &error);
 
         public:
                 WeederAdaptor(Weeder& weeder) : _weeder(weeder) {

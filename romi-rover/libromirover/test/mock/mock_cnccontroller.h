@@ -11,4 +11,7 @@ public:
         MOCK_METHOD(bool, pause_activity, (), (override));
         MOCK_METHOD(bool, continue_activity, (), (override));
         MOCK_METHOD(bool, reset_activity, (), (override));
+        MOCK_METHOD(bool, enable, (), (override));
+        MOCK_METHOD(bool, disable, (), (override));
+        MOCK_METHOD(bool, configure_homing, (AxisIndex axis1, AxisIndex axis2, AxisIndex axis3), (override));
 };

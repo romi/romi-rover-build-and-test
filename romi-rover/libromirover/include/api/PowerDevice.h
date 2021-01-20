@@ -21,13 +21,29 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_METHODS_ROVER_H
-#define __ROMI_METHODS_ROVER_H
+#ifndef __ROMI_POWER_DEVICE_H
+#define __ROMI_POWER_DEVICE_H
 
-#include "rpc/MethodsActivity.h"
-#include "rpc/MethodsCNC.h"
-#include "rpc/MethodsNavigation.h"
-#include "rpc/MethodsWeeder.h"
-#include "rpc/MethodsPowerDevice.h"
+namespace romi {
+        
+        class PowerDevice
+        {
+        public:
+                virtual ~PowerDevice() = default;
 
-#endif // __ROMI_METHODS_ROVER_H
+                // Do the initial power-up sequence once the power has
+                // been supplied after a fresh reboot.
+                virtual bool power_up() = 0;
+                
+                // Do the power-down sequence before shutting down.
+                virtual bool power_down() = 0;
+
+                // Go into a lower-power state due to inactivity.
+                virtual bool stand_by() = 0;
+
+                // Exit the lower-power state and prepare for action.
+                virtual bool wake_up() = 0;
+        };
+}
+
+#endif // __ROMI_POWER_DEVICE_H

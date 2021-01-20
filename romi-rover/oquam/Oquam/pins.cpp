@@ -35,6 +35,7 @@ void init_output_pins()
         STEPPERS_DISABLE_DDR |= STEPPERS_DISABLE_MASK;
 
         LIMIT_DDR &= ~(LIMIT_MASK); // Set as input pins
-        LIMIT_PORT |= (LIMIT_MASK);  // Enable internal pull-up resistors. Normal high operation        
-        /* The pins for the encoders are initialized in encoder.cpp */
+        LIMIT_PORT |= (LIMIT_MASK);  // Enable internal pull-up resistors. Normal high operation
+        pinMode(PIN_SPINLDE, OUTPUT);  
+        digitalWrite(PIN_SPINLDE, LOW);
 }

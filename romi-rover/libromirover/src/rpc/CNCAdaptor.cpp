@@ -41,7 +41,7 @@ namespace romi {
                                 error.message = "No method specified";
                                 
                         } else if (rstreq(method, MethodsCNC::homing)) {
-                                execute_homing(params, result, error);
+                                execute_homing(error);
                                  
                         } else if (rstreq(method, MethodsCNC::moveto)) {
                                 execute_moveto(params, result, error);
@@ -56,13 +56,25 @@ namespace romi {
                                 execute_get_range(params, result, error);
                                 
                         } else if (rstreq(method, MethodsActivity::activity_pause)) {
-                                execute_pause(params, result, error);
+                                execute_pause(error);
                                 
                         } else if (rstreq(method, MethodsActivity::activity_continue)) {
-                                execute_continue(params, result, error);
+                                execute_continue(error);
                                 
                         } else if (rstreq(method, MethodsActivity::activity_reset)) {
-                                execute_reset(params, result, error);
+                                execute_reset(error);
+                                
+                        } else if (rstreq(method, MethodsPowerDevice::power_up)) {
+                                execute_power_up(error);
+                                
+                        } else if (rstreq(method, MethodsPowerDevice::power_down)) {
+                                execute_power_down(error);
+                                
+                        } else if (rstreq(method, MethodsPowerDevice::stand_by)) {
+                                execute_stand_by(error);
+                                
+                        } else if (rstreq(method, MethodsPowerDevice::wake_up)) {
+                                execute_wake_up(error);
                                 
                         } else {
                                 error.code = rcom::RPCError::MethodNotFound;
@@ -171,8 +183,7 @@ namespace romi {
                 }
         }
         
-        void CNCAdaptor::execute_homing(JsonCpp& params, JsonCpp& result,
-                                       rcom::RPCError &error)
+        void CNCAdaptor::execute_homing(rcom::RPCError &error)
         {
                 r_debug("CNCAdaptor::execute_homing");
                 
@@ -182,8 +193,7 @@ namespace romi {
                 }
         }
 
-        void CNCAdaptor::execute_pause(JsonCpp& params, JsonCpp& result,
-                                     rcom::RPCError &error)
+        void CNCAdaptor::execute_pause(rcom::RPCError &error)
         {
                 r_debug("CNCAdaptor::execute_pause");
                 if (!_cnc.pause_activity()) {
@@ -192,8 +202,7 @@ namespace romi {
                 }
         }
 
-        void CNCAdaptor::execute_continue(JsonCpp& params, JsonCpp& result,
-                                         rcom::RPCError &error)
+        void CNCAdaptor::execute_continue(rcom::RPCError &error)
         {
                 r_debug("CNCAdaptor::execute_continue");
                 if (!_cnc.continue_activity()) {
@@ -202,13 +211,48 @@ namespace romi {
                 }
         }
 
-        void CNCAdaptor::execute_reset(JsonCpp& params, JsonCpp& result,
-                                      rcom::RPCError &error)
+        void CNCAdaptor::execute_reset(rcom::RPCError &error)
         {
                 r_debug("CNCAdaptor::execute_reset");
                 if (!_cnc.reset_activity()) {
                         error.code = 1;
                         error.message = "reset failed";
+                }
+        }
+
+        void CNCAdaptor::execute_power_up(rcom::RPCError &error)
+        {
+                r_debug("CNCAdaptor::power_up");
+                if (!_cnc.power_up()) {
+                        error.code = 1;
+                        error.message = "power up failed";
+                }
+        }
+        
+        void CNCAdaptor::execute_power_down(rcom::RPCError &error)
+        {
+                r_debug("CNCAdaptor::power_down");
+                if (!_cnc.power_down()) {
+                        error.code = 1;
+                        error.message = "power down failed";
+                }
+        }
+        
+        void CNCAdaptor::execute_stand_by(rcom::RPCError &error)
+        {
+                r_debug("CNCAdaptor::stand_by");
+                if (!_cnc.stand_by()) {
+                        error.code = 1;
+                        error.message = "stand_by failed";
+                }
+        }
+        
+        void CNCAdaptor::execute_wake_up(rcom::RPCError &error)
+        {
+                r_debug("CNCAdaptor::wake_up");
+                if (!_cnc.wake_up()) {
+                        error.code = 1;
+                        error.message = "wake_up failed";
                 }
         }
 }

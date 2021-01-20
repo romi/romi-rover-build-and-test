@@ -134,4 +134,28 @@ namespace romi {
                 r_debug("RemoteCNC::reset");
                 return execute_simple_request(MethodsActivity::activity_reset);
         }
+
+        bool RemoteCNC::power_up()
+        {
+                r_debug("RemoteCNC::power_up");
+                return execute_simple_request(MethodsPowerDevice::power_up);
+        }
+        
+        bool RemoteCNC::power_down()
+        {
+                r_debug("RemoteCNC::power_down");
+                return execute_simple_request(MethodsPowerDevice::power_down);
+        }
+        
+        bool RemoteCNC::stand_by()
+        {
+                r_debug("RemoteCNC::stand_by");
+                return execute_simple_request(MethodsPowerDevice::stand_by);
+        }
+        
+        bool RemoteCNC::wake_up()
+        {
+                r_debug("RemoteCNC::wake_up");
+                return execute_simple_request(MethodsPowerDevice::wake_up);
+        }
 }

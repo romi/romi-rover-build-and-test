@@ -53,6 +53,8 @@ namespace romi {
                 
                 virtual ~StepperController() override = default;
 
+                bool configure_homing(AxisIndex axis1, AxisIndex axis2,
+                                      AxisIndex axis3) override;
                 bool get_position(int32_t *pos) override;
                 bool homing() override;
                 
@@ -64,6 +66,9 @@ namespace romi {
                 bool pause_activity() override;
                 bool continue_activity() override;
                 bool reset_activity() override;
+                
+                bool enable() override;
+                bool disable() override;
 
         protected:
 

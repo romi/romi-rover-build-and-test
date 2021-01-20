@@ -24,11 +24,12 @@
 #ifndef _ROMI_WEEDER_H_
 #define _ROMI_WEEDER_H_
 
-#include "Activity.h"
+#include "api/Activity.h"
+#include "api/PowerDevice.h"
 
 namespace romi {
         
-        class Weeder : public Activity
+        class Weeder : public Activity, public PowerDevice
         {
         public:
                 virtual ~Weeder() = default;

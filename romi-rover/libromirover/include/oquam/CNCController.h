@@ -32,9 +32,14 @@ namespace romi {
         {
         public:
                 enum { RUNNING, HOMING, ERROR };
+
+                enum AxisIndex { NoAxis = -1, AxisX = 0, AxisY = 1, AxisZ = 2 };
                         
                 virtual ~CNCController() = default;
-                
+
+                virtual bool configure_homing(AxisIndex axis1, AxisIndex axis2,
+                                              AxisIndex axis3) = 0;
+
                 virtual bool get_position(int32_t *pos) = 0;
 
                 /** The homing operation sets the CNC in the home
@@ -45,6 +50,8 @@ namespace romi {
                 virtual bool move(int16_t millis, int16_t steps_x,
                                   int16_t steps_y, int16_t steps_z) = 0;
                 
+                virtual bool enable() = 0;
+                virtual bool disable() = 0;
         };
 }
 

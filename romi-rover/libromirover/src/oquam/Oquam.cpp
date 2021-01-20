@@ -38,8 +38,7 @@ namespace romi {
                      const double *amax,
                      const double *scale_meters_to_steps, 
                      double path_max_deviation,
-                     double path_slice_duration,
-                     bool do_homing)
+                     double path_slice_duration)
                 : _controller(controller),
                   _file_cabinet(0),
                   _range(range),
@@ -54,9 +53,13 @@ namespace romi {
                 
                 _script_count = 0;
 
-                if (do_homing && !homing()) {
-                        r_err("Oquam:: Homing failed!");
-                        throw std::runtime_error("Homing failed");
+                // if (!_controller.configure_homing(AxisZ, AxisX, AxisY)) 
+                //         throw std::runtime_error("Oquam: configure_homing failed");
+                // }
+                if (!_controller.configure_homing(CNCController::AxisX,
+                                                  CNCController::AxisY,
+                                                  CNCController::NoAxis)) {
+                        throw std::runtime_error("Oquam: configure_homing failed");
                 }
         }
                 
@@ -339,5 +342,37 @@ namespace romi {
         bool Oquam::reset_activity()
         {
                 return _controller.reset_activity();
+        }
+
+        bool Oquam::enable_driver()
+        {
+                SynchronizedCodeBlock synchronize(_m);
+                return _controller.enable();
+        }
+
+        bool Oquam::disable_driver()
+        {
+                SynchronizedCodeBlock synchronize(_m);
+                return _controller.disable();
+        }
+
+        bool Oquam::power_up()
+        {
+                return enable_driver() && homing();
+        }
+        
+        bool Oquam::power_down()
+        {
+                return disable_driver();
+        }
+        
+        bool Oquam::stand_by()
+        {
+                return disable_driver();
+        }
+        
+        bool Oquam::wake_up()
+        {
+                return enable_driver();
         }
 }

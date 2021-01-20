@@ -32,6 +32,9 @@ namespace romi {
         {
                 r_debug("rover_ready");
                 // TODO: Turn power on
+                rover.weeder.power_up();
+                //rover.navigation.power_up();
+                
                 rover.display.show(0, "Ready");
                 rover.display.clear(1);
                 rover.event_timer.reset(); 

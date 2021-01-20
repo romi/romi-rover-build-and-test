@@ -42,7 +42,12 @@ namespace romi {
                 }
                         
                 virtual ~FakeCNCController() override = default;
-                
+
+                bool configure_homing(AxisIndex axis1, AxisIndex axis2,
+                                      AxisIndex axis3) override {
+                        return true;
+                }
+
                 bool get_position(int32_t *pos) override {
                         for (int i = 0; i < 3; i++)
                                 pos[i] = _pos[i];
@@ -77,6 +82,14 @@ namespace romi {
                 
                 bool reset_activity() override {
                         return homing();
+                }
+
+                bool enable() override {
+                        return true;
+                }
+                
+                bool disable() override {
+                        return true;
                 }
         };
 }

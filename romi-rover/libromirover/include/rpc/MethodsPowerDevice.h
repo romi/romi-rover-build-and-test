@@ -21,13 +21,19 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_METHODS_ROVER_H
-#define __ROMI_METHODS_ROVER_H
+#ifndef __ROMI_METHODS_POWER_DEVICE_H
+#define __ROMI_METHODS_POWER_DEVICE_H
 
-#include "rpc/MethodsActivity.h"
-#include "rpc/MethodsCNC.h"
-#include "rpc/MethodsNavigation.h"
-#include "rpc/MethodsWeeder.h"
-#include "rpc/MethodsPowerDevice.h"
+namespace romi {
+        
+        class MethodsPowerDevice
+        {
+        public:
+                static constexpr const char *power_up = "power-up";
+                static constexpr const char *power_down = "power-down";
+                static constexpr const char *stand_by = "power-stand-by";
+                static constexpr const char *wake_up = "power-wake-up";
+        };
+}
 
-#endif // __ROMI_METHODS_ROVER_H
+#endif // __ROMI_METHODS_POWER_DEVICE_H
