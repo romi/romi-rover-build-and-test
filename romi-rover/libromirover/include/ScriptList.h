@@ -32,8 +32,14 @@ namespace romi {
         
         struct Action
         {
-                enum ActionType { Move, Hoe };
+                enum ActionType { Move, Hoe, Homing, PickUp, PutDown };
 
+                static constexpr const char *move_command = "move";
+                static constexpr const char *hoe_command = "hoe";
+                static constexpr const char *homing_command = "homing";
+                static constexpr const char *pick_up_command = "pick-up";
+                static constexpr const char *put_down_command = "put-down";
+                
                 ActionType type;
                 double params[2];
 
@@ -61,6 +67,10 @@ namespace romi {
                         id = id_;
                         title = title_;
                 }
+
+                void append(Action action) {
+                        actions.push_back(action);
+                }
         };
 
         class ScriptList : public std::vector<Script>
@@ -69,11 +79,14 @@ namespace romi {
                 void load_scripts(const char *path);
                 void convert_scripts(JsonCpp& scripts);
                 void convert_script(JsonCpp& script);
-                void convert_script_actions(Script& new_script, JsonCpp& json_script);
-                void convert_action(Script& new_script, JsonCpp& action);
-                void convert_move(Script& new_script, JsonCpp& action);
+                void convert_script_actions(Script& script, JsonCpp& json_script);
+                void convert_action(Script& script, JsonCpp& action);
+                void convert_move(Script& script, JsonCpp& action);
                 void assure_move_params(double distance, double speed);
-                void convert_hoe(Script& new_script);
+                void convert_hoe(Script& script);
+                void convert_homing(Script& script);
+                void convert_pick_up(Script& script);
+                void convert_put_down(Script& script);
                 
         public:
                 

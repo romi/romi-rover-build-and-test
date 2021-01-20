@@ -22,21 +22,21 @@
 
  */
 
-#ifndef __ROMI_ROVER_WEEDER_H
-#define __ROMI_ROVER_WEEDER_H
+#ifndef __ROMI_DEFAULT_WEEDER_H
+#define __ROMI_DEFAULT_WEEDER_H
 
 #include <string>
 #include <IRPCHandler.h>
 
-#include "Camera.h"
-#include "CNC.h"
+#include "api/Camera.h"
+#include "api/CNC.h"
+#include "api/Weeder.h"
 #include "IFileCabinet.h"
-#include "Weeder.h"
 #include "weeder/IPipeline.h"
 
 namespace romi {
 
-        class RoverWeeder : public Weeder
+        class DefaultWeeder : public Weeder
         {
         protected:
                 Camera& _camera;
@@ -67,10 +67,10 @@ namespace romi {
 
         public:
                 
-                RoverWeeder(Camera& camera, IPipeline& pipeline, CNC& cnc,
+                DefaultWeeder(Camera& camera, IPipeline& pipeline, CNC& cnc,
                             double z0, double speed, IFileCabinet &filecabinet);
                 
-                virtual ~RoverWeeder() override = default;
+                virtual ~DefaultWeeder() override = default;
                 
                 bool hoe() override;
                 bool stop() override;
@@ -81,4 +81,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_ROVER_WEEDER_H
+#endif // __ROMI_DEFAULT_WEEDER_H

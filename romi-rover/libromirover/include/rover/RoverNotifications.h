@@ -22,12 +22,12 @@
 
  */
 
-#ifndef _ROMI_NOTIFICATIONS_H
-#define _ROMI_NOTIFICATIONS_H
+#ifndef _ROMI_ROVER_NOTIFICATIONS_H
+#define _ROMI_ROVER_NOTIFICATIONS_H
 
 namespace romi {
 
-        class Notifications
+        class RoverNotifications
         {
         public:
 
@@ -43,13 +43,7 @@ namespace romi {
                 static constexpr const char *script_finished = "script-finished";
                 static constexpr const char *script_failed = "script-failed";
                 static constexpr const char *rover_reset = "rover-reset";
-
-                virtual ~Notifications() = default;
-
-                virtual void notify(const char *name) = 0;
-                virtual void stop(const char *name) = 0;
-                virtual void reset() = 0;
         };
 }
 
-#endif // _ROMI_NOTIFICATIONS_H
+#endif // _ROMI_ROVER_NOTIFICATIONS_H

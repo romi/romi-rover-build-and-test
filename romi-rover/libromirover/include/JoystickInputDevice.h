@@ -26,8 +26,8 @@
 
 #include <string>
 #include <vector>
-#include "InputDevice.h"
-#include "Joystick.h"
+#include "api/InputDevice.h"
+#include "api/Joystick.h"
 #include "JoystickEventMapper.h"
 
 namespace romi {

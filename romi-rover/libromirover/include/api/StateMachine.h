@@ -26,7 +26,6 @@
 
 #include <r.h>
 #include <vector>
-#include "EventsAndStates.h"
 
 namespace romi {
 

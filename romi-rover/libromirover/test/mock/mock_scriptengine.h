@@ -1,6 +1,6 @@
 #include "gmock/gmock.h"
 #include "ScriptEngine.h"
-#include "Rover.h"
+#include "rover/Rover.h"
 
 class MockScriptEngine : public romi::ScriptEngine<romi::Rover>
 {

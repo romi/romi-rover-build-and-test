@@ -26,7 +26,7 @@
 
 #include <string>
 #include <vector>
-#include "InputDevice.h"
+#include "api/InputDevice.h"
 
 namespace romi {
         

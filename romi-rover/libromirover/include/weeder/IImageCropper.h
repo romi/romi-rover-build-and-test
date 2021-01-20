@@ -25,8 +25,8 @@
 #ifndef __ROMI_I_IMAGE_CROPPER_H
 #define __ROMI_I_IMAGE_CROPPER_H
 
+#include "api/CNCRange.h"
 #include "IFolder.h"
-#include "CNCRange.h"
 #include "Image.h"
 
 namespace romi {

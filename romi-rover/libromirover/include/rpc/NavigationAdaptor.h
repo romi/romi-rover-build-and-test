@@ -24,8 +24,8 @@
 #ifndef __ROMI_NAVIGATION_ADAPTOR_H
 #define __ROMI_NAVIGATION_ADAPTOR_H
 
-#include "IRPCHandler.h"
-#include "Navigation.h"
+#include <IRPCHandler.h>
+#include "api/Navigation.h"
 
 namespace romi {
         

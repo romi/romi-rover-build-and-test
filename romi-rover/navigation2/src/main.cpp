@@ -29,11 +29,11 @@
 #include <RomiSerialClient.h>
 #include <RSerial.h>
 
-#include "BrushMotorDriver.h"
-#include "RoverNavigation.h"
-#include "RoverConfiguration.h"
-#include "RoverOptions.h"
-#include "rpc/NavigationAdaptor.h"
+#include <BrushMotorDriver.h>
+#include <DefaultNavigation.h>
+#include <NavigationSettings.h>
+#include <rover/RoverOptions.h>
+#include <rpc/NavigationAdaptor.h>
 
 using namespace romi;
 using namespace rcom;
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
                 JsonCpp config = JsonCpp::load(config_file);
 
                 JsonCpp rover_settings = config["navigation"]["rover"];
-                RoverConfiguration rover(rover_settings);
+                NavigationSettings rover(rover_settings);
                 
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
                                         rover.encoder_steps,
                                         rover.max_revolutions_per_sec);
 
-                RoverNavigation navigation(driver, rover);
+                DefaultNavigation navigation(driver, rover);
                 
                 NavigationAdaptor adaptor(navigation);
                 RPCServer server(adaptor, "navigation", "navigation");

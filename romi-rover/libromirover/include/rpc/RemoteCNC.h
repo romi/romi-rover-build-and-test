@@ -25,7 +25,7 @@
 #define __ROMI_REMOTE_CNC_H
 
 #include "rpc/RemoteStub.h"
-#include "CNC.h"
+#include "api/CNC.h"
 
 namespace romi {
 

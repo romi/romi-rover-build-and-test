@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "InputDevice.h"
+#include "api/InputDevice.h"
 
 class MockInputDevice : public romi::InputDevice
 {

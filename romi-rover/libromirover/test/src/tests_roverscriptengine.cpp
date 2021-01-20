@@ -9,8 +9,8 @@
 #include "../mock/mock_scriptengine.h"
 #include "../mock/mock_notifications.h"
 #include "../mock/mock_weeder.h"
-#include "Rover.h"
-#include "RoverScriptEngine.h"
+#include "rover/Rover.h"
+#include "rover/RoverScriptEngine.h"
 #include "ScriptList.h"
 
 using namespace std;
@@ -57,7 +57,7 @@ TEST_F(roverscriptengine_tests, get_next_event_returns_none)
         ScriptList scripts(json);
         RoverScriptEngine script_engine(scripts, 1, 2);
 
-        ASSERT_EQ(event_none, script_engine.get_next_event());
+        ASSERT_EQ(0, script_engine.get_next_event());
 }
 
 TEST_F(roverscriptengine_tests, calls_move)

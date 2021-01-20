@@ -25,7 +25,7 @@
 #define __ROMI_WHEEL_ODOMETRY_H
 
 #include <mutex>
-#include "RoverConfiguration.h"
+#include "NavigationSettings.h"
 
 
 namespace romi {
@@ -55,7 +55,7 @@ namespace romi {
                 double encoder_steps;
                 
         public:
-                WheelOdometry(RoverConfiguration &rover_config,
+                WheelOdometry(NavigationSettings &rover_config,
                               double left_encoder,
                               double right_encoder,
                               double timestamp);

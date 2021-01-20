@@ -22,38 +22,20 @@
 
  */
 
-#ifndef __ROMI_USER_INTERFACE_H
-#define __ROMI_USER_INTERFACE_H
-
-#include "Rover.h"
-#include "StateMachine.h"
+#ifndef _ROMI_NOTIFICATIONS_H
+#define _ROMI_NOTIFICATIONS_H
 
 namespace romi {
-        
-        class UserInterface
+
+        class Notifications
         {
-        protected:
-
-                void handle_input_events();
-                void handle_timer_events();
-                void handle_script_events();
-                void handle_event(int event);
-                
         public:
-                Rover& _rover;
-                StateMachine<Rover>& _state_machine;
+                virtual ~Notifications() = default;
 
-                UserInterface(Rover& rover,
-                              StateMachine<Rover>& state_machine);
-                
-                virtual ~UserInterface() = default;
-
-                void handle_events();
-
-                int get_state() {
-                        return _state_machine.get_state();
-                }
-
+                virtual void notify(const char *name) = 0;
+                virtual void stop(const char *name) = 0;
+                virtual void reset() = 0;
         };
 }
-#endif // __ROMI_USER_INTERFACE_H
+
+#endif // _ROMI_NOTIFICATIONS_H

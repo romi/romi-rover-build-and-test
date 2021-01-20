@@ -24,9 +24,8 @@
 #include <thread>
 #include <stdexcept>
 #include <r.h>
-#include "RoverScriptEngine.h"
-#include "UserInterface.h"
-#include "Activity.h"
+#include "api/Activity.h"
+#include "rover/RoverScriptEngine.h"
 
 namespace romi {
                 
@@ -87,6 +86,8 @@ namespace romi {
                         success = execute_move(rover, action.params[0], action.params[1]);
                 else if (action.type == Action::Hoe)
                         success = execute_hoe(rover);
+                else if (action.type == Action::Homing)
+                        success = execute_homing(rover);
                 return success;
         }
                 
@@ -104,6 +105,16 @@ namespace romi {
                 if (!success)
                         r_err("RoverScriptEngine: 'hoe' failed");
                 return success;
+        }
+                
+        bool RoverScriptEngine::execute_homing(Rover* rover)
+        {
+                // bool success = rover->cnc.homing();
+                // if (!success)
+                //         r_err("RoverScriptEngine: 'homing' failed");
+                // return success;
+                r_err("NOT IMPLEMENTED!");
+                return false;
         }
 
         void RoverScriptEngine::execute_script(Rover& rover, int id)

@@ -27,7 +27,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include "Activity.h" 
+#include "api/Activity.h" 
 
 namespace romi {
 

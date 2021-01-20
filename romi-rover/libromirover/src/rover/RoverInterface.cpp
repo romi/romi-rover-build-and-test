@@ -21,26 +21,24 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "EventsAndStates.h"
-#include "UserInterface.h"
+#include "rover/RoverInterface.h"
+#include "rover/EventsAndStates.h"
 
 namespace romi {
         
-        UserInterface::UserInterface(Rover& rover,
-                                     StateMachine<Rover>& state_machine)
-                : _rover(rover),
-                  _state_machine(state_machine)
+        RoverInterface::RoverInterface(Rover& rover, StateMachine<Rover>& state_machine)
+                : _rover(rover), _state_machine(state_machine)
         {
         }
 
-        void UserInterface::handle_events()
+        void RoverInterface::handle_events()
         {
                 handle_input_events();
                 handle_timer_events();
                 handle_script_events();
         }
         
-        void UserInterface::handle_input_events()
+        void RoverInterface::handle_input_events()
         {
                 while (true) {
                         int event = _rover.input_device.get_next_event();
@@ -50,21 +48,21 @@ namespace romi {
                 }
         }
         
-        void UserInterface::handle_timer_events()
+        void RoverInterface::handle_timer_events()
         {
                 int event = _rover.event_timer.get_next_event();
                 if (event != 0)
                         _state_machine.handle_event(event);
         }
 
-        void UserInterface::handle_script_events()
+        void RoverInterface::handle_script_events()
         {
                 int event = _rover.script_engine.get_next_event();
                 if (event != 0)
                         _state_machine.handle_event(event);
         }
 
-        void UserInterface::handle_event(int event)
+        void RoverInterface::handle_event(int event)
         {
                 bool success = _state_machine.handle_event(event);
                 if (!success)

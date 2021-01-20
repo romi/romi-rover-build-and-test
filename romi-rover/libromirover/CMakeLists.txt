@@ -6,20 +6,14 @@ set(libromirover_VERSION_MINOR 1)
 
   
 set(SOURCES
-  include/Activity.h
   include/ActivityHelper.h
   include/BrushMotorDriver.h
-  include/Camera.h
   include/CameraServer.h
-  include/CNC.h
-  include/CNCRange.h
   include/CrystalDisplay.h
   include/DebugWeedingSession.h
   include/DefaultEventTimer.h
+  include/DefaultNavigation.h
   include/DefaultSpeedController.h
-  include/Display.h
-  include/EventsAndStates.h
-  include/EventSource.h
   include/EventTimer.h
   include/FileCamera.h
   include/FluidSoundNotifications.h
@@ -28,36 +22,36 @@ set(SOURCES
   include/IFolder.h
   include/Image.h
   include/ImageIO.h
-  include/InputDevice.h
-  include/Joystick.h
   include/JoystickInputDevice.h
   include/JoystickEventMapper.h
   include/LinuxJoystick.h
   include/Menu.h
   include/MotorDriver.h
-  include/Navigation.h
-  include/Notifications.h
+  include/NavigationSettings.h
   include/Options.h
-  include/Path.h
-  include/Rover.h
-  include/RoverConfiguration.h
-  include/RoverNavigation.h
-  include/RoverOptions.h
-  include/RoverScriptEngine.h
-  include/RoverStateMachine.h
-  include/RoverWeeder.h
   include/ScriptEngine.h
   include/ScriptList.h
   include/ScriptMenu.h
   include/SpeedController.h
   include/SpeedConverter.h
-  include/StateMachine.h
   include/UIEventMapper.h
   include/USBCamera.h
-  include/UserInterface.h
   include/v.h
-  include/Weeder.h
   include/WheelOdometry.h
+  
+  include/api/Activity.h
+  include/api/Camera.h
+  include/api/CNC.h
+  include/api/CNCRange.h
+  include/api/Display.h
+  include/api/EventSource.h
+  include/api/InputDevice.h
+  include/api/Joystick.h
+  include/api/Navigation.h
+  include/api/Notifications.h
+  include/api/Path.h
+  include/api/StateMachine.h
+  include/api/Weeder.h
 
   include/fake/FakeCNC.h
   include/fake/FakeDisplay.h
@@ -78,7 +72,15 @@ set(SOURCES
   include/oquam/Section.h
   include/oquam/StepperController.h
   include/oquam/StepperSettings.h
-  
+
+  include/rover/EventsAndStates.h
+  include/rover/Rover.h
+  include/rover/RoverInterface.h
+  include/rover/RoverNotifications.h
+  include/rover/RoverOptions.h
+  include/rover/RoverScriptEngine.h
+  include/rover/RoverStateMachine.h
+
   include/rpc/CNCAdaptor.h
   include/rpc/MethodsActivity.h
   include/rpc/MethodsCNC.h
@@ -92,19 +94,27 @@ set(SOURCES
   include/rpc/RemoteWeeder.h
   include/rpc/WeederAdaptor.h
 
+  include/weeder/DefaultWeeder.h
+  include/weeder/IImageCropper.h
+  include/weeder/IImageSegmentation.h
+  include/weeder/ImageCropper.h
+  include/weeder/IPathPlanner.h
+  include/weeder/IPipeline.h
+  include/weeder/PipelineFactory.h
+  include/weeder/Pipeline.h
+  
+  src/api/CNCRange.cpp
+  src/api/Path.cpp
+  
   src/ActivityHelper.cpp
   src/BrushMotorDriver.cpp
-  src/CNCRange.cpp
   src/DebugWeedingSession.cpp
   src/DefaultEventTimer.cpp
+  src/DefaultNavigation.cpp
   src/DefaultSpeedController.cpp
-  src/EventsAndStates.cpp
   src/GetOpt.cpp
   src/Image.cpp
   src/ImageIO.cpp
-  src/Path.cpp
-  src/RoverNavigation.cpp
-  src/RoverWeeder.cpp
   src/ScriptList.cpp
   src/ScriptMenu.cpp
   src/SpeedConverter.cpp
@@ -125,11 +135,14 @@ set(SOURCES
   src/oquam/Section.cpp
   src/oquam/StepperSettings.cpp
   src/oquam/StepperController.cpp
+  
+  src/rover/EventsAndStates.cpp
   src/rover/Rover.cpp
+  src/rover/RoverInterface.cpp
   src/rover/RoverOptions.cpp
   src/rover/RoverScriptEngine.cpp
   src/rover/RoverStateMachine.cpp
-  src/rover/UserInterface.cpp
+  
   src/rpc/CNCAdaptor.cpp
   src/rpc/NavigationAdaptor.cpp
   src/rpc/RemoteCNC.cpp
@@ -137,18 +150,13 @@ set(SOURCES
   src/rpc/RemoteStub.cpp
   src/rpc/RemoteWeeder.cpp
   src/rpc/WeederAdaptor.cpp
+  
   src/ui/CrystalDisplay.cpp
   src/ui/JoystickInputDevice.cpp
   src/ui/LinuxJoystick.cpp
   src/ui/UIEventMapper.cpp
-  
-  include/weeder/IImageCropper.h
-  include/weeder/IImageSegmentation.h
-  include/weeder/IPipeline.h  
-  include/weeder/PipelineFactory.h
-  include/weeder/ImageCropper.h
-  include/weeder/IPathPlanner.h
-  include/weeder/Pipeline.h
+
+  src/weeder/DefaultWeeder.cpp  
   src/weeder/ImageCropper.cpp
   src/weeder/Pipeline.cpp
   src/weeder/PipelineFactory.cpp

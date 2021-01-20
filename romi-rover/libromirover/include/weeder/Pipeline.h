@@ -25,8 +25,8 @@
 #ifndef __ROMI_PIPELINE_H
 #define __ROMI_PIPELINE_H
 
-#include "JsonCpp.h"
-#include "CNCRange.h"
+#include <JsonCpp.h>
+#include "api/CNCRange.h"
 #include "IPipeline.h"
 #include "IPathPlanner.h"
 #include "IImageCropper.h"

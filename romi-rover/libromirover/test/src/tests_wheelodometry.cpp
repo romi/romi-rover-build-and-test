@@ -33,7 +33,7 @@ protected:
 
 TEST_F(wheelodometry_tests, test_initialisation)
 {
-        RoverConfiguration rover(config);
+        NavigationSettings rover(config);
 
         WheelOdometry odometry(rover, 1000.0, 1000.0, 0.0);
         double x, y, orientation;
@@ -49,7 +49,7 @@ TEST_F(wheelodometry_tests, test_initialisation)
 
 TEST_F(wheelodometry_tests, test_update_encoders_displacement)
 {
-        RoverConfiguration rover(config);
+        NavigationSettings rover(config);
 
         WheelOdometry odometry(rover, 1000.0, 1000.0, 0.0);
         double x, y, vx, vy, orientation;
@@ -71,7 +71,7 @@ TEST_F(wheelodometry_tests, test_update_encoders_displacement)
 
 TEST_F(wheelodometry_tests, test_update_encoders_orientation_360degrees)
 {
-        RoverConfiguration rover(config);
+        NavigationSettings rover(config);
 
         WheelOdometry odometry(rover, 0.0, 0.0, 0.0);
         double x, y, orientation;
@@ -92,7 +92,7 @@ TEST_F(wheelodometry_tests, test_update_encoders_orientation_360degrees)
 
 TEST_F(wheelodometry_tests, test_update_encoders_orientation_90degrees)
 {
-        RoverConfiguration rover(config);
+        NavigationSettings rover(config);
 
         WheelOdometry odometry(rover, 0.0, 0.0, 0.0);
         double x, y, orientation;
@@ -111,7 +111,7 @@ TEST_F(wheelodometry_tests, test_update_encoders_orientation_90degrees)
 
 TEST_F(wheelodometry_tests, test_update_encoders_move_and_turn_90degrees)
 {
-        RoverConfiguration rover(config);
+        NavigationSettings rover(config);
 
         WheelOdometry odometry(rover, 0.0, 0.0, 0.0);
         double x, y, orientation;
@@ -130,7 +130,7 @@ TEST_F(wheelodometry_tests, test_update_encoders_move_and_turn_90degrees)
 
 TEST_F(wheelodometry_tests, test_update_encoders_2x90degrees)
 {
-        RoverConfiguration rover(config);
+        NavigationSettings rover(config);
 
         WheelOdometry odometry(rover, 0.0, 0.0, 0.0);
         double x, y, orientation;

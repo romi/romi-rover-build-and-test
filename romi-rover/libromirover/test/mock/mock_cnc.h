@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "CNC.h"
+#include "api/CNC.h"
 
 class MockCNC : public romi::CNC
 {

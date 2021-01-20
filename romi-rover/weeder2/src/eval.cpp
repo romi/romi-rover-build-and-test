@@ -26,13 +26,13 @@
 #include <getopt.h>
 
 #include <rcom.h>
-#include <RoverOptions.h>
-#include <DebugWeedingSession.h>
 
-#include "FileCamera.h"
-#include "RoverWeeder.h"
-#include "weeder/PipelineFactory.h"
-#include "fake/FakeCNC.h"
+#include <rover/RoverOptions.h>
+#include <DebugWeedingSession.h>
+#include <FileCamera.h>
+#include <weeder/DefaultWeeder.h>
+#include <weeder/PipelineFactory.h>
+#include <fake/FakeCNC.h>
 
 using namespace romi;
 
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
                 double z0 = config["weeder"]["z0"];
                 double speed = config["weeder"]["speed"];
-                RoverWeeder weeder(camera, pipeline, cnc, z0, speed, session);
+                DefaultWeeder weeder(camera, pipeline, cnc, z0, speed, session);
                 
                 weeder.hoe();
                 

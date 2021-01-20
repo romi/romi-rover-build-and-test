@@ -25,7 +25,7 @@
 #define _ROMI_SCRIPT_ENGINE_H
 
 #include "ScriptList.h"
-#include "EventSource.h"
+#include "api/EventSource.h"
 
 namespace romi {
         

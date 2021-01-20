@@ -24,7 +24,7 @@
 #ifndef _ROMI_EVENT_TIMER_H_
 #define _ROMI_EVENT_TIMER_H_
 
-#include "EventSource.h"
+#include "api/EventSource.h"
 
 namespace romi {
         

@@ -4,7 +4,7 @@
 #include "../mock/mock_joystick.h"
 #include "../mock/mock_eventmapper.h"
 #include "JoystickInputDevice.h"
-#include "EventsAndStates.h"
+#include "rover/EventsAndStates.h"
 
 using namespace std;
 using namespace testing;

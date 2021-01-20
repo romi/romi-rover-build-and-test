@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "Navigation.h"
+#include "api/Navigation.h"
 
 class MockNavigation : public romi::Navigation
 {

@@ -38,7 +38,8 @@ namespace romi {
                      const double *amax,
                      const double *scale_meters_to_steps, 
                      double path_max_deviation,
-                     double path_slice_duration)
+                     double path_slice_duration,
+                     bool do_homing)
                 : _controller(controller),
                   _file_cabinet(0),
                   _range(range),
@@ -53,7 +54,7 @@ namespace romi {
                 
                 _script_count = 0;
 
-                if (!homing()) {
+                if (do_homing && !homing()) {
                         r_err("Oquam:: Homing failed!");
                         throw std::runtime_error("Homing failed");
                 }

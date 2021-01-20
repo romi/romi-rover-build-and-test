@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "Joystick.h"
+#include "api/Joystick.h"
 
 class MockJoystick : public romi::Joystick
 {

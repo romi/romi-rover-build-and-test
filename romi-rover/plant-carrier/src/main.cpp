@@ -30,34 +30,33 @@
 #include <RSerial.h>
 #include <RomiSerialClient.h>
 
-#include <Linux.h>
-#include <rover/Rover.h>
-#include <rover/RoverOptions.h>
-#include <rover/RoverInterface.h>
-#include <rover/RoverScriptEngine.h>
-#include <rover/RoverStateMachine.h>
-#include <DefaultSpeedController.h>
-#include <DefaultEventTimer.h>
-#include <ScriptList.h>
-#include <ScriptMenu.h>
-#include <FluidSoundNotifications.h>
-#include <DefaultNavigation.h>
-#include <CrystalDisplay.h>
-#include <JoystickInputDevice.h>
-#include <weeder/DefaultWeeder.h>
-#include <api/Display.h>
-#include <LinuxJoystick.h>
-#include <UIEventMapper.h>
-#include <CrystalDisplay.h>
-#include <JoystickInputDevice.h>
-#include <DebugWeedingSession.h>
-#include <FileCamera.h>
-#include <USBCamera.h>
-#include <BrushMotorDriver.h>
-#include <oquam/StepperController.h>
-#include <oquam/StepperSettings.h>
-#include <oquam/Oquam.h>
-#include <weeder/PipelineFactory.h>
+#include "Linux.h"
+#include "RoverOptions.h"
+#include "DefaultSpeedController.h"
+#include "UserInterface.h"
+#include "DefaultEventTimer.h"
+#include "ScriptList.h"
+#include "ScriptMenu.h"
+#include "FluidSoundNotifications.h"
+#include "RoverScriptEngine.h"
+#include "RoverStateMachine.h"
+#include "PlantCarrier.h"
+#include "RoverNavigation.h"
+#include "CrystalDisplay.h"
+#include "RoverWeeder.h"
+#include "Display.h"
+#include "LinuxJoystick.h"
+#include "UIEventMapper.h"
+#include "CrystalDisplay.h"
+#include "JoystickInputDevice.h"
+#include "DebugWeedingSession.h"
+#include "FileCamera.h"
+#include "USBCamera.h"
+#include "BrushMotorDriver.h"
+#include "oquam/StepperController.h"
+#include "oquam/StepperSettings.h"
+#include "oquam/Oquam.h"
+#include "weeder/PipelineFactory.h"
 
 using namespace std;
 using namespace rpp;
@@ -101,35 +100,6 @@ const char *get_session_directory(Options& options, JsonCpp& config)
                 dir = ".";
         }
         return dir;
-}
-
-const char *get_camera_image(Options& options, JsonCpp& config)
-{
-        const char *path = options.get_value(RoverOptions::camera_image);
-        if (path == 0) {
-                path = config["weeder"]["file-camera"]["image"];
-        }
-        return path;
-}
-
-const char *get_camera_device_in_config(JsonCpp& config)
-{
-        try {
-                return config["ports"]["usb-camera"]["port"];
-                
-        } catch (JSONError& je) {
-                r_err("get_camera_device_in_config: Failed to get value "
-                      "of ports.usb-camera.port");
-                throw std::runtime_error("Missing device name for camera in config");
-        }
-}
-
-const char *get_camera_device(Options& options, JsonCpp& config)
-{
-        const char *device = options.get_value(RoverOptions::camera_device);
-        if (device == 0)
-                device = get_camera_device_in_config(config);
-        return device;
 }
 
 int main(int argc, char** argv)
@@ -203,19 +173,9 @@ int main(int argc, char** argv)
                         camera = make_unique<USBCamera>(camera_device, width, height);
                 }
                 
-                
-                // Weeder pipeline
-                PipelineFactory pipeline_factory;
-                IPipeline& pipeline = pipeline_factory.build(range, config);
-
-                // Weeder
-                double z0 = config["weeder"]["z0"];
-                double speed = config["weeder"]["speed"];
-                DefaultWeeder weeder(*camera, pipeline, oquam, z0, speed, debug);
-
                 // Navigation
                 JsonCpp rover_settings = config["navigation"]["rover"];
-                NavigationSettings rover_config(rover_settings);
+                RoverConfiguration rover_config(rover_settings);
                 const char *driver_device = config["ports"]["brush-motor-driver"]["port"];
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 RSerial driver_serial(driver_device, 115200, 1);
@@ -223,7 +183,7 @@ int main(int argc, char** argv)
                 BrushMotorDriver driver(driver_romiserial, driver_settings,
                                         rover_config.encoder_steps,
                                         rover_config.max_revolutions_per_sec);
-                DefaultNavigation navigation(driver, rover_config);
+                RoverNavigation navigation(driver, rover_config);
 
                 // SpeedController
                 DefaultSpeedController speed_controller(navigation, config);
@@ -251,13 +211,13 @@ int main(int argc, char** argv)
                             menu,
                             script_engine,
                             notifications,
-                            weeder);
+                            oquam);
 
                 // State machine
                 RoverStateMachine state_machine(rover);
 
                 // User interface
-                RoverInterface user_interface(rover, state_machine);
+                UserInterface user_interface(rover, state_machine);
 
                 
                 if (!state_machine.handle_event(event_start))

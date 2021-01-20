@@ -26,18 +26,19 @@
 #include <string.h>
 #include <rcom.h>
 
-#include "RoverOptions.h"
+#include <DefaultSpeedController.h>
+#include <DefaultEventTimer.h>
+#include <ScriptList.h>
+#include <ScriptMenu.h>
+#include <FluidSoundNotifications.h>
+#include <rover/Rover.h>
+#include <rover/RoverInterface.h>
+#include <rover/RoverOptions.h>
+#include <rover/RoverScriptEngine.h>
+#include <rover/RoverStateMachine.h>
+#include <fake/FakeWeeder.h>
+
 #include "UIFactory.h"
-#include "DefaultSpeedController.h"
-#include "UserInterface.h"
-#include "DefaultEventTimer.h"
-#include "ScriptList.h"
-#include "ScriptMenu.h"
-#include "FluidSoundNotifications.h"
-#include "RoverScriptEngine.h"
-#include "RoverStateMachine.h"
-#include "Rover.h"
-#include "fake/FakeWeeder.h"
 
 using namespace romi;
 
@@ -125,14 +126,14 @@ int main(int argc, char** argv)
                             weeder);
 
                 RoverStateMachine state_machine(rover);
-                UserInterface user_interface(rover, state_machine);
+                RoverInterface interface(rover, state_machine);
 
                 state_machine.handle_event(event_start);
                 
                 while (!app_quit()) {
                         
                         try {
-                                user_interface.handle_events();
+                                interface.handle_events();
                         
                         } catch (std::exception& e) {
                                 

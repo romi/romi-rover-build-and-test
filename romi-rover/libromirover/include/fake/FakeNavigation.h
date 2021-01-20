@@ -25,7 +25,7 @@
 #define __ROMI_DEBUG_NAVIGATION_H
 
 #include <r.h>
-#include "Navigation.h"
+#include "api/Navigation.h"
 
 namespace romi {
 

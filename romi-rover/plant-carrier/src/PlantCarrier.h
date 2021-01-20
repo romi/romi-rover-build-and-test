@@ -22,8 +22,8 @@
 
  */
 
-#ifndef __ROMI_ROVER_H
-#define __ROMI_ROVER_H
+#ifndef __ROMI_PLANT_CARRIER_H
+#define __ROMI_PLANT_CARRIER_H
 
 #include "InputDevice.h"
 #include "Display.h"
@@ -38,7 +38,7 @@
 
 namespace romi {
         
-        class Rover
+        class PlantCarrier
         {
         public:
                 InputDevice& input_device;
@@ -47,24 +47,24 @@ namespace romi {
                 Navigation& navigation;
                 EventTimer& event_timer;
                 Menu& menu;
-                ScriptEngine<Rover>& script_engine;
+                ScriptEngine<PlantCarrier>& script_engine;
                 Notifications& notifications;
-                Weeder& weeder;
+                CNC& cnc;
                 
-                Rover(InputDevice& input_device_,
+                PlantCarrier(InputDevice& input_device_,
                       Display& display_,
                       SpeedController& speed_controller_,
                       Navigation& navigation_,
                       EventTimer& event_timer,
                       Menu& menu,
-                      ScriptEngine<Rover>& script_engine,
+                      ScriptEngine<PlantCarrier>& script_engine,
                       Notifications& notifications,
-                      Weeder& weeder);
+                      CNC& cnc);
                 
-                virtual ~Rover() = default;
+                virtual ~PlantCarrier() = default;
 
                 bool reset();
         };
 }
 
-#endif // __ROMI_ROVER_H
+#endif // __ROMI_PLANT_CARRIER_H

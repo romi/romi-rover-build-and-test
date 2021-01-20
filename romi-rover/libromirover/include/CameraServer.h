@@ -26,7 +26,7 @@
 #define __ROMI_CAMERA_SERVER_H
 
 #include <rcom.h>
-#include "Camera.h"
+#include "api/Camera.h"
 
 namespace romi {
 

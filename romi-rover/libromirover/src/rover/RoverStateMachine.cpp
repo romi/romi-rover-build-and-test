@@ -22,8 +22,9 @@
 
 */
 #include <r.h>
-#include "EventsAndStates.h"
-#include "RoverStateMachine.h"
+#include "rover/EventsAndStates.h"
+#include "rover/RoverStateMachine.h"
+#include "rover/RoverNotifications.h"
 
 namespace romi {
         
@@ -41,7 +42,7 @@ namespace romi {
         {
                 r_debug("initialize_rover");
                 rover_ready(rover);
-                rover.notifications.notify(Notifications::startup);
+                rover.notifications.notify(RoverNotifications::startup);
                 return true;
         }
 
@@ -65,7 +66,7 @@ namespace romi {
         bool reset_rover(Rover& rover)
         {
                 r_debug("reset_rover");
-                rover.notifications.notify(Notifications::rover_reset);
+                rover.notifications.notify(RoverNotifications::rover_reset);
                 return (rover.navigation.reset_activity()
                         && rover.weeder.reset_activity());
         }
@@ -90,7 +91,7 @@ namespace romi {
                 r_debug("confirm_navigation_step_2");
                 rover.display.show(0, "Navigate? (X)");
                 rover.event_timer.set_timeout(2.0);
-                rover.notifications.notify(Notifications::confirm_navigation_mode);
+                rover.notifications.notify(RoverNotifications::confirm_navigation_mode);
                 return true;
         }
 
@@ -108,7 +109,7 @@ namespace romi {
         {
                 r_debug("leave_navigation_mode");
                 rover_ready(rover);
-                rover.notifications.notify(Notifications::leave_navigation_mode);
+                rover.notifications.notify(RoverNotifications::leave_navigation_mode);
                 return true;
         }
 
@@ -225,7 +226,7 @@ namespace romi {
                 r_debug("confirm_menu_step_2");
                 rover.display.show(0, "Menu? (X)");
                 rover.event_timer.set_timeout(2.0);
-                rover.notifications.notify(Notifications::confirm_menu_mode);
+                rover.notifications.notify(RoverNotifications::confirm_menu_mode);
                 return true;
         }
 
@@ -248,7 +249,7 @@ namespace romi {
                 rover.menu.next_menu_item(name);
                 rover.display.show(0, name.c_str());
                 rover.event_timer.set_timeout(10.0);  // restart timer
-                rover.notifications.notify(Notifications::change_menu);
+                rover.notifications.notify(RoverNotifications::change_menu);
                 return true;
         }
 
@@ -259,7 +260,7 @@ namespace romi {
                 rover.menu.previous_menu_item(name);
                 rover.display.show(0, name.c_str());
                 rover.event_timer.set_timeout(10.0); // restart timer
-                rover.notifications.notify(Notifications::change_menu);
+                rover.notifications.notify(RoverNotifications::change_menu);
                 return true;
         }
 
@@ -285,7 +286,7 @@ namespace romi {
         bool execute_script(Rover& rover)
         {
                 r_debug("execute_script");
-                rover.notifications.notify(Notifications::menu_confirmed);
+                rover.notifications.notify(RoverNotifications::menu_confirmed);
                 int index = rover.menu.get_current_index();
                 rover.script_engine.execute_script(rover, index);
                 rover.display.show(1, "Running");
@@ -320,7 +321,7 @@ namespace romi {
         bool signal_end_and_show_current_menu(Rover& rover)
         {
                 r_debug("signal_end_and_show_current_menu");
-                rover.notifications.notify(Notifications::script_finished);
+                rover.notifications.notify(RoverNotifications::script_finished);
                 show_current_menu(rover);
                 return true;
         }
@@ -328,7 +329,7 @@ namespace romi {
         bool signal_script_failure(Rover& rover)
         {
                 r_debug("signal_script_failure");
-                rover.notifications.notify(Notifications::script_failed);
+                rover.notifications.notify(RoverNotifications::script_failed);
                 show_current_menu(rover);
                 rover.display.show(1, "Failure! []");
                 return true;
@@ -345,7 +346,7 @@ namespace romi {
         {
                 r_debug("leave_menu_mode");
                 rover_ready(rover);
-                rover.notifications.notify(Notifications::leave_menu_mode);
+                rover.notifications.notify(RoverNotifications::leave_menu_mode);
                 return true;
         }
 

@@ -24,7 +24,7 @@
 #ifndef __ROMI_REMOTE_STUB_H
 #define __ROMI_REMOTE_STUB_H
 
-#include "IRPCHandler.h"
+#include <IRPCHandler.h>
 
 namespace romi {
         

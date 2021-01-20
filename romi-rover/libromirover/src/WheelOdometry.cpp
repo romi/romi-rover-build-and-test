@@ -25,7 +25,7 @@
 
 namespace romi {
         
-        WheelOdometry::WheelOdometry(RoverConfiguration &rover_config,
+        WheelOdometry::WheelOdometry(NavigationSettings &rover_config,
                                      double left_encoder,
                                      double right_encoder,
                                      double timestamp)

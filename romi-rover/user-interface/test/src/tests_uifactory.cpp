@@ -1,15 +1,16 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../mock/mock_navigation.h"
-#include "GetOpt.h"
+#include <GetOpt.h>
+#include <CrystalDisplay.h>
+#include <rpc/RemoteNavigation.h>
+#include <JoystickInputDevice.h>
+#include <rover/RoverOptions.h>
+#include <fake/FakeDisplay.h>
+#include <fake/FakeInputDevice.h>
+#include <fake/FakeNavigation.h>
+
 #include "UIFactory.h"
-#include "CrystalDisplay.h"
-#include "rpc/RemoteNavigation.h"
-#include "JoystickInputDevice.h"
-#include "RoverOptions.h"
-#include "fake/FakeDisplay.h"
-#include "fake/FakeInputDevice.h"
-#include "fake/FakeNavigation.h"
 
 using namespace std;
 using namespace testing;

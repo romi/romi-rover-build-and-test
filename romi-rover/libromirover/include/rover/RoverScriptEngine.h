@@ -27,7 +27,7 @@
 #include <mutex>
 #include "ScriptEngine.h"
 #include "ScriptList.h"
-#include "Rover.h"
+#include "rover/Rover.h"
 
 namespace romi {
         
@@ -56,6 +56,7 @@ namespace romi {
                 bool execute_action(Rover* rover, Action& action);
                 bool execute_move(Rover* rover, double distance, double speed);
                 bool execute_hoe(Rover* rover);
+                bool execute_homing(Rover* rover);
 
                 void clear_result();
                 void set_result(int event);

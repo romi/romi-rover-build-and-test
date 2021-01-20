@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "CNCRange.h"
+#include "api/CNCRange.h"
 
 using namespace std;
 using namespace testing;

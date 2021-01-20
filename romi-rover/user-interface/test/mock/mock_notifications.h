@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "Notifications.h"
+#include "api/Notifications.h"
 
 class MockNotifications : public romi::Notifications
 {

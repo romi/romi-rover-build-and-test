@@ -24,7 +24,7 @@
 #ifndef _OQUAM_CNC_CONTROLLER_HPP_
 #define _OQUAM_CNC_CONTROLLER_HPP_
 
-#include "Activity.h"
+#include "api/Activity.h"
 
 namespace romi {
 

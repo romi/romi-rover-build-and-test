@@ -88,11 +88,11 @@ if __name__ == "__main__":
         if (response == "n"):
             sys.exit("Bad motor direction on y-axis")
                 
-        print("Testing homing")
-        test_homing(link)
-        response = input("Did the CNC home correctly? [Y/n]")
-        if (response == "n"):
-            sys.exit("Error with homing")
+#        print("Testing homing")
+#        test_homing(link)
+#        response = input("Did the CNC home correctly? [Y/n]")
+#        if (response == "n"):
+#            sys.exit("Error with homing")
 
         print("Doing speed tests")    
         test_move_xy(link, 500, 500, 500)

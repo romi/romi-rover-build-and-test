@@ -1,17 +1,17 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "RoverConfiguration.h"
+#include "NavigationSettings.h"
 
 using namespace std;
 using namespace testing;
 using namespace romi;
 
-class roverconfiguration_tests : public ::testing::Test
+class navigationsettings_tests : public ::testing::Test
 {
 protected:
         JsonCpp config;
         
-	roverconfiguration_tests() {
+	navigationsettings_tests() {
                 const char * config_string = "{"
                         "'wheel_diameter': 1.0,"
                         "'wheel_base': 2.0,"
@@ -20,7 +20,7 @@ protected:
                 config = JsonCpp::parse(config_string);
 	}
 
-	~roverconfiguration_tests() override = default;
+	~navigationsettings_tests() override = default;
 
 	void SetUp() override {
 	}
@@ -29,9 +29,9 @@ protected:
 	}
 };
 
-TEST_F(roverconfiguration_tests, parse_config)
+TEST_F(navigationsettings_tests, parse_config)
 {
-        RoverConfiguration rover(config);
+        NavigationSettings rover(config);
         
         //Assert
         ASSERT_EQ(rover.wheel_diameter, 1.0);

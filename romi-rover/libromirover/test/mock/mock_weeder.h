@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "Weeder.h"
+#include "api/Weeder.h"
 
 class MockWeeder : public romi::Weeder
 {

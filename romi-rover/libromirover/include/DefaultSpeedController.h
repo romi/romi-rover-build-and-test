@@ -25,9 +25,10 @@
 #define __ROMI_DEFAULT_SPEEDCONTROLLER_H
 
 #include <math.h>
+#include <JsonCpp.h>
+
+#include "api/Navigation.h"
 #include "SpeedController.h"
-#include "Navigation.h"
-#include "JsonCpp.h"
 #include "SpeedConverter.h"
 
 namespace romi {

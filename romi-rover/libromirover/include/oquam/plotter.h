@@ -25,7 +25,7 @@
 #ifndef _OQUAM_PLOTTER_H_
 #define _OQUAM_PLOTTER_H_
 
-#include "CNCRange.h"
+#include "api/CNCRange.h"
 #include "oquam/SmoothPath.h"
 
 namespace romi {

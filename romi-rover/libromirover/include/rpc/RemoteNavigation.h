@@ -24,8 +24,8 @@
 #ifndef __ROMI_REMOTE_NAVIGATION_H
 #define __ROMI_REMOTE_NAVIGATION_H
 
-#include "IRPCClient.h"
-#include "Navigation.h"
+#include <IRPCClient.h>
+#include "api/Navigation.h"
 #include "rpc/RemoteStub.h"
 
 namespace romi {

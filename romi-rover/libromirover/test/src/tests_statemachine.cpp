@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "StateMachine.h"
+#include "api/StateMachine.h"
 
 using namespace std;
 using namespace testing;

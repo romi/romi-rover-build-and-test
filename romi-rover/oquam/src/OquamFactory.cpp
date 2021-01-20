@@ -22,10 +22,11 @@
 
  */
 #include <stdexcept>
-#include "oquam/FakeCNCController.h"
-#include "oquam/StepperController.h"
+#include <oquam/FakeCNCController.h>
+#include <oquam/StepperController.h>
+#include <rover/RoverOptions.h>
+
 #include "OquamFactory.h"
-#include "RoverOptions.h"
 
 using namespace std;
 

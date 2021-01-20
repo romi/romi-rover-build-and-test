@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "Path.h"
+#include "api/Path.h"
 
 using namespace std;
 using namespace testing;

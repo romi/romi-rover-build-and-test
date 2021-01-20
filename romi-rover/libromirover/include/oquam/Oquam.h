@@ -27,8 +27,8 @@
 #include <r.h>
 #include <mutex>
 
+#include "api/CNC.h"
 #include "v.h"
-#include "CNC.h"
 #include "IFileCabinet.h"
 
 #include "oquam/CNCController.h"
@@ -63,7 +63,8 @@ namespace romi {
                       const double *vmax, const double *amax,
                       const double *scale_meters_to_steps, 
                       double path_max_deviation,
-                      double path_slice_duration);
+                      double path_slice_duration,
+                      bool do_homing = true);
                 
                 virtual ~Oquam() = default;
 

@@ -25,7 +25,7 @@
 #ifndef _ROMI_FAKE_NOTIFICATIONS_H
 #define _ROMI_FAKE_NOTIFICATIONS_H
 
-#include "Notifications.h"
+#include "api/Notifications.h"
 
 namespace romi {
 

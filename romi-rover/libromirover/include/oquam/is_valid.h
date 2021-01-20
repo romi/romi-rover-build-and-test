@@ -25,7 +25,7 @@
 #ifndef _OQUAM_IS_VALID_H_
 #define _OQUAM_IS_VALID_H_
 
-#include "CNCRange.h"
+#include "api/CNCRange.h"
 #include "oquam/SmoothPath.h"
 
 namespace romi {

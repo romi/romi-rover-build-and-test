@@ -25,7 +25,7 @@
 #define __ROMI_JOYSTICK_EVENT_MAPPER_H
 
 #include <stdint.h>
-#include "Joystick.h"
+#include "api/Joystick.h"
 
 namespace romi {
 

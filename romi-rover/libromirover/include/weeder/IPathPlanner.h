@@ -27,7 +27,7 @@
 
 #include <vector>
 #include "r.h"
-#include "Path.h"
+#include "api/Path.h"
 #include "Image.h"
 
 namespace romi {

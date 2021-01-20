@@ -23,16 +23,18 @@
  */
 
 #include <stdexcept>
+
+#include <CrystalDisplay.h>
+#include <JoystickInputDevice.h>
+#include <rover/RoverOptions.h>
+#include <rpc/RemoteNavigation.h>
+#include <rpc/RemoteWeeder.h>
+#include <fake/FakeInputDevice.h>
+#include <fake/FakeDisplay.h>
+#include <fake/FakeNavigation.h>
+#include <fake/FakeWeeder.h>
+
 #include "UIFactory.h"
-#include "CrystalDisplay.h"
-#include "JoystickInputDevice.h"
-#include "RoverOptions.h"
-#include "rpc/RemoteNavigation.h"
-#include "rpc/RemoteWeeder.h"
-#include "fake/FakeInputDevice.h"
-#include "fake/FakeDisplay.h"
-#include "fake/FakeNavigation.h"
-#include "fake/FakeWeeder.h"
 
 using namespace std;
 using namespace rcom;

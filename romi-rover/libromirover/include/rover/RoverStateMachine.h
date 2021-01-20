@@ -24,8 +24,8 @@
 #ifndef __ROMI_ROVER_STATE_MACHINE_H
 #define __ROMI_ROVER_STATE_MACHINE_H
 
-#include "StateMachine.h"
-#include "Rover.h"
+#include "api/StateMachine.h"
+#include "rover/Rover.h"
 
 namespace romi {
 

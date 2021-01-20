@@ -25,10 +25,11 @@
 #ifndef _ROMI_FLUID_SOUND_NOTIFICATION_H
 #define _ROMI_FLUID_SOUND_NOTIFICATION_H
 
-#include "JsonCpp.h"
+#include <JsonCpp.h>
 #include <fluidsynth.h>
 #include <map>
-#include "Notifications.h"
+
+#include "api/Notifications.h"
 
 namespace romi {
 

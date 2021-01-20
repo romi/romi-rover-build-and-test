@@ -27,7 +27,7 @@
 
 #include <string>
 #include <IRPCHandler.h>
-#include "Weeder.h"
+#include "api/Weeder.h"
 
 namespace romi {
 

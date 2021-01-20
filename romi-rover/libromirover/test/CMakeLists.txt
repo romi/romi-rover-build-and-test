@@ -24,9 +24,9 @@ add_test(
 set(SRCS_CNCRANGE
   src/tests_main.cpp
   src/tests_cncrange.cpp
-  ../include/CNCRange.h
+  ../include/api/CNCRange.h
   ../include/v.h
-  ../src/CNCRange.cpp
+  ../src/api/CNCRange.cpp
   ../src/v.cpp
   )
 add_executable(romi_rover_unit_tests_libromirover_cncrange ${SRCS_CNCRANGE})
@@ -42,11 +42,11 @@ add_test(
 set(SRCS_PATH
   src/tests_main.cpp
   src/tests_path.cpp
-  ../include/CNCRange.h
-  ../include/Path.h
+  ../include/api/CNCRange.h
+  ../include/api/Path.h
   ../include/v.h
-  ../src/CNCRange.cpp
-  ../src/Path.cpp
+  ../src/api/CNCRange.cpp
+  ../src/api/Path.cpp
   ../src/v.cpp
   )
 add_executable(romi_rover_unit_tests_libromirover_path ${SRCS_PATH})
@@ -59,19 +59,19 @@ add_test(
 
 ##
 
-set(SRCS_ROVERCONFIGURATION 
+set(SRCS_NAVIGATIONSETTINGS 
   src/tests_main.cpp
-  src/tests_roverconfiguration.cpp
-  ../include/RoverConfiguration.h
+  src/tests_navigationsettings.cpp
+  ../include/NavigationSettings.h
   )
 
-add_executable(romi_rover_unit_tests_libromirover_roverconfiguration ${SRCS_ROVERCONFIGURATION})
+add_executable(romi_rover_unit_tests_libromirover_navigationsettings ${SRCS_NAVIGATIONSETTINGS})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_libromirover_roverconfiguration rpp gtest gmock)
+target_link_libraries(romi_rover_unit_tests_libromirover_navigationsettings rpp gtest gmock)
 
 add_test(
-    NAME romi_rover_unit_tests_libromirover_roverconfiguration
-    COMMAND romi_rover_unit_tests_libromirover_roverconfiguration
+    NAME romi_rover_unit_tests_libromirover_navigationsettings
+    COMMAND romi_rover_unit_tests_libromirover_navigationsettings
 )
 
 
@@ -133,7 +133,7 @@ set(SRCS_ROVEROPTIONS
   src/tests_main.cpp
   src/tests_roveroptions.cpp
   ../include/GetOpt.h
-  ../include/RoverOptions.h
+  ../include/rover/RoverOptions.h
   ../src/GetOpt.cpp
   ../src/rover/RoverOptions.cpp
   )
@@ -166,21 +166,21 @@ add_test(
 
 ##
 
-set(SRCS_ROVERNAVIGATION 
+set(SRCS_DEFAULTNAVIGATION 
   src/tests_main.cpp
-  src/tests_rovernavigation.cpp
+  src/tests_defaultnavigation.cpp
   mock/mock_motordriver.h
-  ../include/RoverNavigation.h
-  ../src/RoverNavigation.cpp
+  ../include/DefaultNavigation.h
+  ../src/DefaultNavigation.cpp
   )
 
-add_executable(romi_rover_unit_tests_libromirover_rovernavigation ${SRCS_ROVERNAVIGATION})
+add_executable(romi_rover_unit_tests_libromirover_defaultnavigation ${SRCS_DEFAULTNAVIGATION})
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-target_link_libraries(romi_rover_unit_tests_libromirover_rovernavigation romirover rpp gtest gmock)
+target_link_libraries(romi_rover_unit_tests_libromirover_defaultnavigation romirover rpp gtest gmock)
 
 add_test(
-    NAME romi_rover_unit_tests_libromirover_rovernavigation
-    COMMAND romi_rover_unit_tests_libromirover_rovernavigation
+    NAME romi_rover_unit_tests_libromirover_defaultnavigation
+    COMMAND romi_rover_unit_tests_libromirover_defaultnavigation
 )
 
 ##
@@ -224,7 +224,7 @@ set(SRCS_JOYSTICK
   src/tests_main.cpp
   src/tests_joystick.cpp
   mock/Linux-Mock.cpp
-  ../include/Joystick.h
+  ../include/api/Joystick.h
   ../include/LinuxJoystick.h
   ../src/ui/LinuxJoystick.cpp
   )
@@ -284,8 +284,8 @@ set(SRCS_ROVERSCRIPTENGINE
   mock/mock_inputdevice.h
   mock/mock_navigation.h
   mock/mock_display.h
-  ../include/Rover.h
-  ../include/RoverScriptEngine.h
+  ../include/rover/Rover.h
+  ../include/rover/RoverScriptEngine.h
   ../src/rover/Rover.cpp
   ../src/rover/RoverScriptEngine.cpp
   )
@@ -303,7 +303,7 @@ add_test(
 set(SRCS_STATEMACHINE 
   src/tests_main.cpp
   src/tests_statemachine.cpp
-  ../include/StateMachine.h
+  ../include/api/StateMachine.h
   )
 
 add_executable(romi_rover_unit_tests_libromirover_statemachine ${SRCS_STATEMACHINE})
@@ -537,10 +537,10 @@ if(BUILD_COVERAGE)
                          romi_rover_unit_tests_libromirover_image
                          romi_rover_unit_tests_libromirover_imageio
                          romi_rover_unit_tests_libromirover_wheelodometry
-                         romi_rover_unit_tests_libromirover_roverconfiguration
+                         romi_rover_unit_tests_libromirover_navigationsettings
                          romi_rover_unit_tests_libromirover_roveroptions
                          romi_rover_unit_tests_libromirover_navigationadaptor
-                         romi_rover_unit_tests_libromirover_rovernavigation
+                         romi_rover_unit_tests_libromirover_defaultnavigation
                          romi_rover_unit_tests_libromirover_remotenavigation
                          romi_rover_unit_tests_libromirover_crystaldisplay
                          romi_rover_unit_tests_libromirover_joystick

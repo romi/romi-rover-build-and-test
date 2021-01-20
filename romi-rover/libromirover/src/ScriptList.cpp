@@ -87,32 +87,38 @@ namespace romi {
                 convert_script_actions(back(), script);                        
         }
 
-        void ScriptList::convert_script_actions(Script& new_script,
+        void ScriptList::convert_script_actions(Script& script,
                                                 JsonCpp& json_script)
         {
                 JsonCpp actions = json_script.array("actions");
                 for (int i = 0; i < actions.length(); i++) {
                         JsonCpp action = actions[i];
-                        convert_action(new_script, action);
+                        convert_action(script, action);
                 }
         }
 
-        void ScriptList::convert_action(Script& new_script, JsonCpp& action)
+        void ScriptList::convert_action(Script& script, JsonCpp& action)
         {
                 const char *type = action["action"];
-                if (rstreq(type, "move"))
-                        convert_move(new_script, action);
-                else if (rstreq(type, "hoe"))
-                        convert_hoe(new_script);
+                if (rstreq(type, Action::move_command))
+                        convert_move(script, action);
+                else if (rstreq(type, Action::hoe_command))
+                        convert_hoe(script);
+                else if (rstreq(type, Action::homing_command))
+                        convert_homing(script);
+                else if (rstreq(type, Action::pick_up_command))
+                        convert_pick_up(script);
+                else if (rstreq(type, Action::put_down_command))
+                        convert_put_down(script);
         }
         
-        void ScriptList::convert_move(Script& new_script, JsonCpp& action)
+        void ScriptList::convert_move(Script& script, JsonCpp& action)
         {
                 double distance = action["distance"];
                 double speed = action["speed"];
                 
                 assure_move_params(distance, speed);
-                new_script.actions.push_back(Action(Action::Move, distance, speed));
+                script.append(Action(Action::Move, distance, speed));
         }
 
         void ScriptList::assure_move_params(double distance, double speed)
@@ -129,8 +135,23 @@ namespace romi {
                 }
         }
         
-        void ScriptList::convert_hoe(Script& new_script)
+        void ScriptList::convert_hoe(Script& script)
         {
-                new_script.actions.push_back(Action(Action::Hoe));
+                script.append(Action(Action::Hoe));
+        }
+        
+        void ScriptList::convert_homing(Script& script)
+        {
+                script.append(Action(Action::Homing));
+        }
+        
+        void ScriptList::convert_pick_up(Script& script)
+        {
+                script.append(Action(Action::PickUp));
+        }
+        
+        void ScriptList::convert_put_down(Script& script)
+        {
+                script.append(Action(Action::PutDown));
         }
 }

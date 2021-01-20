@@ -25,7 +25,7 @@
 #define _ROMI_REMOTE_WEEDER_H_
 
 #include <IRPCClient.h>
-#include "Weeder.h"
+#include "api/Weeder.h"
 #include "rpc/RemoteStub.h"
 
 namespace romi {

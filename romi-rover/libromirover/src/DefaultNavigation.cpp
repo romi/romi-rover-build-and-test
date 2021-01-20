@@ -23,22 +23,22 @@
  */
 
 #include <r.h>
-#include "RoverNavigation.h" 
+#include "DefaultNavigation.h" 
 
 namespace romi {
 
-        double RoverNavigation::compute_timeout(double distance, double speed)
+        double DefaultNavigation::compute_timeout(double distance, double speed)
         {
                 double timeout = 0.0;
                 if (speed != 0.0) {
-                        double relative_speed = _rover.maximum_speed * speed;
+                        double relative_speed = _settings.maximum_speed * speed;
                         double time = distance / fabs(relative_speed);
                         timeout = 1.5 * time;
                 }
                 return timeout;
         }
 
-        bool RoverNavigation::wait_travel(WheelOdometry &odometry, double distance,
+        bool DefaultNavigation::wait_travel(WheelOdometry &odometry, double distance,
                                      double timeout)
         {
                 bool success = false;
@@ -70,7 +70,7 @@ namespace romi {
 
                         double now = clock_time();
                         if (now - start_time >= timestamp) {
-                                r_err("RoverNavigation::wait_travel: time out (%f s)", timeout);
+                                r_err("DefaultNavigation::wait_travel: time out (%f s)", timeout);
                                 _driver.moveat(0, 0);
                                 success = false;
                                 _stop = true;
@@ -82,7 +82,7 @@ namespace romi {
                 return success;
         }
         
-        bool RoverNavigation::do_move2(double distance, double speed)
+        bool DefaultNavigation::do_move2(double distance, double speed)
         {
                 bool success = false;
                 double left, right, timestamp;
@@ -91,7 +91,7 @@ namespace romi {
 
                         // r_debug("get_encoder_values: %f %f", left, right);
                         
-                        WheelOdometry odometry(_rover, left, right, timestamp);
+                        WheelOdometry odometry(_settings, left, right, timestamp);
                         
                         if (_driver.moveat(speed, speed)) {
                                 
@@ -99,16 +99,16 @@ namespace romi {
                                                         compute_timeout(distance, speed));
                                 
                         } else {
-                                r_err("RoverNavigation::do_move2: moveat failed");
+                                r_err("DefaultNavigation::do_move2: moveat failed");
                         }
                 } else {
-                        r_err("RoverNavigation::do_move2: get_encoder_values failed");
+                        r_err("DefaultNavigation::do_move2: get_encoder_values failed");
                 }
                                         
                 return success;
         }
         
-        bool RoverNavigation::do_move(double distance, double speed)
+        bool DefaultNavigation::do_move(double distance, double speed)
         {
                 bool success = false;
                 
@@ -136,11 +136,11 @@ namespace romi {
                                 success = do_move2(distance, speed);
                                 
                         } else {
-                                r_err("RoverNavigation::do_move: stop failed");
+                                r_err("DefaultNavigation::do_move: stop failed");
                         }
                         
                 } else {
-                        r_err("RoverNavigation::do_move: invalid speed or distance: "
+                        r_err("DefaultNavigation::do_move: invalid speed or distance: "
                               "speed=%f, distance=%f", speed, distance);
                 }
                 
@@ -152,61 +152,61 @@ namespace romi {
         }
 
 
-        bool RoverNavigation::moveat(double left, double right)
+        bool DefaultNavigation::moveat(double left, double right)
         {
                 SynchronizedCodeBlock sync(_mutex);
                 bool success = false;
-                if (_status == ROVER_MOVEAT_CAPABLE) 
+                if (_status == MOVEAT_CAPABLE) 
                         success = _driver.moveat(left, right);
                 else
-                        r_warn("RoverNavigation::moveat: still moving");
+                        r_warn("DefaultNavigation::moveat: still moving");
                 return success;
         }
         
-        bool RoverNavigation::move(double distance, double speed)
+        bool DefaultNavigation::move(double distance, double speed)
         {
                 bool success = false;
                 {
                         SynchronizedCodeBlock sync(_mutex);
-                        if (_status == ROVER_MOVEAT_CAPABLE) {
-                                _status = ROVER_MOVING;
+                        if (_status == MOVEAT_CAPABLE) {
+                                _status = MOVING;
                         } else {
-                                r_warn("RoverNavigation::move: already moving");
+                                r_warn("DefaultNavigation::move: already moving");
                         }
                 }
                         
-                if (_status == ROVER_MOVING)
+                if (_status == MOVING)
                         success = do_move(distance, speed);
                         
-                _status = ROVER_MOVEAT_CAPABLE;
+                _status = MOVEAT_CAPABLE;
                         
                 return success;
         }
         
-        bool RoverNavigation::stop()
+        bool DefaultNavigation::stop()
         {
                 // This flag should assure that we break out
                 // the wait_travel loop.
                 _stop = true;
                 bool success = _driver.stop();
-                _status = ROVER_MOVEAT_CAPABLE;
+                _status = MOVEAT_CAPABLE;
                 return success;
         }
 
-        bool RoverNavigation::pause_activity()
+        bool DefaultNavigation::pause_activity()
         {
-                r_warn("*** RoverNavigation::pause_activity NOT YET IMPLEMENTED");
+                r_warn("*** DefaultNavigation::pause_activity NOT YET IMPLEMENTED");
                 stop();
                 return true;
         }
         
-        bool RoverNavigation::continue_activity()
+        bool DefaultNavigation::continue_activity()
         {
-                r_warn("*** RoverNavigation::continue_activity NOT YET IMPLEMENTED");
+                r_warn("*** DefaultNavigation::continue_activity NOT YET IMPLEMENTED");
                 return true;
         }
         
-        bool RoverNavigation::reset_activity()
+        bool DefaultNavigation::reset_activity()
         {
                 stop();
                 return true;

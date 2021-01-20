@@ -27,19 +27,18 @@
 
 #include <rcom.h>
 #include <RPCServer.h>
-
-#include <RoverOptions.h>
-#include <DebugWeedingSession.h>
 #include <RPCClient.h>
 
-#include "FileCamera.h"
-#include "USBCamera.h"
-#include "CameraServer.h"
-#include "RoverWeeder.h"
-#include "weeder/PipelineFactory.h"
-#include "rpc/WeederAdaptor.h"
-#include "rpc/RemoteCNC.h"
-#include "fake/FakeCNC.h"
+#include <rover/RoverOptions.h>
+#include <DebugWeedingSession.h>
+#include <FileCamera.h>
+#include <USBCamera.h>
+#include <CameraServer.h>
+#include <weeder/DefaultWeeder.h>
+#include <weeder/PipelineFactory.h>
+#include <rpc/WeederAdaptor.h>
+#include <rpc/RemoteCNC.h>
+#include <fake/FakeCNC.h>
 
 using namespace romi;
 using namespace rcom;
@@ -225,7 +224,7 @@ int main(int argc, char** argv)
                 
                 double z0 = config["weeder"]["z0"];
                 double speed = config["weeder"]["speed"];
-                RoverWeeder weeder(*camera, pipeline, *cnc, z0, speed, session);
+                DefaultWeeder weeder(*camera, pipeline, *cnc, z0, speed, session);
                 WeederAdaptor adaptor(weeder);
                 RPCServer weeder_server(adaptor, "weeder", "weeder");
                 

@@ -21,26 +21,39 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_UI_EVENT_MAPPER_H
-#define __ROMI_UI_EVENT_MAPPER_H
 
-#include "api/Joystick.h"
-#include "JoystickEventMapper.h"
-#include "rover/EventsAndStates.h"
+#ifndef __ROMI_ROVER_INTERFACE_H
+#define __ROMI_ROVER_INTERFACE_H
+
+#include "api/StateMachine.h"
+#include "rover/Rover.h"
 
 namespace romi {
-
-        class UIEventMapper : public JoystickEventMapper
+        
+        class RoverInterface
         {
         protected:
-                int map_axis(Joystick& joystick, JoystickEvent& event);
-                int map_button(Joystick& joystick, JoystickEvent& event);                
-        public:
-                
-                virtual ~UIEventMapper() override = default;
 
-                int map(Joystick& joystick, JoystickEvent& event);
+                void handle_input_events();
+                void handle_timer_events();
+                void handle_script_events();
+                void handle_event(int event);
+                
+        public:
+                Rover& _rover;
+                StateMachine<Rover>& _state_machine;
+
+                RoverInterface(Rover& rover,
+                              StateMachine<Rover>& state_machine);
+                
+                virtual ~RoverInterface() = default;
+
+                void handle_events();
+
+                int get_state() {
+                        return _state_machine.get_state();
+                }
+
         };
 }
-
-#endif // __ROMI_UI_EVENT_MAPPER_H
+#endif // __ROMI_ROVER_INTERFACE_H

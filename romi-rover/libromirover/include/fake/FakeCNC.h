@@ -24,7 +24,7 @@
 #ifndef __ROMI_FAKE_CNC_H
 #define __ROMI_FAKE_CNC_H
 
-#include "CNC.h"
+#include "api/CNC.h"
 
 namespace romi {
         

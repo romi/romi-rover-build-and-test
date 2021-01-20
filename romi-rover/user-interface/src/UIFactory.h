@@ -24,21 +24,20 @@
 
 #include <memory>
 
+#include <JsonCpp.h>
 #include <RomiSerialClient.h>
 #include <RSerial.h>
 #include <RPCClient.h>
 
-#include "Navigation.h"
-#include "Display.h"
-#include "InputDevice.h"
-#include "Notifications.h"
-#include "Weeder.h"
-
-#include "Options.h"
-#include "JsonCpp.h"
-#include "LinuxJoystick.h"
-#include "UIEventMapper.h"
-#include "Linux.h"
+#include <api/Navigation.h>
+#include <api/Display.h>
+#include <api/InputDevice.h>
+#include <api/Notifications.h>
+#include <api/Weeder.h>
+#include <Options.h>
+#include <LinuxJoystick.h>
+#include <UIEventMapper.h>
+#include <Linux.h>
 
 #ifndef __ROMI_UI_FACTORY_H
 #define __ROMI_UI_FACTORY_H

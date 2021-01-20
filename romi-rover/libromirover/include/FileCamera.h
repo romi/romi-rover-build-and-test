@@ -28,7 +28,7 @@
 #include <string>
 #include <r.h>
 #include "ImageIO.h"
-#include "Camera.h"
+#include "api/Camera.h"
 
 namespace romi {
 

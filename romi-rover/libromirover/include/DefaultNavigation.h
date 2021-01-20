@@ -21,12 +21,13 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_ROVER_NAVIGATION_H
-#define __ROMI_ROVER_NAVIGATION_H
+#ifndef __ROMI_DEFAULT_NAVIGATION_H
+#define __ROMI_DEFAULT_NAVIGATION_H
 
 #include <mutex>
-#include "Navigation.h" 
-#include "RoverConfiguration.h"
+
+#include "api/Navigation.h" 
+#include "NavigationSettings.h"
 #include "MotorDriver.h"
 #include "WheelOdometry.h" 
 
@@ -34,14 +35,14 @@ namespace romi {
 
         using SynchronizedCodeBlock = std::lock_guard<std::mutex>;
 
-        class RoverNavigation : public Navigation
+        class DefaultNavigation : public Navigation
         {
         protected:
 
-                enum { ROVER_MOVEAT_CAPABLE, ROVER_MOVING };
+                enum { MOVEAT_CAPABLE, MOVING };
                 
                 MotorDriver &_driver;
-                RoverConfiguration &_rover;
+                NavigationSettings &_settings;
                 std::mutex _mutex;
                 int _status;
                 int _stop;
@@ -53,11 +54,11 @@ namespace romi {
                                         
         public:
                 
-                RoverNavigation(MotorDriver &driver, RoverConfiguration &rover) :
-                        _driver(driver), _rover(rover), _status(ROVER_MOVEAT_CAPABLE) {
+                DefaultNavigation(MotorDriver &driver, NavigationSettings &settings)
+                        : _driver(driver), _settings(settings), _status(MOVEAT_CAPABLE) {
                 }
                 
-                virtual ~RoverNavigation() override = default;
+                virtual ~DefaultNavigation() override = default;
 
                 bool moveat(double left, double right) override;
                 bool move(double distance, double speed) override;
@@ -69,4 +70,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_ROVER_NAVIGATION_H
+#endif // __ROMI_DEFAULT_NAVIGATION_H

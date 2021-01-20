@@ -25,7 +25,7 @@
 #ifndef __ROMI_FAKE_DISPLAY_H
 #define __ROMI_FAKE_DISPLAY_H
 
-#include "Display.h"
+#include "api/Display.h"
 
 namespace romi {
         

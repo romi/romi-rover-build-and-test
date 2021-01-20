@@ -21,15 +21,15 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#ifndef __ROMI_ROVER_CONFIGURATION_H
-#define __ROMI_ROVER_CONFIGURATION_H
+#ifndef __ROMI_NAVIGATION_SETTINGS_H
+#define __ROMI_NAVIGATION_SETTINGS_H
 
 #include <math.h>
 #include <JsonCpp.h>
 
 namespace romi {
         
-        class RoverConfiguration
+        class NavigationSettings
         {
         public:
                 double encoder_steps;
@@ -39,7 +39,7 @@ namespace romi {
                 double wheel_circumference;
                 double max_revolutions_per_sec;
 
-                RoverConfiguration(JsonCpp &config) {
+                NavigationSettings(JsonCpp &config) {
                         encoder_steps = config.num("encoder_steps");
                         wheel_diameter = config.num("wheel_diameter");
                         maximum_speed = config.num("maximum_speed");
@@ -50,4 +50,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_ROVER_CONFIGURATION_H
+#endif // __ROMI_NAVIGATION_SETTINGS_H

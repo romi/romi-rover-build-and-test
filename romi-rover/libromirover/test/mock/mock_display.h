@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "Display.h"
+#include "api/Display.h"
 
 class MockDisplay : public romi::Display
 {

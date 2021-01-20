@@ -25,8 +25,8 @@
 #ifndef __ROMI_CRYSTAL_DISPLAY_H
 #define __ROMI_CRYSTAL_DISPLAY_H
 
-#include "Display.h"
-#include "IRomiSerialClient.h"
+#include <IRomiSerialClient.h>
+#include "api/Display.h"
 
 namespace romi {
         

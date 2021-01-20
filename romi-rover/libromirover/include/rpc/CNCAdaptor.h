@@ -24,8 +24,8 @@
 #ifndef __ROMI_CNC_ADAPTER_H
 #define __ROMI_CNC_ADAPTER_H
 
-#include "CNC.h"
-#include "IRPCHandler.h"
+#include <IRPCHandler.h>
+#include "api/CNC.h"
 
 namespace romi {
         

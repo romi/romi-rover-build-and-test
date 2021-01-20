@@ -28,9 +28,10 @@
 #include <string>
 #include <r.h>
 #include <mutex>
-#include "Camera.h"
+#include <JsonCpp.h>
+
+#include "api/Camera.h"
 #include "Image.h"
-#include "JsonCpp.h"
 
 typedef struct _camera_t camera_t;
 

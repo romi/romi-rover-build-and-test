@@ -16,6 +16,9 @@ using namespace std;
 using namespace testing;
 using namespace romi;
 
+//const char *device = "/dev/ttyACM0";
+const char *device = "/dev/ttyUSB0";
+
 class hardware_tests : public ::testing::Test
 {
 protected:
@@ -39,34 +42,34 @@ protected:
 	void TearDown() override {}
 };
 
-TEST_F(hardware_tests, test_homing_romiserial)
-{
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
-        RomiSerialClient romi_serial(&serial, &serial);
-        romi_serial.set_debug(debug_romi_serial);
+// TEST_F(hardware_tests, test_homing_romiserial)
+// {
+//         RSerial serial(device, 115200, 1);        
+//         RomiSerialClient romi_serial(&serial, &serial);
+//         romi_serial.set_debug(debug_romi_serial);
 
-        JsonCpp reply;
-        romi_serial.send("H", reply);
+//         JsonCpp reply;
+//         romi_serial.send("H", reply);
         
-        //json_print(reply, k_json_pretty);
+//         //json_print(reply, k_json_pretty);
 
-        ASSERT_EQ(true, reply.isarray());
-        ASSERT_EQ(1, reply.length());
-        ASSERT_EQ(0.0, reply.num(0));
+//         ASSERT_EQ(true, reply.isarray());
+//         ASSERT_EQ(1, reply.length());
+//         ASSERT_EQ(0.0, reply.num(0));
 
-        while (true) {
-                romi_serial.send("I", reply);
-                //json_print(reply, k_json_pretty);
-                if (1 == (int) reply.num(1)) {
-                        break;
-                }
-                clock_sleep(1.0);
-        }
-}
+//         while (true) {
+//                 romi_serial.send("I", reply);
+//                 //json_print(reply, k_json_pretty);
+//                 if (1 == (int) reply.num(1)) {
+//                         break;
+//                 }
+//                 clock_sleep(1.0);
+//         }
+// }
 
 TEST_F(hardware_tests, test_homing_stepper)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         romi_serial.set_debug(debug_romi_serial);
@@ -76,7 +79,7 @@ TEST_F(hardware_tests, test_homing_stepper)
 
 TEST_F(hardware_tests, test_move)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         romi_serial.set_debug(debug_romi_serial);
@@ -86,7 +89,7 @@ TEST_F(hardware_tests, test_move)
 
 TEST_F(hardware_tests, test_get_position)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         romi_serial.set_debug(debug_romi_serial);
@@ -120,7 +123,7 @@ TEST_F(hardware_tests, test_get_position)
 
 TEST_F(hardware_tests, test_oquam_homing)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         
@@ -131,7 +134,7 @@ TEST_F(hardware_tests, test_oquam_homing)
 
 TEST_F(hardware_tests, test_oquam_moveto_1)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
 
@@ -145,7 +148,7 @@ TEST_F(hardware_tests, test_oquam_moveto_1)
 
 TEST_F(hardware_tests, test_oquam_moveto_2)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
 
@@ -165,7 +168,7 @@ TEST_F(hardware_tests, test_oquam_moveto_2)
 
 TEST_F(hardware_tests, test_oquam_travel_square)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_square");
@@ -191,7 +194,7 @@ TEST_F(hardware_tests, test_oquam_travel_square)
 
 TEST_F(hardware_tests, test_oquam_travel_square_fast)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_square_fast");
@@ -217,7 +220,7 @@ TEST_F(hardware_tests, test_oquam_travel_square_fast)
 
 TEST_F(hardware_tests, test_oquam_travel_snake)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_snake");
@@ -245,7 +248,7 @@ TEST_F(hardware_tests, test_oquam_travel_snake)
 
 TEST_F(hardware_tests, test_oquam_travel_snake_2)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_snake_2");
@@ -279,7 +282,7 @@ TEST_F(hardware_tests, test_oquam_travel_snake_2)
 
 TEST_F(hardware_tests, test_oquam_travel_round_trip)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_round_trip");
@@ -300,7 +303,7 @@ TEST_F(hardware_tests, test_oquam_travel_round_trip)
 
 TEST_F(hardware_tests, test_oquam_travel_collinear)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_collinear");
@@ -322,7 +325,7 @@ TEST_F(hardware_tests, test_oquam_travel_collinear)
 
 TEST_F(hardware_tests, test_oquam_travel_large_displacement)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_displacement");
@@ -345,7 +348,7 @@ TEST_F(hardware_tests, test_oquam_travel_large_displacement)
 
 TEST_F(hardware_tests, test_oquam_travel_small_displacement)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_small_displacement");
@@ -368,7 +371,7 @@ TEST_F(hardware_tests, test_oquam_travel_small_displacement)
 
 TEST_F(hardware_tests, test_oquam_travel_tiny_displacement)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_tiny_displacement");
@@ -391,7 +394,7 @@ TEST_F(hardware_tests, test_oquam_travel_tiny_displacement)
 
 TEST_F(hardware_tests, test_oquam_travel_zigzag)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_travel_zigzag");
@@ -437,7 +440,7 @@ void stop_and_continue(Oquam *oquam)
 
 TEST_F(hardware_tests, test_oquam_stop_and_continue)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_stop_and_continue");
@@ -465,7 +468,7 @@ void stop_and_reset(Oquam *oquam)
 
 TEST_F(hardware_tests, test_oquam_stop_and_reset)
 {
-        RSerial serial("/dev/ttyACM0", 115200, 1);        
+        RSerial serial(device, 115200, 1);        
         RomiSerialClient romi_serial(&serial, &serial);
         StepperController stepper(romi_serial);
         DebugWeedingSession debug(".", "test_stop_and_reset");

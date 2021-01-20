@@ -26,7 +26,7 @@
 
 #include <string>
 #include <vector>
-#include "Joystick.h"
+#include "api/Joystick.h"
 #include "ILinux.h"
 
 namespace romi {
