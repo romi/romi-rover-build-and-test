@@ -1,0 +1,4 @@
+# Originally from Mark Magath. Modified.
+# https://gitlab.com/diplomathesis/i40barman/-/tree/master/product
+set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} @PAHOMQTTC_INCLUDE_DIR@)
+set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} @PAHOMQTTC_LIBRARY_DIR@)
