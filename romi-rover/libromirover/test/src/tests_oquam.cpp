@@ -40,6 +40,10 @@ protected:
                 EXPECT_CALL(controller, get_position(NotNull()))
                         .WillRepeatedly(DoAll(SetArrayArgument<0>(position, position+3),
                                               Return(true)));
+                EXPECT_CALL(controller, configure_homing(_,_,_))
+                        .WillRepeatedly(Return(true));
+                EXPECT_CALL(controller, enable())
+                        .WillRepeatedly(Return(true));
                 EXPECT_CALL(controller, homing())
                         .WillRepeatedly(Return(true));
                 EXPECT_CALL(controller, synchronize(_))
@@ -65,18 +69,18 @@ public:
         }
 };
 
-TEST_F(oquam_tests, constructor_calls_homing)
+TEST_F(oquam_tests, constructor_calls_configure_homing)
 {
-        EXPECT_CALL(controller, homing())
+        EXPECT_CALL(controller, configure_homing(_,_,_))
                 .Times(1)
                 .WillOnce(Return(true));
         
         Oquam oquam(controller, range, vmax, amax, scale, 0.01, slice_interval);
 }
 
-TEST_F(oquam_tests, constructor_throws_exception_when_homing_fails)
+TEST_F(oquam_tests, constructor_throws_exception_when_configure_homing_fails)
 {
-        EXPECT_CALL(controller, homing())
+        EXPECT_CALL(controller, configure_homing(_,_,_))
                 .Times(1)
                 .WillOnce(Return(false));
         
@@ -163,7 +167,7 @@ TEST_F(oquam_tests, reset_calls_controller_2)
 
 TEST_F(oquam_tests, constructor_copies_range)
 {
-        EXPECT_CALL(controller, homing())
+        EXPECT_CALL(controller, configure_homing(_,_,_))
                 .Times(1)
                 .WillOnce(Return(true));
         
@@ -184,6 +188,7 @@ TEST_F(oquam_tests, moveto_returns_error_when_speed_is_invalid)
         DefaultSetUp();
         
         Oquam oquam(controller, range, vmax, amax, scale, 0.01, slice_interval);
+        
         ASSERT_EQ(oquam.moveto(0.1, 0.0, 0.0, 1.1), false);
         ASSERT_EQ(oquam.moveto(0.1, 0.0, 0.0, -0.1), false);
 }
@@ -203,7 +208,7 @@ TEST_F(oquam_tests, moveto_returns_error_when_position_is_invalid)
 
 TEST_F(oquam_tests, returns_false_when_get_position_fails)
 {
-        EXPECT_CALL(controller, homing())
+        EXPECT_CALL(controller, configure_homing(_,_,_))
                 .Times(1)
                 .WillOnce(Return(true));
         EXPECT_CALL(controller, get_position(_))
@@ -217,7 +222,7 @@ TEST_F(oquam_tests, returns_false_when_get_position_fails)
 
 TEST_F(oquam_tests, returns_false_when_moveto_fails)
 {
-        EXPECT_CALL(controller, homing())
+        EXPECT_CALL(controller, configure_homing(_,_,_))
                 .Times(1)
                 .WillOnce(Return(true));
         EXPECT_CALL(controller, get_position(_))
@@ -233,7 +238,7 @@ TEST_F(oquam_tests, returns_false_when_moveto_fails)
 
 TEST_F(oquam_tests, returns_false_when_synchronize_fails)
 {
-        EXPECT_CALL(controller, homing())
+        EXPECT_CALL(controller, configure_homing(_,_,_))
                 .Times(1)
                 .WillOnce(Return(true));
         EXPECT_CALL(controller, get_position(_))
@@ -253,7 +258,7 @@ TEST_F(oquam_tests, test_oquam_moveto)
 {
         InSequence seq;
 
-        EXPECT_CALL(controller, homing())
+        EXPECT_CALL(controller, configure_homing(_,_,_))
                 .Times(1)
                 .WillOnce(Return(true));
         EXPECT_CALL(controller, get_position(_))
@@ -274,7 +279,7 @@ TEST_F(oquam_tests, test_oquam_moveto_2)
 {
         InSequence seq;
 
-        EXPECT_CALL(controller, homing())
+        EXPECT_CALL(controller, configure_homing(_,_,_))
                 .Times(1)
                 .WillOnce(Return(true));
         for (int i = 0; i < 2; i++) {
