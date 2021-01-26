@@ -11,6 +11,10 @@ Since the romi-rover uses CMake as it's build system, CMake is also used to down
 
 This ReadMe file gives a detailed description of the download / build / test functionality as well as configuration / build information.
 
+# Dependencies
+Before continuing this project assumes you have CMake, GCC and Build essentials installed.
+You'll also need to install the fluidsynth-dev package for development: **sudo apt install libfluidsynth-dev**
+
 ## Getting Started
 As you have probably already noticed, this repo contains a number of submodules. The libraries used in this project all have a a dependency on the google test suite
 as well as LCOV.
