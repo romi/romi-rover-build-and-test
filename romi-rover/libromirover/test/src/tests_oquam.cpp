@@ -309,7 +309,7 @@ TEST_F(oquam_tests, test_oquam_travel_empty_path)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.03, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         bool success = oquam.travel(path, 0.3);
@@ -322,7 +322,7 @@ TEST_F(oquam_tests, test_oquam_travel_square)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.03, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         v3 p0(0.1, 0.0, 0.0);
@@ -344,7 +344,7 @@ TEST_F(oquam_tests, test_oquam_travel_square_fast)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.03, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         v3 p0(0.1, 0.0, 0.0);
@@ -366,7 +366,7 @@ TEST_F(oquam_tests, test_oquam_travel_snake)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         int N = 10;
@@ -390,7 +390,7 @@ TEST_F(oquam_tests, test_oquam_travel_snake_2)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         int N = 11;
         Path path;
@@ -420,7 +420,7 @@ TEST_F(oquam_tests, test_oquam_travel_round_trip)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -437,7 +437,7 @@ TEST_F(oquam_tests, test_oquam_travel_collinear)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -455,7 +455,7 @@ TEST_F(oquam_tests, test_oquam_travel_large_displacement)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -474,7 +474,7 @@ TEST_F(oquam_tests, test_oquam_travel_small_displacement)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -493,7 +493,7 @@ TEST_F(oquam_tests, test_oquam_travel_tiny_displacement)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -512,7 +512,7 @@ TEST_F(oquam_tests, test_oquam_travel_zigzag)
         DefaultSetUp();
 
         Oquam oquam(controller, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug_session);
+        //oquam.set_file_cabinet(&debug_session);
 
         Path path;
         v3 p(0.0, 0.0, 0.0);
