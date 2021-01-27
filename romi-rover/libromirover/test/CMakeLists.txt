@@ -501,7 +501,7 @@ set(SRCS_OQUAM
   )
 
 add_executable(romi_rover_unit_tests_libromirover_oquam ${SRCS_OQUAM})
-target_link_libraries(romi_rover_unit_tests_libromirover_oquam rpp romirover romi gtest gmock)
+target_link_libraries(romi_rover_unit_tests_libromirover_oquam rpp romirover gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_libromirover_oquam

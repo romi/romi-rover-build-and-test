@@ -21,6 +21,7 @@ else()
 endif()
 
 # For now everything is debug. Set Compile options locally to maintain independent library builds.
+# TBD: add -Wconversion flag.
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror -Wno-unused-parameter ${PROJECT_SANITISE_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
