@@ -11,7 +11,7 @@ set(SRCS_OQUAMFACTORY
   )
 
 add_executable(romi_rover_unit_tests_oquam_factory ${SRCS_OQUAMFACTORY})
-target_link_libraries(romi_rover_unit_tests_oquam_factory rpp romirover romiserial gtest gmock)
+target_link_libraries(romi_rover_unit_tests_oquam_factory rpp romi romiserial gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_oquam_factory
@@ -52,7 +52,7 @@ add_test(
 #  )
 #
 #add_executable(romi_rover_hardware_tests_oquam ${SRCS_OQUAMSTEPPER})
-#target_link_libraries(romi_rover_hardware_tests_oquam rpp romirover romi gtest gmock)
+#target_link_libraries(romi_rover_hardware_tests_oquam rpp romi romi gtest gmock)
 
 
 
@@ -62,7 +62,7 @@ set(SRCS_HARDWARE
   )
 
 add_executable(romi_rover_hardware_tests_oquam ${SRCS_HARDWARE})
-target_link_libraries(romi_rover_hardware_tests_oquam rpp romirover romiserial gtest gmock)
+target_link_libraries(romi_rover_hardware_tests_oquam rpp romi romiserial gtest gmock)
 
 
 

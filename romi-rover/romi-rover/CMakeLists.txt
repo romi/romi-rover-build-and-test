@@ -9,6 +9,6 @@ set(SOURCES
   )
 
 add_executable(romi-rover ${SOURCES})
-target_link_libraries(romi-rover romirover)
+target_link_libraries(romi-rover romi)
 
 install(TARGETS romi-rover DESTINATION bin)

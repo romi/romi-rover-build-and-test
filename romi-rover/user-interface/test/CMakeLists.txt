@@ -11,7 +11,7 @@ set(SRCS_UIFACTORY
  )
 
 add_executable(romi_rover_unit_tests_userinterface_uifactory ${SRCS_UIFACTORY})
-target_link_libraries(romi_rover_unit_tests_userinterface_uifactory romirover romiserial rcompp rpp gtest gmock)
+target_link_libraries(romi_rover_unit_tests_userinterface_uifactory romi romiserial rcompp rpp gtest gmock)
 
 add_test(
     NAME romi_rover_unit_tests_userinterface_uifactory
