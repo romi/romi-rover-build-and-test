@@ -44,7 +44,6 @@ add_subdirectory(weeder2)
 add_subdirectory(user-interface)
 add_subdirectory(navigation2)
 add_subdirectory(oquam)
-add_subdirectory(arduino_libraries)
 add_subdirectory(romi-rover)
 
 #add_subdirectory(camera_recorder)

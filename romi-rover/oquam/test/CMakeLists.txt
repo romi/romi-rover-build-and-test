@@ -2,11 +2,6 @@
 cmake_minimum_required(VERSION 3.10)
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../../arduino_libraries/RomiSerial" )
-
-
-
-
 
 set(SRCS_OQUAMFACTORY
   src/tests_main.cpp
