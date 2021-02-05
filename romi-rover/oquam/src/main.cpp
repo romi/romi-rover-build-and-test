@@ -54,8 +54,8 @@ int main(int argc, char** argv)
                 r = config["oquam"]["stepper-settings"];
                 StepperSettings stepper_settings(r);
         
-                double slice_duration = config["oquam"]["path-slice-duration"];
-                double maximum_deviation = config["oquam"]["path-maximum-deviation"];
+                double slice_duration = (double) config["oquam"]["path-slice-duration"];
+                double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
 
                 CNCController& controller = factory.create_controller(options, config);
 

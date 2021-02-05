@@ -59,7 +59,7 @@ const char *get_config_file(Options& options)
 const char *get_camera_image_in_config(JsonCpp &config)
 {
         try {
-                return config["weeder"]["file-camera"]["image"];
+                return (const char *)config["weeder"]["file-camera"]["image"];
                 
         } catch (JSONError& je) {
                 r_err("get_camera_image_in_config: Failed to get value "
@@ -84,7 +84,7 @@ Camera *instantiate_file_camera(Options &options, JsonCpp &config)
 const char *get_camera_device_in_config(JsonCpp &config)
 {
         try {
-                return config["ports"]["usb-camera"]["port"];
+                return (const char *)config["ports"]["usb-camera"]["port"];
                 
         } catch (JSONError& je) {
                 r_err("get_camera_device_in_config: Failed to get value "
@@ -105,8 +105,8 @@ Camera *instantiate_usb_camera(Options &options, JsonCpp &config)
 {
         try {
                 const char *device = get_camera_device(options, config);
-                double width = config["weeder"]["usb-camera"]["width"];
-                double height = config["weeder"]["usb-camera"]["height"];
+                double width = (double) config["weeder"]["usb-camera"]["width"];
+                double height = (double) config["weeder"]["usb-camera"]["height"];
                 return new USBCamera(device, (size_t) width, (size_t) height);
                 
         } catch (JSONError& je) {
@@ -133,7 +133,7 @@ Camera *instantiate_camera(const char *camera_class, Options &options, JsonCpp &
 const char *get_camera_class(Options &options, JsonCpp &config)
 {
         try {
-                return config["weeder"]["camera-classname"];
+                return (const char *) config["weeder"]["camera-classname"];
                 
         } catch (JSONError& je) {
                 r_err("get_camera_class: Failed to get value "
@@ -151,7 +151,7 @@ Camera *create_camera(Options &options, JsonCpp &config)
 const char *get_cnc_class(Options &options, JsonCpp &config)
 {
         try {
-                return config["weeder"]["cnc-classname"];
+                return (const char *) config["weeder"]["cnc-classname"];
                 
         } catch (JSONError& je) {
                 r_err("get_cnc_class: Failed to get value "
@@ -222,8 +222,8 @@ int main(int argc, char** argv)
                                             "weeder");
 
                 
-                double z0 = config["weeder"]["z0"];
-                double speed = config["weeder"]["speed"];
+                double z0 = (double) config["weeder"]["z0"];
+                double speed = (double) config["weeder"]["speed"];
                 DefaultWeeder weeder(*camera, pipeline, *cnc, z0, speed, session);
                 WeederAdaptor adaptor(weeder);
                 RPCServer weeder_server(adaptor, "weeder", "weeder");

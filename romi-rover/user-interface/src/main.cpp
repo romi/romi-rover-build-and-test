@@ -46,7 +46,7 @@ using namespace romi;
 const char *get_sound_font_in_config(JsonCpp& config)
 {
         try {
-                return config["user-interface"]["fluid-sounds"]["soundfont"];
+                return (const char *)config["user-interface"]["fluid-sounds"]["soundfont"];
                 
         } catch (JSONError& je) {
                 r_err("FluidSoundNotification: Failed to read the config: %s",

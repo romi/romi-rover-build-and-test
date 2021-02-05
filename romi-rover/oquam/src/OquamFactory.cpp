@@ -60,7 +60,7 @@ namespace romi {
         {
                 const char *controller_classname = 0;
                 try {
-                        controller_classname = config["oquam"]["controller-classname"];
+                        controller_classname = (const char *) config["oquam"]["controller-classname"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
@@ -117,7 +117,7 @@ namespace romi {
         {
                 const char *device_name = 0;
                 try {
-                        device_name = config["ports"]["oquam"]["port"];
+                        device_name = (const char *) config["ports"]["oquam"]["port"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "

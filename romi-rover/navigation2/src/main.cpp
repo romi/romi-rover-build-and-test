@@ -42,7 +42,7 @@ const char *get_brush_motor_device_in_config(JsonCpp& config)
 {
         const char *brush_motor_device = 0;
         try {
-                brush_motor_device = config["ports"]["brush-motor-driver"]["port"];
+                brush_motor_device = (const char *)config["ports"]["brush-motor-driver"]["port"];
                         
         } catch (JSONError &je) {
                 r_warn("Failed to get the value for "

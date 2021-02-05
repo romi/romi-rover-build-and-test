@@ -68,7 +68,7 @@ namespace romi {
         {
                 const char *display_classname = 0;
                 try {
-                        display_classname = config["user-interface"]["display-classname"];
+                        display_classname = (const char *)config["user-interface"]["display-classname"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
@@ -125,7 +125,7 @@ namespace romi {
         {
                 const char *device_name = 0;
                 try {
-                        device_name = config["ports"]["crystal-display"]["port"];
+                        device_name = (const char *)config["ports"]["crystal-display"]["port"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
@@ -153,7 +153,7 @@ namespace romi {
         {
                 const char *classname = 0;
                 try {
-                        classname = config["user-interface"]["navigation-classname"];
+                        classname = (const char *)config["user-interface"]["navigation-classname"];
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
                                "user-interface.navigation-classname: %s", je.what());
@@ -202,9 +202,9 @@ namespace romi {
         
         const char *UIFactory::get_input_device_classname(JsonCpp &config)
         {
-                const char *classname = 0;
+                const char *classname = nullptr;
                 try {
-                        classname = config["user-interface"]["input-device-classname"];
+                        classname = (const char *) config["user-interface"]["input-device-classname"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
@@ -258,7 +258,7 @@ namespace romi {
         {
                 const char *joystick_device = 0;
                 try {
-                        joystick_device = config["ports"]["joystick"]["port"];
+                        joystick_device = (const char *) config["ports"]["joystick"]["port"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
@@ -279,9 +279,9 @@ namespace romi {
 
         const char *UIFactory::get_script_file_in_config(JsonCpp &config)
         {
-                const char *path = 0;
+                const char *path = nullptr;
                 try {
-                        path = config["user-interface"]["script-engine"]["script"];
+                        path =  (const char *) config["user-interface"]["script-engine"]["script"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
@@ -315,7 +315,7 @@ namespace romi {
         {
                 const char *classname = 0;
                 try {
-                        classname = config["user-interface"]["weeder-classname"];
+                        classname = (const char *) config["user-interface"]["weeder-classname"];
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
                                "user-interface.weeder-classname: %s", je.what());

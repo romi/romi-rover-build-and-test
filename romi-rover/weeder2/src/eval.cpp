@@ -59,8 +59,8 @@ int main(int argc, char** argv)
                 DebugWeedingSession session(options.get_value("session-directory"),
                                             "weeder");
 
-                double z0 = config["weeder"]["z0"];
-                double speed = config["weeder"]["speed"];
+                double z0 = (double) config["weeder"]["z0"];
+                double speed = (double) config["weeder"]["speed"];
                 DefaultWeeder weeder(camera, pipeline, cnc, z0, speed, session);
                 
                 weeder.hoe();

@@ -78,7 +78,7 @@ const char *get_script_file(Options& options, JsonCpp& config)
 {
         const char *file = options.get_value(RoverOptions::script);
         if (file == 0) {
-                file = config["user-interface"]["script-engine"]["script-file"];
+                file = (const char *) config["user-interface"]["script-engine"]["script-file"];
         }
         return file;
 }
@@ -87,7 +87,7 @@ const char *get_sound_font_file(Options& options, JsonCpp& config)
 {
         const char *file = options.get_value(RoverOptions::soundfont);
         if (file == 0)
-                file = config["user-interface"]["fluid-sounds"]["soundfont"];
+                file = (const char *) config["user-interface"]["fluid-sounds"]["soundfont"];
         return file;
 }
 
@@ -107,7 +107,7 @@ const char *get_camera_image(Options& options, JsonCpp& config)
 {
         const char *path = options.get_value(RoverOptions::camera_image);
         if (path == 0) {
-                path = config["weeder"]["file-camera"]["image"];
+                path = (const char *) config["weeder"]["file-camera"]["image"];
         }
         return path;
 }
@@ -115,7 +115,7 @@ const char *get_camera_image(Options& options, JsonCpp& config)
 const char *get_camera_device_in_config(JsonCpp& config)
 {
         try {
-                return config["ports"]["usb-camera"]["port"];
+                return (const char *) config["ports"]["usb-camera"]["port"];
                 
         } catch (JSONError& je) {
                 r_err("get_camera_device_in_config: Failed to get value "
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
                 JsonCpp config = JsonCpp::load(config_file);
 
                 // Display
-                const char *display_device = config["ports"]["crystal-display"]["port"];
+                const char *display_device = (const char *) config["ports"]["crystal-display"]["port"];
                 RSerial display_serial(display_device, 115200, 1);
                 RomiSerialClient display_romiserial(&display_serial, &display_serial);
                 CrystalDisplay display(display_romiserial);
@@ -158,13 +158,13 @@ int main(int argc, char** argv)
 
                 // Joystick
                 Linux linux;
-                const char *joystick_device = config["ports"]["joystick"]["port"];
+                const char *joystick_device = (const char *) config["ports"]["joystick"]["port"];
                 LinuxJoystick joystick(linux, joystick_device);
                 UIEventMapper joystick_event_mapper;
                 JoystickInputDevice input_device(joystick, joystick_event_mapper);
 
                 // CNC controller
-                const char *cnc_device = config["ports"]["oquam"]["port"];
+                const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
                 RSerial cnc_serial(cnc_device, 115200, 1);
                 RomiSerialClient cnc_romiserial(&cnc_serial, &cnc_serial);
                 StepperController cnc_controller(cnc_romiserial);
@@ -174,8 +174,8 @@ int main(int argc, char** argv)
                 CNCRange range(r);
                 JsonCpp s = config["oquam"]["stepper-settings"];
                 StepperSettings stepper_settings(s);        
-                double slice_duration = config["oquam"]["path-slice-duration"];
-                double maximum_deviation = config["oquam"]["path-maximum-deviation"];
+                double slice_duration = (double) config["oquam"]["path-slice-duration"];
+                double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
                 
                 Oquam oquam(cnc_controller, range,
                             stepper_settings.maximum_speed,
@@ -190,7 +190,7 @@ int main(int argc, char** argv)
 
                 // Camera
                 unique_ptr<Camera> camera;
-                const char *camera_classname = config["weeder"]["camera-classname"];
+                const char *camera_classname = (const char *) config["weeder"]["camera-classname"];
                 if (rstreq(camera_classname, FileCamera::ClassName)) {
                         const char *image_file = get_camera_image(options, config);
                         r_info("Loading image %s", image_file);
@@ -198,8 +198,8 @@ int main(int argc, char** argv)
                         
                 } else {
                         const char *camera_device = get_camera_device(options, config);
-                        double width = config["weeder"]["usb-camera"]["width"];
-                        double height = config["weeder"]["usb-camera"]["height"];
+                        double width = (double) config["weeder"]["usb-camera"]["width"];
+                        double height = (double) config["weeder"]["usb-camera"]["height"];
                         camera = make_unique<USBCamera>(camera_device, width, height);
                 }
                 
@@ -209,14 +209,14 @@ int main(int argc, char** argv)
                 IPipeline& pipeline = pipeline_factory.build(range, config);
 
                 // Weeder
-                double z0 = config["weeder"]["z0"];
-                double speed = config["weeder"]["speed"];
+                double z0 = (double) config["weeder"]["z0"];
+                double speed = (double) config["weeder"]["speed"];
                 DefaultWeeder weeder(*camera, pipeline, oquam, z0, speed, debug);
 
                 // Navigation
                 JsonCpp rover_settings = config["navigation"]["rover"];
                 NavigationSettings rover_config(rover_settings);
-                const char *driver_device = config["ports"]["brush-motor-driver"]["port"];
+                const char *driver_device = (const char *) config["ports"]["brush-motor-driver"]["port"];
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 RSerial driver_serial(driver_device, 115200, 1);
                 RomiSerialClient driver_romiserial(&driver_serial, &driver_serial);
