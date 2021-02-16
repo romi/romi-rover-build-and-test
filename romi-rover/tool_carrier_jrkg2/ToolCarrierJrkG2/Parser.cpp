@@ -162,6 +162,7 @@ bool Parser::process(char c)
                 break;
         case wait_digits_or_comma_or_bracket:
                 if (DIGIT(c)) {
+                    // TBD: Code duplicated in serial parser.
                         _tmpval = 10 * _tmpval + _sign * VALUE(c);
                         _state = wait_digits_or_comma_or_bracket;
                         if (_tmpval > 32767 || _tmpval < -32768)
