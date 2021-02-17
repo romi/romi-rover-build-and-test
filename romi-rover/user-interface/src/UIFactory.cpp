@@ -42,13 +42,11 @@ using namespace rcom;
 namespace romi {
         
         UIFactory::UIFactory()
-                : _serial(0)
+                : _serial()
         {}
         
         UIFactory::~UIFactory()
         {
-                if (_serial)
-                        delete _serial;
         }
         
         Display& UIFactory::create_display(Options &options, JsonCpp &config)
@@ -104,9 +102,8 @@ namespace romi {
         void UIFactory::instantiate_crystal_display(Options &options, JsonCpp &config)
         {
                 const char *device = get_crystal_display_device(options, config);
-                _serial = new RSerial(device, 115200, 1);
-                _romi_serial = unique_ptr<RomiSerialClient>(new RomiSerialClient(_serial,
-                                                                                 _serial));
+                _serial = make_shared<RSerial>(device, 115200, 1);
+                _romi_serial = std::make_unique<RomiSerialClient>(_serial,_serial);
                 _romi_serial->set_debug(true);
                 _display = std::unique_ptr<Display>(new CrystalDisplay(*_romi_serial));
         }

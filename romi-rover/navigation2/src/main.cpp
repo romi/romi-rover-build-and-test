@@ -90,8 +90,8 @@ int main(int argc, char** argv)
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 
                 const char *device = get_brush_motor_device(options, config);
-                RSerial serial(device, 115200, 1);
-                RomiSerialClient romi_serial(&serial, &serial);
+                std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
+                RomiSerialClient romi_serial(serial, serial);
                 romi_serial.set_debug(true);
                 
                 BrushMotorDriver driver(romi_serial,

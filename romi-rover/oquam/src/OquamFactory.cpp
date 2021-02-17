@@ -33,13 +33,10 @@ using namespace std;
 namespace romi {
         
         OquamFactory::OquamFactory()
-                : _serial(0)
         {}
         
         OquamFactory::~OquamFactory()
         {
-                if (_serial)
-                        delete _serial;
         }
         
         CNCController& OquamFactory::create_controller(Options &options,
@@ -97,10 +94,10 @@ namespace romi {
                                                           JsonCpp &config)
         {
                 const char *device = get_stepper_controller_device(options, config);
-                _serial = new RSerial(device, 115200, 1);
-                _romi_serial = unique_ptr<RomiSerialClient>(new RomiSerialClient(_serial, _serial));
+                _serial = std::make_shared<RSerial>(device, 115200, 1);
+                _romi_serial = std::make_unique<RomiSerialClient>(_serial, _serial);
                 _romi_serial->set_debug(true);
-                _controller = std::unique_ptr<CNCController>(new StepperController(*_romi_serial));
+                _controller = std::make_unique<StepperController>(*_romi_serial);
         }
 
         const char *OquamFactory::get_stepper_controller_device(Options &options,

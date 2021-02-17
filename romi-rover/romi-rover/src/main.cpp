@@ -151,8 +151,8 @@ int main(int argc, char** argv)
 
                 // Display
                 const char *display_device = (const char *) config["ports"]["crystal-display"]["port"];
-                RSerial display_serial(display_device, 115200, 1);
-                RomiSerialClient display_romiserial(&display_serial, &display_serial);
+                std::shared_ptr<RSerial>display_serial = std::make_shared<RSerial>(display_device, 115200, 1);
+                RomiSerialClient display_romiserial(display_serial, display_serial);
                 CrystalDisplay display(display_romiserial);
                 display.show(0, "Initializing");
 
@@ -165,8 +165,8 @@ int main(int argc, char** argv)
 
                 // CNC controller
                 const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
-                RSerial cnc_serial(cnc_device, 115200, 1);
-                RomiSerialClient cnc_romiserial(&cnc_serial, &cnc_serial);
+                std::shared_ptr<RSerial>cnc_serial = std::make_shared<RSerial>(cnc_device, 115200, 1);
+                RomiSerialClient cnc_romiserial(cnc_serial, cnc_serial);
                 StepperController cnc_controller(cnc_romiserial);
 
                 // CNC
@@ -218,8 +218,8 @@ int main(int argc, char** argv)
                 NavigationSettings rover_config(rover_settings);
                 const char *driver_device = (const char *) config["ports"]["brush-motor-driver"]["port"];
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
-                RSerial driver_serial(driver_device, 115200, 1);
-                RomiSerialClient driver_romiserial(&driver_serial, &driver_serial);
+                std::shared_ptr<RSerial>driver_serial = std::make_shared<RSerial>(driver_device, 115200, 1);
+                RomiSerialClient driver_romiserial(driver_serial, driver_serial);
                 BrushMotorDriver driver(driver_romiserial, driver_settings,
                                         rover_config.encoder_steps,
                                         rover_config.max_revolutions_per_sec);
