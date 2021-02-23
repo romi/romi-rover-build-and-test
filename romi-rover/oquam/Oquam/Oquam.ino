@@ -60,7 +60,7 @@ void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 const static MessageHandler handlers[] = {
         { 'm', 4, false, handle_moveto },
         { 'M', 4, false, handle_move },
-        { 'V', 4, false, handle_moveat },
+        { 'V', 3, false, handle_moveat },
         { 'p', 0, false, handle_pause },
         { 'c', 0, false, handle_continue },
         { 'r', 0, false, handle_reset },
