@@ -28,13 +28,14 @@ protected:
 
 TEST_F(oquamfactory_tests, create_controller_fails_when_missing_classname)
 {
-        GetOpt getopt(0, 0); 
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'oquam': {}}");
         
         OquamFactory factory;
 
         try {
-                factory.create_controller(getopt, config);
+                factory.create_controller(options, config);
                 FAIL() << "Expected a runtime_error";
                 
         } catch (std::runtime_error& re) {
@@ -46,14 +47,14 @@ TEST_F(oquamfactory_tests, create_controller_fails_when_missing_classname)
 
 TEST_F(oquamfactory_tests, create_controller_fails_unknown_classname_1)
 {
-        static Option option = { "oquam-controller-classname", true, 0, "foo"};
-        GetOpt getopt(&option, 1); 
+        std::vector<Option> options_list = {{ "oquam-controller-classname", true, 0, "foo"}};
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'oquam': {}}");
         
         OquamFactory factory;
 
         try {
-                factory.create_controller(getopt, config);
+                factory.create_controller(options, config);
                 FAIL() << "Expected a runtime_error";
                 
         } catch (std::runtime_error& re) {
@@ -65,13 +66,14 @@ TEST_F(oquamfactory_tests, create_controller_fails_unknown_classname_1)
 
 TEST_F(oquamfactory_tests, create_controller_fails_unknown_classname_2)
 {
-        GetOpt getopt(0, 0); 
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'oquam': {'controller-classname': 'bar'}}");
         
         OquamFactory factory;
 
         try {
-                factory.create_controller(getopt, config);
+                factory.create_controller(options, config);
                 FAIL() << "Expected a runtime_error";
                 
         } catch (std::runtime_error& re) {
@@ -83,13 +85,14 @@ TEST_F(oquamfactory_tests, create_controller_fails_unknown_classname_2)
 
 TEST_F(oquamfactory_tests, successfully_create_fake_controller)
 {
-        GetOpt getopt(0, 0); 
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::construct("{'oquam': {'controller-classname': '%s'}}",
                                             FakeCNCController::ClassName);
         OquamFactory factory;
 
         try {
-                factory.create_controller(getopt, config);
+                factory.create_controller(options, config);
                 
         } catch (std::runtime_error& re) {
                 FAIL() << "Expected successful creation";
@@ -100,15 +103,15 @@ TEST_F(oquamfactory_tests, successfully_create_fake_controller)
 
 TEST_F(oquamfactory_tests, create_stepper_controller_fails_when_missing_device)
 {
-        static Option option = { "oquam-controller-classname", true, 0,
-                                 StepperController::ClassName };
-        GetOpt getopt(&option, 1); 
+        std::vector<Option> options_list = {{ "oquam-controller-classname", true, 0,
+                                 StepperController::ClassName }};
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'oquam': {}}");
         
         OquamFactory factory;
 
         try {
-                factory.create_controller(getopt, config);
+                factory.create_controller(options, config);
                 FAIL() << "Expected a runtime_error";
                 
         } catch (std::runtime_error& re) {
@@ -120,15 +123,15 @@ TEST_F(oquamfactory_tests, create_stepper_controller_fails_when_missing_device)
 
 TEST_F(oquamfactory_tests, create_stepper_controller_fails_when_bad_device)
 {
-        static Option option = { "oquam-controller-classname", true, 0,
-                                 StepperController::ClassName };
-        GetOpt getopt(&option, 1); 
+        std::vector<Option> options_list = {{ "oquam-controller-classname", true, 0,
+                                 StepperController::ClassName }};
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'ports':{'oquam':{'port':'/foo/bar'}}}");
         
         OquamFactory factory;
 
         try {
-                factory.create_controller(getopt, config);
+                factory.create_controller(options, config);
                 FAIL() << "Expected a runtime_error";
                 
         } catch (std::runtime_error& re) {

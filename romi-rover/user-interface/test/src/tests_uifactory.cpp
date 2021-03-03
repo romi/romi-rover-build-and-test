@@ -33,7 +33,8 @@ protected:
 
 TEST_F(uifactory_tests, create_display_uses_config)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::construct("{'user-interface': {'display-classname': '%s'}}",
                                          FakeDisplay::ClassName);
         
@@ -48,7 +49,8 @@ TEST_F(uifactory_tests, create_display_uses_config)
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_display_classname_1)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{}");
         
         try {
@@ -63,7 +65,8 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_display_classname_1)
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_display_classname_2)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'user-interface': {'display-classname': 'foo'}}");
         
         try {
@@ -78,7 +81,8 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_display_classname_2)
 
 TEST_F(uifactory_tests, throws_exception_on_missing_crystal_display_device)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::construct("{'user-interface': "
                                             "{'display-classname': '%s'}}",
                                             CrystalDisplay::ClassName);
@@ -95,8 +99,8 @@ TEST_F(uifactory_tests, throws_exception_on_missing_crystal_display_device)
 
 TEST_F(uifactory_tests, throws_exception_on_invalid_crystal_display_device_1)
 {
-        Option option = { "display-device", true, "/foo/bar", "" };
-        GetOpt options(&option, 1);
+        std::vector<Option> options_list = { {"display-device", true, "/foo/bar", ""} };
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::construct("{'user-interface': "
                                             "{'display-classname': '%s'}}",
                                             CrystalDisplay::ClassName);
@@ -113,7 +117,8 @@ TEST_F(uifactory_tests, throws_exception_on_invalid_crystal_display_device_1)
 
 TEST_F(uifactory_tests, throws_exception_on_invalid_crystal_display_device_2)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::construct("{'user-interface': "
                                             "{'display-classname': '%s'}, "
                                             "'ports': {'crystal-display': "
@@ -132,7 +137,8 @@ TEST_F(uifactory_tests, throws_exception_on_invalid_crystal_display_device_2)
 
 TEST_F(uifactory_tests, create_navigation_uses_config)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::construct("{'user-interface': "
                                             "{'navigation-classname': '%s'}}",
                                             FakeNavigation::ClassName);
@@ -148,7 +154,8 @@ TEST_F(uifactory_tests, create_navigation_uses_config)
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_navigation_type_1)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
         
         try {
@@ -163,7 +170,8 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_navigation_type_1)
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_navigation_type_2)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'user-interface': "
                                         "{'navigation-classname': 'foo'}}");
         
@@ -179,7 +187,8 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_navigation_type_2)
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_remote_navigation_server_1)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::construct("{'user-interface': "
                                             "{'navigation-classname': '%s'}}",
                                             RemoteNavigation::ClassName);
@@ -196,7 +205,8 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_remote_navigation_server_1)
 
 TEST_F(uifactory_tests, create_input_device_uses_config)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::construct("{'user-interface': "
                                             "{'input-device-classname': '%s'}}",
                                             FakeInputDevice::ClassName);
@@ -212,7 +222,8 @@ TEST_F(uifactory_tests, create_input_device_uses_config)
 
 TEST_F(uifactory_tests, throws_exception_on_missing_input_type)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
         
         try {
@@ -227,7 +238,8 @@ TEST_F(uifactory_tests, throws_exception_on_missing_input_type)
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_input_type)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'user-interface': {'input-device-classname':'foo'}}");
         
         try {
@@ -242,8 +254,8 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_input_type)
 
 TEST_F(uifactory_tests, throws_exception_on_unknown_joystick_device)
 {
-        Option option = { "input-device-classname", true, JoystickInputDevice::ClassName, "" };
-        GetOpt options(&option, 1);
+        std::vector<Option> options_list = {{ "input-device-classname", true, JoystickInputDevice::ClassName, "" }};
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
         
         try {
@@ -258,8 +270,8 @@ TEST_F(uifactory_tests, throws_exception_on_unknown_joystick_device)
 
 TEST_F(uifactory_tests, throws_exception_on_invalid_joystick_device)
 {
-        Option option = {"input-device-classname",true, JoystickInputDevice::ClassName, ""};
-        GetOpt options(&option, 1);
+        std::vector<Option> options_list = {{"input-device-classname",true, JoystickInputDevice::ClassName, ""}};
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'user-interface': {}, 'ports': "
                                         "{'joystick':{'port':'/foo/bar'}}}");
         
@@ -275,8 +287,8 @@ TEST_F(uifactory_tests, throws_exception_on_invalid_joystick_device)
 
 TEST_F(uifactory_tests, successfully_uses_script_file_from_options)
 {
-        Option option = { RoverOptions::script, true, "/foo/bar", "" };
-        GetOpt options(&option, 1);
+        std::vector<Option> options_list = {{ RoverOptions::script, true, "/foo/bar", "" }};
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
         
         try {
@@ -292,7 +304,8 @@ TEST_F(uifactory_tests, successfully_uses_script_file_from_options)
 
 TEST_F(uifactory_tests, successfully_uses_script_file_from_config)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::construct("{'user-interface': {'script-engine': "
                                             "{'%s':'/bar/foo'}}}",
                                             RoverOptions::script);
@@ -310,7 +323,8 @@ TEST_F(uifactory_tests, successfully_uses_script_file_from_config)
 
 TEST_F(uifactory_tests, throws_exception_on_missing_script_file)
 {
-        GetOpt options(0, 0);
+        std::vector<Option> options_list;
+        GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
         
         try {
