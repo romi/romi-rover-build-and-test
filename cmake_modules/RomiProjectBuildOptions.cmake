@@ -20,9 +20,9 @@ endif()
 # Ideal list of warnings! Add gradually!
 #"-Wall -Wextra -Wpedantic -Werror -Wmissing-include-dirs -Wconversion -Wsign-conversion -Weffc++ -Wuseless-cast -Wzero-as-null-pointer-constant -Wswitch-default -Wswitch-enum -Winit-self -Waddress -Wlogical-op -Wpointer-arith -Wformat=2)
 #set(COMMON_COMPILATION_FLAGS "-Wall -Wextra -Wpedantic -Werror -Wmissing-include-dirs -Wconversion -Wsign-conversion -Wzero-as-null-pointer-constant -Wswitch-default -Winit-self -Waddress -Wlogical-op -Wpointer-arith -Wformat=2")
-set(COMMON_COMPILATION_FLAGS "-Wall -Wextra -Wpedantic -Werror -Wmissing-include-dirs -Wconversion -Wsign-conversion -Wzero-as-null-pointer-constant -Wswitch-default -Winit-self -Waddress -Wlogical-op -Wpointer-arith -Wformat=2")
+set(COMMON_COMPILATION_FLAGS "-Wall -Wextra -Wpedantic -Werror -Wmissing-include-dirs -Wconversion -Wsign-conversion -Wswitch-default -Wswitch-enum -Winit-self -Waddress -Wlogical-op -Wpointer-arith -Wformat=2")
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS "${COMMON_COMPILATION_FLAGS} -Wuseless-cast -Weffc++ ${PROJECT_SANITISE_FLAGS}")
+set(CMAKE_CXX_FLAGS "${COMMON_COMPILATION_FLAGS} -Wuseless-cast -Weffc++ -Wzero-as-null-pointer-constant ${PROJECT_SANITISE_FLAGS}")
 set(CMAKE_C_FLAGS "${COMMON_COMPILATION_FLAGS} ${PROJECT_SANITISE_FLAGS}")
 
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PROJECT_SANITISE_FLAGS}")
