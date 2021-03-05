@@ -32,7 +32,7 @@ using namespace std;
 
 namespace romi {
         
-        OquamFactory::OquamFactory()
+        OquamFactory::OquamFactory() : _serial(), _romi_serial(), _controller()
         {}
         
         OquamFactory::~OquamFactory()

@@ -60,7 +60,7 @@ namespace romi {
                 std::unique_ptr<Display> _display;
                 std::unique_ptr<Navigation> _navigation;
                 std::unique_ptr<InputDevice> _input_device;
-                std::unique_ptr<Notifications> _notifications;
+            //    std::unique_ptr<Notifications> _notifications;
                 std::unique_ptr<Weeder> _weeder;
                 
 

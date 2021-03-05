@@ -42,7 +42,8 @@ using namespace rcom;
 namespace romi {
         
         UIFactory::UIFactory()
-                : _serial()
+                : _linux(), _joystick_event_mapper(), _serial(), _romi_serial(), _navigation_client(), _weeder_client(),
+                  _joystick(), _display(), _navigation(), _input_device(), _weeder()
         {}
         
         UIFactory::~UIFactory()
