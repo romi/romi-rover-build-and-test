@@ -47,7 +47,7 @@ TEST_F(oquamfactory_tests, create_controller_fails_when_missing_classname)
 
 TEST_F(oquamfactory_tests, create_controller_fails_unknown_classname_1)
 {
-        std::vector<Option> options_list = {{ "oquam-controller-classname", true, 0, "foo"}};
+        std::vector<Option> options_list = {{ "oquam-controller-classname", true, nullptr, "foo"}};
         GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'oquam': {}}");
         
@@ -103,7 +103,7 @@ TEST_F(oquamfactory_tests, successfully_create_fake_controller)
 
 TEST_F(oquamfactory_tests, create_stepper_controller_fails_when_missing_device)
 {
-        std::vector<Option> options_list = {{ "oquam-controller-classname", true, 0,
+        std::vector<Option> options_list = {{ "oquam-controller-classname", true, nullptr,
                                  StepperController::ClassName }};
         GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'oquam': {}}");
@@ -123,7 +123,7 @@ TEST_F(oquamfactory_tests, create_stepper_controller_fails_when_missing_device)
 
 TEST_F(oquamfactory_tests, create_stepper_controller_fails_when_bad_device)
 {
-        std::vector<Option> options_list = {{ "oquam-controller-classname", true, 0,
+        std::vector<Option> options_list = {{ "oquam-controller-classname", true, nullptr,
                                  StepperController::ClassName }};
         GetOpt options(options_list);
         JsonCpp config = JsonCpp::parse("{'ports':{'oquam':{'port':'/foo/bar'}}}");

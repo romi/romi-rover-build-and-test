@@ -24,7 +24,7 @@ static inline double sign(double v)
 const char *get_config_file(Options& options)
 {
         const char *file = options.get_value(RoverOptions::config);
-        if (file == 0) {
+        if (file == nullptr) {
                 throw std::runtime_error("No configuration file was given (can't run without one...).");
         }
         return file;

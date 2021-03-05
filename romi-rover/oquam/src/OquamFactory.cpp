@@ -42,7 +42,7 @@ namespace romi {
         CNCController& OquamFactory::create_controller(Options &options,
                                                        JsonCpp &config)
         {
-                if (_controller == 0)
+                if (_controller == nullptr)
                         instantiate_controller(options, config);
                 return *_controller;
         }
@@ -55,7 +55,7 @@ namespace romi {
         
         const char *OquamFactory::get_controller_classname_in_config(JsonCpp &config)
         {
-                const char *controller_classname = 0;
+                const char *controller_classname = nullptr;
                 try {
                         controller_classname = (const char *) config["oquam"]["controller-classname"];
                         
@@ -104,7 +104,7 @@ namespace romi {
                                                                 JsonCpp &config)
         {
                 const char *device_name = options.get_value(RoverOptions::cnc_device);
-                if (device_name == 0) {
+                if (device_name == nullptr) {
                         device_name = get_stepper_controller_device_in_config(config);
                 }
                 return device_name;
@@ -112,7 +112,7 @@ namespace romi {
         
         const char *OquamFactory::get_stepper_controller_device_in_config(JsonCpp &config)
         {
-                const char *device_name = 0;
+                const char *device_name = nullptr;
                 try {
                         device_name = (const char *) config["ports"]["oquam"]["port"];
                         

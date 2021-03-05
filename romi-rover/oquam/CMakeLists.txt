@@ -4,9 +4,6 @@ project(oquam)
 set(oquam_VERSION_MAJOR 0)
 set(oquam_VERSION_MINOR 1)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_BUILD_TYPE Debug)
-
 set(SOURCES
   src/main.cpp
   src/OquamFactory.cpp

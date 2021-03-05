@@ -58,7 +58,7 @@ const char *get_sound_font_in_config(JsonCpp& config)
 const char *get_sound_font_file(Options& options, JsonCpp& config)
 {
         const char *file = options.get_value("notifications-sound-font");
-        if (file == 0)
+        if (file == nullptr)
                 file = get_sound_font_in_config(config);
 
         return file;
@@ -67,7 +67,7 @@ const char *get_sound_font_file(Options& options, JsonCpp& config)
 const char *get_config_file(Options& options)
 {
         const char *file = options.get_value(RoverOptions::config);
-        if (file == 0) {
+        if (file == nullptr) {
                 throw std::runtime_error("No configuration file was given (can't run without one...).");
         }
         return file;

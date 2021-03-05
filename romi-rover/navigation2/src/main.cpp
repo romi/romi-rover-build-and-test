@@ -40,7 +40,7 @@ using namespace rcom;
 
 const char *get_brush_motor_device_in_config(JsonCpp& config)
 {
-        const char *brush_motor_device = 0;
+        const char *brush_motor_device = nullptr;
         try {
                 brush_motor_device = (const char *)config["ports"]["brush-motor-driver"]["port"];
                         
@@ -55,7 +55,7 @@ const char *get_brush_motor_device_in_config(JsonCpp& config)
 const char *get_brush_motor_device(Options& options, JsonCpp& config)
 {
         const char *brush_motor_device = options.get_value(RoverOptions::navigation_device);
-        if (brush_motor_device == 0) {
+        if (brush_motor_device == nullptr) {
                 brush_motor_device = get_brush_motor_device_in_config(config);
         }
         return brush_motor_device;
@@ -64,7 +64,7 @@ const char *get_brush_motor_device(Options& options, JsonCpp& config)
 const char *get_config_file(Options& options)
 {
         const char *file = options.get_value(RoverOptions::config);
-        if (file == 0) {
+        if (file == nullptr) {
                 throw std::runtime_error("No configuration file was given (can't run without one...).");
         }
         return file;
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
                 
                 BrushMotorDriver driver(romi_serial,
                                         driver_settings,
-                                        rover.encoder_steps,
+                                        static_cast<int>(rover.encoder_steps),
                                         rover.max_revolutions_per_sec);
 
                 DefaultNavigation navigation(driver, rover);

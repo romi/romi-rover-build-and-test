@@ -51,7 +51,7 @@ namespace romi {
         
         Display& UIFactory::create_display(Options &options, JsonCpp &config)
         {
-                if (_display == 0)
+                if (_display == nullptr)
                         instantiate_display(options, config);
                 return *_display;
         }
@@ -64,7 +64,7 @@ namespace romi {
         
         const char *UIFactory::get_display_classname(JsonCpp &config)
         {
-                const char *display_classname = 0;
+                const char *display_classname = nullptr;
                 try {
                         display_classname = (const char *)config["user-interface"]["display-classname"];
                         
@@ -112,7 +112,7 @@ namespace romi {
                                                           JsonCpp &config)
         {
                 const char *device_name = options.get_value("display-device");
-                if (device_name == 0) {
+                if (device_name == nullptr) {
                         device_name = get_crystal_display_device_in_config(config);
                 }
                 return device_name;
@@ -120,7 +120,7 @@ namespace romi {
         
         const char *UIFactory::get_crystal_display_device_in_config(JsonCpp &config)
         {
-                const char *device_name = 0;
+                const char *device_name = nullptr;
                 try {
                         device_name = (const char *)config["ports"]["crystal-display"]["port"];
                         
@@ -134,7 +134,7 @@ namespace romi {
         
         Navigation& UIFactory::create_navigation(Options &options, JsonCpp &config)
         {
-                if (_navigation == 0) {
+                if (_navigation == nullptr) {
                         instantiate_navigation(options, config);
                 }
                 return *_navigation;
@@ -148,7 +148,7 @@ namespace romi {
         
         const char *UIFactory::get_navigation_classname(JsonCpp &config)
         {
-                const char *classname = 0;
+                const char *classname = nullptr;
                 try {
                         classname = (const char *)config["user-interface"]["navigation-classname"];
                 } catch (JSONError &je) {
@@ -182,7 +182,7 @@ namespace romi {
                 _navigation = unique_ptr<Navigation>(new FakeNavigation());
         }
 
-        void UIFactory::instantiate_remote_navigation(Options &options, JsonCpp &config)
+        void UIFactory::instantiate_remote_navigation(__attribute__((unused))Options &options, __attribute__((unused))JsonCpp &config)
         {
                 _navigation_client = unique_ptr<RPCClient>(new RPCClient("navigation",
                                                                          "navigation",
@@ -245,7 +245,7 @@ namespace romi {
         const char *UIFactory::get_joystick_device(Options& options, JsonCpp& config)
         {
                 const char *joystick_device = options.get_value("joystick-device");
-                if (joystick_device == 0) {
+                if (joystick_device == nullptr) {
                         joystick_device = get_joystick_device_in_config(config);
                 }
                 return joystick_device;
@@ -253,7 +253,7 @@ namespace romi {
 
         const char *UIFactory::get_joystick_device_in_config(JsonCpp& config)
         {
-                const char *joystick_device = 0;
+                const char *joystick_device = nullptr;
                 try {
                         joystick_device = (const char *) config["ports"]["joystick"]["port"];
                         
@@ -268,7 +268,7 @@ namespace romi {
         const char *UIFactory::get_script_file(Options &options, JsonCpp &config)
         {
                 const char *path = options.get_value(RoverOptions::script);
-                if (path == 0) {
+                if (path == nullptr) {
                         path = get_script_file_in_config(config);
                 }
                 return path;
@@ -296,7 +296,7 @@ namespace romi {
 
         Weeder& UIFactory::create_weeder(Options &options, JsonCpp &config)
         {
-                if (_weeder == 0) {
+                if (_weeder == nullptr) {
                         instantiate_weeder(options, config);
                 }
                 return *_weeder;
@@ -310,7 +310,7 @@ namespace romi {
         
         const char *UIFactory::get_weeder_classname(JsonCpp &config)
         {
-                const char *classname = 0;
+                const char *classname = nullptr;
                 try {
                         classname = (const char *) config["user-interface"]["weeder-classname"];
                 } catch (JSONError &je) {
@@ -344,7 +344,7 @@ namespace romi {
                 _weeder = unique_ptr<Weeder>(new FakeWeeder());
         }
 
-        void UIFactory::instantiate_remote_weeder(Options &options, JsonCpp &config)
+        void UIFactory::instantiate_remote_weeder(__attribute__((unused))Options &options, __attribute__((unused))JsonCpp &config)
         {
                 _weeder_client = unique_ptr<RPCClient>(new RPCClient("weeder",
                                                                      "weeder", 60.0));

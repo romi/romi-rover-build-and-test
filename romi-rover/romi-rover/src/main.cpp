@@ -65,10 +65,11 @@ using namespace rcom;
 using namespace romi;
 
 
+// TBD: Duplicated functions here and in other main.cpp files.
 const char *get_config_file(Options& options)
 {
         const char *file = options.get_value(RoverOptions::config);
-        if (file == 0) {
+        if (file == nullptr) {
                 throw std::runtime_error("No configuration file was given (can't run without one...).");
         }
         return file;
@@ -77,7 +78,7 @@ const char *get_config_file(Options& options)
 const char *get_script_file(Options& options, JsonCpp& config)
 {
         const char *file = options.get_value(RoverOptions::script);
-        if (file == 0) {
+        if (file == nullptr) {
                 file = (const char *) config["user-interface"]["script-engine"]["script-file"];
         }
         return file;
@@ -86,15 +87,15 @@ const char *get_script_file(Options& options, JsonCpp& config)
 const char *get_sound_font_file(Options& options, JsonCpp& config)
 {
         const char *file = options.get_value(RoverOptions::soundfont);
-        if (file == 0)
+        if (file == nullptr)
                 file = (const char *) config["user-interface"]["fluid-sounds"]["soundfont"];
         return file;
 }
 
-const char *get_session_directory(Options& options, JsonCpp& config)
+const char *get_session_directory(Options& options, __attribute__((unused))JsonCpp& config)
 {
         const char *dir = options.get_value(RoverOptions::session_directory);
-        if (dir == 0) {
+        if (dir == nullptr) {
                 // TODO: to be finalized: get seesion dir from config
                 // file, add the current date to the path, and create
                 // a new directory.
@@ -106,7 +107,7 @@ const char *get_session_directory(Options& options, JsonCpp& config)
 const char *get_camera_image(Options& options, JsonCpp& config)
 {
         const char *path = options.get_value(RoverOptions::camera_image);
-        if (path == 0) {
+        if (path == nullptr) {
                 path = (const char *) config["weeder"]["file-camera"]["image"];
         }
         return path;
@@ -127,7 +128,7 @@ const char *get_camera_device_in_config(JsonCpp& config)
 const char *get_camera_device(Options& options, JsonCpp& config)
 {
         const char *device = options.get_value(RoverOptions::camera_device);
-        if (device == 0)
+        if (device == nullptr)
                 device = get_camera_device_in_config(config);
         return device;
 }
@@ -221,7 +222,7 @@ int main(int argc, char** argv)
                 std::shared_ptr<RSerial>driver_serial = std::make_shared<RSerial>(driver_device, 115200, 1);
                 RomiSerialClient driver_romiserial(driver_serial, driver_serial);
                 BrushMotorDriver driver(driver_romiserial, driver_settings,
-                                        rover_config.encoder_steps,
+                                        static_cast<int>(rover_config.encoder_steps),
                                         rover_config.max_revolutions_per_sec);
                 DefaultNavigation navigation(driver, rover_config);
 

@@ -1,20 +1,23 @@
 cmake_minimum_required(VERSION 3.10)
 project(romi-rover-build-and-test)
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-# Since submodules are forced to debug we need to make sure google tools are also debug for now.
-# This stops a build error of you don't specify builld type debug cmake -DCMAKE_BUILD_TYPE=DEBUG ..
-set(CMAKE_BUILD_TYPE Debug)
-
 ############################################################
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+###########################################################
+# Everything debug for now this needs to be addressed.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_BUILD_TYPE Debug)
+
+set(COMMON_COMPILATION_FLAGS "-Wall -Wextra -Wpedantic -Werror")
+set(CMAKE_CXX_FLAGS "${COMMON_COMPILATION_FLAGS}")
+set(CMAKE_C_FLAGS "${COMMON_COMPILATION_FLAGS}")
+
+set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
 # Options.
 #Build tests by default. We want run tests whether we are developing or building a release. I mean... why wouldn't you? :)
@@ -109,6 +112,7 @@ endif()
 
 ######################################
 
+include(${CMAKE_MODULES_DIRECTORY}/RomiProjectBuildOptions.cmake)
 add_subdirectory(libr)
 add_subdirectory(rcom)
 add_subdirectory(libromi)

@@ -43,14 +43,13 @@
 using namespace romi;
 using namespace rcom;
 
-static CNC *cnc = 0;
-static RPCClient *rpc_client = 0;
-static Camera *camera = 0;
+// TBD: Move scope.
+static RPCClient *rpc_client = nullptr;
 
 const char *get_config_file(Options& options)
 {
         const char *file = options.get_value(RoverOptions::config);
-        if (file == 0) {
+        if (file == nullptr) {
                 throw std::runtime_error("No configuration file was given (can't run without one...).");
         }
         return file;
@@ -71,7 +70,7 @@ const char *get_camera_image_in_config(JsonCpp &config)
 const char *get_camera_image(Options &options, JsonCpp &config)
 {
         const char *filename = options.get_value(RoverOptions::camera_image);
-        if (filename == 0)
+        if (filename == nullptr)
                 filename = get_camera_image_in_config(config);
         return filename;
 }
@@ -96,7 +95,7 @@ const char *get_camera_device_in_config(JsonCpp &config)
 const char *get_camera_device(Options &options, JsonCpp &config)
 {
         const char *device = options.get_value("weeder-camera-device");
-        if (device == 0)
+        if (device == nullptr)
                 device = get_camera_device_in_config(config);
         return device;
 }
@@ -130,7 +129,7 @@ Camera *instantiate_camera(const char *camera_class, Options &options, JsonCpp &
         }
 }
 
-const char *get_camera_class(Options &options, JsonCpp &config)
+const char *get_camera_class(__attribute__((unused))Options &options, JsonCpp &config)
 {
         try {
                 return (const char *) config["weeder"]["camera-classname"];
@@ -148,7 +147,7 @@ Camera *create_camera(Options &options, JsonCpp &config)
         return instantiate_camera(camera_class, options, config);
 }
 
-const char *get_cnc_class(Options &options, JsonCpp &config)
+const char *get_cnc_class(__attribute__((unused))Options &options, JsonCpp &config)
 {
         try {
                 return (const char *) config["weeder"]["cnc-classname"];
@@ -163,12 +162,12 @@ const char *get_cnc_class(Options &options, JsonCpp &config)
 CNC *create_cnc(Options &options, JsonCpp &config)
 {
         const char *cnc_class = get_cnc_class(options, config);
-        CNC *cnc = 0;
+        CNC *localcnc = nullptr;
         
         if (rstreq(cnc_class, FakeCNC::ClassName)) {
                 try {
                         JsonCpp range_data = config["oquam"]["cnc-range"];
-                        cnc = new FakeCNC(range_data);
+                        localcnc = new FakeCNC(range_data);
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to configure FakeCNC: %s", je.what());
@@ -176,19 +175,23 @@ CNC *create_cnc(Options &options, JsonCpp &config)
                 
         } else if (rstreq(cnc_class, RemoteCNC::ClassName)) {
                 rpc_client = new RPCClient("oquam", "cnc", 60.0);
-                cnc = new RemoteCNC(*rpc_client);
+                localcnc = new RemoteCNC(*rpc_client);
         }
 
-        if (cnc == 0) {
+        if (localcnc == nullptr) {
                 r_err("Failed to create the CNC '%s'", cnc_class);
                 throw std::runtime_error("Failed to create the CNC");
         }
         
-        return cnc;
+        return localcnc;
 }
 
 int main(int argc, char** argv)
 {
+        static CNC *cnc = nullptr;
+//        static RPCClient *rpc_client = nullptr;
+        static Camera *camera = nullptr;
+
         int retval = 1;
 
         RoverOptions options;
