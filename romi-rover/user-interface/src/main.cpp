@@ -23,11 +23,10 @@
  */
 #include <exception>
 #include <stdexcept>
-#include <string.h>
 #include <rcom.h>
 
-#include <DefaultSpeedController.h>
-#include <DefaultEventTimer.h>
+#include <SpeedController.h>
+#include <EventTimer.h>
 #include <ScriptList.h>
 #include <ScriptMenu.h>
 #include <FluidSoundNotifications.h>
@@ -92,17 +91,17 @@ int main(int argc, char** argv)
 
                 UIFactory ui_factory;
 
-                InputDevice& input_device = ui_factory.create_input_device(options,
-                                                                           config);
+                IInputDevice& input_device = ui_factory.create_input_device(options,
+                                                                            config);
 
-                Display& display = ui_factory.create_display(options, config);
+                IDisplay& display = ui_factory.create_display(options, config);
                 display.show(0, "Initializing");
 
-                Navigation& navigation = ui_factory.create_navigation(options,
-                                                                      config);
+                INavigation& navigation = ui_factory.create_navigation(options,
+                                                                       config);
                 
-                DefaultSpeedController speed_controller(navigation, config);
-                DefaultEventTimer event_timer(event_timer_timeout);
+                SpeedController speed_controller(navigation, config);
+                EventTimer event_timer(event_timer_timeout);
 
                 ScriptList scripts(ui_factory.get_script_file(options, config));
                 ScriptMenu menu(scripts);
@@ -113,7 +112,7 @@ int main(int argc, char** argv)
                 JsonCpp sound_setup = config["user-interface"]["fluid-sounds"]["sounds"];
                 FluidSoundNotifications notifications(soundfont, sound_setup);
 
-                Weeder& weeder = ui_factory.create_weeder(options, config);
+                IWeeder& weeder = ui_factory.create_weeder(options, config);
                 
                 Rover rover(input_device,
                             display,

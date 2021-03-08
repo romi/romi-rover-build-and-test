@@ -34,7 +34,7 @@
 #include <FileCamera.h>
 #include <USBCamera.h>
 #include <CameraServer.h>
-#include <weeder/DefaultWeeder.h>
+#include <weeder/Weeder.h>
 #include <weeder/PipelineFactory.h>
 #include <rpc/WeederAdaptor.h>
 #include <rpc/RemoteCNC.h>
@@ -75,7 +75,7 @@ const char *get_camera_image(Options &options, JsonCpp &config)
         return filename;
 }
 
-Camera *instantiate_file_camera(Options &options, JsonCpp &config)
+ICamera *instantiate_file_camera(Options &options, JsonCpp &config)
 {
         return new FileCamera(get_camera_image(options, config));
 }
@@ -100,7 +100,7 @@ const char *get_camera_device(Options &options, JsonCpp &config)
         return device;
 }
 
-Camera *instantiate_usb_camera(Options &options, JsonCpp &config)
+ICamera *instantiate_usb_camera(Options &options, JsonCpp &config)
 {
         try {
                 const char *device = get_camera_device(options, config);
@@ -115,7 +115,7 @@ Camera *instantiate_usb_camera(Options &options, JsonCpp &config)
         }
 }
 
-Camera *instantiate_camera(const char *camera_class, Options &options, JsonCpp &config)
+ICamera *instantiate_camera(const char *camera_class, Options &options, JsonCpp &config)
 {
         if (rstreq(camera_class, FileCamera::ClassName)) {
                 return instantiate_file_camera(options, config);
@@ -141,7 +141,7 @@ const char *get_camera_class(__attribute__((unused))Options &options, JsonCpp &c
         }
 }
 
-Camera *create_camera(Options &options, JsonCpp &config)
+ICamera *create_camera(Options &options, JsonCpp &config)
 {
         const char *camera_class = get_camera_class(options, config);
         return instantiate_camera(camera_class, options, config);
@@ -159,10 +159,10 @@ const char *get_cnc_class(__attribute__((unused))Options &options, JsonCpp &conf
         }
 }
 
-CNC *create_cnc(Options &options, JsonCpp &config)
+ICNC *create_cnc(Options &options, JsonCpp &config)
 {
         const char *cnc_class = get_cnc_class(options, config);
-        CNC *localcnc = nullptr;
+        ICNC *localcnc = nullptr;
         
         if (rstreq(cnc_class, FakeCNC::ClassName)) {
                 try {
@@ -188,9 +188,9 @@ CNC *create_cnc(Options &options, JsonCpp &config)
 
 int main(int argc, char** argv)
 {
-        static CNC *cnc = nullptr;
+        static ICNC *cnc = nullptr;
 //        static RPCClient *rpc_client = nullptr;
-        static Camera *camera = nullptr;
+        static ICamera *camera = nullptr;
 
         int retval = 1;
 
@@ -203,20 +203,20 @@ int main(int argc, char** argv)
         
         try {
                 const char *config_file = get_config_file(options);
-                r_info("Weeder: Using configuration file: '%s'", config_file);
+                r_info("IWeeder: Using configuration file: '%s'", config_file);
                 JsonCpp config = JsonCpp::load(config_file);
 
                 // Instantiate the camera
                 camera = create_camera(options, config);
                 
-                // Instantiate the CNC
+                // Instantiate the ICNC
                 cnc = create_cnc(options, config);
 
                 JsonCpp config_range = config["oquam"]["cnc-range"];
                 
                 CNCRange range;
                 if (!cnc->get_range(range)) 
-                        throw std::runtime_error("Failed to get the CNC range");
+                        throw std::runtime_error("Failed to get the ICNC range");
                                
                 PipelineFactory factory;
                 IPipeline& pipeline = factory.build(range, config);
@@ -227,7 +227,7 @@ int main(int argc, char** argv)
                 
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];
-                DefaultWeeder weeder(*camera, pipeline, *cnc, z0, speed, session);
+                Weeder weeder(*camera, pipeline, *cnc, z0, speed, session);
                 WeederAdaptor adaptor(weeder);
                 RPCServer weeder_server(adaptor, "weeder", "weeder");
                 
@@ -243,12 +243,12 @@ int main(int argc, char** argv)
                 r_err(e.what());
         }
 
-        if (cnc)
-                delete cnc;
-        if (rpc_client)
-                delete rpc_client;
-        if (camera)
-                delete camera;
+
+        delete cnc;
+
+        delete rpc_client;
+
+        delete camera;
                 
         
         return retval;

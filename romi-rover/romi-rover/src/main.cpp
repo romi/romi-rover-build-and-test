@@ -36,16 +36,16 @@
 #include <rover/RoverInterface.h>
 #include <rover/RoverScriptEngine.h>
 #include <rover/RoverStateMachine.h>
-#include <DefaultSpeedController.h>
-#include <DefaultEventTimer.h>
+#include <SpeedController.h>
+#include <EventTimer.h>
 #include <ScriptList.h>
 #include <ScriptMenu.h>
 #include <FluidSoundNotifications.h>
-#include <DefaultNavigation.h>
+#include <Navigation.h>
 #include <CrystalDisplay.h>
 #include <JoystickInputDevice.h>
-#include <weeder/DefaultWeeder.h>
-#include <api/Display.h>
+#include <weeder/Weeder.h>
+#include <api/IDisplay.h>
 #include <LinuxJoystick.h>
 #include <UIEventMapper.h>
 #include <CrystalDisplay.h>
@@ -190,7 +190,7 @@ int main(int argc, char** argv)
                 oquam.set_file_cabinet(&debug);
 
                 // Camera
-                unique_ptr<Camera> camera;
+                unique_ptr<ICamera> camera;
                 const char *camera_classname = (const char *) config["weeder"]["camera-classname"];
                 if (rstreq(camera_classname, FileCamera::ClassName)) {
                         const char *image_file = get_camera_image(options, config);
@@ -212,7 +212,7 @@ int main(int argc, char** argv)
                 // Weeder
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];
-                DefaultWeeder weeder(*camera, pipeline, oquam, z0, speed, debug);
+                Weeder weeder(*camera, pipeline, oquam, z0, speed, debug);
 
                 // Navigation
                 JsonCpp rover_settings = config["navigation"]["rover"];
@@ -224,13 +224,13 @@ int main(int argc, char** argv)
                 BrushMotorDriver driver(driver_romiserial, driver_settings,
                                         static_cast<int>(rover_config.encoder_steps),
                                         rover_config.max_revolutions_per_sec);
-                DefaultNavigation navigation(driver, rover_config);
+                Navigation navigation(driver, rover_config);
 
                 // SpeedController
-                DefaultSpeedController speed_controller(navigation, config);
+                SpeedController speed_controller(navigation, config);
 
                 // EventTimer
-                DefaultEventTimer event_timer(event_timer_timeout);
+                EventTimer event_timer(event_timer_timeout);
 
                 // Scripts and script engine
                 ScriptList scripts(get_script_file(options, config));

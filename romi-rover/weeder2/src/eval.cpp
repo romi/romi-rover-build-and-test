@@ -30,7 +30,7 @@
 #include <rover/RoverOptions.h>
 #include <DebugWeedingSession.h>
 #include <FileCamera.h>
-#include <weeder/DefaultWeeder.h>
+#include <weeder/Weeder.h>
 #include <weeder/PipelineFactory.h>
 #include <fake/FakeCNC.h>
 
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];
-                DefaultWeeder weeder(camera, pipeline, cnc, z0, speed, session);
+                Weeder weeder(camera, pipeline, cnc, z0, speed, session);
                 
                 weeder.hoe();
                 

@@ -29,11 +29,11 @@
 #include <RSerial.h>
 #include <RPCClient.h>
 
-#include <api/Navigation.h>
-#include <api/Display.h>
-#include <api/InputDevice.h>
-#include <api/Notifications.h>
-#include <api/Weeder.h>
+#include <api/INavigation.h>
+#include <api/IDisplay.h>
+#include <api/IInputDevice.h>
+#include <api/INotifications.h>
+#include <api/IWeeder.h>
 #include <Options.h>
 #include <LinuxJoystick.h>
 #include <UIEventMapper.h>
@@ -57,11 +57,11 @@ namespace romi {
                 std::unique_ptr<rcom::RPCClient> _weeder_client; 
                 std::unique_ptr<LinuxJoystick> _joystick;
 
-                std::unique_ptr<Display> _display;
-                std::unique_ptr<Navigation> _navigation;
-                std::unique_ptr<InputDevice> _input_device;
-            //    std::unique_ptr<Notifications> _notifications;
-                std::unique_ptr<Weeder> _weeder;
+                std::unique_ptr<IDisplay> _display;
+                std::unique_ptr<INavigation> _navigation;
+                std::unique_ptr<IInputDevice> _input_device;
+            //    std::unique_ptr<INotifications> _notifications;
+                std::unique_ptr<IWeeder> _weeder;
                 
 
                 // Display
@@ -86,7 +86,7 @@ namespace romi {
                 void instantiate_remote_navigation(Options &options, JsonCpp &config);
 
                 // Input device / joystick
-                const char *get_input_device_classname(JsonCpp &config);
+                static const char *get_input_device_classname(JsonCpp &config);
                 void instantiate_input_device(const char *classname, Options& options,
                                              JsonCpp& config);
                 void instantiate_fake_input_device();
@@ -98,7 +98,7 @@ namespace romi {
                 void instantiate_weeder(Options &options, JsonCpp &config);
                 void instantiate_weeder(const char *classname, Options &options,
                                            JsonCpp &config);
-                const char *get_weeder_classname(JsonCpp &config);
+                static const char *get_weeder_classname(JsonCpp &config);
                 void instantiate_fake_weeder();
                 void instantiate_remote_weeder(Options &options, JsonCpp &config);
 
@@ -111,11 +111,11 @@ namespace romi {
                 UIFactory();
                 virtual ~UIFactory();
                 
-                Display& create_display(Options& options, JsonCpp& config);
-                Navigation& create_navigation(Options& options, JsonCpp& config);
-                InputDevice& create_input_device(Options& options, JsonCpp& config);
-                Weeder& create_weeder(Options& options, JsonCpp& config);
-                // Notifications& create_notifications(Options& options, JsonCpp& config);
+                IDisplay& create_display(Options& options, JsonCpp& config);
+                INavigation& create_navigation(Options& options, JsonCpp& config);
+                IInputDevice& create_input_device(Options& options, JsonCpp& config);
+                IWeeder& create_weeder(Options& options, JsonCpp& config);
+                // INotifications& create_notifications(Options& options, JsonCpp& config);
                 const char *get_script_file(Options &options, JsonCpp &config);
         };
 }

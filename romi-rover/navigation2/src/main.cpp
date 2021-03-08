@@ -22,7 +22,6 @@
 
  */
 #include <exception>
-#include <string.h>
 
 #include <rcom.h>
 #include <RPCServer.h>
@@ -30,7 +29,7 @@
 #include <RSerial.h>
 
 #include <BrushMotorDriver.h>
-#include <DefaultNavigation.h>
+#include <Navigation.h>
 #include <NavigationSettings.h>
 #include <rover/RoverOptions.h>
 #include <rpc/NavigationAdaptor.h>
@@ -99,7 +98,7 @@ int main(int argc, char** argv)
                                         static_cast<int>(rover.encoder_steps),
                                         rover.max_revolutions_per_sec);
 
-                DefaultNavigation navigation(driver, rover);
+                Navigation navigation(driver, rover);
                 
                 NavigationAdaptor adaptor(navigation);
                 RPCServer server(adaptor, "navigation", "navigation");
