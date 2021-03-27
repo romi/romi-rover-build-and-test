@@ -23,6 +23,7 @@
 #include <Servo.h>
 #include <PID_v1.h>
 #include <RomiSerial.h>
+#include <ArduinoSerial.h>
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_configure(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
@@ -30,6 +31,7 @@ void handle_enable(RomiSerial *romiSerial, int16_t *args, const char *string_arg
 void send_encoders(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_moveat(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void send_status(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void send_configure(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_stop(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 
 const static MessageHandler handlers[] = {
@@ -39,10 +41,12 @@ const static MessageHandler handlers[] = {
         { 'C', 9, false, handle_configure },
         { 'E', 1, false, handle_enable },
         { 'S', 0, false, send_status },
+        { 'c', 0, false, send_configuration },
         { 'X', 0, false, handle_stop },
 };
 
-RomiSerial romiSerial(handlers, sizeof(handlers) / sizeof(MessageHandler));
+ArduinoSerial serial;
+RomiSerial romiSerial(serial, serial, handlers, sizeof(handlers) / sizeof(MessageHandler));
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -145,6 +149,8 @@ int debug = 1;
 
 void setup()
 {
+        serial.init(115200);
+        
         pinMode(pinFrontStopSwitch, INPUT_PULLUP);
         pinMode(pinBackStopSwitch, INPUT_PULLUP);
 
@@ -307,7 +313,7 @@ void send_encoders(RomiSerial *romiSerial, int16_t *args, const char *string_arg
 
 void send_status(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        static char buffer[200];
+        static char buffer[64];
         const char *state_str;
         const char *control_str;
         
@@ -318,12 +324,6 @@ void send_status(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
         case STATE_ERROR: state_str = "X"; break;
         default: state_str = "?"; break;
         }
-        
-        switch (controlMode) {
-        case CONTROL_PID: control_str = "P1"; break;
-        case CONTROL_DIRECT: control_str = "P0"; break;
-        default: control_str = "?"; break;
-        }
 
         char c[8]; dtostrf(leftAbsoluteSpeed, 5, 3, c);
         char d[8]; dtostrf(rightAbsoluteSpeed, 5, 3, d);
@@ -331,19 +331,33 @@ void send_status(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
         char f[8]; dtostrf(rightInput, 5, 3, f);
         char g[8]; dtostrf(leftOutput, 5, 3, g);
         char h[8]; dtostrf(rightOutput, 5, 3, h);
+        
+        snprintf(buffer, sizeof(buffer),
+                 "[0,\"%s\",%d,%d,%s,%s,%s,%s,%s,%s,%d,%d]",
+                 state_str, 
+                 (int) (1000.0 * leftTarget),
+                 (int) (1000.0 * rightTarget),
+                 c, d, e, f, g, h, leftSignal, rightSignal);
+        
+        romiSerial->send(buffer);                
+}
+
+void send_configuration(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        static char buffer[64];
+        const char *control_str;
+        
+        switch (controlMode) {
+        case CONTROL_PID: control_str = "P1"; break;
+        case CONTROL_DIRECT: control_str = "P0"; break;
+        default: control_str = "?"; break;
+        }
+
         char kp[8]; dtostrf(leftPID.GetKp(), 5, 3, kp);
         char ki[8]; dtostrf(leftPID.GetKi(), 5, 3, ki);
         char kd[8]; dtostrf(leftPID.GetKd(), 5, 3, kd);
         
-        snprintf(buffer, sizeof(buffer),
-                 "[0,\"%s\",\"%s\","
-                 "%d,%d,%s,%s,%s,%s,%s,%s,"
-                 "%d,%d,%s,%s,%s]",
-                 state_str, control_str,
-                 (int) (1000.0 * leftTarget),
-                 (int) (1000.0 * rightTarget),
-                 c, d, e, f, g, h, leftSignal, rightSignal,
-                 kp, ki, kd);
+        snprintf(buffer, sizeof(buffer), "[0,\"%s\",%s,%s,%s]", control_str, kp, ki, kd);
         
         romiSerial->send(buffer);                
 }
@@ -468,4 +482,3 @@ void handleRightMotorInterruptA()
         bool b = readRightEncoderPinB();
         rightEncoderTicks += b ? -rightEncoderDirection : +rightEncoderDirection;
 }
-
