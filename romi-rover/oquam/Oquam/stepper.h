@@ -23,6 +23,7 @@
  */
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include "gshield.h"
 
 #ifndef _OQUAM_STEPPER_H_
 #define _OQUAM_STEPPER_H_
