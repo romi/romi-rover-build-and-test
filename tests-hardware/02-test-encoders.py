@@ -4,6 +4,7 @@ import json
 import traceback
 
 from testlib import *
+from motor_controller import MotorController
 
 def ask_prerequisites():
     request_confirmation("Did you run the motor tests?")
@@ -47,7 +48,8 @@ if __name__ == "__main__":
     try:
         ask_prerequisites()
         config = load_configuration_file(args.config)
-        controller = MotorController(args.device, config)
+        navigation_config = config["navigation"]
+        controller = MotorController(args.device, navigation_config)
         request_confirmation("Activate the security button (turn and/or pull out).")
         test_left_encoder(controller)
         test_right_encoder(controller)
