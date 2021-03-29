@@ -195,15 +195,13 @@ void stop()
 
 void enable()
 {
-        if (state == STATE_DISABLED)
-                state = STATE_ENABLED;
+        state = STATE_ENABLED;
 }
 
 void disable()
 {
         stop();
-        if (state == STATE_ENABLED) 
-                state = STATE_DISABLED;
+        state = STATE_DISABLED;
 }
 
 // The left and right speed should have a value in [-1, 1].
@@ -365,7 +363,6 @@ void send_configuration(RomiSerial *romiSerial, int16_t *args, const char *strin
 void handle_configure(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
         switch(state) {
-        case STATE_DISABLED:
         case STATE_ERROR:
         case STATE_ENABLED:
                 // If we receive an init command while we are already
@@ -375,6 +372,7 @@ void handle_configure(RomiSerial *romiSerial, int16_t *args, const char *string_
                 stop();
                 romiSerial->send_error(1, errBadState);  
                 break;                
+        case STATE_DISABLED:
         case STATE_UNINITIALIZED:
                 stepsPerRevolution = (float) args[0];
                 maxSpeed = (float) args[1] / 100.0f;
@@ -436,7 +434,7 @@ void handle_enable(RomiSerial *romiSerial, int16_t *args, const char *string_arg
                 break;
         case STATE_ENABLED:
                 if (args[0] == 0)
-                        enable();
+                        disable();
                 romiSerial->send_ok();  
                 break;                
         }
