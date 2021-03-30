@@ -27,7 +27,8 @@
 #ifndef _OQUAM_GSHIELD_H_
 #define _OQUAM_GSHIELD_H_
 
-#define ENABLE_PIN_HIGH    0
+#define ENABLE_PIN_HIGH   0
+//#define ENABLE_PIN_HIGH   1
 #define ENCODER_REVERSED 0
 #define PRESCALING         1
 #define FREQUENCY_STEPPER  25000
@@ -82,20 +83,9 @@
 #define Y_ENCODER_B       0
 
 /**
- * Define the pins for the limit switches.
- */
-#define LIMIT_DDR         DDRB
-#define LIMIT_PIN         PINB
-#define LIMIT_PORT        PORTB
-#define X_LIMIT_BIT       1  // Uno Digital Pin 9
-#define Y_LIMIT_BIT       2  // Uno Digital Pin 10
-#define Z_LIMIT_BIT	  4  // Uno Digital Pin 12
-#define LIMIT_MASK        ((1 << X_LIMIT_BIT) | (1 << Y_LIMIT_BIT) | (1 << Z_LIMIT_BIT))
-
-/**
  * \brief Configure the step and dir pins as output.
  */
-void init_output_pins();
+void init_pins();
 
 /**
  * \brief Raise the enable pin.
@@ -172,10 +162,5 @@ void init_output_pins();
  * \brief Read the Y-encoder B pin.
  */
 #define get_y_encoder_b()  0
-
-/**
- * \brief Read the limit switches.
- */
-#define get_limit_bits()  (LIMIT_PIN & LIMIT_MASK)
 
 #endif // _OQUAM_GSHIELD_H_

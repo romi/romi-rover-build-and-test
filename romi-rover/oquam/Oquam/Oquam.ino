@@ -24,7 +24,6 @@
 #include "block.h"
 #include "stepper.h"
 #include "config.h"
-#include "limit.h"
 #include "encoder.h"
 #include <RomiSerial.h>
 
@@ -120,7 +119,7 @@ void setup()
                 ;
         
         init_block_buffer();
-        init_output_pins();
+        init_pins();
         init_encoders();
         
         //enable_driver();

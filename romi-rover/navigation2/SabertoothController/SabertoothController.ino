@@ -24,6 +24,8 @@
 #include <PID_v1.h>
 #include <RomiSerial.h>
 #include <ArduinoSerial.h>
+#include <SoftwareSerial.h>
+
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_configure(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
@@ -68,18 +70,25 @@ unsigned char controlMode = CONTROL_DIRECT;
 #define leftEncoderPinB 4
 #define rightEncoderPinA 3
 #define rightEncoderPinB 5
-#define pinLeftMotor 9
-#define pinRightMotor 10
+//#define pinLeftMotor 9
+//#define pinRightMotor 10
 #define pinFrontStopSwitch 11
 #define pinBackStopSwitch 12
+
+/////////////////////////////////////////////////////////////////////////
+
+#define sabertoothTxPin 9
+#define sabertoothRxPin 10  
+
+SoftwareSerial sabertooth(sabertoothRxPin, sabertoothTxPin); // RX, TX
 
 /////////////////////////////////////////////////////////////////////////
 // The H-bridge expects a PWM signal similar to those produced by RC
 // receiver or accepted by servo motors. For ease, we use the standard
 // Servo library to produce these signals.
 
-Servo leftMotor;
-Servo rightMotor;
+//Servo leftMotor;
+//Servo rightMotor;
 // The maximum amplitude of the servo signal.
 float maxSignal = 20.0f;
 
@@ -169,8 +178,13 @@ void setup()
         
         // We use the standard Servo library to generate the PWM
         // signal that go to the motor driver
-        leftMotor.attach(pinLeftMotor);
-        rightMotor.attach(pinRightMotor);
+        //leftMotor.attach(pinLeftMotor);
+        //rightMotor.attach(pinRightMotor);
+        
+        pinMode(sabertoothRxPin, INPUT);
+        pinMode(sabertoothTxPin, OUTPUT);
+        sabertooth.begin(9600);
+  
         stop();
 
         leftPID.SetMode(AUTOMATIC);
@@ -205,7 +219,8 @@ void disable()
 }
 
 // The left and right speed should have a value in [-1, 1].
-inline void setOutputSignal(float l, float r)
+/*
+inline void setOutputSignalSERVO(float l, float r)
 {
         if (0) {
                 static float last_value = -1.0f;
@@ -228,6 +243,80 @@ inline void setOutputSignal(float l, float r)
 
         leftMotor.write(leftSignal);
         rightMotor.write(rightSignal);
+}
+*/
+
+inline void sabertooth_putc(unsigned char c)
+{
+        sabertooth.write(c);
+}
+
+#define ADDRESS 128
+#define kLeftDriveForward 0
+#define kLeftDriveBackward 1
+#define kRightDriveForward 4
+#define kRightDriveBackward 5
+
+inline void sendCommand(unsigned char command, unsigned char data)
+{
+        unsigned char checksum = (ADDRESS + command + data) & 0b01111111;
+        sabertooth_putc(ADDRESS);
+        sabertooth_putc(command);
+        sabertooth_putc(data);
+        sabertooth_putc(checksum);
+}
+
+inline unsigned char speedToData(float speed)
+{
+        if (speed < 0.0)
+                return speedToData(-speed);
+        return (unsigned char) (speed * 127.0);
+}
+
+inline void leftDriveForwardAt(float speed)
+{
+        sendCommand(kLeftDriveForward, speedToData(speed));
+}
+
+inline void leftDriveBackwardAt(float speed)
+{
+        sendCommand(kLeftDriveBackward, speedToData(speed));
+}
+
+inline void leftDriveAt(float speed)
+{
+        if (speed >= 0.0)
+                leftDriveForwardAt(speed);
+        else 
+                leftDriveBackwardAt(speed);
+}
+
+inline void rightDriveForwardAt(float speed)
+{
+        sendCommand(kRightDriveForward, speedToData(speed));
+}
+
+inline void rightDriveBackwardAt(float speed)
+{
+        sendCommand(kRightDriveBackward, speedToData(speed));
+}
+
+inline void rightDriveAt(float speed)
+{
+        if (speed >= 0.0)
+                rightDriveForwardAt(speed);
+        else 
+                rightDriveBackwardAt(speed);
+}
+
+inline void setOutputSignal(float l, float r)
+{
+        // Memorize the last values
+        leftSpeed = l;
+        rightSpeed = r;
+        
+        leftDriveAt(leftSpeed);
+        rightDriveAt(rightSpeed);
 }
 
 inline void setTargetSpeed(float l, float r)

@@ -27,15 +27,20 @@
 /**
  * \brief Configure the step and dir pins as output.
  */
-void init_output_pins() 
+void init_pins() 
 {
         /* Enable output on the selected pins */
         STEP_DDR |= STEP_MASK;
         DIRECTION_DDR |= DIRECTION_MASK;
         STEPPERS_DISABLE_DDR |= STEPPERS_DISABLE_MASK;
+        
+        // Set as input pins and enable internal pull-up
+        // resistors. Normal high operation
+        pinMode(PIN_LIMIT_SWITCH_X, INPUT_PULLUP);  
+        pinMode(PIN_LIMIT_SWITCH_Y, INPUT_PULLUP);  
+        pinMode(PIN_LIMIT_SWITCH_Z, INPUT_PULLUP);  
 
-        LIMIT_DDR &= ~(LIMIT_MASK); // Set as input pins
-        LIMIT_PORT |= (LIMIT_MASK);  // Enable internal pull-up resistors. Normal high operation
+        // Set as output pins
         pinMode(PIN_SPINLDE, OUTPUT);  
         digitalWrite(PIN_SPINLDE, LOW);
 }
