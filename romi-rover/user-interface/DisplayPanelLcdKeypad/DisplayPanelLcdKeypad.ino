@@ -21,6 +21,7 @@
 
  */
 #include <RomiSerial.h>
+#include <ArduinoSerial.h>
 #include "CrystalDisplay.h"
 #include "pins.h"
 
@@ -34,7 +35,8 @@ const static MessageHandler handlers[] = {
         { 'C', 1, false, handle_clear },
 };
 
-RomiSerial romiSerial(handlers, sizeof(handlers) / sizeof(MessageHandler));
+ArduinoSerial serial;
+RomiSerial romiSerial(serial, serial, handlers, sizeof(handlers) / sizeof(MessageHandler));
 CrystalDisplay display(PIN_RS,  PIN_EN,  PIN_D4,  PIN_D5,  PIN_D6,  PIN_D7);
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
@@ -66,6 +68,7 @@ void handle_clear(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 
 void setup()
 {
+        serial.init(115200);
 }
 
 void loop()

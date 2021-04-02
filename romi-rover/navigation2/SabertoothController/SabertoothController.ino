@@ -70,8 +70,6 @@ unsigned char controlMode = CONTROL_DIRECT;
 #define leftEncoderPinB 4
 #define rightEncoderPinA 3
 #define rightEncoderPinB 5
-//#define pinLeftMotor 9
-//#define pinRightMotor 10
 #define pinFrontStopSwitch 11
 #define pinBackStopSwitch 12
 
@@ -148,17 +146,9 @@ long rightEncoderDirection = 1;
 
 /////////////////////////////////////////////////////////////////////////
 
-int debug = 1;
-#define debug_print(__x)  if (debug) Serial.print(__x)
-#define debug_println(__x)  if (debug) Serial.println(__x)
-#define debug_print_float(__x,__y)  if (debug) Serial.print(__x,__y)
-#define debug_print_name_value(__s, __v) if (debug) { Serial.print(__s); Serial.print(" "); Serial.println(__v); }
-
-/////////////////////////////////////////////////////////////////////////
-
 void setup()
 {
-        serial.init(9600);
+        serial.init(115200);
         
         pinMode(pinFrontStopSwitch, INPUT_PULLUP);
         pinMode(pinBackStopSwitch, INPUT_PULLUP);
@@ -195,7 +185,8 @@ void setup()
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        romiSerial->send("[0,\"SabertoothController\",\"0.1\"]"); 
+        romiSerial->send("[0,\"SabertoothController\",\"0.1\","
+                         "\"" __DATE__ " " __TIME__ "\"]"); 
 }
 
 void stop()
@@ -234,9 +225,6 @@ inline void setOutputSignalSERVO(float l, float r)
         // The Servo API expects a value between 0 and 180
         leftSignal = (int) (90.0f + maxSignal * l); 
         rightSignal = (int) (90.0f + maxSignal * r);
-
-        // debug_print_name_value("servo leftMotor: ", (int) leftSignal);
-        // debug_print_name_value("servo rightMotor: ", (int) rightSignal);
 
         leftMotor.write(leftSignal);
         rightMotor.write(rightSignal);
@@ -322,26 +310,6 @@ inline void setTargetSpeed(float l, float r)
         rightTarget = r;
 }
 
-inline void printCurrentSpeed()
-{
-        unsigned long t = millis();
-        debug_print("t=");
-        debug_print(t);
-        debug_print(",e=");
-        debug_print(rightEncoderTicks);
-        debug_print(",v=");
-        debug_print_float(rightAbsoluteSpeed, 4);
-        debug_print(",target=");
-        debug_print_float(rightTarget, 4);
-        debug_print(",in=");
-        debug_print_float(rightInput, 4);
-        debug_print(",out=");
-        debug_print(rightOutput);
-        debug_print(",sig=");
-        debug_print((int)rightSignal);
-        debug_print("\r\n");
-}
-
 inline void measureCurrentSpeed()
 {
         static unsigned long lastTime = 0;
@@ -358,8 +326,6 @@ inline void measureCurrentSpeed()
                 
                 leftInput = 0.2 * leftInput + 0.8 * lastLeftInput;
                 rightInput = 0.2 * rightInput + 0.8 * lastRightInput;
-
-                //printCurrentSpeed();
 
                 // Update state for next loop
                 leftPrevEncoderTicks = leftEncoderTicks;
