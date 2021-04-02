@@ -25,7 +25,7 @@ def test_encoder(controller, index):
     encoders_after = controller.get_encoder_values()
     print("Encoder: before: {0}, after {1}".format(encoders_before[index],
                                                         encoders_after[index]))
-    assert(encoders_before[index] + 100 < encoders_after[index])
+    assert(encoders_before[index] + 20 < encoders_after[index])
 
     
 def test_left_encoder(controller):
