@@ -78,7 +78,7 @@ unsigned char controlMode = CONTROL_DIRECT;
 /////////////////////////////////////////////////////////////////////////
 
 #define sabertoothTxPin 9
-#define sabertoothRxPin 10  
+#define sabertoothRxPin 13
 
 SoftwareSerial sabertooth(sabertoothRxPin, sabertoothTxPin); // RX, TX
 
@@ -158,7 +158,7 @@ int debug = 1;
 
 void setup()
 {
-        serial.init(115200);
+        serial.init(9600);
         
         pinMode(pinFrontStopSwitch, INPUT_PULLUP);
         pinMode(pinBackStopSwitch, INPUT_PULLUP);
@@ -180,9 +180,6 @@ void setup()
         // signal that go to the motor driver
         //leftMotor.attach(pinLeftMotor);
         //rightMotor.attach(pinRightMotor);
-        
-        pinMode(sabertoothRxPin, INPUT);
-        pinMode(sabertoothTxPin, OUTPUT);
         sabertooth.begin(9600);
   
         stop();
@@ -198,7 +195,7 @@ void setup()
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        romiSerial->send("[0,\"BrushMotorController\",\"0.4\"]"); 
+        romiSerial->send("[0,\"SabertoothController\",\"0.1\"]"); 
 }
 
 void stop()
