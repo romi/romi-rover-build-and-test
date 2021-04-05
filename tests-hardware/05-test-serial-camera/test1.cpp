@@ -3,7 +3,7 @@
 
 int main()
 {
-        serial_t *serial = new_serial("", 115200, 0);
+        serial_t *serial = new_serial("/dev/serial0", 115200, 0);
         if (serial == nullptr) {
                 r_err("Failed to open serial device");
                 exit(1);
