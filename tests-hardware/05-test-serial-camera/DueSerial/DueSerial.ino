@@ -12,20 +12,15 @@ void setup()
 
 static int counter = 0;
 
-static void send_message()
+static void send_counter()
 {
         Serial1.println(counter);
         Serial.println(counter);
-        counter += 2;
-}
-
-static void read_reply()
-{
+        counter++;
 }
 
 void loop()
 {
-        send_message();
-        read_reply();
+        send_counter();
         delay(1000);
 }
