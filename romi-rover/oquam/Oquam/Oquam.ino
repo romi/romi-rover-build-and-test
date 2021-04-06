@@ -25,6 +25,7 @@
 #include "stepper.h"
 #include "config.h"
 #include "encoder.h"
+#include <ArduinoSerial.h>
 #include <RomiSerial.h>
 
 /**
@@ -72,7 +73,8 @@ const static MessageHandler handlers[] = {
         { '?', 0, false, send_info },
 };
 
-RomiSerial romiSerial(handlers, sizeof(handlers) / sizeof(MessageHandler));
+ArduinoSerial serial(Serial);
+RomiSerial romiSerial(serial, serial, handlers, sizeof(handlers) / sizeof(MessageHandler));
 
 
 // DEBUG
@@ -114,9 +116,7 @@ void check_accuracy()
 
 void setup()
 {
-        Serial.begin(115200);
-        while (!Serial)
-                ;
+        serial.init(115200);
         
         init_block_buffer();
         init_pins();

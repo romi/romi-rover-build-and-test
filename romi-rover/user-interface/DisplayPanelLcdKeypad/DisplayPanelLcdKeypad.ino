@@ -35,7 +35,7 @@ const static MessageHandler handlers[] = {
         { 'C', 1, false, handle_clear },
 };
 
-ArduinoSerial serial;
+ArduinoSerial serial(Serial);
 RomiSerial romiSerial(serial, serial, handlers, sizeof(handlers) / sizeof(MessageHandler));
 CrystalDisplay display(PIN_RS,  PIN_EN,  PIN_D4,  PIN_D5,  PIN_D6,  PIN_D7);
 
