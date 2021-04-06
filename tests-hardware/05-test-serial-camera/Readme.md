@@ -14,7 +14,7 @@ It should be connected as shown in the image below:
 
 * Rpi Pin 6 -> Due Pin GND 
 * Rpi Pin 8 (TX) -> Due Pin 19 (RX)
-* Rpi Pin 8 (RX) -> Due Pin 18 (TX)
+* Rpi Pin 10 (RX) -> Due Pin 18 (TX)
 
 For the pins on the Raspberry Pi, check https://pinout.xyz
 
