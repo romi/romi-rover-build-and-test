@@ -10,7 +10,7 @@ static void handle_grab(RomiSerial *romiSerial, int16_t *args, const char *strin
 
 const static MessageHandler handlers[] = {
         { '?', 0, false, send_info },
-        { 'G', 0, false, handle_grab }
+        { 'G', 1, false, handle_grab }
 };
 
 int main()
@@ -36,10 +36,8 @@ static void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_
 
 static void handle_grab(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        (void) args;
         (void) string_arg;
-        static int counter = 0;
         char buffer[128];
-        snprintf(buffer, 128, "[0,%d]", counter++);
+        snprintf(buffer, 128, "[0,%d]", (int) args[0]+1);
         romiSerial->send(buffer);
 }
