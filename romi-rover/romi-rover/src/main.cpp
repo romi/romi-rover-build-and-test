@@ -59,6 +59,14 @@
 #include <oquam/Oquam.h>
 #include <weeder/PipelineFactory.h>
 
+#include "Clock.h"
+#include "ClockAccessor.h"
+#include "data_provider/RomiDeviceData.h"
+#include "data_provider/SoftwareVersion.h"
+#include "weeder_session/Session.h"
+#include "data_provider/Gps.h"
+#include "data_provider/GpsLocationProvider.h"
+
 using namespace std;
 using namespace rpp;
 using namespace rcom;
@@ -135,6 +143,9 @@ const char *get_camera_device(Options& options, JsonCpp& config)
 
 int main(int argc, char** argv)
 {
+        std::shared_ptr<IClock> clock = std::make_shared<Clock>();
+        rpp::ClockAccessor::SetInstance(clock);
+
         int retval = 1;
         
         RoverOptions options;
@@ -177,17 +188,23 @@ int main(int argc, char** argv)
                 StepperSettings stepper_settings(s);        
                 double slice_duration = (double) config["oquam"]["path-slice-duration"];
                 double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
-                
+
+                // Session
+                RomiDeviceData romiDeviceData;
+                SoftwareVersion softwareVersion;
+                romi::Gps gps;
+                std::unique_ptr<ILocationProvider> locationPrivider = std::make_unique<GpsLocationProvider>(gps);
+                std::string session_directory = get_session_directory(options, config);
+
+                romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+                session.start("hw_observation_id");
                 Oquam oquam(cnc_controller, range,
                             stepper_settings.maximum_speed,
                             stepper_settings.maximum_acceleration,
                             stepper_settings.steps_per_meter,
                             maximum_deviation,
-                            slice_duration);
-                
-                DebugWeedingSession debug(get_session_directory(options, config),
-                                          "romi-rover");
-                oquam.set_file_cabinet(&debug);
+                            slice_duration,
+                            session);
 
                 // Camera
                 unique_ptr<ICamera> camera;
@@ -212,7 +229,7 @@ int main(int argc, char** argv)
                 // Weeder
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];
-                Weeder weeder(*camera, pipeline, oquam, z0, speed, debug);
+                Weeder weeder(*camera, pipeline, oquam, z0, speed, session);
 
                 // Navigation
                 JsonCpp rover_settings = config["navigation"]["rover"];
@@ -263,7 +280,7 @@ int main(int argc, char** argv)
                 
                 if (!state_machine.handle_event(event_start))
                         // FIXME: should not quit but display something
-                        throw std::runtime_error("Start-up failed"); 
+                        throw std::runtime_error("start-up failed");
                 
                 while (!app_quit()) {
                         

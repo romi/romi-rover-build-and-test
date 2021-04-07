@@ -42,9 +42,9 @@ set(GPIO_SOURCES
 )
 
 add_executable(06-test-gpio-power-relay 06-test-gpio/test-power-relay.cpp ${GPIO_SOURCES})
-target_link_libraries(06-test-gpio-power-relay romi r gpiod)
+target_link_libraries(06-test-gpio-power-relay romi r)
 install(TARGETS 06-test-gpio-power-relay DESTINATION bin)
 
 add_executable(06-test-gpio-security-button 06-test-gpio/test-security-button.cpp ${GPIO_SOURCES})
-target_link_libraries(06-test-gpio-security-button romi r gpiod)
+target_link_libraries(06-test-gpio-security-button romi r)
 install(TARGETS 06-test-gpio-security-button DESTINATION bin)

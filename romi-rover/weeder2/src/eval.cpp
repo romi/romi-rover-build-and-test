@@ -22,22 +22,30 @@
 
  */
 #include <exception>
-#include <string.h>
-#include <getopt.h>
-
 #include <rcom.h>
 
+#include "Linux.h"
 #include <rover/RoverOptions.h>
-#include <DebugWeedingSession.h>
 #include <FileCamera.h>
 #include <weeder/Weeder.h>
 #include <weeder/PipelineFactory.h>
 #include <fake/FakeCNC.h>
+#include "data_provider/RomiDeviceData.h"
+#include "data_provider/SoftwareVersion.h"
+#include "weeder_session/Session.h"
+#include "data_provider/Gps.h"
+#include "data_provider/GpsLocationProvider.h"
+
+#include "Clock.h"
+#include "ClockAccessor.h"
 
 using namespace romi;
 
 int main(int argc, char** argv)
 {
+        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
+        rpp::ClockAccessor::SetInstance(clock);
+
         RoverOptions options;
         options.parse(argc, argv);
         
@@ -56,8 +64,15 @@ int main(int argc, char** argv)
 
                 PipelineFactory factory;
                 IPipeline& pipeline = factory.build(range, config);
-                DebugWeedingSession session(options.get_value("session-directory"),
-                                            "weeder");
+
+                // Session
+                rpp::Linux linux;
+                RomiDeviceData romiDeviceData;
+                SoftwareVersion softwareVersion;
+                romi::Gps gps;
+                std::unique_ptr<ILocationProvider> locationPrivider = std::make_unique<GpsLocationProvider>(gps);
+                std::string session_directory = options.get_value("session-directory");
+                romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
 
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];

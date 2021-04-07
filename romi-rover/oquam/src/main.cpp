@@ -1,18 +1,24 @@
 #include <exception>
 #include <stdexcept>
-#include <string.h>
+#include <string>
 #include <rcom.h>
 
 #include <RPCServer.h>
+#include "Linux.h"
 
-#include <DebugWeedingSession.h>
 #include <rover/RoverOptions.h>
 #include <rpc/CNCAdaptor.h>
 #include <oquam/Oquam.h>
 #include <oquam/StepperSettings.h>
-
 #include "OquamFactory.h"
+#include "data_provider/RomiDeviceData.h"
+#include "data_provider/SoftwareVersion.h"
+#include "weeder_session/Session.h"
+#include "data_provider/Gps.h"
+#include "data_provider/GpsLocationProvider.h"
 
+#include "Clock.h"
+#include "ClockAccessor.h"
 
 using namespace romi;
 
@@ -32,6 +38,9 @@ const char *get_config_file(Options& options)
 
 int main(int argc, char** argv)
 {
+        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
+        rpp::ClockAccessor::SetInstance(clock);
+
         int retval = 1;
 
         RoverOptions options;
@@ -59,16 +68,22 @@ int main(int argc, char** argv)
 
                 CNCController& controller = factory.create_controller(options, config);
 
+                rpp::Linux linux;
+                RomiDeviceData romiDeviceData;
+                SoftwareVersion softwareVersion;
+                romi::Gps gps;
+                std::unique_ptr<ILocationProvider> locationPrivider = std::make_unique<GpsLocationProvider>(gps);
+                std::string session_directory = options.get_value("oquam-session");
+                romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+                session.start("oquam_observation_id");
                 Oquam oquam(controller, range,
                             stepper_settings.maximum_speed,
                             stepper_settings.maximum_acceleration,
                             stepper_settings.steps_per_meter,
                             maximum_deviation,
-                            slice_duration);
+                            slice_duration,
+                            session);
 
-                DebugWeedingSession debug(options.get_value("session-directory"), "oquam");
-                oquam.set_file_cabinet(&debug);
-                
                 CNCAdaptor adaptor(oquam);
                 rcom::RPCServer server(adaptor, "oquam", "cnc");
                 

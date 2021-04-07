@@ -12,6 +12,13 @@
 #include "oquam/Oquam.h"
 #include "oquam/StepperController.h"
 
+#include "Linux.h"
+#include "data_provider/RomiDeviceData.h"
+#include "data_provider/SoftwareVersion.h"
+#include "weeder_session/Session.h"
+#include "data_provider/Gps.h"
+#include "data_provider/GpsLocationProvider.h"
+
 using namespace std;
 using namespace testing;
 using namespace romi;
@@ -33,13 +40,25 @@ protected:
         const double slice_interval = 0.020;
         CNCRange range;
         
-	hardware_tests() : range(xmin, xmax) {}
+	hardware_tests() : range(xmin, xmax), linux(), romiDeviceData(), softwareVersion(), gps(), locationPrivider(),
+	session_directory("session-directory")
+	{
+                locationPrivider  = std::make_unique<GpsLocationProvider>(gps);
+	}
 
 	~hardware_tests() override = default;
 
 	void SetUp() override {}
 
 	void TearDown() override {}
+
+    rpp::Linux linux;
+    RomiDeviceData romiDeviceData;
+    SoftwareVersion softwareVersion;
+    romi::Gps gps;
+    std::unique_ptr<ILocationProvider> locationPrivider;
+    const std::string session_directory;
+
 };
 
 // TEST_F(hardware_tests, test_homing_romiserial)
@@ -128,8 +147,9 @@ TEST_F(hardware_tests, test_oquam_homing)
         StepperController stepper(romi_serial);
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval);
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval, session);
 }
 
 TEST_F(hardware_tests, test_oquam_moveto_1)
@@ -139,8 +159,10 @@ TEST_F(hardware_tests, test_oquam_moveto_1)
         StepperController stepper(romi_serial);
 
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval, session);
 
         bool success = oquam.moveto(0.1, 0.0, 0.0, 0.3);
         ASSERT_EQ(success, true);
@@ -153,8 +175,10 @@ TEST_F(hardware_tests, test_oquam_moveto_2)
         StepperController stepper(romi_serial);
 
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval, session);
 
         bool success = oquam.moveto(0.1, 0.0, 0.0, 0.3);
         ASSERT_EQ(success, true);
@@ -174,9 +198,10 @@ TEST_F(hardware_tests, test_oquam_travel_square)
         DebugWeedingSession debug(".", "test_travel_square");
 
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval, session);
 
         Path path;
         v3 p0(0.1, 0.0, 0.0);
@@ -200,9 +225,10 @@ TEST_F(hardware_tests, test_oquam_travel_square_fast)
         DebugWeedingSession debug(".", "test_travel_square_fast");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval, session);
 
         Path path;
         v3 p0(0.1, 0.0, 0.0);
@@ -226,9 +252,10 @@ TEST_F(hardware_tests, test_oquam_travel_snake)
         DebugWeedingSession debug(".", "test_travel_snake");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
         int N = 10;
@@ -254,9 +281,10 @@ TEST_F(hardware_tests, test_oquam_travel_snake_2)
         DebugWeedingSession debug(".", "test_travel_snake_2");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         int N = 11;
         Path path;
@@ -288,9 +316,10 @@ TEST_F(hardware_tests, test_oquam_travel_round_trip)
         DebugWeedingSession debug(".", "test_travel_round_trip");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -309,9 +338,10 @@ TEST_F(hardware_tests, test_oquam_travel_collinear)
         DebugWeedingSession debug(".", "test_travel_collinear");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -331,9 +361,10 @@ TEST_F(hardware_tests, test_oquam_travel_large_displacement)
         DebugWeedingSession debug(".", "test_travel_displacement");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -354,9 +385,10 @@ TEST_F(hardware_tests, test_oquam_travel_small_displacement)
         DebugWeedingSession debug(".", "test_small_displacement");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -377,9 +409,10 @@ TEST_F(hardware_tests, test_oquam_travel_tiny_displacement)
         DebugWeedingSession debug(".", "test_tiny_displacement");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -400,9 +433,10 @@ TEST_F(hardware_tests, test_oquam_travel_zigzag)
         DebugWeedingSession debug(".", "test_travel_zigzag");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
         v3 p(0.0, 0.0, 0.0);
@@ -446,9 +480,10 @@ TEST_F(hardware_tests, test_oquam_stop_and_continue)
         DebugWeedingSession debug(".", "test_stop_and_continue");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         
         std::thread th(stop_and_continue, &oquam);
@@ -474,9 +509,10 @@ TEST_F(hardware_tests, test_oquam_stop_and_reset)
         DebugWeedingSession debug(".", "test_stop_and_reset");
         
         romi_serial.set_debug(debug_romi_serial);
-        
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval);
-        oquam.set_file_cabinet(&debug);
+
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("hw_observation_id");
+        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
         
         std::thread th(stop_and_reset, &oquam);
 

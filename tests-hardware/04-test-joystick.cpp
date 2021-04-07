@@ -51,6 +51,9 @@
 #include <JoystickInputDevice.h>
 #include <BrushMotorDriver.h>
 
+#include "Clock.h"
+#include "ClockAccessor.h"
+
 using namespace std;
 using namespace rpp;
 using namespace romi;
@@ -79,6 +82,9 @@ const char *get_script_file(Options& options, JsonCpp& config)
 
 int main(int argc, char** argv)
 {
+        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
+        rpp::ClockAccessor::SetInstance(clock);
+
         int retval = 1;
         
         RoverOptions options;
@@ -157,7 +163,7 @@ int main(int argc, char** argv)
                 
                 if (!state_machine.handle_event(event_start))
                         // FIXME: should not quit but display something
-                        throw std::runtime_error("Start-up failed"); 
+                        throw std::runtime_error("start-up failed");
                 
                 while (!app_quit()) {
                         
