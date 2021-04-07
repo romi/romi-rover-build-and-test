@@ -1,17 +1,19 @@
 #ifndef _LIBROMI_GPIO_INPUT_H_
 #define _LIBROMI_GPIO_INPUT_H_
 
-#include "GpioLine.h"
+#include <stdint.h>
+#include "GpioFileDescriptor.h"
+#include "GpioChip.h"
 
 namespace romi {
 
-        class GpioInput : public GpioLine
+        class GpioInput : public GpioFileDescriptor
         {
         public:
-                GpioInput(GpioChip& chip, uint offset);
-                virtual ~GpioInput() override = default;
+                GpioInput(GpioChip& chip, uint32_t offset);
+                ~GpioInput() override = default;
                 
-                bool get();
+                bool get(bool& value);
         };
 }
 

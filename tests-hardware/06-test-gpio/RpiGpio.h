@@ -23,8 +23,8 @@ namespace romi {
                 RpiGpio();
                 virtual ~RpiGpio() override = default;
 
-                void set_power_relay(bool on) override;
-                bool get_security_button() override;
+                bool set_power_relay(bool on) override;
+                bool get_security_button(bool& on) override;
         };
 }
 

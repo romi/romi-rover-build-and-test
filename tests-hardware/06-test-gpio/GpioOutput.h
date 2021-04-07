@@ -1,17 +1,19 @@
 #ifndef _LIBROMI_GPIO_OUTPUT_H_
 #define _LIBROMI_GPIO_OUTPUT_H_
 
-#include "GpioLine.h"
+#include <stdint.h>
+#include "GpioFileDescriptor.h"
+#include "GpioChip.h"
 
 namespace romi {
 
-        class GpioOutput : public GpioLine
+        class GpioOutput : public GpioFileDescriptor
         {
         public:
-                GpioOutput(GpioChip& chip, uint offset);
-                virtual ~GpioOutput() override = default;
+                GpioOutput(GpioChip& chip, uint32_t offset);
+                ~GpioOutput() override = default;
                 
-                void set(bool value);
+                bool set(bool value);
         };
 }
 

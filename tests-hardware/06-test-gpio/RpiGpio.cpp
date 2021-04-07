@@ -4,19 +4,19 @@
 namespace romi {
         
         RpiGpio::RpiGpio()
-                : chip_(0),
+                : chip_(),
                   power_relay_(chip_, kOffsetPowerRelay),
                   security_button_(chip_, kOffsetSecurityButton)
         {
         }
 
-        void RpiGpio::set_power_relay(bool value)
+        bool RpiGpio::set_power_relay(bool value)
         {
-                power_relay_.set(value);
+                return power_relay_.set(value);
         }
 
-        bool RpiGpio::get_security_button()
+        bool RpiGpio::get_security_button(bool& value)
         {
-                return security_button_.get();
+                return security_button_.get(value);
         }
 }

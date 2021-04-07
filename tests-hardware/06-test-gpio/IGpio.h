@@ -8,8 +8,8 @@ namespace romi {
         public:
                 virtual ~IGpio() = default;
         
-                virtual void set_power_relay(bool value) = 0;
-                virtual bool get_security_button() = 0;
+                virtual bool set_power_relay(bool on) = 0;
+                virtual bool get_security_button(bool& on) = 0;
 
                 //virtual int get_next_event() = 0;
         };

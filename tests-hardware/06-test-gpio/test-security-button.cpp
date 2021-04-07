@@ -12,7 +12,8 @@ int main()
         romi::RpiGpio gpio;
 
         while (true) {
-                bool on = gpio.get_security_button();
+                bool on;
+                gpio.get_security_button(on);
                 if (on) 
                         std::cout << "ON" << std::endl;
                 else

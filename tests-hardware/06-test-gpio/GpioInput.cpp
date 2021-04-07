@@ -1,24 +1,36 @@
-#include <stdexcept>
-#include <r.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <linux/gpio.h>
 #include "GpioInput.h"
 
 namespace romi {
 
-        GpioInput::GpioInput(GpioChip& chip, uint offset)
-                : GpioLine(chip, offset)
+        GpioInput::GpioInput(GpioChip& chip, uint32_t offset)
+                : GpioFileDescriptor()
         {
-                if (gpiod_line_request_input(line_, kConsumer)) {
-                        throw_error("Failed to set the GPIO line to input");
+                struct gpiohandle_request request;
+                memset(&request, 0, sizeof(struct gpiohandle_request));
+                request.lineoffsets[0] = offset;
+                request.flags = GPIOHANDLE_REQUEST_INPUT;
+                request.lines = 1;
+
+                if (ioctl(chip.get_fd(), GPIO_GET_LINEHANDLE_IOCTL, &request) < 0) {
+                        throw_error("GpioInput: Get line handle failed");
                 }
+
+                fd_ = request.fd;
         }
 
-        bool GpioInput::get()
+        bool GpioInput::get(bool& value)
         {
-                int value = gpiod_line_get_value(line_);
-                if (value == -1) {
-                        throw_error("Failed to read the GPIO value");
-                }
-                return value == 0? false : true;
+                bool success = true;
+                struct gpiohandle_data data;
+		if (ioctl(fd_, GPIOHANDLE_GET_LINE_VALUES_IOCTL, &data) < 0)
+                        success = false;
+                else 
+                        value = (data.values[0] == 0)? false : true;
+                return success;
         }
 }
 

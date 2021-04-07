@@ -28,12 +28,12 @@ install(TARGETS 05-test-serial-camera-2-camera DESTINATION bin)
 #
 
 set(GPIO_SOURCES
+  06-test-gpio/GpioFileDescriptor.cpp
+  06-test-gpio/GpioFileDescriptor.h
   06-test-gpio/GpioChip.cpp
   06-test-gpio/GpioChip.h
   06-test-gpio/GpioInput.cpp
   06-test-gpio/GpioInput.h
-  06-test-gpio/GpioLine.cpp
-  06-test-gpio/GpioLine.h
   06-test-gpio/GpioOutput.cpp
   06-test-gpio/GpioOutput.h
   06-test-gpio/IGpio.h
