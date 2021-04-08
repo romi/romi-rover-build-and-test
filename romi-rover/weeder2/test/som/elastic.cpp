@@ -47,7 +47,7 @@ int main(int argc, char **argv)
         std::string session_directory(".");
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("elastic");
-        std::string dump_filename("dump.out")
+        std::string dump_filename("dump.out");
         bool print = false;
         double alpha = 0.2;
         double beta = 2.0;
