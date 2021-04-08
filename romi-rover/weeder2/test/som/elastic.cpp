@@ -24,16 +24,30 @@
 
 #include <getopt.h>
 
-#include "DebugWeedingSession.h"
-#include "som/SelfOrganizedMap.h"
+#include "Linux.h"
+#include "debug_tools/debug_data_dumper.h"
+#include "data_provider/RomiDeviceData.h"
+#include "data_provider/SoftwareVersion.h"
+#include "data_provider/GpsLocationProvider.h"
+#include "data_provider/Gps.h"
+#include "weeder/Session.h"
+#include "weeder/som/SelfOrganizedMap.h"
 #include "test.h"
 
 using namespace romi;
 
 int main(int argc, char **argv)
 {
-        DebugWeedingSession session(".", "elastic");
-        IFolder &folder = session.start_new_folder();
+
+        rpp::Linux linux;
+        RomiDeviceData romiDeviceData;
+        SoftwareVersion softwareVersion;
+        romi::Gps gps;
+        std::unique_ptr<ILocationProvider> locationPrivider = std::make_unique<GpsLocationProvider>(gps);
+        std::string session_directory(".");
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        session.start("elastic");
+        std::string dump_filename("dump.out")
         bool print = false;
         double alpha = 0.2;
         double beta = 2.0;
@@ -42,20 +56,20 @@ int main(int argc, char **argv)
         int option_index;
         static const char *optchars = "dpa:b:";
         static struct option long_options[] = {
-                {"dump", no_argument, 0, 'd'},
-                {"print", no_argument, 0, 'p'},
-                {"alpha", required_argument, 0, 'a'},
-                {"beta", required_argument, 0, 'b'},
-                {"epsilon", required_argument, 0, 'e'},
-                {0, 0, 0, 0}
+                {"dump", no_argument, nullptr, 'd'},
+                {"print", no_argument, nullptr, 'p'},
+                {"alpha", required_argument, nullptr, 'a'},
+                {"beta", required_argument, nullptr, 'b'},
+                {"epsilon", required_argument, nullptr, 'e'},
+                {nullptr, 0, nullptr, 0}
         };
-        
-        while (1) {
-                int c = getopt_long(argc, argv, optchars, long_options, &option_index);
-                if (c == -1) break;
+
+        int c = 0;
+        while (c != -1) {
+                c = getopt_long(argc, argv, optchars, long_options, &option_index);
                 switch (c) {
                 case 'd':
-                        folder.open_dump();
+                        OPEN_DUMP(session.current_path()/dump_filename);
                         break;
                 case 'p':
                         print = true;
@@ -68,6 +82,8 @@ int main(int argc, char **argv)
                         break;
                 case 'e':
                         epsilon = atof(optarg);
+                        break;
+                default:
                         break;
                 }
         }
@@ -93,5 +109,5 @@ int main(int argc, char **argv)
 
         som.init_cities(&cx[0], &cy[0]);
         som.init_path(&px[0], &py[0]);
-        som.compute_path(folder, print);
+        som.compute_path(session, print);
 }
