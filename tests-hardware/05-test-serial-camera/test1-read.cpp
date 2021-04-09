@@ -11,13 +11,14 @@ int main()
 
         membuf_t *buffer = new_membuf();
         while (true) {
-                const char *counter = serial_readline(serial, buffer);
-                if (counter != nullptr) {
-                        r_info("%s", counter);
+                const char *request = serial_readline(serial, buffer);
+                if (request != nullptr) {
+                        r_info("%s", request);
                 } else {
                         r_warn("serial_readline returned null");
                         break;
                 }
+                serial_print(serial, "#G[0,0]:xxxx\r\n");
         }
 
         delete_membuf(buffer);

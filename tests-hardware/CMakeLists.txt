@@ -27,6 +27,12 @@ install(TARGETS 05-test-serial-camera-2-camera DESTINATION bin)
 
 #
 
+add_executable(05-test-serial-camera-3-grab 05-test-serial-camera/test3-grab.cpp)
+target_link_libraries(05-test-serial-camera-3-grab romi r)
+install(TARGETS 05-test-serial-camera-3-grab DESTINATION bin)
+
+#
+
 set(GPIO_SOURCES
   06-test-gpio/GpioFileDescriptor.cpp
   06-test-gpio/GpioFileDescriptor.h
