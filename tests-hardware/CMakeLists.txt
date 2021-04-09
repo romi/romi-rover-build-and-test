@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.10)
 project(test-hardware)
 
 add_executable(04-test-joystick 04-test-joystick.cpp)

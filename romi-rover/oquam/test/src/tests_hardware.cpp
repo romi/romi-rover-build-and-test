@@ -15,7 +15,7 @@
 #include "Linux.h"
 #include "data_provider/RomiDeviceData.h"
 #include "data_provider/SoftwareVersion.h"
-#include "weeder_session/Session.h"
+#include "weeder/Session.h"
 #include "data_provider/Gps.h"
 #include "data_provider/GpsLocationProvider.h"
 

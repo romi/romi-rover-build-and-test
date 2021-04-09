@@ -17,7 +17,7 @@ typedef struct _matrix_t {
 int matrix_read(matrix_t *matrix, int fd)
 {
         ssize_t n;
-        int32_t len;
+        size_t len;
         
         n = read(fd, (void *) &len, sizeof(int32_t));
         if (n != sizeof(int32_t)) {
@@ -25,12 +25,12 @@ int matrix_read(matrix_t *matrix, int fd)
                 exit(1);
         }
         if (len < 1 || len > 31) {
-                printf("Invalid name length: %d\n", len);
+                printf("Invalid name length: %lu\n", len);
                 exit(1);
         }
         
         n = read(fd, (void *) matrix->name, len);
-        if (n != len) {
+        if (n != (ssize_t)len) {
                 printf("Read failed\n");
                 exit(1);
         }
@@ -56,16 +56,16 @@ int matrix_read(matrix_t *matrix, int fd)
                 exit(1);
         }
 
-        len = matrix->rows * matrix->cols;
+        len = (size_t) (matrix->rows * matrix->cols);
         if (len > 100000) {
-                printf("Matrix too large (%d)\n", len);
+                printf("Matrix too large (%lu)\n", len);
                 exit(1);
         }
         
-        ssize_t size = (ssize_t) len * sizeof(double);
+        size_t size = ( len * sizeof(double));
         
         n = read(fd, (void *) matrix->values, size);                
-        if (n != size) {
+        if (n != (ssize_t)size) {
                 printf("Read failed\n");
                 exit(1);
         }
