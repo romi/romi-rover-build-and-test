@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.10)
 project(test-hardware)
 
 add_executable(04-test-joystick 04-test-joystick.cpp)
@@ -24,6 +24,12 @@ install(TARGETS 05-test-serial-camera-2-host DESTINATION bin)
 add_executable(05-test-serial-camera-2-camera 05-test-serial-camera/test2-camera.cpp)
 target_link_libraries(05-test-serial-camera-2-camera romi romiserial r)
 install(TARGETS 05-test-serial-camera-2-camera DESTINATION bin)
+
+#
+
+add_executable(05-test-serial-camera-3-grab 05-test-serial-camera/test3-grab.cpp)
+target_link_libraries(05-test-serial-camera-3-grab romi r)
+install(TARGETS 05-test-serial-camera-3-grab DESTINATION bin)
 
 #
 
