@@ -25,7 +25,7 @@ int matrix_read(matrix_t *matrix, int fd)
                 exit(1);
         }
         if (len < 1 || len > 31) {
-                printf("Invalid name length: %lu\n", len);
+                printf("Invalid name length: %zu\n", len);
                 exit(1);
         }
         
@@ -58,7 +58,7 @@ int matrix_read(matrix_t *matrix, int fd)
 
         len = (size_t) (matrix->rows * matrix->cols);
         if (len > 100000) {
-                printf("Matrix too large (%lu)\n", len);
+                printf("Matrix too large (%zu)\n", len);
                 exit(1);
         }
         
