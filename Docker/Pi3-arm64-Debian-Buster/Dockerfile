@@ -32,11 +32,12 @@ RUN echo '#!/bin/sh.real\nbalena-info\nrm -f /bin/sh\ncp /bin/sh.real /bin/sh\n/
 	&& cp /bin/sh /bin/sh.real \
 	&& mv /bin/sh-shim /bin/sh
 
-RUN useradd -ms /bin/bash romi \
+RUN adduser --disabled-password \--gecos '' romi \
+&& adduser romi sudo \
 && echo "romi:romi" | chpasswd \
-&& usermod -aG sudo romi \
-&& usermod -aG dialout romi \
-&& echo "root:root" | chpasswd
+&& echo "root:root" | chpasswd \
+&& echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 # Disable leak sanitizer in Qemu
 ENV ASAN_OPTIONS=detect_leaks=0
 
