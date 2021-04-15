@@ -21,6 +21,9 @@ sudo apt-get install -y qemu-user-static
 The following command will run the docker container and will mount the current directory as /hostworkspace inside the container.
 docker run -it -v ${PWD}:/hostworkspace --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --privileged pi3arm7debianbullseye /bin/bash
 
+${PWD} can be replaced with a path to the romi_build_and_test project root.
+Make sure ${PWD} or whatever directory you use has write permissions for all users.
+
 ## Running the tests
 1) Run all tests except tests requiring socat as user romi
    ctest -V -E rcom_rcdiscover_unit_tests
