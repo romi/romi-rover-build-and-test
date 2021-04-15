@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 project(romi-rover-build-and-test)
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm")
-    MESSAGE("ARMP ROCESSOR DETECTED")
+if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
+    MESSAGE("ARM PROCESSOR DETECTED")
 else()
     MESSAGE("X86 PROCESSOR DETECTED")
 endif()
+
+MESSAGE(${CMAKE_SYSTEM_PROCESSOR})
 
 ############################################################
 
