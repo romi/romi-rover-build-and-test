@@ -20,6 +20,7 @@ sudo apt-get install -y qemu-user-static
 ### Run container
 The following command will run the docker container and will mount the current directory as /hostworkspace inside the container.
 docker run -it -v ${PWD}:/hostworkspace --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --privileged pi3arm7debianbullseye /bin/bash
+docker run -it -v ${PWD}:/hostworkspace --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --privileged pi3arm7debianbuster /bin/bash
 
 ${PWD} can be replaced with a path to the romi_build_and_test project root, but it is suggested to keep all the code within the container.
 32bit versions of debian have issues with a 64bit filesystem and a *lot* of tests will fail and you will get write failures.
