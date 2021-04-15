@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		i2c-tools \
 		usbutils \
         git \
+		gcc \
 		libfluidsynth-dev \
 		socat \
 		python3 \
@@ -27,11 +28,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip3 install websocket-client \
 && sudo apt-get update \
 && sudo apt-get upgrade -y \
-&& sudo apt-get dist-upgrade -y \
-&& rm -rf /var/lib/apt/lists/*
+&& sudo apt-get dist-upgrade -y 
 
-# specifically at the end as we only want 3.13. Anything higher won't work with Qemu in a docker image.
+# specifically at the end as we only want 3.13 betweem 3.14 and 3.18 wont work in a Qemu docker container.
 RUN apt install cmake-data=3.13.4-1 && apt install cmake=3.13.4-1
+
+RUN rm -rf /var/lib/apt/lists/*
 
 RUN [ ! -d /.balena/messages ] && mkdir -p /.balena/messages; echo 'Here are a few details about this Docker image (For more information please visit https://www.balena.io/docs/reference/base-images/base-images/): \nArchitecture: ARM v7 \nOS: Debian Buster \nVariant: build variant \nDefault variable(s): UDEV=off \nExtra features: \n- Easy way to install packages with `install_packages <package-name>` command \n- Run anywhere with cross-build feature  (for ARM only) \n- Keep the container idling with `balena-idle` command \n- Show base image details with `balena-info` command' > /.balena/messages/image-info
 
