@@ -1,4 +1,4 @@
-## Raspberry Pi 3 Bullseye Dockerfile
+## Raspberry Pi 3 Buster Dockerfile
 This folder contains a dockerfile with built in ARM emulator for building and testing the romi rover project.
 Tested on Ubuntu 20.04
 
@@ -19,7 +19,7 @@ sudo apt-get install -y qemu-user-static
 
 ### Run container
 The following command will run the docker container and will mount the current directory as /hostworkspace inside the container.
-docker run -it -v ${PWD}:/hostworkspace --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --privileged pi3arm7debianbullseye /bin/bash
+docker run -it -v ${PWD}:/hostworkspace --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --privileged pi3arm7debianbusyer /bin/bash
 
 ${PWD} can be replaced with a path to the romi_build_and_test project root.
 Make sure ${PWD} or whatever directory you use has write permissions for all users.
