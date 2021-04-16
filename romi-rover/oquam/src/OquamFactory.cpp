@@ -35,10 +35,6 @@ namespace romi {
         OquamFactory::OquamFactory() : _serial(), _romi_serial(), _controller()
         {}
         
-        OquamFactory::~OquamFactory()
-        {
-        }
-        
         CNCController& OquamFactory::create_controller(Options &options,
                                                        JsonCpp &config)
         {
@@ -49,13 +45,13 @@ namespace romi {
 
         void OquamFactory::instantiate_controller(Options &options, JsonCpp &config)
         {
-                const char *classname = get_controller_classname_in_config(config);
+                std::string classname = get_controller_classname_in_config(config);
                 instantiate_controller(classname, options, config);
         }
-        
-        const char *OquamFactory::get_controller_classname_in_config(JsonCpp &config)
+
+        std::string OquamFactory::get_controller_classname_in_config(JsonCpp &config)
         {
-                const char *controller_classname = nullptr;
+                std::string controller_classname ;
                 try {
                         controller_classname = (const char *) config["oquam"]["controller-classname"];
                         
@@ -67,20 +63,20 @@ namespace romi {
                 return controller_classname;
         }
         
-        void OquamFactory::instantiate_controller(const char *classname,
+        void OquamFactory::instantiate_controller(const std::string& classname,
                                                   Options &options,
                                                   JsonCpp &config)
         {
-                r_info("create_controller: Creating an instance of '%s'", classname);
+                r_info("create_controller: Creating an instance of '%s'", classname.c_str());
                 
-                if (rstreq(classname, FakeCNCController::ClassName)) {
+                if (classname == FakeCNCController::ClassName) {
                         instantiate_fake_controller();
 
-                } else if (rstreq(classname, StepperController::ClassName)) {
+                } else if (classname == StepperController::ClassName) {
                         instantiate_stepper_controller(options, config);
                         
                 } else {
-                        r_err("Unknown controller class: '%s'", classname);
+                        r_err("Unknown controller class: '%s'", classname.c_str());
                         throw std::runtime_error("Failed to create the controller");
                 }
         }
@@ -93,26 +89,26 @@ namespace romi {
         void OquamFactory::instantiate_stepper_controller(Options &options,
                                                           JsonCpp &config)
         {
-                const char *device = get_stepper_controller_device(options, config);
+                std::string device = get_stepper_controller_device(options, config);
                 _serial = std::make_shared<RSerial>(device, 115200, 1);
                 _romi_serial = std::make_unique<RomiSerialClient>(_serial, _serial);
                 _romi_serial->set_debug(true);
                 _controller = std::make_unique<StepperController>(*_romi_serial);
         }
 
-        const char *OquamFactory::get_stepper_controller_device(Options &options,
+        std::string OquamFactory::get_stepper_controller_device(Options &options,
                                                                 JsonCpp &config)
         {
-                const char *device_name = options.get_value(RoverOptions::cnc_device);
-                if (device_name == nullptr) {
+                std::string device_name = options.get_value(RoverOptions::cnc_device);
+                if (device_name.empty()) {
                         device_name = get_stepper_controller_device_in_config(config);
                 }
                 return device_name;
         }
-        
-        const char *OquamFactory::get_stepper_controller_device_in_config(JsonCpp &config)
+
+        std::string OquamFactory::get_stepper_controller_device_in_config(JsonCpp &config)
         {
-                const char *device_name = nullptr;
+                std::string device_name;
                 try {
                         device_name = (const char *) config["ports"]["oquam"]["port"];
                         

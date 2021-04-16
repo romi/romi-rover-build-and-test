@@ -53,58 +53,51 @@ namespace romi {
 
                 std::shared_ptr<RSerial> _serial;
                 std::unique_ptr<RomiSerialClient> _romi_serial;
-                std::unique_ptr<rcom::RPCClient> _navigation_client; 
-                std::unique_ptr<rcom::RPCClient> _weeder_client; 
                 std::unique_ptr<LinuxJoystick> _joystick;
 
                 std::unique_ptr<IDisplay> _display;
                 std::unique_ptr<INavigation> _navigation;
                 std::unique_ptr<IInputDevice> _input_device;
-            //    std::unique_ptr<INotifications> _notifications;
                 std::unique_ptr<IWeeder> _weeder;
                 
 
                 // Display
                 void instantiate_display(Options &options, JsonCpp &config);
-                void instantiate_display(const char *display_classname,
+                void instantiate_display(const std::string& display_classname,
                                         Options &options,
                                         JsonCpp &config);
-                const char *get_display_classname(JsonCpp &config);
+                std::string get_display_classname(JsonCpp &config);
                 void instantiate_fake_display();
                 void instantiate_crystal_display(Options &options, JsonCpp &config);
-                const char *get_crystal_display_device(Options &options,
+                std::string get_crystal_display_device(Options &options,
                                                        JsonCpp &config);
-                const char *get_crystal_display_device_in_config(JsonCpp &config);
+                std::string get_crystal_display_device_in_config(JsonCpp &config);
 
                 
                 // Navigation
                 void instantiate_navigation(Options &options, JsonCpp &config);
-                void instantiate_navigation(const char *classname, Options &options,
+                void instantiate_navigation(const std::string& classname, Options &options,
                                            JsonCpp &config);
-                const char *get_navigation_classname(JsonCpp &config);
+                std::string get_navigation_classname(JsonCpp &config);
                 void instantiate_fake_navigation();
                 void instantiate_remote_navigation(Options &options, JsonCpp &config);
 
                 // Input device / joystick
-                static const char *get_input_device_classname(JsonCpp &config);
-                void instantiate_input_device(const char *classname, Options& options,
+                static std::string get_input_device_classname(JsonCpp &config);
+                void instantiate_input_device(const std::string& classname, Options& options,
                                              JsonCpp& config);
                 void instantiate_fake_input_device();
                 void instantiate_joystick(Options& options, JsonCpp& config);
-                const char *get_joystick_device(Options& options, JsonCpp& config);
-                const char *get_joystick_device_in_config(JsonCpp& config);
+                std::string get_joystick_device(Options& options, JsonCpp& config);
+                std::string get_joystick_device_in_config(JsonCpp& config);
 
                 // Weeder
                 void instantiate_weeder(Options &options, JsonCpp &config);
-                void instantiate_weeder(const char *classname, Options &options,
+                void instantiate_weeder(const std::string& classname, Options &options,
                                            JsonCpp &config);
-                static const char *get_weeder_classname(JsonCpp &config);
+                static std::string get_weeder_classname(JsonCpp &config);
                 void instantiate_fake_weeder();
                 void instantiate_remote_weeder(Options &options, JsonCpp &config);
-
-
-                // Script
-                const char *get_script_file_in_config(JsonCpp &config);
                 
         public:
 
@@ -116,7 +109,7 @@ namespace romi {
                 IInputDevice& create_input_device(Options& options, JsonCpp& config);
                 IWeeder& create_weeder(Options& options, JsonCpp& config);
                 // INotifications& create_notifications(Options& options, JsonCpp& config);
-                const char *get_script_file(Options &options, JsonCpp &config);
+             //   std::string get_script_file(Options &options, JsonCpp &config);
         };
 }
 

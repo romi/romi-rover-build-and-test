@@ -1,7 +1,8 @@
 #include <exception>
 #include <stdexcept>
 #include <string>
-#include <rcom.h>
+#include <atomic>
+#include <syslog.h>
 
 #include <RPCServer.h>
 #include "Linux.h"
@@ -20,20 +21,27 @@
 #include "Clock.h"
 #include "ClockAccessor.h"
 
-using namespace romi;
+std::atomic<bool> quit(false);
 
 static inline double sign(double v)
 {
         return (v < 0)? -1.0 : 1.0;
 }
 
-const char *get_config_file(Options& options)
+void SignalHandler(int signal)
 {
-        const char *file = options.get_value(RoverOptions::config);
-        if (file == nullptr) {
-                throw std::runtime_error("No configuration file was given (can't run without one...).");
+        if (signal == SIGSEGV){
+                syslog(1, "rcom-registry segmentation fault");
+                exit(signal);
         }
-        return file;
+        else if (signal == SIGINT){
+                r_info("Ctrl-C Quitting Application");
+                perror("init_signal_handler");
+                quit = true;
+        }
+        else{
+                r_err("Unknown signam received %d", signal);
+        }
 }
 
 int main(int argc, char** argv)
@@ -43,40 +51,46 @@ int main(int argc, char** argv)
 
         int retval = 1;
 
-        RoverOptions options;
+        romi::RoverOptions options;
         options.parse(argc, argv);
         options.exit_if_help_requested();
-        
-        app_init(&argc, argv);
-        app_set_name("oquam");
+
+        r_log_init();
+        r_log_set_app("oquam");
+
+        std::signal(SIGSEGV, SignalHandler);
+        std::signal(SIGINT, SignalHandler);
+        // TBD: Check with Peter.
+//        app_init(&argc, argv);
+//        app_set_name("oquam");
 
         try {
-                const char *config_file = get_config_file(options);
-                r_info("Oquam: Using configuration file: '%s'", config_file);
-                JsonCpp config = JsonCpp::load(config_file);
-                
-                OquamFactory factory;
+                std::string config_file = options.get_config_file();
+                r_info("Oquam: Using configuration file: '%s'", config_file.c_str());
+                JsonCpp config = JsonCpp::load(config_file.c_str());
+
+                romi::OquamFactory factory;
                 
                 JsonCpp r = config["oquam"]["cnc-range"];
-                CNCRange range(r);
+                romi::CNCRange range(r);
 
                 r = config["oquam"]["stepper-settings"];
-                StepperSettings stepper_settings(r);
+                romi::StepperSettings stepper_settings(r);
         
                 double slice_duration = (double) config["oquam"]["path-slice-duration"];
                 double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
 
-                CNCController& controller = factory.create_controller(options, config);
+                romi::CNCController& controller = factory.create_controller(options, config);
 
                 rpp::Linux linux;
-                RomiDeviceData romiDeviceData;
-                SoftwareVersion softwareVersion;
+                romi::RomiDeviceData romiDeviceData;
+                romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
-                std::unique_ptr<ILocationProvider> locationPrivider = std::make_unique<GpsLocationProvider>(gps);
+                std::unique_ptr<romi::ILocationProvider> locationPrivider = std::make_unique<romi::GpsLocationProvider>(gps);
                 std::string session_directory = options.get_value("oquam-session");
                 romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
                 session.start("oquam_observation_id");
-                Oquam oquam(controller, range,
+                romi::Oquam oquam(controller, range,
                             stepper_settings.maximum_speed,
                             stepper_settings.maximum_acceleration,
                             stepper_settings.steps_per_meter,
@@ -84,10 +98,10 @@ int main(int argc, char** argv)
                             slice_duration,
                             session);
 
-                CNCAdaptor adaptor(oquam);
+                romi::CNCAdaptor adaptor(oquam);
                 rcom::RPCServer server(adaptor, "oquam", "cnc");
                 
-                while (!app_quit())
+                while (!quit)
                         clock_sleep(0.1);
 
                 retval = 0;

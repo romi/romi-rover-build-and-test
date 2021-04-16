@@ -22,8 +22,9 @@
 
  */
 #include <exception>
+#include <atomic>
 
-#include <rcom.h>
+#include <syslog.h>
 #include <RPCServer.h>
 #include <RomiSerialClient.h>
 #include <RSerial.h>
@@ -31,81 +32,72 @@
 #include <BrushMotorDriver.h>
 #include <Navigation.h>
 #include <NavigationSettings.h>
+#include "configuration/ConfigurationProvider.h"
 #include <rover/RoverOptions.h>
 #include <rpc/NavigationAdaptor.h>
 
-using namespace romi;
-using namespace rcom;
+std::atomic<bool> quit(false);
 
-const char *get_brush_motor_device_in_config(JsonCpp& config)
+void SignalHandler(int signal)
 {
-        const char *brush_motor_device = nullptr;
-        try {
-                brush_motor_device = (const char *)config["ports"]["brush-motor-driver"]["port"];
-                        
-        } catch (JSONError &je) {
-                r_warn("Failed to get the value for "
-                       "ports.brush_motor.port: %s", je.what());
-                throw std::runtime_error("No brush_motor device specified");
+        if (signal == SIGSEGV){
+                syslog(1, "rcom-registry segmentation fault");
+                exit(signal);
         }
-        return brush_motor_device;
-}
-
-const char *get_brush_motor_device(Options& options, JsonCpp& config)
-{
-        const char *brush_motor_device = options.get_value(RoverOptions::navigation_device);
-        if (brush_motor_device == nullptr) {
-                brush_motor_device = get_brush_motor_device_in_config(config);
+        else if (signal == SIGINT){
+                r_info("Ctrl-C Quitting Application");
+                perror("init_signal_handler");
+                quit = true;
         }
-        return brush_motor_device;
-}
-
-const char *get_config_file(Options& options)
-{
-        const char *file = options.get_value(RoverOptions::config);
-        if (file == nullptr) {
-                throw std::runtime_error("No configuration file was given (can't run without one...).");
+        else{
+                r_err("Unknown signam received %d", signal);
         }
-        return file;
 }
         
 int main(int argc, char** argv)
 {
-        RoverOptions options;
+        romi::RoverOptions options;
         options.parse(argc, argv);
         options.exit_if_help_requested();
-        
-        app_init(&argc, argv);
-        app_set_name("navigation");
+
+        r_log_init();
+        r_log_set_app("navigation");
+
+        std::signal(SIGSEGV, SignalHandler);
+        std::signal(SIGINT, SignalHandler);
+
+        // TBD: Check with Peter.
+//        app_init(&argc, argv);
+//        app_set_name("navigation");
         
         try {
-                const char *config_file = get_config_file(options);
-                r_info("Navigation: Using configuration file: '%s'", config_file);
-                JsonCpp config = JsonCpp::load(config_file);
+                std::string config_file = options.get_config_file();
+                r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
+                JsonCpp config = JsonCpp::load(config_file.c_str());
 
                 JsonCpp rover_settings = config["navigation"]["rover"];
-                NavigationSettings rover(rover_settings);
+                romi::NavigationSettings rover(rover_settings);
                 
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 
-                const char *device = get_brush_motor_device(options, config);
+                std::string device = romi::get_brush_motor_device(options, config);
                 std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
                 RomiSerialClient romi_serial(serial, serial);
                 romi_serial.set_debug(true);
-                
-                BrushMotorDriver driver(romi_serial,
+
+                romi::BrushMotorDriver driver(romi_serial,
                                         driver_settings,
                                         static_cast<int>(rover.encoder_steps),
                                         rover.max_revolutions_per_sec);
 
-                Navigation navigation(driver, rover);
-                
-                NavigationAdaptor adaptor(navigation);
-                RPCServer server(adaptor, "navigation", "navigation");
-                
-                while (!app_quit())
-                        clock_sleep(0.1);
+                romi::Navigation navigation(driver, rover);
 
+                romi::NavigationAdaptor adaptor(navigation);
+                rcom::RPCServer server(adaptor, "navigation", "navigation");
+
+                while (!quit) {
+                        clock_sleep(0.1);
+                }
                 
         } catch (std::exception& e) {
                 r_err(e.what());

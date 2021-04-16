@@ -42,19 +42,19 @@ namespace romi {
                 std::unique_ptr<CNCController> _controller;
                 
                 void instantiate_controller(Options &options, JsonCpp &config);
-                void instantiate_controller(const char *controller_classname,
+                void instantiate_controller(const std::string& controller_classname,
                                             Options &options, JsonCpp &config);
-                const char *get_controller_classname_in_config(JsonCpp &config);
+                std::string get_controller_classname_in_config(JsonCpp &config);
                 void instantiate_fake_controller();
                 void instantiate_stepper_controller(Options &options, JsonCpp &config);
-                const char *get_stepper_controller_device(Options &options,
+                std::string get_stepper_controller_device(Options &options,
                                                           JsonCpp &config);
-                const char *get_stepper_controller_device_in_config(JsonCpp &config);
+                std::string get_stepper_controller_device_in_config(JsonCpp &config);
 
         public:
 
                 OquamFactory();
-                virtual ~OquamFactory();
+                virtual ~OquamFactory() = default;
                 
                 CNCController& create_controller(Options& options, JsonCpp& config);
 

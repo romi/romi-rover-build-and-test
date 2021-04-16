@@ -156,7 +156,7 @@
         },
         
         "script-engine": {
-            "script-file": "scripts.json"
+            "script": "scripts.json"
         }
     },
     

@@ -1,8 +1,9 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../mock/mock_navigation.h"
-#include <GetOpt.h>
+#include <configuration/GetOpt.h>
 #include <CrystalDisplay.h>
+#include "configuration/ConfigurationProvider.h"
 #include <rpc/RemoteNavigation.h>
 #include <JoystickInputDevice.h>
 #include <rover/RoverOptions.h>
@@ -292,10 +293,10 @@ TEST_F(uifactory_tests, successfully_uses_script_file_from_options)
         JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
         
         try {
-                UIFactory factory;
-                const char *path = factory.get_script_file(options, config);
+              //  UIFactory factory;
+                std::string path = get_script_file(options, config);
 
-                ASSERT_STREQ(path, "/foo/bar");
+                ASSERT_EQ(path, "/foo/bar");
                 
         } catch (...) {
                 FAIL() << "Didn't expect an exception";
@@ -311,10 +312,10 @@ TEST_F(uifactory_tests, successfully_uses_script_file_from_config)
                                             RoverOptions::script);
         
         try {
-                UIFactory factory;
-                const char *path = factory.get_script_file(options, config);
+               // UIFactory factory;
+                std::string path = get_script_file(options, config);
 
-                ASSERT_STREQ(path, "/bar/foo");
+                ASSERT_EQ(path, "/bar/foo");
                 
         } catch (...) {
                 FAIL() << "Didn't expect an exception";
@@ -328,8 +329,8 @@ TEST_F(uifactory_tests, throws_exception_on_missing_script_file)
         JsonCpp config = JsonCpp::parse("{'user-interface': {}}");
         
         try {
-                UIFactory factory;
-                factory.get_script_file(options, config);
+//                UIFactory factory;
+                get_script_file(options, config);
 
                 FAIL() << "Expected an exception";
                 

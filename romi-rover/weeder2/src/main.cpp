@@ -24,16 +24,17 @@
 #include <exception>
 #include <stdexcept>
 #include <string.h>
+#include <atomic>
+#include <syslog.h>
 
-#include <rcom.h>
 #include <RPCServer.h>
 #include <RPCClient.h>
 
+#include "configuration/ConfigurationProvider.h"
 #include <rover/RoverOptions.h>
-#include <DebugWeedingSession.h>
 #include <FileCamera.h>
 #include <USBCamera.h>
-#include <CameraServer.h>
+//#include <CameraServer.h>
 #include <weeder/Weeder.h>
 #include <weeder/PipelineFactory.h>
 #include <rpc/WeederAdaptor.h>
@@ -49,73 +50,31 @@
 #include "Clock.h"
 #include "ClockAccessor.h"
 
-using namespace romi;
-using namespace rcom;
+std::atomic<bool> quit(false);
 
-// TBD: Move scope.
-static RPCClient *rpc_client = nullptr;
-
-const char *get_config_file(Options& options)
+std::shared_ptr<romi::ICamera> instantiate_file_camera(romi::Options &options, JsonCpp &config)
 {
-        const char *file = options.get_value(RoverOptions::config);
-        if (file == nullptr) {
-                throw std::runtime_error("No configuration file was given (can't run without one...).");
-        }
-        return file;
+        return std::make_shared<romi::FileCamera>(get_camera_image(options, config));
 }
 
-const char *get_camera_image_in_config(JsonCpp &config)
-{
-        try {
-                return (const char *)config["weeder"]["file-camera"]["image"];
-                
-        } catch (JSONError& je) {
-                r_err("get_camera_image_in_config: Failed to get value "
-                      "of weeder.file-camera.image");
-                throw std::runtime_error("Missing image file for camera");
-        }
-}
 
-const char *get_camera_image(Options &options, JsonCpp &config)
+// TBD: This is duplicate code but the device is different.
+// Should make it common.
+std::string get_weeder_camera_device(romi::Options &options, JsonCpp &config)
 {
-        const char *filename = options.get_value(RoverOptions::camera_image);
-        if (filename == nullptr)
-                filename = get_camera_image_in_config(config);
-        return filename;
-}
-
-ICamera *instantiate_file_camera(Options &options, JsonCpp &config)
-{
-        return new FileCamera(get_camera_image(options, config));
-}
-
-const char *get_camera_device_in_config(JsonCpp &config)
-{
-        try {
-                return (const char *)config["ports"]["usb-camera"]["port"];
-                
-        } catch (JSONError& je) {
-                r_err("get_camera_device_in_config: Failed to get value "
-                      "of ports.usb-camera.port");
-                throw std::runtime_error("Missing device name for camera in config");
-        }
-}
-
-const char *get_camera_device(Options &options, JsonCpp &config)
-{
-        const char *device = options.get_value("weeder-camera-device");
-        if (device == nullptr)
-                device = get_camera_device_in_config(config);
+        std::string device = options.get_value("weeder-camera-device");
+        if (device.empty())
+                device = romi::get_camera_device_in_config(config);
         return device;
 }
 
-ICamera *instantiate_usb_camera(Options &options, JsonCpp &config)
+std::shared_ptr<romi::ICamera> instantiate_usb_camera(romi::Options &options, JsonCpp &config)
 {
         try {
-                const char *device = get_camera_device(options, config);
+                std::string device = get_weeder_camera_device(options, config);
                 double width = (double) config["weeder"]["usb-camera"]["width"];
                 double height = (double) config["weeder"]["usb-camera"]["height"];
-                return new USBCamera(device, (size_t) width, (size_t) height);
+                return std::make_shared<romi::USBCamera>(device, (size_t) width, (size_t) height);
                 
         } catch (JSONError& je) {
                 r_err("instantiate_usb_camera: Failed to get width and height of "
@@ -124,39 +83,43 @@ ICamera *instantiate_usb_camera(Options &options, JsonCpp &config)
         }
 }
 
-ICamera *instantiate_camera(const char *camera_class, Options &options, JsonCpp &config)
+std::shared_ptr<romi::ICamera> instantiate_camera(const std::string& camera_class, romi::Options &options, JsonCpp &config)
 {
-        if (rstreq(camera_class, FileCamera::ClassName)) {
+        if (camera_class == romi::FileCamera::ClassName) {
                 return instantiate_file_camera(options, config);
 
-        } else if (rstreq(camera_class, USBCamera::ClassName)) {
+        } else if (camera_class == romi::USBCamera::ClassName) {
                 return instantiate_usb_camera(options, config);
 
         } else {
-                r_err("instantiate_camera: Unknown camera classname: %s", camera_class);
+                r_err("instantiate_camera: Unknown camera classname: %s", camera_class.c_str());
                 throw std::runtime_error("Unknown camera classname");
         }
 }
 
-const char *get_camera_class(__attribute__((unused))Options &options, JsonCpp &config)
+std::string get_camera_class(__attribute__((unused))romi::Options &options, JsonCpp &config)
 {
+        std::string camera_class;
         try {
-                return (const char *) config["weeder"]["camera-classname"];
+                auto cclass = (const char *) config["weeder"]["camera-classname"];
+                if (cclass)
+                        camera_class = cclass;
                 
         } catch (JSONError& je) {
                 r_err("get_camera_class: Failed to get value "
                       "of weeder.camera-classname");
                 throw std::runtime_error("Missing camera class in config");
         }
+        return camera_class;
 }
 
-ICamera *create_camera(Options &options, JsonCpp &config)
+std::shared_ptr<romi::ICamera> create_camera(romi::Options &options, JsonCpp &config)
 {
-        const char *camera_class = get_camera_class(options, config);
+        std::string camera_class = get_camera_class(options, config);
         return instantiate_camera(camera_class, options, config);
 }
 
-const char *get_cnc_class(__attribute__((unused))Options &options, JsonCpp &config)
+std::string get_cnc_class(__attribute__((unused))romi::Options &options, JsonCpp &config)
 {
         try {
                 return (const char *) config["weeder"]["cnc-classname"];
@@ -168,54 +131,75 @@ const char *get_cnc_class(__attribute__((unused))Options &options, JsonCpp &conf
         }
 }
 
-ICNC *create_cnc(Options &options, JsonCpp &config)
+std::shared_ptr<romi::ICNC> create_cnc(romi::Options &options, JsonCpp &config)
 {
-        const char *cnc_class = get_cnc_class(options, config);
-        ICNC *localcnc = nullptr;
+        std::string cnc_class = get_cnc_class(options, config);
+        std::shared_ptr<romi::ICNC>localcnc = nullptr;
         
-        if (rstreq(cnc_class, FakeCNC::ClassName)) {
+        if (cnc_class == romi::FakeCNC::ClassName) {
                 try {
                         JsonCpp range_data = config["oquam"]["cnc-range"];
-                        localcnc = new FakeCNC(range_data);
+                        localcnc = std::make_shared<romi::FakeCNC>(range_data);
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to configure FakeCNC: %s", je.what());
                 }
                 
-        } else if (rstreq(cnc_class, RemoteCNC::ClassName)) {
-                rpc_client = new RPCClient("oquam", "cnc", 60.0);
-                localcnc = new RemoteCNC(*rpc_client);
+        } else if (cnc_class == romi::RemoteCNC::ClassName) {
+                std::shared_ptr<rcom::IRPCHandler> rpc_client = std::make_shared<rcom::RPCClient>("oquam", "cnc", 60.0);
+                localcnc = std::make_shared<romi::RemoteCNC>(rpc_client);
         }
 
         if (localcnc == nullptr) {
-                r_err("Failed to create the CNC '%s'", cnc_class);
+                r_err("Failed to create the CNC '%s'", cnc_class.c_str());
                 throw std::runtime_error("Failed to create the CNC");
         }
         
         return localcnc;
 }
 
+void SignalHandler(int signal)
+{
+        if (signal == SIGSEGV){
+                syslog(1, "rcom-registry segmentation fault");
+                exit(signal);
+        }
+        else if (signal == SIGINT){
+                r_info("Ctrl-C Quitting Application");
+                perror("init_signal_handler");
+                quit = true;
+        }
+        else{
+                r_err("Unknown signam received %d", signal);
+        }
+}
+
 int main(int argc, char** argv)
 {
         std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
         rpp::ClockAccessor::SetInstance(clock);
-        static ICNC *cnc = nullptr;
-//        static RPCClient *rpc_client = nullptr;
-        static ICamera *camera = nullptr;
+        std::shared_ptr<romi::ICNC> cnc = nullptr;
+        std::shared_ptr<romi::ICamera> camera = nullptr;
 
         int retval = 1;
 
-        RoverOptions options;
+        romi::RoverOptions options;
         options.parse(argc, argv);
         options.exit_if_help_requested();
-        
-        app_init(&argc, argv);
-        app_set_name("weeder");
+
+        r_log_init();
+        r_log_set_app("weeder");
+
+        std::signal(SIGSEGV, SignalHandler);
+        std::signal(SIGINT, SignalHandler);
+        // TBD: Check with Peter.
+//        app_init(&argc, argv);
+//        app_set_name("weeder");
         
         try {
-                const char *config_file = get_config_file(options);
-                r_info("IWeeder: Using configuration file: '%s'", config_file);
-                JsonCpp config = JsonCpp::load(config_file);
+                std::string config_file = options.get_config_file();
+                r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
+                JsonCpp config = JsonCpp::load(config_file.c_str());
 
                 // Instantiate the camera
                 camera = create_camera(options, config);
@@ -224,34 +208,36 @@ int main(int argc, char** argv)
                 cnc = create_cnc(options, config);
 
                 JsonCpp config_range = config["oquam"]["cnc-range"];
-                
-                CNCRange range;
+
+                romi::CNCRange range;
                 if (!cnc->get_range(range)) 
                         throw std::runtime_error("Failed to get the ICNC range");
-                               
-                PipelineFactory factory;
-                IPipeline& pipeline = factory.build(range, config);
+
+                romi::PipelineFactory factory;
+                romi::IPipeline& pipeline = factory.build(range, config);
 
                 rpp::Linux linux;
-                RomiDeviceData romiDeviceData;
-                SoftwareVersion softwareVersion;
+                romi::RomiDeviceData romiDeviceData;
+                romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
-                std::unique_ptr<ILocationProvider> locationPrivider = std::make_unique<GpsLocationProvider>(gps);
+                std::unique_ptr<romi::ILocationProvider> locationPrivider = std::make_unique<romi::GpsLocationProvider>(gps);
                 std::string session_directory = options.get_value("session-directory");
                 romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
 
                 
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];
-                Weeder weeder(*camera, pipeline, *cnc, z0, speed, session);
-                WeederAdaptor adaptor(weeder);
-                RPCServer weeder_server(adaptor, "weeder", "weeder");
+                romi::Weeder weeder(*camera, pipeline, *cnc, z0, speed, session);
+                romi::WeederAdaptor adaptor(weeder);
+                rcom::RPCServer weeder_server(adaptor, "weeder", "weeder");
                 
-                // Make the camera accessible over HTTP 
-                CameraServer camera_server(*camera, "weeder", "topcam");
-                
-                while (!app_quit())
+                // Make the camera accessible over HTTP
+                // TBD: Reinstate
+//                CameraServer camera_server(*camera, "weeder", "topcam");
+
+                while (!quit) {
                         clock_sleep(0.1);
+                }
 
                 retval = 0;
                 
@@ -259,14 +245,6 @@ int main(int argc, char** argv)
                 r_err(e.what());
         }
 
-
-        delete cnc;
-
-        delete rpc_client;
-
-        delete camera;
-                
-        
         return retval;
 }
 

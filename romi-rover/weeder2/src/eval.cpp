@@ -22,7 +22,7 @@
 
  */
 #include <exception>
-#include <rcom.h>
+#include <syslog.h>
 
 #include "Linux.h"
 #include <rover/RoverOptions.h>
@@ -39,44 +39,64 @@
 #include "Clock.h"
 #include "ClockAccessor.h"
 
-using namespace romi;
+void SignalHandler(int signal)
+{
+        if (signal == SIGSEGV){
+                syslog(1, "rcom-registry segmentation fault");
+                exit(signal);
+        }
+        else if (signal == SIGINT){
+                r_info("Ctrl-C Quitting Application");
+                perror("init_signal_handler");
+        }
+        else{
+                r_err("Unknown signam received %d", signal);
+        }
+}
 
 int main(int argc, char** argv)
 {
         std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
         rpp::ClockAccessor::SetInstance(clock);
 
-        RoverOptions options;
+        romi::RoverOptions options;
         options.parse(argc, argv);
-        
-        app_init(&argc, argv);
+
+        r_log_init();
+        r_log_set_app("eval");
+
+        std::signal(SIGSEGV, SignalHandler);
+        std::signal(SIGINT, SignalHandler);
+        // TBD: Check with Peter.
+//        app_init(&argc, argv);
+//        app_set_name("weeder");
 
         try {
-                JsonCpp config = JsonCpp::load(options.get_value("config-file"));
+                JsonCpp config = JsonCpp::load(options.get_value("config-file").c_str());
                 
                 JsonCpp range_data = config["oquam"]["cnc-range"];
-                FakeCNC cnc(range_data);
-                
-                CNCRange range;
-                cnc.get_range(range);
-                
-                FileCamera camera(options.get_value("weeder-camera-image"));
+                romi::FakeCNC cnc(range_data);
 
-                PipelineFactory factory;
-                IPipeline& pipeline = factory.build(range, config);
+                romi::CNCRange range;
+                cnc.get_range(range);
+
+                romi::FileCamera camera(options.get_value("weeder-camera-image"));
+
+                romi::PipelineFactory factory;
+                romi::IPipeline& pipeline = factory.build(range, config);
 
                 // Session
                 rpp::Linux linux;
-                RomiDeviceData romiDeviceData;
-                SoftwareVersion softwareVersion;
+                romi::RomiDeviceData romiDeviceData;
+                romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
-                std::unique_ptr<ILocationProvider> locationPrivider = std::make_unique<GpsLocationProvider>(gps);
+                std::unique_ptr<romi::ILocationProvider> locationPrivider = std::make_unique<romi::GpsLocationProvider>(gps);
                 std::string session_directory = options.get_value("session-directory");
                 romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
 
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];
-                Weeder weeder(camera, pipeline, cnc, z0, speed, session);
+                romi::Weeder weeder(camera, pipeline, cnc, z0, speed, session);
                 
                 weeder.hoe();
                 

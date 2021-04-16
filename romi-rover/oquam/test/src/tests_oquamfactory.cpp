@@ -2,7 +2,7 @@
 #include "gmock/gmock.h"
 
 #include "OquamFactory.h"
-#include "GetOpt.h"
+#include "configuration/GetOpt.h"
 
 #include "oquam/FakeCNCController.h"
 #include "oquam/StepperController.h"

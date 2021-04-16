@@ -23,13 +23,15 @@
  */
 #include <exception>
 #include <stdexcept>
-#include <rcom.h>
+#include <atomic>
+#include <syslog.h>
 
 #include <SpeedController.h>
 #include <EventTimer.h>
 #include <ScriptList.h>
 #include <ScriptMenu.h>
 #include <FluidSoundNotifications.h>
+#include "configuration/ConfigurationProvider.h"
 #include <rover/Rover.h>
 #include <rover/RoverInterface.h>
 #include <rover/RoverOptions.h>
@@ -39,82 +41,72 @@
 
 #include "UIFactory.h"
 
-using namespace romi;
+std::atomic<bool> quit(false);
 
-
-const char *get_sound_font_in_config(JsonCpp& config)
+void SignalHandler(int signal)
 {
-        try {
-                return (const char *)config["user-interface"]["fluid-sounds"]["soundfont"];
-                
-        } catch (JSONError& je) {
-                r_err("FluidSoundNotification: Failed to read the config: %s",
-                      je.what());
-                throw std::runtime_error("No soundfont in the config file");
+        if (signal == SIGSEGV){
+                syslog(1, "rcom-registry segmentation fault");
+                exit(signal);
+        }
+        else if (signal == SIGINT){
+                r_info("Ctrl-C Quitting Application");
+                perror("init_signal_handler");
+                quit = true;
+        }
+        else{
+                r_err("Unknown signam received %d", signal);
         }
 }
-
-const char *get_sound_font_file(Options& options, JsonCpp& config)
-{
-        const char *file = options.get_value("notifications-sound-font");
-        if (file == nullptr)
-                file = get_sound_font_in_config(config);
-
-        return file;
-}
-
-const char *get_config_file(Options& options)
-{
-        const char *file = options.get_value(RoverOptions::config);
-        if (file == nullptr) {
-                throw std::runtime_error("No configuration file was given (can't run without one...).");
-        }
-        return file;
-}
-
 
 int main(int argc, char** argv)
 {
         int retval = 1;
-        
-        RoverOptions options;
+
+        romi::RoverOptions options;
         options.parse(argc, argv);
         options.exit_if_help_requested();
-        
-        app_init(&argc, argv);
-        app_set_name("user-interface");
+        r_log_init();
+        r_log_set_app("user-interface");
+
+        std::signal(SIGSEGV, SignalHandler);
+        std::signal(SIGINT, SignalHandler);
+
+        // TBD: Check with Peter.
+//        app_init(&argc, argv);
+//        app_set_name("user-interface");
 
         try {
-                const char *config_file = get_config_file(options);
-                r_info("User-interface: Using configuration file: '%s'", config_file);
-                JsonCpp config = JsonCpp::load(config_file);
+                std::string config_file = options.get_config_file();
+                r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
+                JsonCpp config = JsonCpp::load(config_file.c_str());
 
-                UIFactory ui_factory;
+                romi::UIFactory ui_factory;
 
-                IInputDevice& input_device = ui_factory.create_input_device(options,
+                romi::IInputDevice& input_device = ui_factory.create_input_device(options,
                                                                             config);
 
-                IDisplay& display = ui_factory.create_display(options, config);
+                romi::IDisplay& display = ui_factory.create_display(options, config);
                 display.show(0, "Initializing");
 
-                INavigation& navigation = ui_factory.create_navigation(options,
+                romi::INavigation& navigation = ui_factory.create_navigation(options,
                                                                        config);
-                
-                SpeedController speed_controller(navigation, config);
-                EventTimer event_timer(event_timer_timeout);
 
-                ScriptList scripts(ui_factory.get_script_file(options, config));
-                ScriptMenu menu(scripts);
-                RoverScriptEngine script_engine(scripts, event_script_finished,
-                                                event_script_error);
+                romi::SpeedController speed_controller(navigation, config);
+                romi::EventTimer event_timer(romi::event_timer_timeout);
 
-                const char *soundfont = get_sound_font_file(options, config);
+                romi::ScriptList scripts(get_script_file(options, config));
+                romi::ScriptMenu menu(scripts);
+                romi::RoverScriptEngine script_engine(scripts, romi::event_script_finished,
+                                                      romi::event_script_error);
+
+                std::string soundfont = get_sound_font_file(options, config);
                 JsonCpp sound_setup = config["user-interface"]["fluid-sounds"]["sounds"];
-                FluidSoundNotifications notifications(soundfont, sound_setup);
+                romi::FluidSoundNotifications notifications(soundfont, sound_setup);
 
-                IWeeder& weeder = ui_factory.create_weeder(options, config);
-                
-                Rover rover(input_device,
+                romi::IWeeder& weeder = ui_factory.create_weeder(options, config);
+
+                romi::Rover rover(input_device,
                             display,
                             speed_controller,
                             navigation,
@@ -124,12 +116,12 @@ int main(int argc, char** argv)
                             notifications,
                             weeder);
 
-                RoverStateMachine state_machine(rover);
-                RoverInterface interface(rover, state_machine);
+                romi::RoverStateMachine state_machine(rover);
+                romi::RoverInterface interface(rover, state_machine);
 
-                state_machine.handle_event(event_start);
-                
-                while (!app_quit()) {
+                state_machine.handle_event(romi::event_start);
+
+                while (!quit) {
                         
                         try {
                                 interface.handle_events();

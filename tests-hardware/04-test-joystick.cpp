@@ -25,12 +25,14 @@
 #include <stdexcept>
 #include <memory>
 #include <string.h>
-#include <rcom.h>
+#include <atomic>
+#include <syslog.h>
 
 #include <RSerial.h>
 #include <RomiSerialClient.h>
 
 #include <Linux.h>
+#include "configuration/ConfigurationProvider.h"
 #include <rover/Rover.h>
 #include <rover/RoverOptions.h>
 #include <rover/RoverInterface.h>
@@ -54,31 +56,24 @@
 #include "Clock.h"
 #include "ClockAccessor.h"
 
-using namespace std;
-using namespace rpp;
-using namespace romi;
+std::atomic<bool> quit(false);
 
 
-// TBD: Duplicated functions here and in other main.cpp files.
-const char *get_config_file(Options& options)
+void SignalHandler(int signal)
 {
-        const char *file = options.get_value(RoverOptions::config);
-        if (file == nullptr) {
-                throw std::runtime_error("No configuration file was given (can't run without one...).");
+        if (signal == SIGSEGV){
+                syslog(1, "rcom-registry segmentation fault");
+                exit(signal);
         }
-        return file;
-}
-
-
-const char *get_script_file(Options& options, JsonCpp& config)
-{
-        const char *file = options.get_value(RoverOptions::script);
-        if (file == nullptr) {
-                file = (const char *) config["user-interface"]["script-engine"]["script-file"];
+        else if (signal == SIGINT){
+                r_info("Ctrl-C Quitting Application");
+                perror("init_signal_handler");
+                quit = true;
         }
-        return file;
+        else{
+                r_err("Unknown signam received %d", signal);
+        }
 }
-
 
 int main(int argc, char** argv)
 {
@@ -86,65 +81,70 @@ int main(int argc, char** argv)
         rpp::ClockAccessor::SetInstance(clock);
 
         int retval = 1;
-        
-        RoverOptions options;
+
+        romi::RoverOptions options;
         options.parse(argc, argv);
         options.exit_if_help_requested();
-        
-        
-        app_init(&argc, argv);
-        app_set_name("romi-rover");
+
+        r_log_init();
+        r_log_set_app("joystick-test");
+
+        std::signal(SIGSEGV, SignalHandler);
+        std::signal(SIGINT, SignalHandler);
+        // TBD: Check with Peter.
+//        app_init(&argc, argv);
+//        app_set_name("romi-rover");
         
         try {
-                const char *config_file = get_config_file(options);
-                r_info("Romi Rover: Using configuration file: '%s'", config_file);
-                JsonCpp config = JsonCpp::load(config_file);
+                std::string config_file = options.get_config_file();
+                r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
+                JsonCpp config = JsonCpp::load(config_file.c_str());
                 
                 // Display
                 const char *display_device = (const char *) config["ports"]["crystal-display"]["port"];
                 std::shared_ptr<RSerial>display_serial = std::make_shared<RSerial>(display_device, 115200, 1);
                 RomiSerialClient display_romiserial(display_serial, display_serial);
-                CrystalDisplay display(display_romiserial);
+                romi::CrystalDisplay display(display_romiserial);
                 display.show(0, "Initializing");
                 
                 // Joystick
-                Linux linux;
+                rpp::Linux linux;
                 const char *joystick_device = (const char *) config["ports"]["joystick"]["port"];
-                LinuxJoystick joystick(linux, joystick_device);
-                UIEventMapper joystick_event_mapper;
-                JoystickInputDevice input_device(joystick, joystick_event_mapper);
-                
+                romi::LinuxJoystick joystick(linux, joystick_device);
+                romi::UIEventMapper joystick_event_mapper;
+                romi::JoystickInputDevice input_device(joystick, joystick_event_mapper);
 
-                FakeWeeder weeder;
+
+                romi::FakeWeeder weeder;
                 
                 // Navigation
                 JsonCpp rover_settings = config["navigation"]["rover"];
-                NavigationSettings rover_config(rover_settings);
+                romi::NavigationSettings rover_config(rover_settings);
                 const char *driver_device = (const char *) config["ports"]["brush-motor-driver"]["port"];
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 std::shared_ptr<RSerial>driver_serial = std::make_shared<RSerial>(driver_device, 115200, 1);
                 RomiSerialClient driver_romiserial(driver_serial, driver_serial);
-                BrushMotorDriver driver(driver_romiserial, driver_settings,
+                romi::BrushMotorDriver driver(driver_romiserial, driver_settings,
                                         static_cast<int>(rover_config.encoder_steps),
                                         rover_config.max_revolutions_per_sec);
-                Navigation navigation(driver, rover_config);
+                romi::Navigation navigation(driver, rover_config);
 
                 // SpeedController
-                SpeedController speed_controller(navigation, config);
+                romi::SpeedController speed_controller(navigation, config);
 
                 // EventTimer
-                EventTimer event_timer(event_timer_timeout);
+                romi::EventTimer event_timer(romi::event_timer_timeout);
 
                 // Script engine
-                ScriptList scripts(get_script_file(options, config));
-                ScriptMenu menu(scripts);
-                FakeScriptEngine script_engine(scripts, event_script_finished);
+                romi::ScriptList scripts(get_script_file(options, config));
+                romi::ScriptMenu menu(scripts);
+                romi::FakeScriptEngine script_engine(scripts, romi::event_script_finished);
 
                 // Notifications
-                FakeNotifications notifications;
+                romi::FakeNotifications notifications;
 
                 // Rover
-                Rover rover(input_device,
+                romi::Rover rover(input_device,
                             display,
                             speed_controller,
                             navigation,
@@ -155,25 +155,25 @@ int main(int argc, char** argv)
                             weeder);
 
                 // State machine
-                RoverStateMachine state_machine(rover);
+                romi::RoverStateMachine state_machine(rover);
 
                 // User interface
-                RoverInterface user_interface(rover, state_machine);
+                romi::RoverInterface user_interface(rover, state_machine);
 
                 
-                if (!state_machine.handle_event(event_start))
+                if (!state_machine.handle_event(romi::event_start))
                         // FIXME: should not quit but display something
                         throw std::runtime_error("start-up failed");
-                
-                while (!app_quit()) {
+
+                while (!quit) {
                         
                         try {
                                 user_interface.handle_events();
                         
-                        } catch (exception& e) {
+                        } catch (std::exception& e) {
                                 
                                 navigation.stop();
-                                throw e;
+                                throw;
                         }
                 }
 
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
         } catch (JSONError& je) {
                 r_err("main: Failed to read the configuration file: %s", je.what());
                 
-        } catch (exception& e) {
+        } catch (std::exception& e) {
                 r_err("main: exception: %s", e.what());
         }
         

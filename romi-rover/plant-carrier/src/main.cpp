@@ -25,7 +25,8 @@
 #include <stdexcept>
 #include <memory>
 #include <string.h>
-#include <rcom.h>
+#include <atomic>
+#include <syslog.h>
 
 #include <RSerial.h>
 #include <RomiSerialClient.h>
@@ -58,48 +59,23 @@
 #include "oquam/Oquam.h"
 #include "weeder/PipelineFactory.h"
 
-using namespace std;
-using namespace rpp;
-using namespace rcom;
-using namespace romi;
 
+std::atomic<bool> quit(false);
 
-const char *get_config_file(Options& options)
+void SignalHandler(int signal)
 {
-        const char *file = options.get_value(RoverOptions::config);
-        if (file == 0) {
-                throw std::runtime_error("No configuration file was given (can't run without one...).");
+        if (signal == SIGSEGV){
+                syslog(1, "rcom-registry segmentation fault");
+                exit(signal);
         }
-        return file;
-}
-
-const char *get_script_file(Options& options, JsonCpp& config)
-{
-        const char *file = options.get_value(RoverOptions::script);
-        if (file == 0) {
-                file = config["user-interface"]["script-engine"]["script-file"];
+        else if (signal == SIGINT){
+                r_info("Ctrl-C Quitting Application");
+                perror("init_signal_handler");
+                quit = true;
         }
-        return file;
-}
-
-const char *get_sound_font_file(Options& options, JsonCpp& config)
-{
-        const char *file = options.get_value(RoverOptions::soundfont);
-        if (file == 0)
-                file = config["user-interface"]["fluid-sounds"]["soundfont"];
-        return file;
-}
-
-const char *get_session_directory(Options& options, JsonCpp& config)
-{
-        const char *dir = options.get_value(RoverOptions::session_directory);
-        if (dir == 0) {
-                // TODO: to be finalized: get seesion dir from config
-                // file, add the current date to the path, and create
-                // a new directory.
-                dir = ".";
+        else{
+                r_err("Unknown signam received %d", signal);
         }
-        return dir;
 }
 
 int main(int argc, char** argv)
@@ -109,15 +85,21 @@ int main(int argc, char** argv)
         RoverOptions options;
         options.parse(argc, argv);
         options.exit_if_help_requested();
-        
-        
-        app_init(&argc, argv);
-        app_set_name("romi-rover");
+
+        r_log_init();
+        r_log_set_app("plant-carrier");
+
+        std::signal(SIGSEGV, SignalHandler);
+        std::signal(SIGINT, SignalHandler);
+
+        // TBD: Check with Peter.
+//        app_init(&argc, argv);
+//        app_set_name("romi-rover");
 
         try {
-                const char *config_file = get_config_file(options);
-                r_info("Romi Rover: Using configuration file: '%s'", config_file);
-                JsonCpp config = JsonCpp::load(config_file);
+                std::string config_file = options.get_config_file();
+                r_info("Romi Rover: Using configuration file: '%s'", config_file.c_str());
+                JsonCpp config = JsonCpp::load(config_file.c_str());
 
                 // Display
                 const char *display_device = config["ports"]["crystal-display"]["port"];
@@ -159,6 +141,7 @@ int main(int argc, char** argv)
                 oquam.set_file_cabinet(&debug);
 
                 // Camera
+                // TBD: Use refactored functions. get_camera_class
                 unique_ptr<Camera> camera;
                 const char *camera_classname = config["weeder"]["camera-classname"];
                 if (rstreq(camera_classname, FileCamera::ClassName)) {
@@ -224,7 +207,7 @@ int main(int argc, char** argv)
                         // FIXME: should not quit but display something
                         throw std::runtime_error("Start-up failed"); 
                 
-                while (!app_quit()) {
+                while (!quit)) {
                         
                         try {
                                 user_interface.handle_events();
