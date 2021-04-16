@@ -130,8 +130,8 @@ add_subdirectory(tests-hardware)
 ######################################
 
 # We've checked above for the correct build options, but another check of the coverage flag won't hurt.
-if (BUILD_EXAMPLES)
-    if (NOT BUILD_COVERAGE)
-        add_subdirectory(rcom/examples)
-    endif()
-endif()
+#if (BUILD_EXAMPLES)
+#    if (NOT BUILD_COVERAGE)
+#        add_subdirectory(rcom/examples)
+#    endif()
+#endif()
