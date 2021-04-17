@@ -24,7 +24,6 @@
 #include "block.h"
 #include "stepper.h"
 #include "config.h"
-#include "encoder.h"
 #include <ArduinoSerial.h>
 #include <RomiSerial.h>
 
@@ -68,7 +67,7 @@ const static MessageHandler handlers[] = {
         { 'I', 0, false, send_idle },
         { 'H', 0, false, handle_homing },
         { 'h', 3, false, handle_set_homing },
-        { 'e', 1, false, handle_enable },
+        { 'E', 1, false, handle_enable },
         { 'S', 1, false, handle_spindle },
         { '?', 0, false, send_info },
 };
@@ -116,11 +115,12 @@ void check_accuracy()
 
 void setup()
 {
-        serial.init(115200);
+        Serial.begin(115200);
+        while (!Serial)
+                ;
         
         init_block_buffer();
         init_pins();
-        init_encoders();
         
         //enable_driver();
 
@@ -365,12 +365,19 @@ int homing_wait_switch(int dt, int v, int axis, int state)
         int err = 0;
         int dx, dy, dz;
 
+        // Serial.print("#!Axis=");
+        // Serial.print(axis);
+        // Serial.print(":xxxx\r\n");
+
         err = homing_moveat(dt, v, axis);
         if (err != 0)
                 return err;
         
         while (1) {
                 update_limit_switches();
+                // Serial.print("#!L=");
+                // Serial.print(limit_switches[axis]);
+                // Serial.print(":xxxx\r\n");
                 
                 if (limit_switches[axis] == state) {
                         err = move(0, 0, 0, 0); // This will stop the moveat
