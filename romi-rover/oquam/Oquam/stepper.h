@@ -37,6 +37,27 @@ enum {
 };
 
 /**
+ * \brief: Configure the stepper. Must be called with interrupts
+ * disabled (see cli()).
+ *
+ */
+void init_stepper();
+
+
+/**
+ * \brief: Sets the current position as the orginin.
+ *
+ */
+void stepper_zero();
+
+void stepper_reset();
+
+bool stepper_is_idle();
+
+void get_stepper_position(int32_t *pos);
+
+
+/**
  * \brief: Configure Timer1 to drive the stepper's STEP pulse train.
  *
  *  Timer1 is used as the "stepper timer", i.e. this timer will pulse
@@ -65,7 +86,7 @@ void init_reset_step_pins_timer();
 #define disable_driver() set_enable_pin_high()
 #endif
 
-extern volatile uint8_t thread_state;
+//extern volatile uint8_t thread_state;
 
 #define enable_reset_step_pins_timer()                                  \
         {                                                               \
@@ -86,7 +107,7 @@ extern volatile uint8_t thread_state;
                 /* Initialize counter */                                \
                 TCNT1 = 0;                                              \
                 /* Set the status of the stepper thread */              \
-                thread_state = STATE_THREAD_EXECUTING;                  \
+                /* thread_state = STATE_THREAD_EXECUTING; */            \
                 /* Enable Timer1 */                                     \
                 TIMSK1 |= (1 << OCIE1A);                                \
         }
@@ -94,7 +115,7 @@ extern volatile uint8_t thread_state;
 #define disable_stepper_timer()                                         \
         {                                                               \
                 /* Set the status of the stepper thread */              \
-                thread_state = STATE_THREAD_IDLE;                       \
+                /*thread_state = STATE_THREAD_IDLE;*/                   \
                 /* Disable Timer1 interrupt */                          \
                 TIMSK1 &= ~(1 << OCIE1A);                               \
         }

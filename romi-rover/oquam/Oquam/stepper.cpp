@@ -30,18 +30,51 @@
 #include "block.h"
 #include "stepper.h"
 
-volatile int32_t stepper_position[3];
-volatile int32_t accumulation_error[3];
-volatile int32_t delta[3];
-volatile int32_t dt;
-volatile int16_t step_dir[3];
-volatile uint8_t thread_state;
-volatile int32_t counter_reset_timer = 0;
-volatile block_t *current_block;
-volatile int32_t interrupts = 0;
-volatile int16_t milliseconds;
-volatile int8_t stepper_reset = 0;
+volatile int32_t stepper_position_[3];
+volatile int32_t accumulation_error_[3];
+volatile int32_t delta_[3];
+volatile int32_t dt_;
+volatile int16_t step_dir_[3];
+//volatile int32_t counter_reset_timer = 0;
+volatile block_t *current_block_;
+volatile int32_t interrupts_ = 0;
+volatile int16_t milliseconds_ = 0;
+volatile int8_t stepper_reset_ = 0;
 
+void stepper_zero()
+{
+        for (int i = 0; i < 3; i++) {
+                stepper_position_[i] = 0;
+                accumulation_error_[i] = 0;
+        }
+}
+
+void stepper_reset()
+{
+        stepper_reset_ = 1;
+}
+
+void init_stepper()
+{
+        stepper_zero();
+        cli();
+        init_stepper_timer();
+        init_reset_step_pins_timer();
+        sei(); 
+}
+
+void get_stepper_position(int32_t *pos)
+{
+        pos[0] = stepper_position_[0];
+        pos[1] = stepper_position_[1];
+        pos[2] = stepper_position_[2];
+}
+
+bool stepper_is_idle()
+{
+        return ((block_buffer_available() == 0)
+                && (current_block_ == 0));
+}
 
 /*
  
@@ -125,7 +158,7 @@ void init_reset_step_pins_timer()
  */
 void init_stepper_timer()
 {
-        current_block = 0;
+        current_block_ = 0;
 
         /* Don't enable the timer, yet */
         TIMSK1 &= ~(1 << OCIE1A);
@@ -208,7 +241,7 @@ ISR(TIMER2_COMPA_vect)
 {
         reset_step_pins();
         disable_reset_step_pins_timer();
-        counter_reset_timer++;
+        //counter_reset_timer++;
 }
 
 /**
@@ -219,85 +252,85 @@ ISR(TIMER1_COMPA_vect)
 {
         /* If a reset is requested, set the current block and other
          * state variables to zero and return. */
-        if (stepper_reset) {
-                current_block = 0;
-                interrupts = 0;
-                milliseconds = 0;
-                stepper_reset = 0;
+        if (stepper_reset_) {
+                current_block_ = 0;
+                interrupts_ = 0;
+                milliseconds_ = 0;
+                stepper_reset_ = 0;
                 return;
         }
 
         /* If there is no block active then pop the next block from
          * the buffer and do some initialization.  */
-        if (current_block == 0) {
+        if (current_block_ == 0) {
                 
-                current_block = block_buffer_get_next();
+                current_block_ = block_buffer_get_next();
 
-                if (current_block == 0) {
+                if (current_block_ == 0) {
                         return;
                 }
                 
                 /* Do the necessary initializations for the new
                  * block. */
                 
-                interrupts = 0;
-                milliseconds = 0;
+                interrupts_ = 0;
+                milliseconds_ = 0;
                 
-                if (current_block->type == BLOCK_MOVE
-                    || current_block->type == BLOCK_MOVETO
-                    || current_block->type == BLOCK_MOVEAT) {
+                if (current_block_->type == BLOCK_MOVE
+                    || current_block_->type == BLOCK_MOVETO
+                    || current_block_->type == BLOCK_MOVEAT) {
 
                         /* Sanity check */
-                        if (current_block->type == BLOCK_MOVE
-                            && current_block->data[DT] <= 0) {
-                                        current_block = 0;
+                        if (current_block_->type == BLOCK_MOVE
+                            && current_block_->data[DT] <= 0) {
+                                        current_block_ = 0;
                                         return;
                         }
                         
                         /* Check the direction and set DIR pins. */
                         uint8_t dir = 0;
-                        step_dir[0] = 1;
-                        step_dir[1] = 1;
-                        step_dir[2] = 1;
+                        step_dir_[0] = 1;
+                        step_dir_[1] = 1;
+                        step_dir_[2] = 1;
                         
-                        delta[0] = (int32_t) current_block->data[DX];
-                        delta[1] = (int32_t) current_block->data[DY];
-                        delta[2] = (int32_t) current_block->data[DZ];
+                        delta_[0] = (int32_t) current_block_->data[DX];
+                        delta_[1] = (int32_t) current_block_->data[DY];
+                        delta_[2] = (int32_t) current_block_->data[DZ];
 
                         /* For moveto events, substract the current
                          * position of the CNC. */
-                        if (current_block->type == BLOCK_MOVETO) {
-                                if (delta[0] < 0)
-                                        delta[0] = 0;
+                        if (current_block_->type == BLOCK_MOVETO) {
+                                if (delta_[0] < 0)
+                                        delta_[0] = 0;
                                 else
-                                        delta[0] -= stepper_position[0];
+                                        delta_[0] -= stepper_position_[0];
                                 
-                                if (delta[1] < 0)
-                                        delta[1] = 0;
+                                if (delta_[1] < 0)
+                                        delta_[1] = 0;
                                 else
-                                        delta[1] -= stepper_position[1];
+                                        delta_[1] -= stepper_position_[1];
                                 
-                                if (delta[2] < 0)
-                                        delta[2] = 0;
+                                if (delta_[2] < 0)
+                                        delta_[2] = 0;
                                 else
-                                        delta[2] -= stepper_position[2];
+                                        delta_[2] -= stepper_position_[2];
                         }
 
                         /* Check the directions */
-                        if (delta[0] < 0) {
+                        if (delta_[0] < 0) {
                                 toggle_dir(dir, X_DIRECTION_BIT);
-                                delta[0] = -delta[0];
-                                step_dir[0] = -1;
+                                delta_[0] = -delta_[0];
+                                step_dir_[0] = -1;
                         }
-                        if (delta[1] < 0) {
+                        if (delta_[1] < 0) {
                                 toggle_dir(dir, Y_DIRECTION_BIT);
-                                delta[1] = -delta[1];
-                                step_dir[1] = -1;
+                                delta_[1] = -delta_[1];
+                                step_dir_[1] = -1;
                         }
-                        if (delta[2] < 0) {
+                        if (delta_[2] < 0) {
                                 toggle_dir(dir, Z_DIRECTION_BIT);
-                                delta[2] = -delta[2];
-                                step_dir[2] = -1;
+                                delta_[2] = -delta_[2];
+                                step_dir_[2] = -1;
                         }
 
                         /* Set the direction output pins */
@@ -305,23 +338,23 @@ ISR(TIMER1_COMPA_vect)
 
                         /* For a moveto, compute the duration of the
                          * movement (in ms), based on the requested
-                         * speed given in current_block->data[DT] (in
+                         * speed given in current_block_->data[DT] (in
                          * steps/s).
                          * 
                          * T = 1000 ms/s x n steps / V steps/s
                          */
-                        if (current_block->type == BLOCK_MOVETO) {
-                                int32_t n = delta[0];
-                                if (delta[1] > n)
-                                        n = delta[1];
-                                if (delta[2] > n)
-                                        n = delta[2];
-                                int32_t T = 1000 * n / (int32_t) current_block->data[DT];
+                        if (current_block_->type == BLOCK_MOVETO) {
+                                int32_t n = delta_[0];
+                                if (delta_[1] > n)
+                                        n = delta_[1];
+                                if (delta_[2] > n)
+                                        n = delta_[2];
+                                int32_t T = 1000 * n / (int32_t) current_block_->data[DT];
                                 
                                 // Replace the speed value in the
                                 // current block by the computed
                                 // duration.
-                                current_block->data[DT] = (int16_t) T;
+                                current_block_->data[DT] = (int16_t) T;
                         }
                         
                         /* The number of interrupts during which the
@@ -329,22 +362,22 @@ ISR(TIMER1_COMPA_vect)
                          * the length of the segment in milliseconds
                          * times the number of interrupts per
                          * millisecond. */
-                        dt = INTERRUPTS_PER_MILLISECOND * (int32_t) current_block->data[DT];
+                        dt_ = INTERRUPTS_PER_MILLISECOND * (int32_t) current_block_->data[DT];
                         
                         /* Initialize the accumulation error for the
                          * Bresenham algorithm. */
-                        accumulation_error[0] = delta[0] - dt / 2;
-                        accumulation_error[1] = delta[1] - dt / 2;
-                        accumulation_error[2] = delta[2] - dt / 2;
+                        accumulation_error_[0] = delta_[0] - dt_ / 2;
+                        accumulation_error_[1] = delta_[1] - dt_ / 2;
+                        accumulation_error_[2] = delta_[2] - dt_ / 2;
                         
                 } 
                 
         }
 
         /* Update the interrupt and millisecond counter. */
-        if (++interrupts == INTERRUPTS_PER_MILLISECOND) {
-                interrupts = 0;
-                milliseconds++;
+        if (++interrupts_ == INTERRUPTS_PER_MILLISECOND) {
+                interrupts_ = 0;
+                milliseconds_++;
         }
         
         /* Move and moveat block: 99.9% of the time, we will end up
@@ -356,35 +389,35 @@ ISR(TIMER1_COMPA_vect)
          * Wikipedia
          * (https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm).
          */
-        if (current_block->type == BLOCK_MOVE
-            || current_block->type == BLOCK_MOVETO
-            || current_block->type == BLOCK_MOVEAT) {
+        if (current_block_->type == BLOCK_MOVE
+            || current_block_->type == BLOCK_MOVETO
+            || current_block_->type == BLOCK_MOVEAT) {
                 
                 uint8_t pins = 0;
 
                 // X-axis
-                if (accumulation_error[0] > 0) {
+                if (accumulation_error_[0] > 0) {
                         toggle_x_step(pins);
-                        stepper_position[0] += step_dir[0];
-                        accumulation_error[0] -= dt;
+                        stepper_position_[0] += step_dir_[0];
+                        accumulation_error_[0] -= dt_;
                 }
-                accumulation_error[0] += delta[0];
+                accumulation_error_[0] += delta_[0];
 
                 // Y-axis
-                if (accumulation_error[1] > 0) {
+                if (accumulation_error_[1] > 0) {
                         toggle_y_step(pins);
-                        stepper_position[1] += step_dir[1];
-                        accumulation_error[1] -= dt;
+                        stepper_position_[1] += step_dir_[1];
+                        accumulation_error_[1] -= dt_;
                 }
-                accumulation_error[1] += delta[1];
+                accumulation_error_[1] += delta_[1];
 
                 // Z-axis
-                if (accumulation_error[2] > 0) {
+                if (accumulation_error_[2] > 0) {
                         toggle_z_step(pins);
-                        stepper_position[2] += step_dir[2];
-                        accumulation_error[2] -= dt;
+                        stepper_position_[2] += step_dir_[2];
+                        accumulation_error_[2] -= dt_;
                 }
-                accumulation_error[2] += delta[2];
+                accumulation_error_[2] += delta_[2];
 
                 // Raise the STEP pins, if needed, and schedule a
                 // reset pins event.
@@ -394,13 +427,13 @@ ISR(TIMER1_COMPA_vect)
                 }
 
                 // Check whether we have to move to the next block
-                if ((current_block->type == BLOCK_MOVE 
-                     && milliseconds >= current_block->data[DT])
-                    || (current_block->type == BLOCK_MOVETO 
-                     && milliseconds >= current_block->data[DT])
-                    || (current_block->type == BLOCK_MOVEAT
+                if ((current_block_->type == BLOCK_MOVE 
+                     && milliseconds_ >= current_block_->data[DT])
+                    || (current_block_->type == BLOCK_MOVETO 
+                     && milliseconds_ >= current_block_->data[DT])
+                    || (current_block_->type == BLOCK_MOVEAT
                         && block_buffer_available() > 0)) {
-                        current_block = 0;
+                        current_block_ = 0;
                 }
                 
                 return;
