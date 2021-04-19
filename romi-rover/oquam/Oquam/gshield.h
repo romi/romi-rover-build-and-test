@@ -28,7 +28,6 @@
 #define _OQUAM_GSHIELD_H_
 
 #define ENABLE_PIN_HIGH   0
-//#define ENABLE_PIN_HIGH   1
 #define ENCODER_REVERSED 0
 #define PRESCALING         1
 #define FREQUENCY_STEPPER  25000
@@ -72,15 +71,6 @@
 #define STEPPERS_DISABLE_PORT   PORTB
 #define STEPPERS_DISABLE_BIT    0  // Uno Digital Pin 8
 #define STEPPERS_DISABLE_MASK   (1 << STEPPERS_DISABLE_BIT)
-
-/**
- * Define the pins for the X and Y encoders. There are set to zero
- * because the encoders are not used on the gShield.
- */
-#define X_ENCODER_A       0
-#define X_ENCODER_B       0
-#define Y_ENCODER_A       0
-#define Y_ENCODER_B       0
 
 /**
  * \brief Configure the step and dir pins as output.
@@ -152,15 +142,5 @@ void init_pins();
 #define toggle_x_dir(__mask)  toggle_dir(__mask, X_DIRECTION_BIT)
 #define toggle_y_dir(__mask)  toggle_dir(__mask, Y_DIRECTION_BIT)
 #define toggle_z_dir(__mask)  toggle_dir(__mask, Z_DIRECTION_BIT)
-
-/**
- * \brief Read the X-encoder B pin.
- */
-#define get_x_encoder_b()  0
-
-/**
- * \brief Read the Y-encoder B pin.
- */
-#define get_y_encoder_b()  0
 
 #endif // _OQUAM_GSHIELD_H_
