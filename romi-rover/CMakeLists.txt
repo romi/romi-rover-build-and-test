@@ -14,6 +14,10 @@ add_subdirectory(navigation2)
 add_subdirectory(oquam)
 add_subdirectory(romi-rover)
 
+if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
+add_subdirectory(romi-camera)
+endif()
+
 #add_subdirectory(camera_recorder)
 #add_subdirectory(grbl)
 #add_subdirectory(webproxy)
