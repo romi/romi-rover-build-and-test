@@ -6,10 +6,9 @@ def load_configuration_file(filename):
         return json.load(read_file)
 
 def request_confirmation(message):
-    response = input(message + " [Y/n] ")
-    if (response == "n"):
+    if (ask(message) == False):
         raise AssertionError("User responded 'no'")
 
 def ask(message):
     response = input(message + " [Y/n] ")
-    return response == "" or response == "y"
+    return response == "" or response == "y" or response == "Y"
