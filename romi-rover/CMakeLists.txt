@@ -5,8 +5,11 @@ project(romi_rover)
 MESSAGE("Romi_rover CXX Flags = ${CMAKE_CXX_FLAGS}")
 MESSAGE("Romi_rover C Flags = ${CMAKE_C_FLAGS}")
 
-#option(WITH_REALSENSE "Compile the realsense app" OFF)
-#option(WITH_PICAMERA "Compile the picamera app" OFF)
+
+if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
+    set(PICAMERA_LIBRARY_PATH /opt/vc/lib)
+    link_directories(${PICAMERA_LIBRARY_PATH})
+endif()
 
 add_subdirectory(weeder2)
 add_subdirectory(user-interface)

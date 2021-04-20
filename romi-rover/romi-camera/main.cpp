@@ -12,7 +12,8 @@ static void quit_on_control_c();
 int main()
 {
         try {
-                romi::V2CameraSettings settings(kV2HalfWidth, kV2HalfHeight);
+                romi::V2CameraSettings settings(romi::kV2HalfWidth,
+                                                romi::kV2HalfHeight);
                 romi::PiCamera camera(settings);
                 romi::CameraAdaptor adaptor(camera);
                 rcom::RPCServer server(adaptor, "notused", "camera");
@@ -27,7 +28,7 @@ int main()
                 
 
         } catch (std::exception& e) {
-                r_err("RomiCamera: caught exception: %s". e.what());
+                r_err("RomiCamera: caught exception: %s", e.what());
         }
 }
 
