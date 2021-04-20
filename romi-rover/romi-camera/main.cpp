@@ -1,9 +1,9 @@
 #include <stdexcept>
 #include <r.h>
-#include <RPCServer.h>
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
+#include <rpc/RcomServer.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
@@ -16,16 +16,14 @@ int main()
                                                 romi::kV2HalfHeight);
                 romi::PiCamera camera(settings);
                 romi::CameraAdaptor adaptor(camera);
-                rcom::RPCServer server(adaptor, "notused", "camera");
+                auto server = romi::RComServer::create(adaptor, "camera");
 
                 quit_on_control_c();
                 
                 while (!quit) {
-                        server.handle_events();
+                        server->handle_events();
                         clock_sleep(0.050);
                 }
-
-                
 
         } catch (std::exception& e) {
                 r_err("RomiCamera: caught exception: %s", e.what());
