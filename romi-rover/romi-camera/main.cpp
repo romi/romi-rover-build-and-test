@@ -16,7 +16,7 @@ int main()
                                                 romi::kV2HalfHeight);
                 romi::PiCamera camera(settings);
                 romi::CameraAdaptor adaptor(camera);
-                auto server = romi::RComServer::create(adaptor, "camera");
+                auto server = romi::RcomServer::create(adaptor, "camera");
 
                 quit_on_control_c();
                 
