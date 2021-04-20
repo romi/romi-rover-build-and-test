@@ -23,9 +23,10 @@
  */
 #include <exception>
 #include <atomic>
+#include <csignal>
 
 #include <syslog.h>
-#include <RPCServer.h>
+#include <rpc/RcomServer.h>
 #include <RomiSerialClient.h>
 #include <RSerial.h>
 
@@ -93,10 +94,11 @@ int main(int argc, char** argv)
                 romi::Navigation navigation(driver, rover);
 
                 romi::NavigationAdaptor adaptor(navigation);
-                rcom::RPCServer server(adaptor, "navigation", "navigation");
+                auto server = romi::RcomServer::create("navigation", adaptor);
 
                 while (!quit) {
-                        clock_sleep(0.1);
+                        server->handle_events();
+                        clock_sleep(0.010);
                 }
                 
         } catch (std::exception& e) {

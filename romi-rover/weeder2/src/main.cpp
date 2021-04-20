@@ -27,14 +27,13 @@
 #include <atomic>
 #include <syslog.h>
 
-#include <RPCServer.h>
-#include <RPCClient.h>
+#include <rpc/RcomServer.h>
+#include <rpc/RcomClient.h>
 
 #include "configuration/ConfigurationProvider.h"
 #include <rover/RoverOptions.h>
 #include <FileCamera.h>
 #include <USBCamera.h>
-//#include <CameraServer.h>
 #include <weeder/Weeder.h>
 #include <weeder/PipelineFactory.h>
 #include <rpc/WeederAdaptor.h>
@@ -134,7 +133,7 @@ std::string get_cnc_class(__attribute__((unused))romi::Options &options, JsonCpp
 std::shared_ptr<romi::ICNC> create_cnc(romi::Options &options, JsonCpp &config)
 {
         std::string cnc_class = get_cnc_class(options, config);
-        std::shared_ptr<romi::ICNC>localcnc = nullptr;
+        std::shared_ptr<romi::ICNC> localcnc = nullptr;
         
         if (cnc_class == romi::FakeCNC::ClassName) {
                 try {
@@ -146,8 +145,8 @@ std::shared_ptr<romi::ICNC> create_cnc(romi::Options &options, JsonCpp &config)
                 }
                 
         } else if (cnc_class == romi::RemoteCNC::ClassName) {
-                std::shared_ptr<rcom::IRPCHandler> rpc_client = std::make_shared<rcom::RPCClient>("oquam", "cnc", 60.0);
-                localcnc = std::make_shared<romi::RemoteCNC>(rpc_client);
+                auto client = romi::RcomClient::create("cnc", 60.0);
+                localcnc = std::make_shared<romi::RemoteCNC>(client);
         }
 
         if (localcnc == nullptr) {
@@ -229,14 +228,12 @@ int main(int argc, char** argv)
                 double speed = (double) config["weeder"]["speed"];
                 romi::Weeder weeder(*camera, pipeline, *cnc, z0, speed, session);
                 romi::WeederAdaptor adaptor(weeder);
-                rcom::RPCServer weeder_server(adaptor, "weeder", "weeder");
                 
-                // Make the camera accessible over HTTP
-                // TBD: Reinstate
-//                CameraServer camera_server(*camera, "weeder", "topcam");
+                auto weeder_server = romi::RcomServer::create("weeder", adaptor);
 
                 while (!quit) {
-                        clock_sleep(0.1);
+                        weeder_server->handle_events();
+                        clock_sleep(0.2);
                 }
 
                 retval = 0;

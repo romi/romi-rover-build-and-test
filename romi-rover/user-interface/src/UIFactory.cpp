@@ -183,11 +183,11 @@ namespace romi {
                 _navigation = unique_ptr<INavigation>(new FakeNavigation());
         }
 
-        void UIFactory::instantiate_remote_navigation(__attribute__((unused))Options &options, __attribute__((unused))JsonCpp &config)
+        void UIFactory::instantiate_remote_navigation(Options &options, JsonCpp &config)
         {
-                std::shared_ptr<rcom::IRPCHandler> navigationclient = std::make_shared<RPCClient>("navigation",
-                                                                         "navigation",
-                                                                         10.0);
+                (void) options;
+                (void) config;
+                auto navigationclient = romi::RcomClient::create("navigation", 10.0);
                 _navigation = std::make_unique<RemoteNavigation>(navigationclient);
         }
         
@@ -316,10 +316,11 @@ namespace romi {
                 _weeder = unique_ptr<IWeeder>(new FakeWeeder());
         }
 
-        void UIFactory::instantiate_remote_weeder(__attribute__((unused))Options &options, __attribute__((unused))JsonCpp &config)
+        void UIFactory::instantiate_remote_weeder(Options &options, JsonCpp &config)
         {
-                std::shared_ptr<rcom::IRPCHandler> weederclient = std::make_shared<RPCClient>("weeder",
-                                                                     "weeder", 60.0);
+                (void) options;
+                (void) config;
+                auto weederclient = romi::RcomClient::create("weeder", 60.0);
                 _weeder = std::make_unique<RemoteWeeder>(weederclient);
         }
         

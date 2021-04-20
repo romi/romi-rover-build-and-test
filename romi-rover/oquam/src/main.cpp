@@ -4,7 +4,7 @@
 #include <atomic>
 #include <syslog.h>
 
-#include <RPCServer.h>
+#include <rpc/RcomServer.h>
 #include "Linux.h"
 
 #include <rover/RoverOptions.h>
@@ -86,9 +86,12 @@ int main(int argc, char** argv)
                 romi::RomiDeviceData romiDeviceData;
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
-                std::unique_ptr<romi::ILocationProvider> locationPrivider = std::make_unique<romi::GpsLocationProvider>(gps);
+                std::unique_ptr<romi::ILocationProvider> locationPrivider
+                        = std::make_unique<romi::GpsLocationProvider>(gps);
                 std::string session_directory = options.get_value("oquam-session");
-                romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+                romi::Session session(linux, session_directory,
+                                      romiDeviceData, softwareVersion,
+                                      std::move(locationPrivider));
                 session.start("oquam_observation_id");
                 romi::Oquam oquam(controller, range,
                             stepper_settings.maximum_speed,
@@ -99,11 +102,13 @@ int main(int argc, char** argv)
                             session);
 
                 romi::CNCAdaptor adaptor(oquam);
-                rcom::RPCServer server(adaptor, "oquam", "cnc");
+                auto server = romi::RcomServer::create("cnc", adaptor);
                 
-                while (!quit)
+                while (!quit) {
+                        server->handle_events();
                         clock_sleep(0.1);
-
+                }
+                
                 retval = 0;
                 
         } catch (JSONError& je) {

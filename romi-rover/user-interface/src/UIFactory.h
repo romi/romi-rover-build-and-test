@@ -27,7 +27,7 @@
 #include <JsonCpp.h>
 #include <RomiSerialClient.h>
 #include <RSerial.h>
-#include <RPCClient.h>
+#include <rpc/RcomClient.h>
 
 #include <api/INavigation.h>
 #include <api/IDisplay.h>
