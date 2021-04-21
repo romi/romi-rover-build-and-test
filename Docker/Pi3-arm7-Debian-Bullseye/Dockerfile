@@ -22,7 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		python3 \
 		python3-pip \
         wget \
-        sudo 
+        sudo \
+		libjpeg-dev
 
 RUN pip3 install websocket-client \
 && sudo apt-get update \
