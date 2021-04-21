@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 {
         if (argc >= 2) {
                 r_info("Using registry IP %s", argv[1]);
-                RegistryServer::set_address(argv[1]);
+                rcom::RegistryServer::set_address(argv[1]);
         }
         
         try {
