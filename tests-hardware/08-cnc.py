@@ -11,6 +11,9 @@ from oquam_controller import OquamController
 def test_homing(cnc):
     cnc.homing()
     
+def configure_homing(cnc, axes):
+    cnc.configure_homing(axes)
+    
 def test_move_x(cnc, millis, steps):
     cnc.move(millis, steps, 0, 0)
 
@@ -36,8 +39,8 @@ def wait(cnc):
 
 def ask_prerequisites():
     request_confirmation("Ready to start the tests?")
-    request_confirmation("Is the security button still off (pushed in)?")
     request_confirmation("Check the locations of the limit switches")
+    request_confirmation("Is the security button still tuned on (pushed in)?")
         
 if __name__ == "__main__":
     # execute only if run as a script
@@ -69,9 +72,19 @@ if __name__ == "__main__":
         test_move_z(cnc, 1000, 1000)
         request_confirmation("Did the CNC move away from the limit switches on the Z-axis?")
                 
-        print("Testing homing")
-        test_homing(cnc)
-        request_confirmation("Did the CNC home correctly?")
+        if (ask("Test homing?")):
+            axes = [-1,-1,-1]
+            if (ask("Homing on X?")):
+                axes[0] = 0
+            if (ask("Homing on Y?")):
+                axes[1] = 1
+            if (ask("Homing on Z?")):
+                axes[2] = 2
+            configure_homing(cnc, axes)
+            
+            print("Testing homing")
+            test_homing(cnc)
+            request_confirmation("Did the CNC home correctly?")
 
         print("Doing speed tests")    
         test_move_xy(cnc, 500, 500, 500)

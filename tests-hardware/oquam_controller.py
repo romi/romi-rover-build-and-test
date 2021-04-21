@@ -26,10 +26,13 @@ class OquamController(RomiDevice):
             
     def homing(self):
         self.send_command("H")
+            
+    def configure_homing(self, axes):
+        self.send_command("h[%d,%d,%d]" % (axes[0], axes[1], axes[2]))
     
     def wait(self):
         while True:
-            status = cnc.send_command(cnc, "I")
+            status = self.send_command("I")
             if status[1] == 1:
                 break
             time.sleep(1);
