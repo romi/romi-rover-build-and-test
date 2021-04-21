@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <r.h>
+#include <RegistryServer.h>
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
@@ -9,8 +10,13 @@ static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
 static void quit_on_control_c();
 
-int main()
+int main(int argc, char **argv)
 {
+        if (argc >= 2) {
+                r_info("Using registry IP %s", argv[1]);
+                RegistryServer::set_address(argv[1]);
+        }
+        
         try {
                 romi::V2CameraSettings settings(romi::kV2HalfWidth,
                                                 romi::kV2HalfHeight);
