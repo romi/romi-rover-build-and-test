@@ -1,4 +1,32 @@
 
+Enabling serial on the Pi:
+
+https://www.framboise314.fr/le-port-serie-du-raspberry-pi-3-pas-simple/
+https://www.abelectronics.co.uk/kb/article/1035/serial-port-setup-in-raspberry-pi-os
+
+
+
+1)--------------------
+In /boot/config.txt, add:
+
+  dtoverlay = pi3-disable-bt
+
+In /boot/cmdline.txt, remove:
+  console=serial0,115200 
+
+2)--------------------
+sudo raspi-config
+Select “3 Interface Options”
+Select “P6 Serial Port”
+Step 4 - A screen will ask you if you would like a login shell to be accessible over serial.  Select No.
+...
+
+
+
+
+
+
+
 # Test 1, 05-test-serial-camera-1
 
 This test requires that the Raspberry Pi has been configured to make
