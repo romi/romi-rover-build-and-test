@@ -1,34 +1,40 @@
 #include <stdexcept>
 #include <r.h>
-#include <RegistryServer.h>
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
-#include <rpc/CameraAdaptor.h>
-#include <rpc/RcomServer.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
 static void quit_on_control_c();
 
-int main(int argc, char **argv)
+void store_jpeg(rpp::MemBuffer& jpeg, const char *name_prefix, int index)
 {
-        if (argc >= 2) {
-                r_info("Using registry IP %s", argv[1]);
-                rcom::RegistryServer::set_address(argv[1]);
-        }
+        char filename[512];
+        snprintf(filename, sizeof(filename), "%s_%04d.jpg", name_prefix, index);
+        r_info("File %s, Length %d", filename, (int) jpeg.size());
         
+        int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+        if (fd >= 0) {
+                write(fd, jpeg.data().data(), jpeg.size());
+                fsync(fd);
+                close(fd);
+        } else {
+                r_err("Failed to write to %s", filename);
+        }
+}
+
+int main()
+{
         try {
                 romi::V2CameraSettings settings(romi::kV2HalfWidth,
                                                 romi::kV2HalfHeight);
                 romi::PiCamera camera(settings);
-                romi::CameraAdaptor adaptor(camera);
-                auto server = romi::RcomServer::create("camera", adaptor);
 
                 quit_on_control_c();
                 
-                while (!quit) {
-                        server->handle_events();
-                        clock_sleep(0.050);
+                for (int i = 0; !quit; i++) {
+                        rpp::MemBuffer& jpeg = camera.grab_jpeg();
+                        store_jpeg(jpeg, "test", i);
                 }
 
         } catch (std::exception& e) {
