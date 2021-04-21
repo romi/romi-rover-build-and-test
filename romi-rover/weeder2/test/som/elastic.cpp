@@ -23,6 +23,7 @@
  */
 
 #include <getopt.h>
+#include <chrono>
 
 #include "Linux.h"
 #include "debug_tools/debug_data_dumper.h"
@@ -102,6 +103,8 @@ int main(int argc, char **argv)
                 py.push_back(test_circle[i].y);
         }
 
+        auto start = std::chrono::high_resolution_clock::now();
+
         SelfOrganizedMap<double> som(num_cities_test,
                                      test_circle_length,
                                      alpha, beta, epsilon);
@@ -110,4 +113,6 @@ int main(int argc, char **argv)
         som.init_cities(&cx[0], &cy[0]);
         som.init_path(&px[0], &py[0]);
         som.compute_path(session, print);
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
+        std::cout << "calculation time: " << std::fixed << elapsed.count() << "ms\n";
 }
