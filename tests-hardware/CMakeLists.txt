@@ -14,50 +14,48 @@ install(TARGETS 04-test-joystick DESTINATION bin)
 
 #
 
-add_executable(05-test-serial-camera-1-read 05-test-serial-camera/test1-read.cpp)
-target_link_libraries(05-test-serial-camera-1-read romi r)
-install(TARGETS 05-test-serial-camera-1-read DESTINATION bin)
+add_executable(05-tests-serial-1-read 05-tests-serial/test1-read.cpp)
+target_link_libraries(05-tests-serial-1-read romi r)
+install(TARGETS 05-tests-serial-1-read DESTINATION bin)
 
-add_executable(05-test-serial-camera-1-write 05-test-serial-camera/test1-write.cpp)
-target_link_libraries(05-test-serial-camera-1-write romi r)
-install(TARGETS 05-test-serial-camera-1-write DESTINATION bin)
+add_executable(05-tests-serial-1-write 05-tests-serial/test1-write.cpp)
+target_link_libraries(05-tests-serial-1-write romi r)
+install(TARGETS 05-tests-serial-1-write DESTINATION bin)
 
-#
-
-add_executable(05-test-serial-camera-2-host 05-test-serial-camera/test2-host.cpp)
-target_link_libraries(05-test-serial-camera-2-host romi romiserial r)
-install(TARGETS 05-test-serial-camera-2-host DESTINATION bin)
-
-add_executable(05-test-serial-camera-2-camera 05-test-serial-camera/test2-camera.cpp)
-target_link_libraries(05-test-serial-camera-2-camera romi romiserial r)
-install(TARGETS 05-test-serial-camera-2-camera DESTINATION bin)
 
 #
 
-add_executable(05-test-serial-camera-3-grab 05-test-serial-camera/test3-grab.cpp)
-target_link_libraries(05-test-serial-camera-3-grab romi r)
-install(TARGETS 05-test-serial-camera-3-grab DESTINATION bin)
+if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
+  add_executable(06-tests-camera-grab 06-tests-camera/test-grab.cpp)
+  target_link_libraries(06-tests-camera-grab romi r)
+  install(TARGETS 06-tests-camera-grab DESTINATION bin)
+endif()
+
+add_executable(06-tests-remote-camera-grab 06-tests-camera/test-remote-grab.cpp)
+target_link_libraries(06-tests-remote-camera-grab romi r)
+install(TARGETS 06-tests-remote-camera-grab DESTINATION bin)
+
 
 #
 
 set(GPIO_SOURCES
-  06-test-gpio/GpioFileDescriptor.cpp
-  06-test-gpio/GpioFileDescriptor.h
-  06-test-gpio/GpioChip.cpp
-  06-test-gpio/GpioChip.h
-  06-test-gpio/GpioInput.cpp
-  06-test-gpio/GpioInput.h
-  06-test-gpio/GpioOutput.cpp
-  06-test-gpio/GpioOutput.h
-  06-test-gpio/IGpio.h
-  06-test-gpio/RpiGpio.cpp
-  06-test-gpio/RpiGpio.h
+  07-tests-gpio/GpioFileDescriptor.cpp
+  07-tests-gpio/GpioFileDescriptor.h
+  07-tests-gpio/GpioChip.cpp
+  07-tests-gpio/GpioChip.h
+  07-tests-gpio/GpioInput.cpp
+  07-tests-gpio/GpioInput.h
+  07-tests-gpio/GpioOutput.cpp
+  07-tests-gpio/GpioOutput.h
+  07-tests-gpio/IGpio.h
+  07-tests-gpio/RpiGpio.cpp
+  07-tests-gpio/RpiGpio.h
 )
 
-add_executable(06-test-gpio-power-relay 06-test-gpio/test-power-relay.cpp ${GPIO_SOURCES})
-target_link_libraries(06-test-gpio-power-relay romi r)
-install(TARGETS 06-test-gpio-power-relay DESTINATION bin)
+add_executable(07-tests-gpio-power-relay 07-tests-gpio/test-power-relay.cpp ${GPIO_SOURCES})
+target_link_libraries(07-tests-gpio-power-relay romi r)
+install(TARGETS 07-tests-gpio-power-relay DESTINATION bin)
 
-add_executable(06-test-gpio-security-button 06-test-gpio/test-security-button.cpp ${GPIO_SOURCES})
-target_link_libraries(06-test-gpio-security-button romi r)
-install(TARGETS 06-test-gpio-security-button DESTINATION bin)
+add_executable(07-tests-gpio-security-button 07-tests-gpio/test-security-button.cpp ${GPIO_SOURCES})
+target_link_libraries(07-tests-gpio-security-button romi r)
+install(TARGETS 07-tests-gpio-security-button DESTINATION bin)
