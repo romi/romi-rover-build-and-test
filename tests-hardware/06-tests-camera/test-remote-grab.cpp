@@ -34,7 +34,9 @@ int main()
                 
                 for (int i = 0; !quit; i++) {
                         rpp::MemBuffer& jpeg = camera.grab_jpeg();
-                        store_jpeg(jpeg, "remote", i);
+                        if (jpeg.size() > 0) {
+                                store_jpeg(jpeg, "remote", i);
+                        }
                 }
 
         } catch (std::exception& e) {

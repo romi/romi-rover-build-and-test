@@ -17,7 +17,7 @@ class RomiDevice():
             if status_code == 0:
                 return values
             if status_code > 0:
-                raise RuntimeError(return_values[0])
+                raise RuntimeError(values[0])
             if status_code < 0:
                 print("Warning: Sending failed. Retrying.")
         raise RuntimeError("Sending failed")
