@@ -239,9 +239,9 @@ void BLDC::calibrate()
                         arduino->delay(1000);
 
                         double angle = encoder->getAngle();
-                        Serial.print(angle, 5);
-                        Serial.print(", ");
-                        Serial.println(pole + iphase / 360.0, 5);
+                        // Serial.print(angle, 5);
+                        // Serial.print(", ");
+                        // Serial.println(pole + iphase / 360.0, 5);
 
                         for (int d = 0; d < step; d++) {
                                 setPhase((iphase + d) / 360.0);
