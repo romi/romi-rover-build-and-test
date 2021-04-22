@@ -22,8 +22,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		python3 \
 		python3-pip \
         wget \
-        sudo \
-		libjpeg-dev
+        sudo 
+		# libjpeg-dev \
+		# libglib2.0-dev // In case if including fluidsynth from source.
 
 RUN pip3 install websocket-client \
 && sudo apt-get update \
