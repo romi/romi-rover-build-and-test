@@ -7,12 +7,11 @@
 #include <RSerial.h>
 #include <RomiSerialClient.h>
 
-#include "DebugWeedingSession.h"
-
 #include "oquam/Oquam.h"
 #include "oquam/StepperController.h"
 
 #include "Linux.h"
+#include <ClockAccessor.h>
 #include "data_provider/RomiDeviceData.h"
 #include "data_provider/SoftwareVersion.h"
 #include "weeder/Session.h"
@@ -195,12 +194,11 @@ TEST_F(hardware_tests, test_oquam_travel_square)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_travel_square");
 
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_travel_square");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval, session);
 
         Path path;
@@ -222,12 +220,11 @@ TEST_F(hardware_tests, test_oquam_travel_square_fast)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_travel_square_fast");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_travel_square_fast");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval, session);
 
         Path path;
@@ -249,12 +246,11 @@ TEST_F(hardware_tests, test_oquam_travel_snake)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_travel_snake");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_travel_snake");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
@@ -278,12 +274,11 @@ TEST_F(hardware_tests, test_oquam_travel_snake_2)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_travel_snake_2");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_travel_snake_2");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         int N = 11;
@@ -313,12 +308,11 @@ TEST_F(hardware_tests, test_oquam_travel_round_trip)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_travel_round_trip");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_travel_round_trip");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
@@ -335,12 +329,11 @@ TEST_F(hardware_tests, test_oquam_travel_collinear)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_travel_collinear");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_travel_collinear");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
@@ -358,12 +351,11 @@ TEST_F(hardware_tests, test_oquam_travel_large_displacement)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_travel_displacement");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_travel_displacement");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
@@ -382,12 +374,11 @@ TEST_F(hardware_tests, test_oquam_travel_small_displacement)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_small_displacement");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_small_displacement");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
@@ -406,12 +397,11 @@ TEST_F(hardware_tests, test_oquam_travel_tiny_displacement)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_tiny_displacement");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_tiny_displacement");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
@@ -430,12 +420,11 @@ TEST_F(hardware_tests, test_oquam_travel_zigzag)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_travel_zigzag");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_travel_zigzag");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         Path path;
@@ -464,10 +453,11 @@ TEST_F(hardware_tests, test_oquam_travel_zigzag)
 
 void stop_and_continue(Oquam *oquam) 
 {
+        auto clock = rpp::ClockAccessor::GetInstance();
         for (int i = 0; i < 4; i++) {
-                clock_sleep(1.0);
+                clock->sleep(1.0);
                 oquam->pause_activity();
-                clock_sleep(1.0);
+                clock->sleep(1.0);
                 oquam->continue_activity();
         }
 } 
@@ -477,12 +467,11 @@ TEST_F(hardware_tests, test_oquam_stop_and_continue)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_stop_and_continue");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_stop_and_continue");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
 
         
@@ -495,9 +484,10 @@ TEST_F(hardware_tests, test_oquam_stop_and_continue)
 
 void stop_and_reset(Oquam *oquam) 
 {
-        clock_sleep(1.0);
+        auto clock = rpp::ClockAccessor::GetInstance();
+        clock->sleep(1.0);
         oquam->pause_activity();
-        clock_sleep(1.0);
+        clock->sleep(1.0);
         oquam->reset_activity();
 } 
 
@@ -506,12 +496,11 @@ TEST_F(hardware_tests, test_oquam_stop_and_reset)
         std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
         RomiSerialClient romi_serial(serial, serial);
         StepperController stepper(romi_serial);
-        DebugWeedingSession debug(".", "test_stop_and_reset");
         
         romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-        session.start("hw_observation_id");
+        session.start("test_stop_and_reset");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
         
         std::thread th(stop_and_reset, &oquam);

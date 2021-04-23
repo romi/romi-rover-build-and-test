@@ -233,7 +233,7 @@ int main(int argc, char** argv)
 
                 while (!quit) {
                         weeder_server->handle_events();
-                        clock_sleep(0.2);
+                        clock->sleep(0.2);
                 }
 
                 retval = 0;

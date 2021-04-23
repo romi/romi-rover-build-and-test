@@ -60,9 +60,6 @@ int main(int argc, char** argv)
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
-        // TBD: Check with Peter.
-//        app_init(&argc, argv);
-//        app_set_name("oquam");
 
         try {
                 std::string config_file = options.get_config_file();
@@ -106,7 +103,7 @@ int main(int argc, char** argv)
                 
                 while (!quit) {
                         server->handle_events();
-                        clock_sleep(0.1);
+                        clock->sleep(0.1);
                 }
                 
                 retval = 0;

@@ -1,4 +1,4 @@
-#include <r.h>
+#include <ClockAccessor.h>
 #include "RpiGpio.h"
 
 int main()
@@ -7,8 +7,8 @@ int main()
 
         while (true) {
                 gpio.set_power_relay(true);
-                clock_sleep(1.0);
+                rpp::ClockAccessor::GetInstance()->sleep(1.0);
                 gpio.set_power_relay(false);
-                clock_sleep(1.0);
+                rpp::ClockAccessor::GetInstance()->sleep(1.0);
         }
 }
