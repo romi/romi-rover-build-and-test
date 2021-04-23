@@ -29,6 +29,8 @@
 #include "PwmGenerator.h"
 #include "DigitalOut.h"
 #include "pins.h"
+#include <RomiSerial.h>
+#include <ArduinoSerial.h>
 
 ArduinoImpl arduino;
 PwmEncoder encoder(&arduino, P_ENC, 11, 959);
@@ -52,70 +54,93 @@ BLDC motor(&arduino, &encoder, &pwmGenerator, &sleepPin, &resetPin);
 
 unsigned long prev_time = 0;
 
+void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_set_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_get_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_set_power(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_calibrate(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+
+const static MessageHandler handlers[] = {
+        { '?', 0, false, send_info },
+        { 'X', 1, false, handle_set_position },
+        { 's', 0, false, handle_get_position },
+        { 'P', 1, false, handle_set_power },
+        { 'C', 1, false, handle_calibrate },
+};
+
+// ArduinoSerial serial(Serial);
+// RomiSerial romiSerial(serial, serial, handlers, sizeof(handlers) / sizeof(MessageHandler));
+
+ArduinoSerial serial1(Serial1);
+RomiSerial romiSerial1(serial1, serial1, handlers, sizeof(handlers) / sizeof(MessageHandler));
+
 void setup()
 {
-        Serial.begin(115200);
-        while (!Serial)
+        // Serial.begin(115200);
+        // while (!Serial)
+        //         ;
+        Serial1.begin(115200);
+        while (!Serial1)
                 ;
+
+        // Serial.println("OK");
+        
         motor.wake();
         motor.setPower(0.5f);
-        Serial.println("Ready");
 }
 
-void handleSerialInput()
-{
-        if (Serial.available()) {
-                char c = Serial.read();
-                if (parser.process(c)) {
-                        switch (parser.opcode()) {
-                        case 'X':
-                                if (parser.length() == 1) {
-                                        float value = (float) parser.value() / 360.0f;
-                                        //motor.setTargetPosition(value);
-                                        bool success = motor.moveto(value);
-                                        if (success) {
-                                                Serial.print("OK X");
-                                                Serial.println(parser.value());
-                                        } else {
-                                                Serial.println("ERR");
-                                        }
-                                } else {
-                                        Serial.println("ERR bad args");
-                                }
-                                break;
-                        case 's':
-                                if (1) {
-                                        Serial.print("s[");
-                                        Serial.print(360.0f * encoder.getAngle());
-                                        Serial.println("]");
-                                }
-                                break;
-                        case 'P':
-                                if (parser.length() == 1) {
-                                        float value = (float) parser.value() / 100.0f;
-                                        motor.setPower(value);
-                                        Serial.println("OK");
-                                } else {
-                                        Serial.println("ERR bad args");
-                                }
-                                break;
-                        case 'C':
-                                motor.calibrate();
-                                break;
-                        case '?':
-                                Serial.println("?['BLDCController','0.1']");
-                                break;
-                        }
-                }
-        }
-}
+// static int counter = 0; 
 
 void loop()
 {
-        static unsigned long lastTime = 0;
-        unsigned long t = arduino.micros();
-        // motor.update((float)(t - lastTime) / 1000000.0f);
-        handleSerialInput();
-        lastTime = t;
-        delay(10);
+        // romiSerial.handle_input();
+        romiSerial1.handle_input();
+        // Serial1.println(counter++);
+        // while (Serial1.available()) {
+        //         char c = Serial1.read();
+        //         Serial1.write(c);
+        // }
+        delay(1000);
+}
+
+void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        romiSerial->send("[0,\"BLDCController\",\"0.1\","
+                         "\"" __DATE__ " " __TIME__ "\"]"); 
+}
+
+void handle_set_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        float value = (float) args[0] / 360.0f;
+        bool success = motor.moveto(value);
+        if (success) {
+                romiSerial->send_ok();  
+        } else {
+                romiSerial->send_error(1, "Failed");  
+        }
+}
+
+void handle_get_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        static char buffer[32];
+        int value = (int) (360.0f * encoder.getAngle()); 
+        snprintf(buffer, sizeof(buffer), "[0,%d]", value);
+        romiSerial->send(buffer);                
+}
+
+void handle_set_power(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        float value = (float) args[0] / 100.0f;
+        if (value > 1.0f)
+                value = 1.0f;
+        else if (value < 0.0f)
+                value = 0.0f;
+        motor.setPower(value);
+        romiSerial->send_ok();  
+}
+
+void handle_calibrate(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        romiSerial->send_ok();  
+        motor.calibrate();
 }
