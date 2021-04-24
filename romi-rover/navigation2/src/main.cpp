@@ -36,6 +36,7 @@
 #include "configuration/ConfigurationProvider.h"
 #include <rover/RoverOptions.h>
 #include <rpc/NavigationAdaptor.h>
+#include <thread>
 
 std::atomic<bool> quit(false);
 
@@ -98,7 +99,7 @@ int main(int argc, char** argv)
 
                 while (!quit) {
                         server->handle_events();
-                        clock_sleep(0.010);
+                        std::this_thread::sleep_for(std::chrono::milliseconds (10));
                 }
                 
         } catch (std::exception& e) {

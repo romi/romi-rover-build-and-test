@@ -52,7 +52,6 @@
 #include <UIEventMapper.h>
 #include <CrystalDisplay.h>
 #include <JoystickInputDevice.h>
-#include <DebugWeedingSession.h>
 #include <FileCamera.h>
 #include <USBCamera.h>
 #include <BrushMotorDriver.h>
