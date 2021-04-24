@@ -80,7 +80,7 @@ int main(int argc, char** argv)
                 double slice_duration = (double) config["oquam"]["path-slice-duration"];
                 double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
 
-                romi::CNCController& controller = factory.create_controller(options, config);
+                romi::ICNCController& controller = factory.create_controller(options, config);
 
                 rpp::Linux linux;
                 romi::RomiDeviceData romiDeviceData;
