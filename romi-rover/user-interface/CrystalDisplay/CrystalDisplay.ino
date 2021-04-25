@@ -41,7 +41,7 @@ CrystalDisplay display(PIN_RS,  PIN_EN,  PIN_D4,  PIN_D5,  PIN_D6,  PIN_D7);
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        romiSerial->send("[0,\"DisplayPanel\",\"0.1\"]"); 
+        romiSerial->send("[0,\"CrystalDisplay\",\"0.1\"]"); 
 }
 
 void handle_show(RomiSerial *romiSerial, int16_t *args, const char *string_arg)

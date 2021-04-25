@@ -123,11 +123,11 @@ namespace romi {
         {
                 std::string device_name;
                 try {
-                        device_name = (const char *)config["ports"]["crystal-display"]["port"];
+                        device_name = (const char *)config["ports"]["display-device"]["port"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
-                               "ports.crystal-display.port: %s", je.what());
+                               "ports.display-device.port: %s", je.what());
                         throw std::runtime_error("No crystal display device defined");
                 }
                 return device_name;

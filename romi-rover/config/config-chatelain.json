@@ -165,7 +165,7 @@
             "port": "/dev/input/js0", 
             "type": "input-device"
         }, 
-        "crystal-display": {
+        "display-device": {
             "port": "/dev/ttyACM1", 
             "type": "serial"
         },
