@@ -61,6 +61,8 @@ BLDC::BLDC(IArduino *_arduino,
         lastSpeed = 0.0f;
         offsetAngleZero = 0.0;
         resetPin->set(1.0f);
+        maxAcceleration = 20.0;
+        kp = 10.0;
 }
 
 void BLDC::setOffsetAngleZero(double angle)
@@ -143,7 +145,7 @@ bool BLDC::updatePosition(float dt)
         // Serial.print(',');
         
         // The speed is proportional to the error...
-        double speed = error * 10.0;
+        double speed = kp * error;
 
         // Serial.print(speed, 5);
         // Serial.print(',');
@@ -151,10 +153,10 @@ bool BLDC::updatePosition(float dt)
         // ... but the acceleration should not surpass the maximum
         // acceleration.
         double acceleration = (speed - lastSpeed) / dt;
-        if (acceleration < -20.0)
-                acceleration = -20.0;
-        else if (acceleration > 20.0)
-                acceleration = 20.0;
+        if (acceleration < -maxAcceleration)
+                acceleration = -maxAcceleration;
+        else if (acceleration > maxAcceleration)
+                acceleration = maxAcceleration;
         speed = lastSpeed + acceleration * dt;
 
         // Serial.print(speed, 5);

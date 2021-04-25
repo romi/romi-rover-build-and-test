@@ -46,7 +46,8 @@ protected:
         double offsetAngleZero;
         double speed;
         double lastSpeed;
-
+        double maxAcceleration;
+        double kp;
         float power;
         double phase;
         

@@ -55,6 +55,7 @@ BLDC motor(&arduino, &encoder, &pwmGenerator, &sleepPin, &resetPin);
 unsigned long prev_time = 0;
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_moveto(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_set_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_get_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_set_power(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
@@ -62,7 +63,7 @@ void handle_calibrate(RomiSerial *romiSerial, int16_t *args, const char *string_
 
 const static MessageHandler handlers[] = {
         { '?', 0, false, send_info },
-        { 'X', 1, false, handle_set_position },
+        { 'M', 1, false, handle_moveto },
         { 's', 0, false, handle_get_position },
         { 'P', 1, false, handle_set_power },
         { 'C', 1, false, handle_calibrate },
@@ -109,9 +110,9 @@ void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
                          "\"" __DATE__ " " __TIME__ "\"]"); 
 }
 
-void handle_set_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
+void handle_moveto(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        float value = (float) args[0] / 360.0f;
+        float value = (float) args[0] / 3600.0f;
         bool success = motor.moveto(value);
         if (success) {
                 romiSerial->send_ok();  
@@ -123,7 +124,7 @@ void handle_set_position(RomiSerial *romiSerial, int16_t *args, const char *stri
 void handle_get_position(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
         static char buffer[32];
-        int value = (int) (360.0f * encoder.getAngle()); 
+        int value = (int) (3600.0f * encoder.getAngle()); 
         snprintf(buffer, sizeof(buffer), "[0,%d]", value);
         romiSerial->send(buffer);                
 }
