@@ -47,6 +47,7 @@
     
     "weeder": {
         "z0": -0.110,
+        "speed": 0.8,
         
         "camera-classname": "usb-camera",
         "cnc-classname": "remote-cnc",
