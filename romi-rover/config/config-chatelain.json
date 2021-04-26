@@ -47,6 +47,7 @@
     
     "weeder": {
         "z0": -0.110,
+        "speed": 0.8,
         
         "camera-classname": "usb-camera",
         "cnc-classname": "remote-cnc",
@@ -164,7 +165,7 @@
             "port": "/dev/input/js0", 
             "type": "input-device"
         }, 
-        "crystal-display": {
+        "display-device": {
             "port": "/dev/ttyACM1", 
             "type": "serial"
         },

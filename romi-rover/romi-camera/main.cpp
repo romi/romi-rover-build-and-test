@@ -5,6 +5,7 @@
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
 #include <rpc/RcomServer.h>
+#include <ClockAccessor.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
@@ -12,6 +13,9 @@ static void quit_on_control_c();
 
 int main(int argc, char **argv)
 {
+        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
+        rpp::ClockAccessor::SetInstance(clock);
+        
         if (argc >= 2) {
                 r_info("Using registry IP %s", argv[1]);
                 rcom::RegistryServer::set_address(argv[1]);
@@ -28,7 +32,7 @@ int main(int argc, char **argv)
                 
                 while (!quit) {
                         server->handle_events();
-                        clock_sleep(0.050);
+                        clock->sleep(0.050);
                 }
 
         } catch (std::exception& e) {

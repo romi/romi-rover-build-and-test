@@ -50,14 +50,14 @@ namespace romi {
         
         UIFactory::~UIFactory() = default;
         
-        IDisplay& UIFactory::create_display(Options &options, JsonCpp &config)
+        IDisplay& UIFactory::create_display(IOptions &options, JsonCpp &config)
         {
                 if (_display == nullptr)
                         instantiate_display(options, config);
                 return *_display;
         }
 
-        void UIFactory::instantiate_display(Options &options, JsonCpp &config)
+        void UIFactory::instantiate_display(IOptions &options, JsonCpp &config)
         {
                 std::string classname = get_display_classname(config);
                 instantiate_display(classname, options, config);
@@ -78,7 +78,7 @@ namespace romi {
         }
         
         void UIFactory::instantiate_display(const std::string& classname,
-                                            Options &options,
+                                            IOptions &options,
                                             JsonCpp &config)
         {
                 r_info("create_display: Creating an instance of '%s'", classname.c_str());
@@ -100,7 +100,7 @@ namespace romi {
                 _display = std::unique_ptr<IDisplay>(new FakeDisplay());
         }
         
-        void UIFactory::instantiate_crystal_display(Options &options, JsonCpp &config)
+        void UIFactory::instantiate_crystal_display(IOptions &options, JsonCpp &config)
         {
                 std::string device = get_crystal_display_device(options, config);
                 _serial = make_shared<RSerial>(device, 115200, 1);
@@ -109,7 +109,7 @@ namespace romi {
                 _display = std::unique_ptr<IDisplay>(new CrystalDisplay(*_romi_serial));
         }
 
-        std::string UIFactory::get_crystal_display_device(Options &options,
+        std::string UIFactory::get_crystal_display_device(IOptions &options,
                                                           JsonCpp &config)
         {
                 std::string device_name = options.get_value("display-device");
@@ -123,17 +123,17 @@ namespace romi {
         {
                 std::string device_name;
                 try {
-                        device_name = (const char *)config["ports"]["crystal-display"]["port"];
+                        device_name = (const char *)config["ports"]["display-device"]["port"];
                         
                 } catch (JSONError &je) {
                         r_warn("Failed to get the value for "
-                               "ports.crystal-display.port: %s", je.what());
+                               "ports.display-device.port: %s", je.what());
                         throw std::runtime_error("No crystal display device defined");
                 }
                 return device_name;
         }
         
-        INavigation& UIFactory::create_navigation(Options &options, JsonCpp &config)
+        INavigation& UIFactory::create_navigation(IOptions &options, JsonCpp &config)
         {
                 if (_navigation == nullptr) {
                         instantiate_navigation(options, config);
@@ -141,7 +141,7 @@ namespace romi {
                 return *_navigation;
         }
         
-        void UIFactory::instantiate_navigation(Options &options, JsonCpp &config)
+        void UIFactory::instantiate_navigation(IOptions &options, JsonCpp &config)
         {
                 std::string classname = get_navigation_classname(config);
                 instantiate_navigation(classname, options, config);
@@ -161,7 +161,7 @@ namespace romi {
         }
         
         void UIFactory::instantiate_navigation(const std::string& classname,
-                                              Options &options,
+                                              IOptions &options,
                                               JsonCpp &config)
         {
                 r_info("Create an instance of navigation '%s'", classname.c_str());
@@ -183,7 +183,7 @@ namespace romi {
                 _navigation = unique_ptr<INavigation>(new FakeNavigation());
         }
 
-        void UIFactory::instantiate_remote_navigation(Options &options, JsonCpp &config)
+        void UIFactory::instantiate_remote_navigation(IOptions &options, JsonCpp &config)
         {
                 (void) options;
                 (void) config;
@@ -191,7 +191,7 @@ namespace romi {
                 _navigation = std::make_unique<RemoteNavigation>(navigationclient);
         }
         
-        IInputDevice& UIFactory::create_input_device(Options& options, JsonCpp& config)
+        IInputDevice& UIFactory::create_input_device(IOptions& options, JsonCpp& config)
         {
                 std::string classname = get_input_device_classname(config);
                 instantiate_input_device(classname, options, config);
@@ -213,7 +213,7 @@ namespace romi {
         }
         
         void UIFactory::instantiate_input_device(const std::string& classname,
-                                                Options& options,
+                                                IOptions& options,
                                                 JsonCpp& config)
         {
                 r_info("Instantiating input device: '%s'", classname.c_str());
@@ -234,7 +234,7 @@ namespace romi {
                 _input_device = std::unique_ptr<IInputDevice>(new FakeInputDevice());
         }
         
-        void UIFactory::instantiate_joystick(Options& options, JsonCpp& config)
+        void UIFactory::instantiate_joystick(IOptions& options, JsonCpp& config)
         {
                 std::string joystick_device = get_joystick_device(options, config);
                 _joystick = std::make_unique<LinuxJoystick>(_linux, joystick_device);
@@ -243,7 +243,7 @@ namespace romi {
                                                                                       _joystick_event_mapper);
         }
 
-        std::string UIFactory::get_joystick_device(Options& options, JsonCpp& config)
+        std::string UIFactory::get_joystick_device(IOptions& options, JsonCpp& config)
         {
                 std::string joystick_device = options.get_value("joystick-device");
                 if (joystick_device.empty()) {
@@ -266,7 +266,7 @@ namespace romi {
                 return joystick_device;
         }
 
-        IWeeder& UIFactory::create_weeder(Options &options, JsonCpp &config)
+        IWeeder& UIFactory::create_weeder(IOptions &options, JsonCpp &config)
         {
                 if (_weeder == nullptr) {
                         instantiate_weeder(options, config);
@@ -274,7 +274,7 @@ namespace romi {
                 return *_weeder;
         }
         
-        void UIFactory::instantiate_weeder(Options &options, JsonCpp &config)
+        void UIFactory::instantiate_weeder(IOptions &options, JsonCpp &config)
         {
                 std::string classname = get_weeder_classname(config);
                 instantiate_weeder(classname, options, config);
@@ -294,7 +294,7 @@ namespace romi {
         }
         
         void UIFactory::instantiate_weeder(const std::string& classname,
-                                              Options &options,
+                                              IOptions &options,
                                               JsonCpp &config)
         {
                 r_info("Create an instance of weeder '%s'", classname.c_str());
@@ -316,7 +316,7 @@ namespace romi {
                 _weeder = unique_ptr<IWeeder>(new FakeWeeder());
         }
 
-        void UIFactory::instantiate_remote_weeder(Options &options, JsonCpp &config)
+        void UIFactory::instantiate_remote_weeder(IOptions &options, JsonCpp &config)
         {
                 (void) options;
                 (void) config;

@@ -34,7 +34,7 @@
 #include <api/IInputDevice.h>
 #include <api/INotifications.h>
 #include <api/IWeeder.h>
-#include <Options.h>
+#include <configuration/IOptions.h>
 #include <LinuxJoystick.h>
 #include <UIEventMapper.h>
 #include <Linux.h>
@@ -62,54 +62,54 @@ namespace romi {
                 
 
                 // Display
-                void instantiate_display(Options &options, JsonCpp &config);
+                void instantiate_display(IOptions &options, JsonCpp &config);
                 void instantiate_display(const std::string& display_classname,
-                                        Options &options,
+                                        IOptions &options,
                                         JsonCpp &config);
                 std::string get_display_classname(JsonCpp &config);
                 void instantiate_fake_display();
-                void instantiate_crystal_display(Options &options, JsonCpp &config);
-                std::string get_crystal_display_device(Options &options,
+                void instantiate_crystal_display(IOptions &options, JsonCpp &config);
+                std::string get_crystal_display_device(IOptions &options,
                                                        JsonCpp &config);
                 std::string get_crystal_display_device_in_config(JsonCpp &config);
 
                 
                 // Navigation
-                void instantiate_navigation(Options &options, JsonCpp &config);
-                void instantiate_navigation(const std::string& classname, Options &options,
+                void instantiate_navigation(IOptions &options, JsonCpp &config);
+                void instantiate_navigation(const std::string& classname, IOptions &options,
                                            JsonCpp &config);
                 std::string get_navigation_classname(JsonCpp &config);
                 void instantiate_fake_navigation();
-                void instantiate_remote_navigation(Options &options, JsonCpp &config);
+                void instantiate_remote_navigation(IOptions &options, JsonCpp &config);
 
                 // Input device / joystick
                 static std::string get_input_device_classname(JsonCpp &config);
-                void instantiate_input_device(const std::string& classname, Options& options,
+                void instantiate_input_device(const std::string& classname, IOptions& options,
                                              JsonCpp& config);
                 void instantiate_fake_input_device();
-                void instantiate_joystick(Options& options, JsonCpp& config);
-                std::string get_joystick_device(Options& options, JsonCpp& config);
+                void instantiate_joystick(IOptions& options, JsonCpp& config);
+                std::string get_joystick_device(IOptions& options, JsonCpp& config);
                 std::string get_joystick_device_in_config(JsonCpp& config);
 
                 // Weeder
-                void instantiate_weeder(Options &options, JsonCpp &config);
-                void instantiate_weeder(const std::string& classname, Options &options,
+                void instantiate_weeder(IOptions &options, JsonCpp &config);
+                void instantiate_weeder(const std::string& classname, IOptions &options,
                                            JsonCpp &config);
                 static std::string get_weeder_classname(JsonCpp &config);
                 void instantiate_fake_weeder();
-                void instantiate_remote_weeder(Options &options, JsonCpp &config);
+                void instantiate_remote_weeder(IOptions &options, JsonCpp &config);
                 
         public:
 
                 UIFactory();
                 virtual ~UIFactory();
                 
-                IDisplay& create_display(Options& options, JsonCpp& config);
-                INavigation& create_navigation(Options& options, JsonCpp& config);
-                IInputDevice& create_input_device(Options& options, JsonCpp& config);
-                IWeeder& create_weeder(Options& options, JsonCpp& config);
-                // INotifications& create_notifications(Options& options, JsonCpp& config);
-             //   std::string get_script_file(Options &options, JsonCpp &config);
+                IDisplay& create_display(IOptions& options, JsonCpp& config);
+                INavigation& create_navigation(IOptions& options, JsonCpp& config);
+                IInputDevice& create_input_device(IOptions& options, JsonCpp& config);
+                IWeeder& create_weeder(IOptions& options, JsonCpp& config);
+                // INotifications& create_notifications(IOptions& options, JsonCpp& config);
+             //   std::string get_script_file(IOptions &options, JsonCpp &config);
         };
 }
 

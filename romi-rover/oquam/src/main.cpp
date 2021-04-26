@@ -66,19 +66,7 @@ int main(int argc, char** argv)
                 r_info("Oquam: Using configuration file: '%s'", config_file.c_str());
                 JsonCpp config = JsonCpp::load(config_file.c_str());
 
-                romi::OquamFactory factory;
-                
-                JsonCpp r = config["oquam"]["cnc-range"];
-                romi::CNCRange range(r);
-
-                r = config["oquam"]["stepper-settings"];
-                romi::StepperSettings stepper_settings(r);
-        
-                double slice_duration = (double) config["oquam"]["path-slice-duration"];
-                double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
-
-                romi::CNCController& controller = factory.create_controller(options, config);
-
+                // Session
                 rpp::Linux linux;
                 romi::RomiDeviceData romiDeviceData;
                 romi::SoftwareVersion softwareVersion;
@@ -90,6 +78,21 @@ int main(int argc, char** argv)
                                       romiDeviceData, softwareVersion,
                                       std::move(locationPrivider));
                 session.start("oquam_observation_id");
+                
+                // Oquam cnc
+                romi::OquamFactory factory;
+                
+                JsonCpp range_data = config["oquam"]["cnc-range"];
+                romi::CNCRange range(range_data);
+
+                JsonCpp stepper_data = config["oquam"]["stepper-settings"];
+                romi::StepperSettings stepper_settings(stepper_data);
+        
+                double slice_duration = (double) config["oquam"]["path-slice-duration"];
+                double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
+
+                romi::ICNCController& controller = factory.create_controller(options, config);
+
                 romi::Oquam oquam(controller, range,
                             stepper_settings.maximum_speed,
                             stepper_settings.maximum_acceleration,
@@ -98,6 +101,7 @@ int main(int argc, char** argv)
                             slice_duration,
                             session);
 
+                // RPC access
                 romi::CNCAdaptor adaptor(oquam);
                 auto server = romi::RcomServer::create("cnc", adaptor);
                 

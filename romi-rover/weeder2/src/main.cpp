@@ -29,6 +29,7 @@
 
 #include <rpc/RcomServer.h>
 #include <rpc/RcomClient.h>
+#include <rpc/RemoteCamera.h>
 
 #include "configuration/ConfigurationProvider.h"
 #include <rover/RoverOptions.h>
@@ -51,7 +52,8 @@
 
 std::atomic<bool> quit(false);
 
-std::shared_ptr<romi::ICamera> instantiate_file_camera(romi::Options &options, JsonCpp &config)
+std::shared_ptr<romi::ICamera> instantiate_file_camera(romi::IOptions &options,
+                                                       JsonCpp &config)
 {
         return std::make_shared<romi::FileCamera>(get_camera_image(options, config));
 }
@@ -59,7 +61,7 @@ std::shared_ptr<romi::ICamera> instantiate_file_camera(romi::Options &options, J
 
 // TBD: This is duplicate code but the device is different.
 // Should make it common.
-std::string get_weeder_camera_device(romi::Options &options, JsonCpp &config)
+std::string get_weeder_camera_device(romi::IOptions &options, JsonCpp &config)
 {
         std::string device = options.get_value("weeder-camera-device");
         if (device.empty())
@@ -67,13 +69,15 @@ std::string get_weeder_camera_device(romi::Options &options, JsonCpp &config)
         return device;
 }
 
-std::shared_ptr<romi::ICamera> instantiate_usb_camera(romi::Options &options, JsonCpp &config)
+std::shared_ptr<romi::ICamera> instantiate_usb_camera(romi::IOptions &options,
+                                                      JsonCpp &config)
 {
         try {
                 std::string device = get_weeder_camera_device(options, config);
                 double width = (double) config["weeder"]["usb-camera"]["width"];
                 double height = (double) config["weeder"]["usb-camera"]["height"];
-                return std::make_shared<romi::USBCamera>(device, (size_t) width, (size_t) height);
+                return std::make_shared<romi::USBCamera>(device, (size_t) width,
+                                                         (size_t) height);
                 
         } catch (JSONError& je) {
                 r_err("instantiate_usb_camera: Failed to get width and height of "
@@ -82,7 +86,24 @@ std::shared_ptr<romi::ICamera> instantiate_usb_camera(romi::Options &options, Js
         }
 }
 
-std::shared_ptr<romi::ICamera> instantiate_camera(const std::string& camera_class, romi::Options &options, JsonCpp &config)
+std::shared_ptr<romi::ICamera> instantiate_remote_camera(romi::IOptions &options,
+                                                         JsonCpp &config)
+{
+        (void) options;
+        (void) config;
+        
+        try {
+                auto client = romi::RcomClient::create("camera", 10.0);
+                return std::make_shared<romi::RemoteCamera>(client);
+                
+        } catch (std::exception& e) {
+                r_err("instantiate_remote_camera: %s", e.what());
+                throw std::runtime_error("Create remote camera failed");
+        }
+}
+
+std::shared_ptr<romi::ICamera> instantiate_camera(const std::string& camera_class,
+                                                  romi::IOptions &options, JsonCpp &config)
 {
         if (camera_class == romi::FileCamera::ClassName) {
                 return instantiate_file_camera(options, config);
@@ -90,14 +111,19 @@ std::shared_ptr<romi::ICamera> instantiate_camera(const std::string& camera_clas
         } else if (camera_class == romi::USBCamera::ClassName) {
                 return instantiate_usb_camera(options, config);
 
+        } else if (camera_class == romi::RemoteCamera::ClassName) {
+                return instantiate_remote_camera(options, config);
+
         } else {
-                r_err("instantiate_camera: Unknown camera classname: %s", camera_class.c_str());
+                r_err("instantiate_camera: Unknown camera classname: %s",
+                      camera_class.c_str());
                 throw std::runtime_error("Unknown camera classname");
         }
 }
 
-std::string get_camera_class(__attribute__((unused))romi::Options &options, JsonCpp &config)
+std::string get_camera_class(romi::IOptions &options, JsonCpp &config)
 {
+        (void) options;
         std::string camera_class;
         try {
                 auto cclass = (const char *) config["weeder"]["camera-classname"];
@@ -112,14 +138,15 @@ std::string get_camera_class(__attribute__((unused))romi::Options &options, Json
         return camera_class;
 }
 
-std::shared_ptr<romi::ICamera> create_camera(romi::Options &options, JsonCpp &config)
+std::shared_ptr<romi::ICamera> create_camera(romi::IOptions &options, JsonCpp &config)
 {
         std::string camera_class = get_camera_class(options, config);
         return instantiate_camera(camera_class, options, config);
 }
 
-std::string get_cnc_class(__attribute__((unused))romi::Options &options, JsonCpp &config)
+std::string get_cnc_class(romi::IOptions &options, JsonCpp &config)
 {
+        (void) options;
         try {
                 return (const char *) config["weeder"]["cnc-classname"];
                 
@@ -130,7 +157,7 @@ std::string get_cnc_class(__attribute__((unused))romi::Options &options, JsonCpp
         }
 }
 
-std::shared_ptr<romi::ICNC> create_cnc(romi::Options &options, JsonCpp &config)
+std::shared_ptr<romi::ICNC> create_cnc(romi::IOptions &options, JsonCpp &config)
 {
         std::string cnc_class = get_cnc_class(options, config);
         std::shared_ptr<romi::ICNC> localcnc = nullptr;
@@ -219,11 +246,12 @@ int main(int argc, char** argv)
                 romi::RomiDeviceData romiDeviceData;
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
-                std::unique_ptr<romi::ILocationProvider> locationPrivider = std::make_unique<romi::GpsLocationProvider>(gps);
+                std::unique_ptr<romi::ILocationProvider> locationProvider
+                        = std::make_unique<romi::GpsLocationProvider>(gps);
                 std::string session_directory = options.get_value("session-directory");
-                romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+                romi::Session session(linux, session_directory, romiDeviceData,
+                                      softwareVersion, std::move(locationProvider));
 
-                
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];
                 romi::Weeder weeder(*camera, pipeline, *cnc, z0, speed, session);

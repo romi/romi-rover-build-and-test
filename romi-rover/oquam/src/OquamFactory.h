@@ -29,8 +29,8 @@
 #include <RomiSerialClient.h>
 #include <RSerial.h>
 
-#include "Options.h"
-#include "oquam/CNCController.h"
+#include "configuration/IOptions.h"
+#include "oquam/ICNCController.h"
 
 namespace romi {
 
@@ -39,15 +39,15 @@ namespace romi {
         protected:
                 std::shared_ptr<RSerial> _serial;
                 std::unique_ptr<RomiSerialClient> _romi_serial;
-                std::unique_ptr<CNCController> _controller;
+                std::unique_ptr<ICNCController> _controller;
                 
-                void instantiate_controller(Options &options, JsonCpp &config);
+                void instantiate_controller(IOptions &options, JsonCpp &config);
                 void instantiate_controller(const std::string& controller_classname,
-                                            Options &options, JsonCpp &config);
+                                            IOptions &options, JsonCpp &config);
                 std::string get_controller_classname_in_config(JsonCpp &config);
                 void instantiate_fake_controller();
-                void instantiate_stepper_controller(Options &options, JsonCpp &config);
-                std::string get_stepper_controller_device(Options &options,
+                void instantiate_stepper_controller(IOptions &options, JsonCpp &config);
+                std::string get_stepper_controller_device(IOptions &options,
                                                           JsonCpp &config);
                 std::string get_stepper_controller_device_in_config(JsonCpp &config);
 
@@ -56,7 +56,7 @@ namespace romi {
                 OquamFactory();
                 virtual ~OquamFactory() = default;
                 
-                CNCController& create_controller(Options& options, JsonCpp& config);
+                ICNCController& create_controller(IOptions& options, JsonCpp& config);
 
         };
 }

@@ -54,6 +54,8 @@
 #include <JoystickInputDevice.h>
 #include <FileCamera.h>
 #include <USBCamera.h>
+#include <rpc/RemoteCamera.h>
+#include <rpc/RcomClient.h>
 #include <BrushMotorDriver.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
@@ -110,16 +112,27 @@ int main(int argc, char** argv)
                 std::string config_file = options.get_config_file();
                 r_info("Romi Rover: Using configuration file: '%s'", config_file.c_str());
                 JsonCpp config = JsonCpp::load(config_file.c_str());
+                
+                rpp::Linux linux;
+
+                // Session
+                romi::RomiDeviceData romiDeviceData;
+                romi::SoftwareVersion softwareVersion;
+                romi::Gps gps;
+                std::unique_ptr<romi::ILocationProvider> locationPrivider = std::make_unique<romi::GpsLocationProvider>(gps);
+                std::string session_directory = romi::get_session_directory(options, config);
+
+                romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+                session.start("hw_observation_id");
 
                 // Display
-                const char *display_device = (const char *) config["ports"]["crystal-display"]["port"];
+                const char *display_device = (const char *) config["ports"]["display-device"]["port"];
                 std::shared_ptr<RSerial>display_serial = std::make_shared<RSerial>(display_device, 115200, 1);
                 RomiSerialClient display_romiserial(display_serial, display_serial);
                 romi::CrystalDisplay display(display_romiserial);
                 display.show(0, "Initializing");
 
                 // Joystick
-                rpp::Linux linux;
                 const char *joystick_device = (const char *) config["ports"]["joystick"]["port"];
                 romi::LinuxJoystick joystick(linux, joystick_device);
                 romi::UIEventMapper joystick_event_mapper;
@@ -131,6 +144,7 @@ int main(int argc, char** argv)
                 RomiSerialClient cnc_romiserial(cnc_serial, cnc_serial);
                 romi::StepperController cnc_controller(cnc_romiserial);
 
+                
                 // CNC
                 JsonCpp r = config["oquam"]["cnc-range"];
                 romi::CNCRange range(r);
@@ -139,15 +153,6 @@ int main(int argc, char** argv)
                 double slice_duration = (double) config["oquam"]["path-slice-duration"];
                 double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
 
-                // Session
-                romi::RomiDeviceData romiDeviceData;
-                romi::SoftwareVersion softwareVersion;
-                romi::Gps gps;
-                std::unique_ptr<romi::ILocationProvider> locationPrivider = std::make_unique<romi::GpsLocationProvider>(gps);
-                std::string session_directory = romi::get_session_directory(options, config);
-
-                romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
-                session.start("hw_observation_id");
                 romi::Oquam oquam(cnc_controller, range,
                             stepper_settings.maximum_speed,
                             stepper_settings.maximum_acceleration,
@@ -159,19 +164,24 @@ int main(int argc, char** argv)
                 // Camera
                 // TBD: Use refactored functions. get_camera_class
                 std::unique_ptr<romi::ICamera> camera;
-                const char *camera_classname = (const char *) config["weeder"]["camera-classname"];
-                if (rstreq(camera_classname, romi::FileCamera::ClassName)) {
+                std::string camera_classname = get_camera_classname(options, config);
+                
+                if (camera_classname == romi::FileCamera::ClassName) {
                         std::string image_file = get_camera_image(options, config);
                         r_info("Loading image %s", image_file.c_str());
                         camera = std::make_unique<romi::FileCamera>(image_file);
                         
-                } else {
+                } else if (camera_classname == romi::USBCamera::ClassName) {
                         std::string camera_device = get_camera_device(options, config);
                         double width = (double) config["weeder"]["usb-camera"]["width"];
                         double height = (double) config["weeder"]["usb-camera"]["height"];
                         camera = std::make_unique<romi::USBCamera>(camera_device, width, height);
+                } else if (camera_classname == romi::RemoteCamera::ClassName) {
+                        auto client = romi::RcomClient::create("camera", 10.0);
+                        camera = std::make_unique<romi::RemoteCamera>(client);
+                } else {
+                        throw std::runtime_error("Unknown camera classname");
                 }
-                
                 
                 // Weeder pipeline
                 romi::PipelineFactory pipeline_factory;
