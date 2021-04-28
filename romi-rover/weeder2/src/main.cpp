@@ -218,9 +218,6 @@ int main(int argc, char** argv)
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
-        // TBD: Check with Peter.
-//        app_init(&argc, argv);
-//        app_set_name("weeder");
         
         try {
                 std::string config_file = options.get_config_file();

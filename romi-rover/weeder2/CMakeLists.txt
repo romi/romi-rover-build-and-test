@@ -5,11 +5,11 @@ include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/src" )
 
 add_executable(weeder2 src/main.cpp)
 
-target_link_libraries(weeder2 rcompp-lite rpp romi)
+target_link_libraries(weeder2 rcompp-lite rpp romi ortools)
 
 add_executable(weeder2_eval src/eval.cpp)
 
-target_link_libraries(weeder2_eval rcompp-lite rpp romi m)
+target_link_libraries(weeder2_eval rcompp-lite rpp romi m ortools)
 
 if(BUILD_TESTS)
     add_subdirectory(test)

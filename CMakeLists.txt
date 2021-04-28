@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(romi-rover-build-and-test)
 
 if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
@@ -21,7 +21,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_BUILD_TYPE Debug)
 
-set(COMMON_COMPILATION_FLAGS "-Wall -Wextra -Wpedantic -Werror")
+#set(COMMON_COMPILATION_FLAGS "-Wall -Wextra -Wpedantic -Werror")
+# Google ortools has a lot of warnings, remove -Werror for google tools build. Re-enabled below.
+set(COMMON_COMPILATION_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${COMMON_COMPILATION_FLAGS}")
 set(CMAKE_C_FLAGS "${COMMON_COMPILATION_FLAGS}")
 
@@ -31,6 +33,7 @@ set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 #Build tests by default. We want run tests whether we are developing or building a release. I mean... why wouldn't you? :)
 option(BUILD_TESTS "Build all tests." ON)
 option(BUILD_COVERAGE "Build coverage." ON)
+option(BUILD_GOOGLE_OR_TOOLS "Build with BUILD_GOOGLE_OR_TOOLS" ON)
 
 # Build the developer example applications. These cannot be built with Coverage enabled.
 option(BUILD_EXAMPLES "Build example applications." OFF)
@@ -61,9 +64,64 @@ endif()
 MESSAGE("Cmake Source = " ${CMAKE_SOURCE_DIR})
 ############################################################
 
+set(CMAKE_MODULES_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
+set(CMAKE_DOWNLOAD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+
+if(BUILD_GOOGLE_OR_TOOLS)
+
+    include(GNUInstallDirs)
+
+    set(BUILD_DEPS ON)
+#    if (NOT DEFINED ortools_SOURCE_DIR)
+        if (CMAKE_VERSION VERSION_LESS 3.2)
+            set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
+        else()
+            set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+        endif()
+
+        if(UNIX)
+            option(BUILD_SHARED_LIBS "Build shared libraries(.so)." ON)
+        else()
+            # only support for static build on Windows.
+            set(BUILD_SHARED_LIBS OFF)
+        endif()
+
+        if(BUILD_SHARED_LIBS)
+            set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+        endif()
+
+#        include(FetchContent)
+#        FetchContent_Declare(
+#                ortools
+#                GIT_REPOSITORY https://github.com/google/or-tools.git
+#                GIT_TAG        master
+#        )
+#
+#        set(BUILD_DEPS ON)
+#        FetchContent_MakeAvailable(ortools)
+
+
+        include(${CMAKE_MODULES_DIRECTORY}/DownloadProject.cmake)
+        download_project(   PROJ                ortools
+                GIT_REPOSITORY      https://github.com/google/or-tools.git
+                GIT_TAG             stable
+                PREFIX              ${CMAKE_DOWNLOAD_DIRECTORY}/ortools
+                ${UPDATE_DISCONNECTED_IF_AVAILABLE}
+                )
+
+        set(BUILD_DEPS ON)
+        set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+        set(BUILD_SHARED_LIBS OFF)
+        set(BUILD_TESTING OFF)
+        set(BUILD_SAMPLES OFF)
+        set(BUILD_EXAMPLES OFF)
+
+        add_subdirectory(${ortools_SOURCE_DIR} ${ortools_BINARY_DIR})
+#    endif()
+
+endif() # BUILD_TESTS
+
 if(BUILD_TESTS)
-    set(CMAKE_MODULES_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
-    set(CMAKE_DOWNLOAD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
 
     include(CTest)
     enable_testing()

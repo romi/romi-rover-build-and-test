@@ -5,7 +5,7 @@
         "cnc-classname": "remote-cnc",
         "cropper": "imagecropper",
         "segmentation": "svm",
-        "path": "som",
+        "path": "ortools",
         "imagecropper": {
             "workspace": [562, 59, 700, 728]
         },
@@ -23,6 +23,9 @@
             "alpha": 0.2,
             "beta": 1.2,
             "epsilon": 0.01,
+            "print": false
+        }, 
+        "ortools": {
             "print": false
         } 
     }

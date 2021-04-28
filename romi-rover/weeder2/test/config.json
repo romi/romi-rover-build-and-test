@@ -8,7 +8,7 @@
         "camera": "camera-usb",
         "cropper": "imagecropper",
         "segmentation": "svm",
-        "path": "som",
+        "path": "ortools",
         
         "camera-file": {
             "file": "camera.jpg"
@@ -40,6 +40,9 @@
             "alpha": 0.2,
             "beta": 2.0,
             "epsilon": 0.01,
+            "print": 0
+        },
+        "ortools": {
             "print": 0
         } 
     }
