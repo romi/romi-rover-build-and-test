@@ -27,6 +27,7 @@
 #include <ArduinoSerial.h>
 #include <RomiSerial.h>
 
+using namespace romiserial;
 /**
  *  \brief The possible states of the controller (the main thread).
  */
@@ -449,7 +450,7 @@ void handle_spindle(RomiSerial *romiSerial, int16_t *args, const char *string_ar
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        romiSerial->send("[0,\"Oquam\",\"0.1\"," "\"" __DATE__ " " __TIME__ "\"]"); 
+        romiSerial->send("[0,\"Oquam\",\"0.1\",\"" __DATE__ " " __TIME__ "\"]"); 
 }
 
 static bool quit_testing;

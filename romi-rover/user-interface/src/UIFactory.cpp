@@ -44,8 +44,13 @@ using namespace rcom;
 namespace romi {
         
         UIFactory::UIFactory()
-                : _linux(), _joystick_event_mapper(), _serial(), _romi_serial(),
-                  _joystick(), _display(), _navigation(), _input_device(), _weeder()
+                : _linux(),
+                  _joystick_event_mapper(), 
+                  _joystick(),
+                  _display(),
+                  _navigation(),
+                  _input_device(),
+                  _weeder()
         {}
         
         UIFactory::~UIFactory() = default;
@@ -103,10 +108,9 @@ namespace romi {
         void UIFactory::instantiate_crystal_display(IOptions &options, JsonCpp &config)
         {
                 std::string device = get_crystal_display_device(options, config);
-                _serial = make_shared<RSerial>(device, 115200, 1);
-                _romi_serial = std::make_unique<RomiSerialClient>(_serial,_serial);
-                _romi_serial->set_debug(true);
-                _display = std::unique_ptr<IDisplay>(new CrystalDisplay(*_romi_serial));
+                auto serial = romiserial::RomiSerialClient::create(device);
+                //_romi_serial->set_debug(true);
+                _display = std::make_unique<CrystalDisplay>(serial);
         }
 
         std::string UIFactory::get_crystal_display_device(IOptions &options,

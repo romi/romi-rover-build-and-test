@@ -87,30 +87,27 @@ protected:
 
 TEST_F(hardware_tests, test_homing_stepper)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
         
         stepper.homing();
 }
 
 TEST_F(hardware_tests, test_move)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
         stepper.move(1000, 1000, 1000, 0);
         stepper.synchronize(120.0);
 }
 
 TEST_F(hardware_tests, test_get_position)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         stepper.homing();
         
@@ -141,11 +138,10 @@ TEST_F(hardware_tests, test_get_position)
 
 TEST_F(hardware_tests, test_oquam_homing)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("hw_observation_id");
         Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval, session);
@@ -153,11 +149,10 @@ TEST_F(hardware_tests, test_oquam_homing)
 
 TEST_F(hardware_tests, test_oquam_moveto_1)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
 
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("hw_observation_id");
@@ -169,11 +164,10 @@ TEST_F(hardware_tests, test_oquam_moveto_1)
 
 TEST_F(hardware_tests, test_oquam_moveto_2)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
 
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("hw_observation_id");
@@ -191,11 +185,10 @@ TEST_F(hardware_tests, test_oquam_moveto_2)
 
 TEST_F(hardware_tests, test_oquam_travel_square)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
 
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_travel_square");
@@ -217,11 +210,10 @@ TEST_F(hardware_tests, test_oquam_travel_square)
 
 TEST_F(hardware_tests, test_oquam_travel_square_fast)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_travel_square_fast");
@@ -243,11 +235,10 @@ TEST_F(hardware_tests, test_oquam_travel_square_fast)
 
 TEST_F(hardware_tests, test_oquam_travel_snake)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_travel_snake");
@@ -271,11 +262,10 @@ TEST_F(hardware_tests, test_oquam_travel_snake)
 
 TEST_F(hardware_tests, test_oquam_travel_snake_2)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_travel_snake_2");
@@ -305,11 +295,10 @@ TEST_F(hardware_tests, test_oquam_travel_snake_2)
 
 TEST_F(hardware_tests, test_oquam_travel_round_trip)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_travel_round_trip");
@@ -326,11 +315,10 @@ TEST_F(hardware_tests, test_oquam_travel_round_trip)
 
 TEST_F(hardware_tests, test_oquam_travel_collinear)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_travel_collinear");
@@ -348,11 +336,10 @@ TEST_F(hardware_tests, test_oquam_travel_collinear)
 
 TEST_F(hardware_tests, test_oquam_travel_large_displacement)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_travel_displacement");
@@ -371,11 +358,10 @@ TEST_F(hardware_tests, test_oquam_travel_large_displacement)
 
 TEST_F(hardware_tests, test_oquam_travel_small_displacement)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_small_displacement");
@@ -394,11 +380,10 @@ TEST_F(hardware_tests, test_oquam_travel_small_displacement)
 
 TEST_F(hardware_tests, test_oquam_travel_tiny_displacement)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_tiny_displacement");
@@ -417,11 +402,10 @@ TEST_F(hardware_tests, test_oquam_travel_tiny_displacement)
 
 TEST_F(hardware_tests, test_oquam_travel_zigzag)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_travel_zigzag");
@@ -464,11 +448,10 @@ void stop_and_continue(Oquam *oquam)
 
 TEST_F(hardware_tests, test_oquam_stop_and_continue)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_stop_and_continue");
@@ -493,11 +476,10 @@ void stop_and_reset(Oquam *oquam)
 
 TEST_F(hardware_tests, test_oquam_stop_and_reset)
 {
-        std::shared_ptr<RSerial>serial = std::make_shared<RSerial>(device, 115200, 1);
-        RomiSerialClient romi_serial(serial, serial);
+        auto romi_serial = romiserial::RomiSerialClient::create(device);
         StepperController stepper(romi_serial);
         
-        romi_serial.set_debug(debug_romi_serial);
+        //romi_serial.set_debug(debug_romi_serial);
 
         romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
         session.start("test_stop_and_reset");

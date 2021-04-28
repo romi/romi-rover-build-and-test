@@ -51,8 +51,6 @@ namespace romi {
                 rpp::Linux _linux;
                 UIEventMapper _joystick_event_mapper;
 
-                std::shared_ptr<RSerial> _serial;
-                std::unique_ptr<RomiSerialClient> _romi_serial;
                 std::unique_ptr<LinuxJoystick> _joystick;
 
                 std::unique_ptr<IDisplay> _display;

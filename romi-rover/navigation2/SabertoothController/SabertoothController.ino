@@ -26,6 +26,7 @@
 #include <ArduinoSerial.h>
 #include <SoftwareSerial.h>
 
+using namespace romiserial;
 
 void send_info(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_configure(RomiSerial *romiSerial, int16_t *args, const char *string_arg);
@@ -148,7 +149,9 @@ long rightEncoderDirection = 1;
 
 void setup()
 {
-        serial.init(115200);
+        Serial.begin(115200);
+        while (!Serial)
+                ;
         
         pinMode(pinFrontStopSwitch, INPUT_PULLUP);
         pinMode(pinBackStopSwitch, INPUT_PULLUP);
@@ -205,31 +208,6 @@ void disable()
         stop();
         state = STATE_DISABLED;
 }
-
-// The left and right speed should have a value in [-1, 1].
-/*
-inline void setOutputSignalSERVO(float l, float r)
-{
-        if (0) {
-                static float last_value = -1.0f;
-                if (l != last_value) {
-                        Serial.print("setOutputSignal ");
-                        Serial.println(l);
-                        last_value = l;
-                }
-        }
-        // Memorize the last values
-        leftSpeed = l;
-        rightSpeed = r;
-        
-        // The Servo API expects a value between 0 and 180
-        leftSignal = (int) (90.0f + maxSignal * l); 
-        rightSignal = (int) (90.0f + maxSignal * r);
-
-        leftMotor.write(leftSignal);
-        rightMotor.write(rightSignal);
-}
-*/
 
 inline void sabertooth_putc(unsigned char c)
 {

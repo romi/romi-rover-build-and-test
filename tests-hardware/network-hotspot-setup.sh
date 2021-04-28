@@ -2,6 +2,7 @@
 
 
 # From https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md
+# And https://cdn-learn.adafruit.com/downloads/pdf/setting-up-a-raspberry-pi-as-a-wifi-access-point.pdf
 
 DEBIAN_FRONTEND=noninteractive apt install -y hostapd dnsmasq netfilter-persistent iptables-persistent
 
