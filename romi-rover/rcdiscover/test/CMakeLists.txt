@@ -23,9 +23,9 @@ set(SRCS
         ../src/DeviceLister.cpp
         )
 
-add_executable(romi-rover_rcdiscover_unit_tests ${SRCS})
+add_executable(romi_rover_rcdiscover_unit_tests ${SRCS})
 
-target_link_libraries(  romi-rover_rcdiscover_unit_tests
+target_link_libraries(  romi_rover_rcdiscover_unit_tests
                         gtest
                         gmock
                         romiserial
@@ -34,6 +34,6 @@ target_link_libraries(  romi-rover_rcdiscover_unit_tests
                         stdc++fs)
 
 add_test(
-        NAME romi-rover_rcdiscover_unit_tests
-        COMMAND romi-rover_rcdiscover_unit_tests
+        NAME romi_rover_rcdiscover_unit_tests
+        COMMAND romi_rover_rcdiscover_unit_tests
         )
