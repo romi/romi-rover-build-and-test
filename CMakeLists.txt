@@ -72,7 +72,7 @@ if(BUILD_GOOGLE_OR_TOOLS)
     include(GNUInstallDirs)
 
     set(BUILD_DEPS ON)
-#    if (NOT DEFINED ortools_SOURCE_DIR)
+    if (NOT DEFINED ortools_SOURCE_DIR)
         if (CMAKE_VERSION VERSION_LESS 3.2)
             set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
         else()
@@ -117,7 +117,7 @@ if(BUILD_GOOGLE_OR_TOOLS)
         set(BUILD_EXAMPLES OFF)
 
         add_subdirectory(${ortools_SOURCE_DIR} ${ortools_BINARY_DIR})
-#    endif()
+    endif()
 
 endif() # BUILD_TESTS
 

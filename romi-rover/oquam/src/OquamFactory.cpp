@@ -32,7 +32,7 @@ using namespace std;
 
 namespace romi {
         
-        OquamFactory::OquamFactory() : _serial(), _romi_serial(), _controller()
+        OquamFactory::OquamFactory() : _controller()
         {}
         
         ICNCController& OquamFactory::create_controller(IOptions &options,
@@ -90,10 +90,8 @@ namespace romi {
                                                           JsonCpp &config)
         {
                 std::string device = get_stepper_controller_device(options, config);
-                _serial = std::make_shared<RSerial>(device, 115200, 1);
-                _romi_serial = std::make_unique<RomiSerialClient>(_serial, _serial);
-                _romi_serial->set_debug(true);
-                _controller = std::make_unique<StepperController>(*_romi_serial);
+                auto romi_serial = romiserial::RomiSerialClient::create(device);
+                _controller = std::make_unique<StepperController>(romi_serial);
         }
 
         std::string OquamFactory::get_stepper_controller_device(IOptions &options,

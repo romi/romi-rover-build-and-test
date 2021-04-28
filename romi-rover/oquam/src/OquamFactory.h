@@ -37,8 +37,6 @@ namespace romi {
         class OquamFactory
         {
         protected:
-                std::shared_ptr<RSerial> _serial;
-                std::unique_ptr<RomiSerialClient> _romi_serial;
                 std::unique_ptr<ICNCController> _controller;
                 
                 void instantiate_controller(IOptions &options, JsonCpp &config);

@@ -25,8 +25,9 @@
 #include "CrystalDisplay.h"
 
 CrystalDisplay::CrystalDisplay(int rs, int enable, int d4, int d5, int d6, int d7,
-                               int cols = 16, int rows = 2)
-        : _lcd(rs, enable, d4, d5, d6, d7) {
+                               int cols, int rows)
+        : _lcd(rs, enable, d4, d5, d6, d7)
+{
         _lcd.begin(cols, rows);
 }
 

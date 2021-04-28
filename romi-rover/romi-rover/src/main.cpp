@@ -127,9 +127,9 @@ int main(int argc, char** argv)
 
                 // Display
                 const char *display_device = (const char *) config["ports"]["display-device"]["port"];
-                std::shared_ptr<RSerial>display_serial = std::make_shared<RSerial>(display_device, 115200, 1);
-                RomiSerialClient display_romiserial(display_serial, display_serial);
-                romi::CrystalDisplay display(display_romiserial);
+                
+                auto display_serial = romiserial::RomiSerialClient::create(display_device);
+                romi::CrystalDisplay display(display_serial);
                 display.show(0, "Initializing");
 
                 // Joystick
@@ -140,9 +140,8 @@ int main(int argc, char** argv)
 
                 // CNC controller
                 const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
-                std::shared_ptr<RSerial>cnc_serial = std::make_shared<RSerial>(cnc_device, 115200, 1);
-                RomiSerialClient cnc_romiserial(cnc_serial, cnc_serial);
-                romi::StepperController cnc_controller(cnc_romiserial);
+                auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device);
+                romi::StepperController cnc_controller(cnc_serial);
 
                 
                 // CNC
@@ -197,11 +196,10 @@ int main(int argc, char** argv)
                 romi::NavigationSettings rover_config(rover_settings);
                 const char *driver_device = (const char *) config["ports"]["brush-motor-driver"]["port"];
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
-                std::shared_ptr<RSerial>driver_serial = std::make_shared<RSerial>(driver_device, 115200, 1);
-                RomiSerialClient driver_romiserial(driver_serial, driver_serial);
-                romi::BrushMotorDriver driver(driver_romiserial, driver_settings,
-                                        static_cast<int>(rover_config.encoder_steps),
-                                        rover_config.max_revolutions_per_sec);
+                auto driver_serial = romiserial::RomiSerialClient::create(driver_device);
+                romi::BrushMotorDriver driver(driver_serial, driver_settings,
+                                              static_cast<int>(rover_config.encoder_steps),
+                                              rover_config.max_revolutions_per_sec);
                 romi::Navigation navigation(driver, rover_config);
 
                 // SpeedController
