@@ -16,19 +16,12 @@ add_subdirectory(user-interface)
 add_subdirectory(navigation2)
 add_subdirectory(oquam)
 add_subdirectory(romi-rover)
+add_subdirectory(rcdiscover)
 
 if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
 add_subdirectory(romi-camera)
 endif()
 
-#add_subdirectory(camera_recorder)
-#add_subdirectory(grbl)
-#add_subdirectory(webproxy)
-#add_subdirectory(gimbal_bldc)
-
-#if(WITH_PICAMERA)
-#  add_subdirectory(picamera)
-#endif(WITH_PICAMERA)
 
 install(DIRECTORY scripts DESTINATION share/romi FILES_MATCHING PATTERN "*.json")
 install(DIRECTORY config DESTINATION share/romi FILES_MATCHING PATTERN "*.json")

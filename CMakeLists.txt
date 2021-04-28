@@ -90,17 +90,6 @@ if(BUILD_GOOGLE_OR_TOOLS)
             set(CMAKE_POSITION_INDEPENDENT_CODE ON)
         endif()
 
-#        include(FetchContent)
-#        FetchContent_Declare(
-#                ortools
-#                GIT_REPOSITORY https://github.com/google/or-tools.git
-#                GIT_TAG        master
-#        )
-#
-#        set(BUILD_DEPS ON)
-#        FetchContent_MakeAvailable(ortools)
-
-
         include(${CMAKE_MODULES_DIRECTORY}/DownloadProject.cmake)
         download_project(   PROJ                ortools
                 GIT_REPOSITORY      https://github.com/google/or-tools.git
@@ -185,11 +174,3 @@ add_subdirectory(libromi)
 add_subdirectory(romi-rover)
 add_subdirectory(tests-hardware)
 
-######################################
-
-# We've checked above for the correct build options, but another check of the coverage flag won't hurt.
-#if (BUILD_EXAMPLES)
-#    if (NOT BUILD_COVERAGE)
-#        add_subdirectory(rcom/examples)
-#    endif()
-#endif()
