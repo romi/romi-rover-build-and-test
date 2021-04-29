@@ -152,13 +152,15 @@ int main(int argc, char** argv)
                 double slice_duration = (double) config["oquam"]["path-slice-duration"];
                 double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
 
-                romi::Oquam oquam(cnc_controller, range,
-                            stepper_settings.maximum_speed,
-                            stepper_settings.maximum_acceleration,
-                            stepper_settings.steps_per_meter,
-                            maximum_deviation,
-                            slice_duration,
-                            session);
+                romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
+                romi::OquamSettings oquam_settings(range,
+                                                   stepper_settings.maximum_speed,
+                                                   stepper_settings.maximum_acceleration,
+                                                   stepper_settings.steps_per_meter,
+                                                   maximum_deviation,
+                                                   slice_duration,
+                                                   homing);
+                romi::Oquam oquam(cnc_controller, oquam_settings, session);
 
                 // Camera
                 // TBD: Use refactored functions. get_camera_class

@@ -97,13 +97,15 @@ int main(int argc, char** argv)
                 romi::CNCRange range(range_data);                
                 romi::StepperSettings stepper_settings(stepper_data);
                 romi::FakeCNCController controller = romi::FakeCNCController();
-                romi::Oquam oquam(controller, range,
-                                  stepper_settings.maximum_speed,
-                                  stepper_settings.maximum_acceleration,
-                                  stepper_settings.steps_per_meter,
-                                  maximum_deviation,
-                                  slice_duration,
-                                  session);
+                romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
+                romi::OquamSettings oquam_settings(range,
+                                                   stepper_settings.maximum_speed,
+                                                   stepper_settings.maximum_acceleration,
+                                                   stepper_settings.steps_per_meter,
+                                                   maximum_deviation,
+                                                   slice_duration,
+                                                   homing);
+                romi::Oquam oquam(controller, oquam_settings, session);
 
                 // File camera
                 romi::FileCamera camera(options.get_value("camera-image"));

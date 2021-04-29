@@ -37,12 +37,21 @@ protected:
         const double amax[3] =  {0.2, 0.2, 0.2};
         const double scale[3] = {40000, 40000, 100000};
         const double slice_interval = 0.020;
+        const romi::AxisIndex homing[3] = {romi::kAxisX, romi::kAxisY, romi::kNoAxis};
         CNCRange range;
+        OquamSettings settings;
         
-	hardware_tests() : range(xmin, xmax), linux(), romiDeviceData(), softwareVersion(), gps(), locationPrivider(),
-	session_directory("session-directory")
-	{
-                locationPrivider  = std::make_unique<GpsLocationProvider>(gps);
+	hardware_tests()
+                : range(xmin, xmax),
+                  settings(range, vmax, amax, scale, 0.005,
+                           slice_interval, homing),
+                  linux(),
+                  romiDeviceData(),
+                  softwareVersion(),
+                  gps(),
+                  locationProvider(),
+                  session_directory("session-directory") {
+                locationProvider  = std::make_unique<GpsLocationProvider>(gps);
 	}
 
 	~hardware_tests() override = default;
@@ -55,7 +64,7 @@ protected:
     RomiDeviceData romiDeviceData;
     SoftwareVersion softwareVersion;
     romi::Gps gps;
-    std::unique_ptr<ILocationProvider> locationPrivider;
+    std::unique_ptr<ILocationProvider> locationProvider;
     const std::string session_directory;
 
 };
@@ -142,9 +151,9 @@ TEST_F(hardware_tests, test_oquam_homing)
         StepperController stepper(romi_serial);
         
         //romi_serial.set_debug(debug_romi_serial);
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("hw_observation_id");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 }
 
 TEST_F(hardware_tests, test_oquam_moveto_1)
@@ -154,9 +163,9 @@ TEST_F(hardware_tests, test_oquam_moveto_1)
 
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("hw_observation_id");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         bool success = oquam.moveto(0.1, 0.0, 0.0, 0.3);
         ASSERT_EQ(success, true);
@@ -169,9 +178,9 @@ TEST_F(hardware_tests, test_oquam_moveto_2)
 
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("hw_observation_id");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.01, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         bool success = oquam.moveto(0.1, 0.0, 0.0, 0.3);
         ASSERT_EQ(success, true);
@@ -190,9 +199,9 @@ TEST_F(hardware_tests, test_oquam_travel_square)
 
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_travel_square");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         Path path;
         v3 p0(0.1, 0.0, 0.0);
@@ -215,9 +224,9 @@ TEST_F(hardware_tests, test_oquam_travel_square_fast)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_travel_square_fast");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.03, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         Path path;
         v3 p0(0.1, 0.0, 0.0);
@@ -240,9 +249,9 @@ TEST_F(hardware_tests, test_oquam_travel_snake)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_travel_snake");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         Path path;
         int N = 10;
@@ -267,9 +276,9 @@ TEST_F(hardware_tests, test_oquam_travel_snake_2)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_travel_snake_2");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         int N = 11;
         Path path;
@@ -300,9 +309,9 @@ TEST_F(hardware_tests, test_oquam_travel_round_trip)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_travel_round_trip");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -320,9 +329,9 @@ TEST_F(hardware_tests, test_oquam_travel_collinear)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_travel_collinear");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -341,9 +350,9 @@ TEST_F(hardware_tests, test_oquam_travel_large_displacement)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_travel_displacement");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -363,9 +372,9 @@ TEST_F(hardware_tests, test_oquam_travel_small_displacement)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_small_displacement");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -385,9 +394,9 @@ TEST_F(hardware_tests, test_oquam_travel_tiny_displacement)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_tiny_displacement");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         Path path;
         path.push_back(v3(0.0, 0.0, 0.0));
@@ -407,9 +416,9 @@ TEST_F(hardware_tests, test_oquam_travel_zigzag)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_travel_zigzag");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         Path path;
         v3 p(0.0, 0.0, 0.0);
@@ -453,9 +462,9 @@ TEST_F(hardware_tests, test_oquam_stop_and_continue)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_stop_and_continue");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
 
         
         std::thread th(stop_and_continue, &oquam);
@@ -481,9 +490,9 @@ TEST_F(hardware_tests, test_oquam_stop_and_reset)
         
         //romi_serial.set_debug(debug_romi_serial);
 
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationProvider));
         session.start("test_stop_and_reset");
-        Oquam oquam(stepper, range, vmax, amax, scale, 0.005, slice_interval, session);
+        Oquam oquam(stepper, settings, session);
         
         std::thread th(stop_and_reset, &oquam);
 
