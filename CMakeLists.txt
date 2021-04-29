@@ -71,23 +71,16 @@ if(BUILD_GOOGLE_OR_TOOLS)
 
     include(GNUInstallDirs)
 
+#    include (FetchContent)
+#    set(FETCHCONTENT_QUIET off)
+#    set(FETCHCONTENT_BASE_DIR ${CMAKE_DOWNLOAD_DIRECTORY})
+
     set(BUILD_DEPS ON)
     if (NOT DEFINED ortools_SOURCE_DIR)
         if (CMAKE_VERSION VERSION_LESS 3.2)
             set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
         else()
             set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
-        endif()
-
-        if(UNIX)
-            option(BUILD_SHARED_LIBS "Build shared libraries(.so)." ON)
-        else()
-            # only support for static build on Windows.
-            set(BUILD_SHARED_LIBS OFF)
-        endif()
-
-        if(BUILD_SHARED_LIBS)
-            set(CMAKE_POSITION_INDEPENDENT_CODE ON)
         endif()
 
         include(${CMAKE_MODULES_DIRECTORY}/DownloadProject.cmake)

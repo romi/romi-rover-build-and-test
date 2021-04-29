@@ -4,3 +4,4 @@ thirdparty
 *_main.c
 *venv*
 *~
+*_deps/*
