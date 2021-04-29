@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		i2c-tools \
 		usbutils \
         git \
-        cmake \
 		libfluidsynth-dev \
 		socat \
 		python3 \
