@@ -67,41 +67,41 @@ MESSAGE("Cmake Source = " ${CMAKE_SOURCE_DIR})
 set(CMAKE_MODULES_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
 set(CMAKE_DOWNLOAD_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
 
-if(BUILD_GOOGLE_OR_TOOLS)
-
-    include(GNUInstallDirs)
-
-#    include (FetchContent)
-#    set(FETCHCONTENT_QUIET off)
-#    set(FETCHCONTENT_BASE_DIR ${CMAKE_DOWNLOAD_DIRECTORY})
-
-    set(BUILD_DEPS ON)
-    if (NOT DEFINED ortools_SOURCE_DIR)
-        if (CMAKE_VERSION VERSION_LESS 3.2)
-            set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
-        else()
-            set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
-        endif()
-
-        include(${CMAKE_MODULES_DIRECTORY}/DownloadProject.cmake)
-        download_project(   PROJ                ortools
-                GIT_REPOSITORY      https://github.com/google/or-tools.git
-                GIT_TAG             stable
-                PREFIX              ${CMAKE_DOWNLOAD_DIRECTORY}/ortools
-                ${UPDATE_DISCONNECTED_IF_AVAILABLE}
-                )
-
-        set(BUILD_DEPS ON)
-        set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-        set(BUILD_SHARED_LIBS OFF)
-        set(BUILD_TESTING OFF)
-        set(BUILD_SAMPLES OFF)
-        set(BUILD_EXAMPLES OFF)
-
-        add_subdirectory(${ortools_SOURCE_DIR} ${ortools_BINARY_DIR})
-    endif()
-
-endif() # BUILD_TESTS
+#if(BUILD_GOOGLE_OR_TOOLS)
+#
+#    include(GNUInstallDirs)
+#
+##    include (FetchContent)
+##    set(FETCHCONTENT_QUIET off)
+##    set(FETCHCONTENT_BASE_DIR ${CMAKE_DOWNLOAD_DIRECTORY})
+#
+#
+#    if (NOT DEFINED ortools_SOURCE_DIR)
+#        if (CMAKE_VERSION VERSION_LESS 3.2)
+#            set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
+#        else()
+#            set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+#        endif()
+#
+#        include(${CMAKE_MODULES_DIRECTORY}/DownloadProject.cmake)
+#        download_project(   PROJ                ortools
+#                GIT_REPOSITORY      https://github.com/google/or-tools.git
+#                GIT_TAG             stable
+#                PREFIX              ${CMAKE_DOWNLOAD_DIRECTORY}/ortools
+#                ${UPDATE_DISCONNECTED_IF_AVAILABLE}
+#                )
+#
+#        set(BUILD_DEPS ON)
+#        set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+#        set(BUILD_SHARED_LIBS OFF)
+#        set(BUILD_TESTING OFF)
+#        set(BUILD_SAMPLES OFF)
+#        set(BUILD_EXAMPLES OFF)
+#
+#        add_subdirectory(${ortools_SOURCE_DIR} ${ortools_BINARY_DIR})
+#    endif()
+#
+#endif() # BUILD_TESTS
 
 if(BUILD_TESTS)
 
@@ -164,6 +164,7 @@ include(${CMAKE_MODULES_DIRECTORY}/RomiProjectBuildOptions.cmake)
 add_subdirectory(libr)
 add_subdirectory(librcom)
 add_subdirectory(libromi)
+MESSAGE("RRBT ORTOOLS_SHARED_LIBS =  ${ORTOOLS_SHARED_LIB} OR_TOOLS_INC = ${ORTOOLS_INCLUDE_DIR}" )
 add_subdirectory(romi-rover)
 add_subdirectory(tests-hardware)
 
