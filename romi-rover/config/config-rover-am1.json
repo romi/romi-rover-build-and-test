@@ -34,9 +34,9 @@
             "maximum_signal_amplitude": 40,
             "use_pid": true,
             "pid": {
-                "kp": 0.280,
-                "ki": 0.000,
-                "kd": 0.010
+                "kp": 0.6,
+                "ki": 0.3,
+                "kd": 0.1
             },
             "encoder_directions": {
                 "left": -1,
@@ -174,7 +174,7 @@
             "type": "serial"
         },
         "brush-motor-driver": {
-            "port": "/dev/ttyACM0",
+            "port": "/dev/ttyACM2",
             "type": "serial"
         },
         "usb-camera": {
