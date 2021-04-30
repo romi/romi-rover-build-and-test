@@ -8,11 +8,15 @@ class MotorController(RomiDevice):
 
     def __init__(self, device, config): 
         super(MotorController, self).__init__(device)
-        self.send_configuration(config)
-        self.enable()
+        self.set_configuration(config)
+
+    def set_configuration(self, config):
         self.config = config
+        self.disable()
+        self.__send_configuration(config)
+        self.enable()
         
-    def send_configuration(self, config):
+    def __send_configuration(self, config):
         steps = config["rover"]["encoder_steps"]
         wheel_diameter = config["rover"]["wheel_diameter"]
         max_speed = config["rover"]["maximum_speed"]
@@ -30,7 +34,16 @@ class MotorController(RomiDevice):
                           .format(int(steps), int(100 * max_rps), int(max_signal),
                                   int(use_pid), int(kp * 1000), int(ki * 1000),
                                   int(kd * 1000), int(left_encoder), int(right_encoder)))
-    
+        
+    def get_max_rps(self):
+        max_speed = self.config["rover"]["maximum_speed"]
+        wheel_diameter = self.config["rover"]["wheel_diameter"]
+        circumference = wheel_diameter * math.pi
+        return max_speed / circumference
+        
+    def get_encoder_steps(self):
+        return self.config["rover"]["encoder_steps"]
+
     def get_config(self):
         return self.config
     
@@ -48,3 +61,6 @@ class MotorController(RomiDevice):
         # The first element is the status code
         reply.pop(0)
         return reply
+
+    def get_status(self):
+        return self.send_command("S")
