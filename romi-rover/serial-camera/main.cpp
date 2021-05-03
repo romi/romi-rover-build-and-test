@@ -6,8 +6,8 @@
 #include <r.h>
 #include <RomiSerial.h>
 #include <RSerial.h>
-#include <USBCamera.h>
-#include <ImageIO.h>
+#include <camera/USBCamera.h>
+#include <cv/ImageIO.h>
 
 using namespace std::chrono_literals;
 

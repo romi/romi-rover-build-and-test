@@ -30,9 +30,9 @@
 #include <RomiSerialClient.h>
 #include <RSerial.h>
 
-#include <BrushMotorDriver.h>
-#include <Navigation.h>
-#include <NavigationSettings.h>
+#include <hal/BrushMotorDriver.h>
+#include <rover/Navigation.h>
+#include <rover/NavigationSettings.h>
 #include "configuration/ConfigurationProvider.h"
 #include <rover/RoverOptions.h>
 #include <rpc/NavigationAdaptor.h>

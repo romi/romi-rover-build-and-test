@@ -31,7 +31,7 @@
 #include "data_provider/SoftwareVersion.h"
 #include "data_provider/GpsLocationProvider.h"
 #include "data_provider/Gps.h"
-#include "weeder/Session.h"
+#include "session/Session.h"
 #include "weeder/som/SelfOrganizedMap.h"
 #include "test.h"
 

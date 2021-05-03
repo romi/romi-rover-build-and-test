@@ -26,8 +26,8 @@
 #include <stdexcept>
 
 #include "configuration/ConfigurationProvider.h"
-#include <CrystalDisplay.h>
-#include <JoystickInputDevice.h>
+#include <ui/CrystalDisplay.h>
+#include <ui/JoystickInputDevice.h>
 #include <rover/RoverOptions.h>
 #include <rpc/RemoteNavigation.h>
 #include <rpc/RemoteWeeder.h>

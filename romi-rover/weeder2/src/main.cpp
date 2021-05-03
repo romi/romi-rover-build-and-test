@@ -33,8 +33,8 @@
 
 #include "configuration/ConfigurationProvider.h"
 #include <rover/RoverOptions.h>
-#include <FileCamera.h>
-#include <USBCamera.h>
+#include <camera/FileCamera.h>
+#include <camera/USBCamera.h>
 #include <weeder/Weeder.h>
 #include <weeder/PipelineFactory.h>
 #include <rpc/WeederAdaptor.h>
@@ -44,7 +44,7 @@
 #include "Linux.h"
 #include "data_provider/RomiDeviceData.h"
 #include "data_provider/SoftwareVersion.h"
-#include "weeder/Session.h"
+#include "session/Session.h"
 #include "data_provider/Gps.h"
 #include "data_provider/GpsLocationProvider.h"
 #include "Clock.h"

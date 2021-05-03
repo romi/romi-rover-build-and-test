@@ -26,11 +26,11 @@
 #include <atomic>
 #include <syslog.h>
 
-#include <SpeedController.h>
-#include <EventTimer.h>
-#include <ScriptList.h>
-#include <ScriptMenu.h>
-#include <FluidSoundNotifications.h>
+#include <rover/SpeedController.h>
+#include <api/EventTimer.h>
+#include <ui/ScriptList.h>
+#include <ui/ScriptMenu.h>
+#include <notifications/FluidSoundNotifications.h>
 #include "configuration/ConfigurationProvider.h"
 #include <rover/Rover.h>
 #include <rover/RoverInterface.h>

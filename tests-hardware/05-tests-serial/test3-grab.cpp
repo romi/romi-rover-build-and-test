@@ -2,8 +2,8 @@
 #include <memory>
 #include <iostream>
 #include <log.h>
-#include <USBCamera.h>
-#include <ImageIO.h>
+#include <camera/USBCamera.h>
+#include <cv/ImageIO.h>
 #include <ClockAccessor.h>
 
 int main()

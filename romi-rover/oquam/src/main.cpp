@@ -14,7 +14,7 @@
 #include "OquamFactory.h"
 #include "data_provider/RomiDeviceData.h"
 #include "data_provider/SoftwareVersion.h"
-#include "weeder/Session.h"
+#include "session/Session.h"
 #include "data_provider/Gps.h"
 #include "data_provider/GpsLocationProvider.h"
 

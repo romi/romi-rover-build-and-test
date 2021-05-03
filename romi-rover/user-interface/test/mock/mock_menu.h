@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "Menu.h"
+#include "ui/Menu.h"
 
 class MockMenu : public romi::Menu
 {

@@ -1,5 +1,5 @@
 #include "gmock/gmock.h"
-#include "EventTimer.h"
+#include "api/EventTimer.h"
 
 class MockEventTimer : public romi::EventTimer
 {

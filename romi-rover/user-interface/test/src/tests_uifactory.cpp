@@ -2,10 +2,10 @@
 #include "gmock/gmock.h"
 #include "../mock/mock_navigation.h"
 #include <configuration/GetOpt.h>
-#include <CrystalDisplay.h>
+#include <ui/CrystalDisplay.h>
 #include "configuration/ConfigurationProvider.h"
 #include <rpc/RemoteNavigation.h>
-#include <JoystickInputDevice.h>
+#include <ui/JoystickInputDevice.h>
 #include <rover/RoverOptions.h>
 #include <fake/FakeDisplay.h>
 #include <fake/FakeInputDevice.h>

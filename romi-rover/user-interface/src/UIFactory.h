@@ -35,8 +35,8 @@
 #include <api/INotifications.h>
 #include <api/IWeeder.h>
 #include <configuration/IOptions.h>
-#include <LinuxJoystick.h>
-#include <UIEventMapper.h>
+#include <ui/LinuxJoystick.h>
+#include <ui/UIEventMapper.h>
 #include <Linux.h>
 
 #ifndef __ROMI_UI_FACTORY_H
