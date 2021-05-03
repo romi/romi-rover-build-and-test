@@ -32,7 +32,7 @@
 #include "data_provider/GpsLocationProvider.h"
 #include "data_provider/Gps.h"
 #include "session/Session.h"
-#include "weeder/som/SelfOrganizedMap.h"
+#include "som/SelfOrganizedMap.h"
 #include "test.h"
 
 using namespace romi;
