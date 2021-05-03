@@ -20,7 +20,6 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include <Servo.h>
 #include <PID_v1.h>
 #include <RomiSerial.h>
 #include <ArduinoSerial.h>
@@ -80,16 +79,6 @@ unsigned char controlMode = CONTROL_DIRECT;
 #define sabertoothRxPin 13
 
 SoftwareSerial sabertooth(sabertoothRxPin, sabertoothTxPin); // RX, TX
-
-/////////////////////////////////////////////////////////////////////////
-// The H-bridge expects a PWM signal similar to those produced by RC
-// receiver or accepted by servo motors. For ease, we use the standard
-// Servo library to produce these signals.
-
-//Servo leftMotor;
-//Servo rightMotor;
-// The maximum amplitude of the servo signal.
-float maxSignal = 20.0f;
 
 /////////////////////////////////////////////////////////////////////////
 double lastLeftInput = 0;
@@ -406,7 +395,6 @@ void handle_configure(RomiSerial *romiSerial, int16_t *args, const char *string_
         case STATE_UNINITIALIZED:
                 stepsPerRevolution = (float) args[0];
                 maxSpeed = (float) args[1] / 100.0f;
-                maxSignal = (float) args[2];
         
                 int enablePID = args[3];
                 if (enablePID) {
@@ -455,7 +443,12 @@ void handle_enable(RomiSerial *romiSerial, int16_t *args, const char *string_arg
         switch(state) {
         case STATE_ERROR:
         case STATE_UNINITIALIZED:
-                romiSerial->send_error(1, errBadState);  
+                if (args[0] == 0) {
+                        disable();
+                        romiSerial->send_ok();  
+                } else {
+                        romiSerial->send_error(1, errBadState);
+                }
                 break;
         case STATE_DISABLED:
                 if (args[0] != 0)
