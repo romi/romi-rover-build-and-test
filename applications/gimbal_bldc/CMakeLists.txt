@@ -14,6 +14,6 @@ target_link_libraries(gimbal_bldc romi rcom r m)
 
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_CURRENT_LIST_DIR}/gimbal_bldc_main.c
-  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/gimbal_bldc_main.c ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
-  DEPENDS ${CMAKE_CURRENT_LIST_DIR}/rcgen.json
+  COMMAND rcgen code ${CMAKE_CURRENT_LIST_DIR}/gimbal_bldc_main.c rcgen.json
+  DEPENDS rcgen.json
   )

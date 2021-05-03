@@ -13,7 +13,7 @@ set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -Werror -O3 ${PROJECT_SANITISE_FLAGS
 
 set(SRCS_ELASTIC som/elastic.cpp som/elastic.cpp som/test.c)
 add_executable(romi_rover_regression_test_som ${SRCS_ELASTIC})
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../src" )
+include_directories( "../src" )
 target_link_libraries(romi_rover_regression_test_som r romi)
 
 add_executable(romi_rover_regression_test_som_compare som/compare.c)

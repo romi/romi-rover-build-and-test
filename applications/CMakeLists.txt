@@ -23,5 +23,5 @@ add_subdirectory(romi-camera)
 endif()
 
 
-install(DIRECTORY scripts DESTINATION share/romi FILES_MATCHING PATTERN "*.json")
-install(DIRECTORY config DESTINATION share/romi FILES_MATCHING PATTERN "*.json")
+#install(DIRECTORY scripts DESTINATION share/romi FILES_MATCHING PATTERN "*.json")
+#install(DIRECTORY config DESTINATION share/romi FILES_MATCHING PATTERN "*.json")

@@ -165,6 +165,6 @@ add_subdirectory(libr)
 add_subdirectory(librcom)
 add_subdirectory(libromi)
 MESSAGE("RRBT ORTOOLS_SHARED_LIBS =  ${ORTOOLS_SHARED_LIB} OR_TOOLS_INC = ${ORTOOLS_INCLUDE_DIR}" )
-add_subdirectory(romi-rover)
+add_subdirectory(applications)
 add_subdirectory(tests-hardware)
 
