@@ -1,6 +1,7 @@
 .idea
 thirdparty
 *build*
-*_main.c*
+*_main.c
 *venv*
 *~
+*_deps/*
