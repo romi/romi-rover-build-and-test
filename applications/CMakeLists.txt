@@ -11,9 +11,9 @@ if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES "
     link_directories(${PICAMERA_LIBRARY_PATH})
 endif()
 
-add_subdirectory(weeder2)
+add_subdirectory(weeder)
 add_subdirectory(user-interface)
-add_subdirectory(navigation2)
+add_subdirectory(navigation)
 add_subdirectory(oquam)
 add_subdirectory(romi-rover)
 add_subdirectory(rcdiscover)
