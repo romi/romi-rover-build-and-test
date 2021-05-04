@@ -13,17 +13,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		i2c-tools \
 		usbutils \
         git \
-		# # gcc \
-		# # g++ \
-		# gcc-8 \ 
-		# g++-8 \
-		libfluidsynth-dev \
 		socat \
 		python3 \
 		python3-pip \
         wget \
         sudo \
-		libjpeg-dev
+		libfluidsynth-dev \
+		libjpeg-dev \
+		zlib1g-dev \
+		libpng-dev
 		# libglib2.0-dev // In case if including fluidsynth from source.
 
 RUN pip3 install websocket-client \
