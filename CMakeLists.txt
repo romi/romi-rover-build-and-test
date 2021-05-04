@@ -164,9 +164,10 @@ include(${CMAKE_MODULES_DIRECTORY}/RomiProjectBuildOptions.cmake)
 add_subdirectory(libr)
 add_subdirectory(librcom)
 add_subdirectory(libromi)
+
 if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
-    set(PICAMERA_LIBRARY_PATH /opt/vc/lib)
-    link_directories(${PICAMERA_LIBRARY_PATH})
+    # MESSAGE("RRBT PICAMERA_SHARED_LIB =  ${PICAMERA_SHARED_LIB} PICAMERA_SHARED_LIB_DIR = ${PICAMERA_SHARED_LIB_DIR}" )
+    link_directories(${PICAMERA_SHARED_LIB_DIR})
 endif()
 
 add_subdirectory(librover)
