@@ -2,8 +2,12 @@
 cmake_minimum_required(VERSION 3.10)
 project(romi_rover)
 
-MESSAGE("Romi_rover CXX Flags = ${CMAKE_CXX_FLAGS}")
-MESSAGE("Romi_rover C Flags = ${CMAKE_C_FLAGS}")
+############################################################
+
+set_romi_build_defaults()
+output_compile_flags()
+
+############################################################
 
 
 if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
