@@ -13,8 +13,8 @@ namespace romi {
         void GpioFileDescriptor::throw_error(const char *what)
         {
                 char errno_message[128];
-                strerror_r(errno, errno_message, sizeof(errno_message));
-                r_err("%s: %s", what, errno_message);
+                auto msg = strerror_r(errno, errno_message, sizeof(errno_message));
+                r_err("%s: %s", what, msg);
                 throw std::runtime_error(what);
         }
 }

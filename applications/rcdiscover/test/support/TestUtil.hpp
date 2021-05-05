@@ -54,19 +54,21 @@ namespace CppLinuxSerial {
                              + device0Name_ + std::string(" pty,raw,echo=0,link=")
                              + device1Name_ + std::string(" &");
                 std::cout << command << std::endl;
-                std::system(command.c_str() );
+                auto res = std::system(command.c_str() );
 
                 // Hacky! Since socat is detached, we have no idea at what point it has created
                 // ttyS10 and ttyS11. Assume 1 seconds is long enough...
                 std::this_thread::sleep_for(2s);
-                std::system((std::string("sudo chmod a+rw ") + GetDevice0Name()).c_str());
-                std::system((std::string("sudo chmod a+rw ") + GetDevice1Name()).c_str());
+                res = std::system((std::string("sudo chmod a+rw ") + GetDevice0Name()).c_str());
+                res = std::system((std::string("sudo chmod a+rw ") + GetDevice1Name()).c_str());
+                std::cout << "Creating virtual serial port pair complete "  << res << std::endl;
             }
 
             void CloseSerialPorts() {
                 // Dangerous! Kills all socat processes running
                 // on computer
-                std::system("sudo pkill socat");
+                if (std::system("sudo pkill socat") != 0)
+                    std::cout << "sudo pkill socat failed"  << std::endl;;
             }
 
             std::string GetDevice0Name() {
