@@ -165,14 +165,7 @@ include(${CMAKE_MODULES_DIRECTORY}/RomiProjectBuildOptions.cmake)
 add_subdirectory(libr)
 add_subdirectory(librcom)
 add_subdirectory(libromi)
-
-if(${PI_BUILD})
-    # MESSAGE("RRBT PICAMERA_SHARED_LIB =  ${PICAMERA_SHARED_LIB} PICAMERA_SHARED_LIB_DIR = ${PICAMERA_SHARED_LIB_DIR}" )
-    link_directories(${PICAMERA_SHARED_LIB_DIR})
-endif()
-
 add_subdirectory(librover)
-MESSAGE("RRBT ORTOOLS_SHARED_LIBS =  ${ORTOOLS_SHARED_LIB} OR_TOOLS_INC = ${ORTOOLS_INCLUDE_DIR}" )
 add_subdirectory(applications)
 add_subdirectory(tests-hardware)
 
