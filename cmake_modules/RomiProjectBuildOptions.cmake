@@ -1,4 +1,4 @@
-MESSAGE("Importing Romi Project Build Settings" )
+MESSAGE("${PROJECT_NAME} Importing Romi Project Build Settings" )
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,7 +12,7 @@ if(ADDRESS_SANITISER_BUILD)
     set( PROJECT_SANITISE_FLAGS
             "-fsanitize=address,undefined,shift,integer-divide-by-zero,unreachable,vla-bound,null,return,signed-integer-overflow,bounds,alignment,object-size,float-divide-by-zero,float-cast-overflow,nonnull-attribute,returns-nonnull-attribute,bool,enum,vptr -fno-omit-frame-pointer")
 else()
-    MESSAGE("${PROJECT_NAME} sanitize flags off")
+    message("${PROJECT_NAME} sanitize flags off")
     set( PROJECT_SANITISE_FLAGS "")
 endif()
 

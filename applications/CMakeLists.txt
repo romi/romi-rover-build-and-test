@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.10)
-project(romi_rover)
+project(romi_rover-applications)
 
 ############################################################
 

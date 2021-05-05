@@ -51,6 +51,7 @@ if(ADDRESS_SANITISER_BUILD)
             "-fsanitize=address,undefined,shift,integer-divide-by-zero,unreachable,vla-bound,null,return,signed-integer-overflow,bounds,alignment,object-size,float-divide-by-zero,float-cast-overflow,nonnull-attribute,returns-nonnull-attribute,bool,enum,vptr")
 else()
     set( PROJECT_SANITISE_FLAGS "")
+    message("${PROJECT_NAME} sanitize flags off")
 endif()
 
 ############################################################
