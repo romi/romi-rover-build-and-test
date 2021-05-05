@@ -5,8 +5,13 @@ project(romi-rover-build-and-test)
 
 set(CMAKE_MODULES_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
 set(CMAKE_THIRDPARTY_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+
+############################################################
+
 include(${CMAKE_MODULES_DIRECTORY}/RomiFunctions.cmake)
-set_romi_build_defaults()
+set(PI_BUILD FALSE)
+set_romi_build_defaults(PI_BUILD)
+message("${PROJECT_NAME} PI_BUILD = ${PI_BUILD}")
 output_compile_flags()
 
 ############################################################
@@ -155,6 +160,7 @@ endif()
 ######################################
 
 include(${CMAKE_MODULES_DIRECTORY}/RomiProjectBuildOptions.cmake)
+MESSAGE("RR Pi Build = ${PI_BUILD}" )
 add_subdirectory(libr)
 add_subdirectory(librcom)
 add_subdirectory(libromi)

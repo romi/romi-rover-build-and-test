@@ -9,11 +9,10 @@ function(output_compile_flags)
 endfunction()
 
 ############################################################
-
-function(set_romi_build_defaults)
+function(set_romi_build_defaults PI_BUILD)
     if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
-        set(PI_BUILD TRUE)
-        MESSAGE("ARM PROCESSOR DETECTED ${CMAKE_SYSTEM_PROCESSOR}")
+        set(${PI_BUILD} TRUE PARENT_SCOPE)
+        MESSAGE("ARM PROCESSOR DETECTED ${CMAKE_SYSTEM_PROCESSOR} PI_BUILD = ${PI_BUILD}")
     else()
         MESSAGE("X86 PROCESSOR DETECTED ${CMAKE_SYSTEM_PROCESSOR}")
     endif()

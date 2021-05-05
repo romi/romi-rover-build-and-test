@@ -16,7 +16,7 @@ void store_jpeg(rpp::MemBuffer& jpeg, const char *name_prefix, int index)
         int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
         if (fd >= 0) {
                 auto nwrite = write(fd, jpeg.data().data(), jpeg.size());
-                if (nwrite != jpeg.size())
+                if (nwrite != (ssize_t)jpeg.size())
                     r_info("File %s, failed to write size <%d> wrote <%d>", filename, (int) jpeg.size(), nwrite);
                 fsync(fd);
                 close(fd);
