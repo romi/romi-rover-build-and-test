@@ -8,12 +8,6 @@ output_compile_flags()
 
 ############################################################
 
-
-if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
-    set(PICAMERA_LIBRARY_PATH /opt/vc/lib)
-    link_directories(${PICAMERA_LIBRARY_PATH})
-endif()
-
 add_subdirectory(weeder)
 add_subdirectory(user-interface)
 add_subdirectory(navigation)
@@ -21,8 +15,8 @@ add_subdirectory(oquam)
 add_subdirectory(romi-rover)
 add_subdirectory(rcdiscover)
 
-if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
-add_subdirectory(romi-camera)
+if(${PI_BUILD})
+    add_subdirectory(romi-camera)
 endif()
 
 
