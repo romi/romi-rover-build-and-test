@@ -35,6 +35,12 @@ add_executable(06-tests-remote-camera-grab 06-tests-camera/test-remote-grab.cpp)
 target_link_libraries(06-tests-remote-camera-grab romi r)
 install(TARGETS 06-tests-remote-camera-grab DESTINATION bin)
 
+#
+
+add_executable(99-python-pca 99-python-pca/pca.cpp)
+target_link_libraries(99-python-pca romi)
+install(TARGETS 99-python-pca DESTINATION bin)
+
 
 #
 
