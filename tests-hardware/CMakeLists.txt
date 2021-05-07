@@ -37,13 +37,6 @@ install(TARGETS 06-tests-remote-camera-grab DESTINATION bin)
 
 #
 
-add_executable(99-python-pca 99-python-pca/pca.cpp)
-target_link_libraries(99-python-pca romi)
-install(TARGETS 99-python-pca DESTINATION bin)
-
-
-#
-
 set(GPIO_SOURCES
   07-tests-gpio/GpioFileDescriptor.cpp
   07-tests-gpio/GpioFileDescriptor.h
