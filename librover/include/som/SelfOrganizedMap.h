@@ -473,7 +473,7 @@ namespace romi {
         void SelfOrganizedMap<T>::update_tension()
         {
                 T tmp;
-                T minus_two;
+                T minus_two{};
                 minus_two = itor(minus_two, -2);
 
                 tmp = rmul(minus_two, _px[0]);

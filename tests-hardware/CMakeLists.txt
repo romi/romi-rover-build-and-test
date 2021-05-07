@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.10)
 project(test-hardware)
 
 
-if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
-    set(PICAMERA_LIBRARY_PATH /opt/vc/lib)
-    link_directories(${PICAMERA_LIBRARY_PATH})
-endif()
+# if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
+#     set(PICAMERA_LIBRARY_PATH /opt/vc/lib)
+#     link_directories(${PICAMERA_LIBRARY_PATH})
+# endif()
 
 
 add_executable(04-test-joystick 04-test-joystick.cpp)
@@ -25,7 +25,7 @@ install(TARGETS 05-tests-serial-1-write DESTINATION bin)
 
 #
 
-if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
+if(PI_BUILD)
   add_executable(06-tests-camera-grab 06-tests-camera/test-grab.cpp)
   target_link_libraries(06-tests-camera-grab romi r)
   install(TARGETS 06-tests-camera-grab DESTINATION bin)

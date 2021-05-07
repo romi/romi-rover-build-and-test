@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
-
 project(librover)
+
+############################################################
+
+output_compile_flags()
+
+############################################################
+
 set(librover_VERSION_MAJOR 0)
 set(librover_VERSION_MINOR 1)
 
