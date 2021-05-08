@@ -356,6 +356,7 @@ namespace romi {
                                   double meters_to_pixels,
                                   Path &waypoints)
         {
+                (void) session;
                 int success = false;
                 std::vector<point_t> path;
                 std::vector<point_t> positions;
