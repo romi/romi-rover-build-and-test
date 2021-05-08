@@ -37,8 +37,14 @@ namespace romi {
                        double z0,
                        double speed,
                        ISession &session)
-                : _camera(camera), _pipeline(pipeline), _cnc(cnc), _range(),
-                  _z0(z0), _speed(speed), _diameter_tool(diameter_tool_default), session_(session)
+                : _camera(camera),
+                  _pipeline(pipeline),
+                  _cnc(cnc),
+                  _range(),
+                  _z0(z0),
+                  _speed(speed),
+                  _diameter_tool(diameter_tool_default),
+                  session_(session)
         {
                 _cnc.get_range(_range);
         }
@@ -96,8 +102,47 @@ namespace romi {
                 Path normalized_path;
                 analyse_image(image, normalized_path);
                 adjust_path(normalized_path, path);
+                store_svg(normalized_path, image.width(), image.height());
         }
 
+        void Weeder::store_svg(Path& path, size_t w, size_t h)
+        {
+                rpp::MemBuffer buffer;
+        
+                buffer.printf("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
+                              "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" "
+                              "xmlns=\"http://www.w3.org/2000/svg\" "
+                              "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
+                              "version=\"1.0\" width=\"%dpx\" height=\"%dpx\">\n",
+                              (int) w, (int) h);
+                
+                buffer.printf("    <image xlink:href=\"crop.png\" "
+                              "x=\"0px\" y=\"0px\" width=\"%dpx\" height=\"%dpx\" />\n",
+                              (int) w, (int) h);
+                store_svg_path(buffer, path);
+                buffer.printf("</svg>\n");
+
+                session_.store_svg("path.svg", buffer.tostring());
+        }
+
+        void Weeder::store_svg_path(rpp::MemBuffer& buffer, Path& path)
+        {
+                buffer.printf("    <path d=\"");
+                
+                v3 p = path[0];
+                buffer.printf("M %.3f,%.3f L", p.x(), p.y());
+
+                for (size_t index = 1; index < path.size(); index++) {
+                        p = path[index];
+                        buffer.printf(" %.3f,%.3f", p.x(), p.y());
+                }
+
+                buffer.printf("\" id=\"path\" style=\"fill:none;stroke:#0000ce;"
+                              "stroke-width:2;stroke-linecap:butt;"
+                              "stroke-linejoin:miter;stroke-miterlimit:4;"
+                              "stroke-opacity:1;stroke-dasharray:none\" />\n");
+        }
+        
         void Weeder::analyse_image(Image& image, Path& path)
         {
 //                IFolder &folder = _filecabinet.start_new_folder();

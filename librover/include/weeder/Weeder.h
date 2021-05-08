@@ -64,6 +64,8 @@ namespace romi {
                 void camera_grab(Image& image);
                 void analyse_image(Image& image, Path& path);
                 void compute_path(Image& image, Path& path);
+                void store_svg(Path& path, size_t w, size_t h);
+                void store_svg_path(rpp::MemBuffer& buffer, Path& path);
 
         public:
 
