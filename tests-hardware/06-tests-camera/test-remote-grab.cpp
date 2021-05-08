@@ -8,10 +8,8 @@ static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
 static void quit_on_control_c();
 
-void store_jpeg(rpp::MemBuffer& jpeg, const char *name_prefix, int index)
+void store_jpeg(rpp::MemBuffer& jpeg, const char *filename)
 {
-        char filename[512];
-        snprintf(filename, sizeof(filename), "%s_%04d.jpg", name_prefix, index);
         r_info("File %s, Length %d", filename, (int) jpeg.size());
         
         int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
@@ -26,18 +24,39 @@ void store_jpeg(rpp::MemBuffer& jpeg, const char *name_prefix, int index)
         }
 }
 
-int main()
+char buffer[512];
+
+const char *make_filename(const char *prefix, int index)
+{
+        snprintf(buffer, sizeof(buffer), "%s_%04d.jpg", prefix, index);
+        return buffer;
+}
+
+int main(int argc, char **argv)
 {
         try {
+                int number_of_grabs = 1000;
+                if (argc >= 2) {
+                        number_of_grabs = atoi(argv[1]);
+                }
+
+                const char *requested_filename = nullptr;
+                if (argc >= 2) {
+                        requested_filename = argv[2];
+                }
+                
                 auto client = romi::RcomClient::create("camera", 10.0);
                 romi::RemoteCamera camera(client);
 
                 quit_on_control_c();
                 
-                for (int i = 0; !quit; i++) {
+                for (int i = 0; i < number_of_grabs; i++) {
                         rpp::MemBuffer& jpeg = camera.grab_jpeg();
                         if (jpeg.size() > 0) {
-                                store_jpeg(jpeg, "remote", i);
+                                const char *filename = requested_filename;
+                                if (filename == nullptr)
+                                        filename = make_filename("remote", i);
+                                store_jpeg(jpeg, filename);
                         }
                 }
 
