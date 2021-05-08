@@ -157,8 +157,8 @@ int main(int argc, char** argv)
                 double slice_duration = (double) config["oquam"]["path-slice-duration"];
                 double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
 
-                //romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
-                romi::AxisIndex homing[3] = { romi::kNoAxis, romi::kNoAxis, romi::kNoAxis };
+                romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
+                //romi::AxisIndex homing[3] = { romi::kNoAxis, romi::kNoAxis, romi::kNoAxis };
                 romi::OquamSettings oquam_settings(range,
                                                    stepper_settings.maximum_speed,
                                                    stepper_settings.maximum_acceleration,

@@ -102,23 +102,29 @@ namespace romi {
                 Path normalized_path;
                 analyse_image(image, normalized_path);
                 adjust_path(normalized_path, path);
-                store_svg(normalized_path, image.width(), image.height());
+                store_svg(normalized_path);
         }
 
-        void Weeder::store_svg(Path& path, size_t w, size_t h)
+        void Weeder::store_svg(Path& path)
         {
                 rpp::MemBuffer buffer;
-        
-                buffer.printf("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
+                // The dimensions are in meter. Convert to mm.
+                v3 dimensions = _range.dimensions();
+                double w = dimensions.x() * 1000.0;
+                double h = dimensions.y() * 1000.0;
+                buffer.printf("<?xml version=\"1.0\" "
+                              "encoding=\"UTF-8\" standalone=\"no\"?>"
                               "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" "
                               "xmlns=\"http://www.w3.org/2000/svg\" "
                               "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
-                              "version=\"1.0\" width=\"%dpx\" height=\"%dpx\">\n",
-                              (int) w, (int) h);
+                              "version=\"1.0\" "
+                              "width=\"%.2fmm\" height=\"%.2fmm\">\n",
+                              w, h);
                 
                 buffer.printf("    <image xlink:href=\"crop.png\" "
-                              "x=\"0px\" y=\"0px\" width=\"%dpx\" height=\"%dpx\" />\n",
-                              (int) w, (int) h);
+                              "x=\"0mm\" y=\"0mm\" "
+                              "width=\"%.2fmm\" height=\"%.2fmm\" />\n",
+                              w, h);
                 store_svg_path(buffer, path);
                 buffer.printf("</svg>\n");
 
@@ -127,20 +133,28 @@ namespace romi {
 
         void Weeder::store_svg_path(rpp::MemBuffer& buffer, Path& path)
         {
+                // The points in a polygon are expressed in user coordinate system.
+                // 1 cm equals 35.43307 px (and therefore 35.43307 user units)
+                // 1 m equals 3.543307 px
+                buffer.printf("    <g transform=\"scale(3.543307)\">\n");
                 buffer.printf("    <path d=\"");
+
+                v3 dimensions = _range.dimensions();
+                double h = dimensions.y() * 1000.0;
                 
                 v3 p = path[0];
-                buffer.printf("M %.3f,%.3f L", p.x(), p.y());
+                buffer.printf("M %.3f,%.3f L", 1000.0 * p.x(), h - 1000.0 * p.y());
 
                 for (size_t index = 1; index < path.size(); index++) {
                         p = path[index];
-                        buffer.printf(" %.3f,%.3f", p.x(), p.y());
+                        buffer.printf(" %.3f,%.3f", 1000.0 * p.x(), h - 1000.0 * p.y());
                 }
 
                 buffer.printf("\" id=\"path\" style=\"fill:none;stroke:#0000ce;"
-                              "stroke-width:2;stroke-linecap:butt;"
+                              "stroke-width:5;stroke-linecap:butt;"
                               "stroke-linejoin:miter;stroke-miterlimit:4;"
                               "stroke-opacity:1;stroke-dasharray:none\" />\n");
+                buffer.printf("    </g>\n");
         }
         
         void Weeder::analyse_image(Image& image, Path& path)
