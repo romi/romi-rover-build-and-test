@@ -55,11 +55,11 @@ target_include_directories(rover
           "${CMAKE_CURRENT_SOURCE_DIR}/include"
         )
       
-if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
-    set(PICAMERA_LIBRARIES mmal_core mmal_util mmal vcos)
-endif()
+# if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
+#     set(PICAMERA_LIBRARIES mmal_core mmal_util mmal vcos)
+# endif()
 
-target_link_libraries(rover pthread romi ${PICAMERA_LIBRARIES})
+target_link_libraries(rover pthread romi)
 
 # Always build the mocks library.
 #add_subdirectory(test/mocks)
