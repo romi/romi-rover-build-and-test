@@ -3,10 +3,13 @@ import asyncio
 import json
 import argparse
 from romi.rpc import Server
+from shutil import copyfile
 
 def unet(image_path, mask_path):
     print(f"Running Unet({image_path}, {mask_path})")
-    
+    src = "/home/hanappe/projects/ROMI/github/rover/romi-rover-build-and-test/applications/weeder/test/mask.png"
+    copyfile(src, mask_path)
+
 def handle_unet_request(params):
     image_path = params["image"]
     mask_path = params["mask"]
