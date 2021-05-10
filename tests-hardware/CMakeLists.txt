@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(test-hardware)
 
-
-# if((CMAKE_SYSTEM_PROCESSOR MATCHES ".*arm") OR (CMAKE_SYSTEM_PROCESSOR MATCHES ".*aarch64"))
-#     set(PICAMERA_LIBRARY_PATH /opt/vc/lib)
-#     link_directories(${PICAMERA_LIBRARY_PATH})
-# endif()
-
-
 add_executable(04-test-joystick 04-test-joystick.cpp)
 target_link_libraries(04-test-joystick romi)
 install(TARGETS 04-test-joystick DESTINATION bin)
