@@ -35,13 +35,13 @@
 
 namespace romi {
         
-        static void store_svg(ISession &session,
-                              int w, int h,
-                              const char *image,
-                              const std::vector<point_t>& path,
-                              const std::vector<point_t>& positions,
-                              double radius_zones,
-                              double scale);
+        // static void store_svg(ISession &session,
+        //                       int w, int h,
+        //                       const char *image,
+        //                       const std::vector<point_t>& path,
+        //                       const std::vector<point_t>& positions,
+        //                       double radius_zones,
+        //                       double scale);
         
         static std::vector<point_t> boustrophedon(float x0, float x1,
                                      float y0, float y1,
@@ -49,7 +49,11 @@ namespace romi {
                                      float radius,
                                      std::vector<point_t>& positions);
 
-        Quincunx::Quincunx(JsonCpp& params) : _distance_plants(0.0), _distance_rows(0.0), _radius_zones(0.0), _threshold(0.0)
+        Quincunx::Quincunx(JsonCpp& params) :
+                _distance_plants(0.0),
+                _distance_rows(0.0),
+                _radius_zones(0.0),
+                _threshold(0.0)
         {
                 try {
                         _distance_plants = (double) params["distance-plants"];
@@ -352,6 +356,7 @@ namespace romi {
                                   double meters_to_pixels,
                                   Path &waypoints)
         {
+                (void) session;
                 int success = false;
                 std::vector<point_t> path;
                 std::vector<point_t> positions;
@@ -377,9 +382,9 @@ namespace romi {
                                              positions);
                         if (!path.empty()) {
 
-                                store_svg(session, mask.width(), mask.height(), 
-                                          "scaled.jpg", path, positions,
-                                          radius_zones_px, 1.0f);
+                                // store_svg(session, mask.width(), mask.height(), 
+                                //           "scaled.jpg", path, positions,
+                                //           radius_zones_px, 1.0f);
 
                                 for (auto& point : path)
                                 {
@@ -1026,86 +1031,88 @@ namespace romi {
         
         ////////////////////////////////////////////////////////////////////
 
-        static void store_path(membuf_t *buffer, const std::vector<point_t>& points, __attribute((unused))int h, double scale)
-        {
-                membuf_printf(buffer, "    <path d=\"");
-                float x, y;
+//         static void store_path(membuf_t *buffer,
+//                                const std::vector<point_t>& points,
+//                                __attribute((unused))int h, double scale)
+//         {
+//                 membuf_printf(buffer, "    <path d=\"");
+//                 float x, y;
         
-//                point_t *p = list_get(points, point_t);
-                auto p  = points[0];
+// //                point_t *p = list_get(points, point_t);
+//                 auto p  = points[0];
 
-                x = p.x * scale;
-                /* y = h - p->y * scale; */
-                y = p.y * scale;
-                membuf_printf(buffer, "M %f,%f L", x, y);
+//                 x = p.x * scale;
+//                 /* y = h - p->y * scale; */
+//                 y = p.y * scale;
+//                 membuf_printf(buffer, "M %f,%f L", x, y);
 
-//                points = list_next(points);
-                int index = 1;
-                while (index < points.size()) {
-//                        p = list_get(points, point_t);
-                        p = points[index++];
-                        x = p.x * scale;
-                        y = p.y * scale;
-                        //y = h - p->y * scale;
-                        membuf_printf(buffer, " %f,%f", x, y);
-//                        points = list_next(points);
-                }
+// //                points = list_next(points);
+//                 int index = 1;
+//                 while (index < points.size()) {
+// //                        p = list_get(points, point_t);
+//                         p = points[index++];
+//                         x = p.x * scale;
+//                         y = p.y * scale;
+//                         //y = h - p->y * scale;
+//                         membuf_printf(buffer, " %f,%f", x, y);
+// //                        points = list_next(points);
+//                 }
 
-                membuf_printf(buffer, "\" id=\"path\" style=\"fill:none;stroke:#0000ce;"
-                              "stroke-width:2;stroke-linecap:butt;"
-                              "stroke-linejoin:miter;stroke-miterlimit:4;"
-                              "stroke-opacity:1;stroke-dasharray:none\" />\n");
-        }
+//                 membuf_printf(buffer, "\" id=\"path\" style=\"fill:none;stroke:#0000ce;"
+//                               "stroke-width:2;stroke-linecap:butt;"
+//                               "stroke-linejoin:miter;stroke-miterlimit:4;"
+//                               "stroke-opacity:1;stroke-dasharray:none\" />\n");
+//         }
 
-        static void store_zones(membuf_t *buffer,
-                                const std::vector<point_t>& positions,
-                                double radius_zones,
-                                __attribute((unused))double h, double scale)
-        {
-                double r = radius_zones * scale;
+//         static void store_zones(membuf_t *buffer,
+//                                 const std::vector<point_t>& positions,
+//                                 double radius_zones,
+//                                 __attribute((unused))double h, double scale)
+//         {
+//                 double r = radius_zones * scale;
 
-                for (auto& position : positions) {
-//                for (list_t *l = positions; l != NULL; l = list_next(l)) {
-//                        point_t *p = list_get(l, point_t);
-                        double x = position.x * scale;
-                        //double y = h - p->y * scale;
-                        double y = position.y * scale;
-                        membuf_printf(buffer,
-                                      "  <circle "
-                                      "style=\"fill:#ff80ff;fill-opacity:0.25;stroke-width:0\" "
-                                      "cx=\"%.3f\" cy=\"%.3f\" r=\"%.3f\" />\n",
-                                      x, y, r);
-                }
-        }
+//                 for (auto& position : positions) {
+// //                for (list_t *l = positions; l != NULL; l = list_next(l)) {
+// //                        point_t *p = list_get(l, point_t);
+//                         double x = position.x * scale;
+//                         //double y = h - p->y * scale;
+//                         double y = position.y * scale;
+//                         membuf_printf(buffer,
+//                                       "  <circle "
+//                                       "style=\"fill:#ff80ff;fill-opacity:0.25;stroke-width:0\" "
+//                                       "cx=\"%.3f\" cy=\"%.3f\" r=\"%.3f\" />\n",
+//                                       x, y, r);
+//                 }
+//         }
 
-        static void store_svg(ISession &session,
-                              int w, int h,
-                              const char *image,
-                              const std::vector<point_t>& path,
-                              const std::vector<point_t>& positions,
-                              double radius_zones,
-                              double scale)
-        {
-                membuf_t *buffer = new_membuf();
+//         static void store_svg(ISession &session,
+//                               int w, int h,
+//                               const char *image,
+//                               const std::vector<point_t>& path,
+//                               const std::vector<point_t>& positions,
+//                               double radius_zones,
+//                               double scale)
+//         {
+//                 membuf_t *buffer = new_membuf();
         
-                membuf_printf(buffer,
-                              ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
-                               "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" "
-                               "xmlns=\"http://www.w3.org/2000/svg\" "
-                               "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
-                               "version=\"1.0\" width=\"%dpx\" height=\"%dpx\">\n"),
-                              w, h);
-                membuf_printf(buffer,
-                              "    <image xlink:href=\"%s\" "
-                              "x=\"0px\" y=\"0px\" width=\"%dpx\" height=\"%dpx\" />\n",
-                              image, w, h);
-                store_path(buffer, path, h, scale);
-                store_zones(buffer, positions, radius_zones, h, scale);
-                membuf_printf(buffer, "</svg>\n");
+//                 membuf_printf(buffer,
+//                               ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>"
+//                                "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" "
+//                                "xmlns=\"http://www.w3.org/2000/svg\" "
+//                                "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
+//                                "version=\"1.0\" width=\"%dpx\" height=\"%dpx\">\n"),
+//                               w, h);
+//                 membuf_printf(buffer,
+//                               "    <image xlink:href=\"%s\" "
+//                               "x=\"0px\" y=\"0px\" width=\"%dpx\" height=\"%dpx\" />\n",
+//                               image, w, h);
+//                 store_path(buffer, path, h, scale);
+//                 store_zones(buffer, positions, radius_zones, h, scale);
+//                 membuf_printf(buffer, "</svg>\n");
 
-                session.store_svg("path", std::string(membuf_data(buffer), membuf_len(buffer)));
-                delete_membuf(buffer);
-        }
+//                 session.store_svg("path", std::string(membuf_data(buffer), membuf_len(buffer)));
+//                 delete_membuf(buffer);
+//         }
 
 }
 #pragma GCC diagnostic pop

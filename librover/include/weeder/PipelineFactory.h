@@ -50,6 +50,7 @@ namespace romi {
                 
                 void build_cropper(CNCRange &range, JsonCpp weeder);
                 void build_segmentation(JsonCpp weeder);
+                void build_segmentation(const std::string& name, JsonCpp& weeder_props);
                 void build_planner(JsonCpp weeder);
                 void build_planner(const std::string& name, JsonCpp& properties);
                 

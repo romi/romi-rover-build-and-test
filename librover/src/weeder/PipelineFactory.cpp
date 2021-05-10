@@ -28,6 +28,7 @@
 #include "cv/ImageCropper.h"
 
 #include "svm/SVMSegmentation.h"
+#include "unet/Unet.h"
 #include "som/SOM.h"
 #include "quincunx/Quincunx.h"
 
@@ -35,21 +36,33 @@ namespace romi {
         
         void PipelineFactory::build_cropper(CNCRange &range, JsonCpp weeder)
         {
-                const char *name = (const char *)weeder["cropper"];
+                const char *name = (const char *) weeder["cropper"];
                 JsonCpp properties = weeder[name];
                 _cropper = std::make_unique<ImageCropper>(range, properties);
         }
         
         void PipelineFactory::build_segmentation(JsonCpp weeder)
         {
-                const char *name = (const char *)weeder["segmentation"];
-                JsonCpp properties = weeder[name];                
-                _segmentation = std::make_unique<SVMSegmentation>(properties);
+                const char *name = (const char *) weeder["segmentation"];
+                build_segmentation(name, weeder);
+        }
+        
+        void PipelineFactory::build_segmentation(const std::string& name, JsonCpp& weeder)
+        {
+                if (name == "svm") {
+                        JsonCpp properties = weeder["svm"];                
+                        _segmentation = std::make_unique<SVMSegmentation>(properties);
+                } else if (name == "unet") {
+                        _segmentation = std::make_unique<Unet>();
+                } else {
+                        r_err("Failed to find the segmentation class: %s", name.c_str());
+                        throw std::runtime_error("Invalid segmentation class");
+                }
         }
         
         void PipelineFactory::build_planner(JsonCpp weeder)
         {
-                std::string name = (const char *)weeder["path"];
+                std::string name = (const char *) weeder["path"];
                 JsonCpp properties = weeder[name.c_str()];
                 build_planner(name, properties);
         }
@@ -61,7 +74,7 @@ namespace romi {
                 } else if (name ==  "som") {
                         _planner = std::make_unique<SOM>(properties);
                 } else if (name ==  "ortools") {
-                    _planner = std::make_unique<GConstraintSolver>(properties);
+                        _planner = std::make_unique<GConstraintSolver>(properties);
                 } else {
                         r_err("Failed to find the path planner class: %s", name.c_str());
                         throw std::runtime_error("Invalid path planner class");

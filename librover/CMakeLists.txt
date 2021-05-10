@@ -22,6 +22,7 @@ set(SOURCES
         include/som/slic.h
         include/som/SOM.h
         include/som/Superpixels.h
+        include/unet/Unet.h
         include/weeder/Weeder.h
         include/weeder/IImageSegmentation.h
         include/weeder/IPathPlanner.h
@@ -38,6 +39,8 @@ set(SOURCES
         src/som/fixed.c
         src/som/slic.cpp
 
+        src/unet/Unet.cpp
+        
         src/weeder/Weeder.cpp
         src/weeder/Pipeline.cpp
         src/weeder/PipelineFactory.cpp)

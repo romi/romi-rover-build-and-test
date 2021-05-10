@@ -37,8 +37,14 @@ namespace romi {
                        double z0,
                        double speed,
                        ISession &session)
-                : _camera(camera), _pipeline(pipeline), _cnc(cnc), _range(),
-                  _z0(z0), _speed(speed), _diameter_tool(diameter_tool_default), session_(session)
+                : _camera(camera),
+                  _pipeline(pipeline),
+                  _cnc(cnc),
+                  _range(),
+                  _z0(z0),
+                  _speed(speed),
+                  _diameter_tool(diameter_tool_default),
+                  session_(session)
         {
                 _cnc.get_range(_range);
         }
@@ -96,8 +102,61 @@ namespace romi {
                 Path normalized_path;
                 analyse_image(image, normalized_path);
                 adjust_path(normalized_path, path);
+                store_svg(normalized_path);
         }
 
+        void Weeder::store_svg(Path& path)
+        {
+                rpp::MemBuffer buffer;
+                // The dimensions are in meter. Convert to mm.
+                v3 dimensions = _range.dimensions();
+                double w = dimensions.x() * 1000.0;
+                double h = dimensions.y() * 1000.0;
+                buffer.printf("<?xml version=\"1.0\" "
+                              "encoding=\"UTF-8\" standalone=\"no\"?>"
+                              "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" "
+                              "xmlns=\"http://www.w3.org/2000/svg\" "
+                              "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
+                              "version=\"1.0\" "
+                              "width=\"%.2fmm\" height=\"%.2fmm\">\n",
+                              w, h);
+                
+                buffer.printf("    <image xlink:href=\"crop.png\" "
+                              "x=\"0mm\" y=\"0mm\" "
+                              "width=\"%.2fmm\" height=\"%.2fmm\" />\n",
+                              w, h);
+                store_svg_path(buffer, path);
+                buffer.printf("</svg>\n");
+
+                session_.store_svg("path.svg", buffer.tostring());
+        }
+
+        void Weeder::store_svg_path(rpp::MemBuffer& buffer, Path& path)
+        {
+                // The points in a polygon are expressed in user coordinate system.
+                // 1 cm equals 35.43307 px (and therefore 35.43307 user units)
+                // 1 m equals 3.543307 px
+                buffer.printf("    <g transform=\"scale(3.543307)\">\n");
+                buffer.printf("    <path d=\"");
+
+                v3 dimensions = _range.dimensions();
+                double h = dimensions.y() * 1000.0;
+                
+                v3 p = path[0];
+                buffer.printf("M %.3f,%.3f L", 1000.0 * p.x(), h - 1000.0 * p.y());
+
+                for (size_t index = 1; index < path.size(); index++) {
+                        p = path[index];
+                        buffer.printf(" %.3f,%.3f", 1000.0 * p.x(), h - 1000.0 * p.y());
+                }
+
+                buffer.printf("\" id=\"path\" style=\"fill:none;stroke:#0000ce;"
+                              "stroke-width:5;stroke-linecap:butt;"
+                              "stroke-linejoin:miter;stroke-miterlimit:4;"
+                              "stroke-opacity:1;stroke-dasharray:none\" />\n");
+                buffer.printf("    </g>\n");
+        }
+        
         void Weeder::analyse_image(Image& image, Path& path)
         {
 //                IFolder &folder = _filecabinet.start_new_folder();
