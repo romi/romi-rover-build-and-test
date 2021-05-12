@@ -26,6 +26,7 @@
 #define __ROMI_PIPELINE_H
 
 #include <JsonCpp.h>
+#include <MemBuffer.h>
 #include "api/CNCRange.h"
 #include "IPipeline.h"
 #include "IPathPlanner.h"
@@ -41,7 +42,7 @@ namespace romi {
                 IImageSegmentation& _segmentation;
                 IPathPlanner& _planner;
                 
-                void create_mask(Image &crop, Image &mask);
+                void create_mask(ISession& session, Image &crop, Image &mask);
 
                 void trace_path(ISession& session, Image& mask, double tool_diameter,
                                 double meters_to_pixels, Path& path);
@@ -51,6 +52,10 @@ namespace romi {
                 
                 void try_run(ISession& session, Image& camera,
                              double tool_diameter, Path& path);
+
+                std::vector<size_t> check_path(ISession& session, Image& image, Path& path);
+                bool segment_crosses_plant(rpp::MemBuffer& buffer,
+                                           Image& image, v3 start, v3 end);
 
         public:
                 Pipeline(IImageCropper& cropper,

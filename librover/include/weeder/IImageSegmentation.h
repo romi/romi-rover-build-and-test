@@ -35,7 +35,7 @@ namespace romi {
         public:
                 virtual ~IImageSegmentation() = default;
                 
-                virtual bool create_mask(Image &image, Image &mask) = 0;
+                virtual bool create_mask(ISession &session, Image &image, Image &mask) = 0;
         };
 }
 

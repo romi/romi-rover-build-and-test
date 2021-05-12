@@ -35,22 +35,16 @@ namespace romi {
         protected:
                 int counter_;
 
-                void try_create_mask(Image &image, Image &mask);
-                void store_image(Image &image, std::string& path);
-                std::string create_image_path();
-                std::string create_mask_path();
-                std::string create_path(const std::string& dir,
-                                        const std::string& prefix,
-                                        int index);
-                void send_python_request(const std::string& image_path,
-                                         const std::string& mask_path);
-                void load_mask(Image& mask, std::string& path);
+                void try_create_mask(ISession &session, Image &image, Image &mask);
+                void store_image(ISession &session, Image &image);
+                void send_python_request(ISession &session);
+                void load_mask(ISession &session, Image& mask);
                 
         public:
                 Unet();
                 ~Unet() override = default;
                 
-                bool create_mask(Image &image, Image &mask) override;
+                bool create_mask(ISession &session, Image &image, Image &mask) override;
         };
 }
 

@@ -2,10 +2,7 @@ import sys
 import asyncio
 import json
 import argparse
-from romi.rpc import Client
 from romi.rpc import create_client
-
-
 
 class Navigation():
     def __init__(self, rpc_client):
@@ -15,7 +12,6 @@ class Navigation():
         await self.rpc_client.execute("navigation-move",
                                       speed=speed,
                                       distance=distance)
-
         
 async def test(distance, speed):    
     loop = asyncio.get_event_loop()
