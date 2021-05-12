@@ -53,7 +53,7 @@
         "cnc-classname": "remote-cnc",
         
         "cropper": "imagecropper",
-        "segmentation": "svm",
+        "segmentation": "unet",
         "path": "ortools",
 
         "usb-camera": {

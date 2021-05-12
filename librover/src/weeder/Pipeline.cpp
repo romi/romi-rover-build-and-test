@@ -25,17 +25,6 @@
 #include "weeder/Pipeline.h"
 
 namespace romi {
-
-        struct PlantCrossing
-        {
-                size_t index_;
-                v3 from_;
-                v3 to_;
-
-                PlantCrossing(size_t index, v3 from, v3 to)
-                        : index_(index), from_(from), to_(to) {
-                }
-        };
         
         void Pipeline::crop_image(ISession& session, Image& camera,
                                   double tool_diameter, Image& crop)
