@@ -32,11 +32,11 @@ namespace romi {
         {
         }
                 
-        bool Unet::create_mask(Image &image, Image &mask)
+        bool Unet::create_mask(ISession &session, Image &image, Image &mask)
         {
                 bool success = false;
                 try {
-                        try_create_mask(image, mask);
+                        try_create_mask(session, image, mask);
                         success = true;
                         
                 } catch (std::exception& e) {
@@ -45,58 +45,31 @@ namespace romi {
                 return success;
         }
 
-        void Unet::try_create_mask(Image &image, Image &mask)
+        void Unet::try_create_mask(ISession &session, Image &image, Image &mask)
         {
-                std::string image_path = create_image_path();
-                std::string mask_path = create_mask_path();
-                
-                store_image(image, image_path);
-                send_python_request(image_path, mask_path);
-                load_mask(mask, mask_path);
+                store_image(session, image);
+                send_python_request(session);
+                load_mask(session, mask);
         }
 
-        void Unet::store_image(Image &image, std::string& path)
+        void Unet::store_image(ISession &session, Image &image)
         {
-                if (!ImageIO::store_jpg(image, path.c_str())) {
-                        r_warn("Failed to save the image to %s", path.c_str());
+                if (!session.store_jpg("unet.jpg", image)) {
                         throw std::runtime_error("Failed to save the image");
                 }
         }
 
-        std::string Unet::create_image_path()
-        {
-                return create_path("/tmp", "unet-image", ++counter_);
-        }
-
-        std::string Unet::create_mask_path()
-        {
-                return create_path("/tmp", "unet-mask", ++counter_);
-        }
-
-        std::string Unet::create_path(const std::string& dir,
-                                      const std::string& prefix,
-                                      int index)
-        {
-                char path[256];
-                snprintf(path, sizeof(path), "%s/%s-%05d.jpg",
-                         dir.c_str(), prefix.c_str(), index);
-                return std::string(path);
-        }
-
-        void Unet::send_python_request(const std::string& image_path,
-                                       const std::string& mask_path)
+        void Unet::send_python_request(ISession &session)
         {
                 JsonCpp response;
                 romi::RPCError error;
                 
-                JsonCpp params = JsonCpp::construct("{\"image\": \"%s\", "
-                                                    "\"mask\": \"%s\"}",
-                                                    image_path.c_str(),
-                                                    mask_path.c_str());
+                JsonCpp params = JsonCpp::construct("{\"path\": \"%s\"}",
+                                                    session.current_path().string().c_str());
         
                 auto rpc = romi::RcomClient::create("python", 30);
                 rpc->execute("unet", params, response, error);
-        
+                
                 if (error.code != 0) {
                         r_warn("Failed to call Python: %s", error.message.c_str());
                         throw std::runtime_error("Failed to call Python");
@@ -107,11 +80,16 @@ namespace romi {
                         throw std::runtime_error("Failed to call Python");
                 }
         }
-
-        void Unet::load_mask(Image& mask, std::string& mask_path)
+                
+        void Unet::load_mask(ISession &session, Image& mask)
         {
-                if (!ImageIO::load(mask, mask_path.c_str())) {
-                        r_warn("Failed to load the mask at %s", mask_path.c_str());
+                std::filesystem::path dir = session.current_path();
+                std::filesystem::path path = dir /= "mask.png";
+                
+                r_info("Unet: loading mask %s", path.string().c_str());
+                
+                if (!ImageIO::load(mask, path.string().c_str())) {
+                        r_warn("Failed to load the mask at %s", path.string().c_str());
                         throw std::runtime_error("Failed to load the mask");
                 }
         }

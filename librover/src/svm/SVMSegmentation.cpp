@@ -80,8 +80,10 @@ namespace romi {
                 set_intercept((float) value.num());
         }
 
-        bool SVMSegmentation::create_mask(Image &image, Image &mask)
+        bool SVMSegmentation::create_mask(ISession &session, Image &image, Image &mask)
         {
+                (void) session;
+                
                 if (image.type() != Image::RGB) {
                         r_err("SVMSegmentation::create_mask: Expected an RGB input image");
                         return false;

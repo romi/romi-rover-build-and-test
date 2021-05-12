@@ -50,7 +50,7 @@ namespace romi {
                 void set_intercept(float b);
                 float get_intercept();
 
-                bool create_mask(Image &image, Image &mask) override;
+                bool create_mask(ISession &session, Image &image, Image &mask) override;
         };
 }
 
