@@ -22,38 +22,21 @@
 
  */
 
-#ifndef __ROMI_SOM_H
-#define __ROMI_SOM_H
+#ifndef __ROMI_I_CONNECTED_COMPONENTS_H
+#define __ROMI_I_CONNECTED_COMPONENTS_H
 
+#include <JsonCpp.h>
 #include "session/ISession.h"
-#include "weeder/IPathPlanner.h"
-#include "SelfOrganizedMap.h"
-#include "Superpixels.h"
 
 namespace romi {
-        
-        class SOM : public IPathPlanner
+
+        class IConnectedComponents
         {
-        protected:
-                double _alpha;
-                double _beta;
-                double _epsilon;
-                bool _print;
-
-                void assert_settings();
-
         public:
-                explicit SOM(JsonCpp& params);
-                ~SOM() override = default;
+                virtual ~IConnectedComponents() = default;
                 
-                Path trace_path(ISession& session, Centers& centers, Image& mask) override;
-                
-                bool trace_path(ISession &session,
-                                Image &mask,
-                                double tool_diameter,
-                                double meters_to_pixels,
-                                Path &path);
+                virtual void compute(ISession& session, Image &mask, Image &components) = 0;
         };
 }
 
-#endif // __ROMI_SOM_H
+#endif // __ROMI_I_CONNECTED_COMPONENTS_H

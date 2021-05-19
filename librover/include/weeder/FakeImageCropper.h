@@ -22,38 +22,27 @@
 
  */
 
-#ifndef __ROMI_SOM_H
-#define __ROMI_SOM_H
+#ifndef __ROMI_FAKE_IMAGE_CROPPER_H
+#define __ROMI_FAKE_IMAGE_CROPPER_H
 
-#include "session/ISession.h"
-#include "weeder/IPathPlanner.h"
-#include "SelfOrganizedMap.h"
-#include "Superpixels.h"
+#include <cv/IImageCropper.h>
 
 namespace romi {
         
-        class SOM : public IPathPlanner
+        class FakeImageCropper : public IImageCropper
         {
         protected:
-                double _alpha;
-                double _beta;
-                double _epsilon;
-                bool _print;
-
-                void assert_settings();
-
+                Image cropped_image_;
+                double meters_to_pixels_;
+                        
         public:
-                explicit SOM(JsonCpp& params);
-                ~SOM() override = default;
+                FakeImageCropper(Image& cropped_image, double meters_to_pixels);
+                ~FakeImageCropper() override = default; 
+                double map_meters_to_pixels(double meters) override;
                 
-                Path trace_path(ISession& session, Centers& centers, Image& mask) override;
-                
-                bool trace_path(ISession &session,
-                                Image &mask,
-                                double tool_diameter,
-                                double meters_to_pixels,
-                                Path &path);
+                bool crop(ISession &session, Image &camera_image,
+                          double tool_diameter, Image &cropped_image) override;
         };
 }
 
-#endif // __ROMI_SOM_H
+#endif // __ROMI_FAKE_IMAGE_CROPPER_H

@@ -52,20 +52,18 @@ namespace romi {
                 explicit GConstraintSolver(JsonCpp& params);
                 ~GConstraintSolver() override = default;
                 
-                bool trace_path(ISession &session,
-                                Image &mask,
-                                double tool_diameter,
-                                double meters_to_pixels,
-                                Path &path) override;
+                Path trace_path(ISession& session, Centers& centers, Image& mask) override;
+                
         private:
-            void compute_path(std::vector<std::vector<int>>& locations, Path &path, const Image& mask);
-            void build_path(const operations_research::RoutingIndexManager &manager,
-                            const operations_research::RoutingModel &routing,
-                            const operations_research::Assignment &solution,
-                            const std::vector<std::vector<int>> &locations,
-                            Path& path,
-                            const Image &mask);
-            bool print_;
+                Path compute_path(std::vector<std::vector<int>>& locations,
+                                  const Image& mask);
+                
+                Path build_path(const operations_research::RoutingIndexManager &manager,
+                                const operations_research::RoutingModel &routing,
+                                const operations_research::Assignment &solution,
+                                const std::vector<std::vector<int>> &locations,
+                                const Image &mask);
+                bool print_;
         };
 }
 

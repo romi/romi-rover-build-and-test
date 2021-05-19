@@ -22,38 +22,24 @@
 
  */
 
-#ifndef __ROMI_SOM_H
-#define __ROMI_SOM_H
+#ifndef __ROMI_FAKE_CONNECTED_COMPONENTS_H
+#define __ROMI_FAKE_CONNECTED_COMPONENTS_H
 
-#include "session/ISession.h"
-#include "weeder/IPathPlanner.h"
-#include "SelfOrganizedMap.h"
-#include "Superpixels.h"
+#include "IConnectedComponents.h"
 
 namespace romi {
-        
-        class SOM : public IPathPlanner
+
+        class FakeConnectedComponents : public IConnectedComponents
         {
         protected:
-                double _alpha;
-                double _beta;
-                double _epsilon;
-                bool _print;
-
-                void assert_settings();
-
+                Image components_;
+                
         public:
-                explicit SOM(JsonCpp& params);
-                ~SOM() override = default;
+                FakeConnectedComponents(Image& components);
+                ~FakeConnectedComponents() override = default;
                 
-                Path trace_path(ISession& session, Centers& centers, Image& mask) override;
-                
-                bool trace_path(ISession &session,
-                                Image &mask,
-                                double tool_diameter,
-                                double meters_to_pixels,
-                                Path &path);
+                void compute(ISession& session, Image &mask, Image &components) override;
         };
 }
 
-#endif // __ROMI_SOM_H
+#endif // __ROMI_FAKE_CONNECTED_COMPONENTS_H

@@ -27,9 +27,11 @@
 
 #include <memory>
 #include <JsonCpp.h>
+#include <cv/IImageCropper.h>
+#include <configuration/GetOpt.h>
 #include "IPipeline.h"
-#include "cv/IImageCropper.h"
 #include "IImageSegmentation.h"
+#include "IConnectedComponents.h"
 #include "IPathPlanner.h"
 #include "IPipeline.h"
 
@@ -43,22 +45,31 @@ namespace romi {
         class PipelineFactory
         {
         protected:
-                std::unique_ptr<IImageCropper> _cropper;
-                std::unique_ptr<IImageSegmentation> _segmentation;
-                std::unique_ptr<IPathPlanner> _planner;
                 std::unique_ptr<IPipeline> _pipeline;
                 
-                void build_cropper(CNCRange &range, JsonCpp weeder);
-                void build_segmentation(JsonCpp weeder);
-                void build_segmentation(const std::string& name, JsonCpp& weeder_props);
-                void build_planner(JsonCpp weeder);
-                void build_planner(const std::string& name, JsonCpp& properties);
+                std::unique_ptr<IImageCropper>
+                build_cropper(CNCRange &range, JsonCpp weeder);
+
+                std::unique_ptr<IImageSegmentation>
+                build_segmentation(JsonCpp weeder);
+                
+                std::unique_ptr<IImageSegmentation>
+                build_segmentation(const std::string& name, JsonCpp& weeder_props);
+                
+                std::unique_ptr<IConnectedComponents>
+                build_connected_components(romi::GetOpt& options);
+                
+                
+                std::unique_ptr<IPathPlanner> build_planner(JsonCpp weeder);
+                
+                std::unique_ptr<IPathPlanner> build_planner(const std::string& name,
+                                                            JsonCpp& properties);
                 
         public:
-                PipelineFactory() : _cropper(), _segmentation(), _planner(), _pipeline() {}
+                PipelineFactory() : _pipeline() {}
                 virtual ~PipelineFactory() = default;
                 
-                IPipeline& build(CNCRange &range, JsonCpp& config);
+                IPipeline& build(CNCRange &range, JsonCpp& config, romi::GetOpt& options);
         };
 }
 

@@ -349,7 +349,15 @@ namespace romi {
         
                 return positions;
         }
-                
+
+        Path Quincunx::trace_path(ISession& session, Centers& centers, Image& mask)
+        {
+                (void) session;
+                (void) centers;
+                (void) mask;
+                throw std::runtime_error("Quincunx::trace_path: NOT IMPLEMENTED");
+        }
+        
         bool Quincunx::trace_path(ISession &session,
                                   Image &mask,
                                   double tool_diameter,

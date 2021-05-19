@@ -26,25 +26,20 @@
 #define __ROMI_I_PATH_PLANNER_H
 
 #include <vector>
-#include "r.h"
-#include "api/Path.h"
-#include "session/ISession.h"
-#include "cv/Image.h"
+#include <r.h>
+#include <api/Path.h>
+#include <session/ISession.h>
+#include <cv/Image.h>
+#include <cv/cv.h>
 
 namespace romi {
-
-        class IFolder;
         
         class IPathPlanner
         {
         public:
                 virtual ~IPathPlanner() = default;
 
-                virtual bool trace_path(ISession &session,
-                                        Image &mask,
-                                        double tool_diameter, // in meters
-                                        double meters_to_pixels,
-                                        Path &path) = 0;
+                virtual Path trace_path(ISession& session, Centers& centers, Image& mask) = 0;
         };
 }
 

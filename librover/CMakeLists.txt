@@ -24,9 +24,12 @@ set(SOURCES
         include/som/Superpixels.h
         include/unet/Unet.h
         include/weeder/Weeder.h
+        include/weeder/IConnectedComponents.h
         include/weeder/IImageSegmentation.h
         include/weeder/IPathPlanner.h
         include/weeder/IPipeline.h
+        include/weeder/FakeConnectedComponents.h
+        include/weeder/FakeImageCropper.h
         include/weeder/PipelineFactory.h
         include/weeder/Pipeline.h
 
@@ -40,10 +43,16 @@ set(SOURCES
         src/som/slic.cpp
 
         src/unet/Unet.cpp
+
+        src/astar/AStar.cpp
         
-        src/weeder/Weeder.cpp
+        src/weeder/ConnectedComponents.cpp
+        src/weeder/FakeImageCropper.cpp
+        src/weeder/FakeConnectedComponents.cpp
         src/weeder/Pipeline.cpp
-        src/weeder/PipelineFactory.cpp)
+        src/weeder/PipelineFactory.cpp
+        src/weeder/Weeder.cpp
+        )
 
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/include" )

@@ -44,11 +44,13 @@ namespace romi {
                 explicit Quincunx(JsonCpp& params);
                 ~Quincunx() override = default;
                 
+                Path trace_path(ISession& session, Centers& centers, Image& mask) override;
+                
                 bool trace_path(ISession &session,
                                 Image &mask,
                                 double tool_diameter,
                                 double meters_to_pixels,
-                                Path &path) override;
+                                Path &path);
         };
 }
 

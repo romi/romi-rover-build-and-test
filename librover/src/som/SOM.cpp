@@ -56,103 +56,34 @@ namespace romi {
                 }
         }
                 
-        bool SOM::trace_path(ISession &session,
-                             Image &mask,
-                             double tool_diameter,
-                             double meters_to_pixels,
-                             Path &path)
+        Path SOM::trace_path(ISession &session, Centers& centers, Image &mask)
         {
-                Superpixels slic;
-
-                double d = meters_to_pixels * tool_diameter;
-                double n = 1.1 * static_cast<double>(mask.width()) * static_cast<double>(mask.height()) / (d * d);
-                int max_cities = (int) n;
-
-                printf(" **** max cities = %d ****\n", max_cities);
-                
-                Centers centers = slic.calculate_centers(mask, max_cities);
-
-                printf(" **** centers size = %d ****\n", (int)centers.size());
-
-                if (1) {
-                        std::vector<double> cx;
-                        std::vector<double> cy;
-                        for (size_t i = 0; i < centers.size(); i++) {
-                                cx.push_back((double) centers[i].first / (double) mask.width());
-                                cy.push_back((double) centers[i].second / (double) mask.height());
-                        }
-                        
-                        {
-                                std::ofstream file;
-                                file.open("centres.txt");
-                                for (size_t i = 0; i < centers.size(); i++)
-                                        file << cx[i] << "\t" << cy[i] << std::endl;
-                                file.close();
-                        }
-                
-                        SelfOrganizedMap<double> som(static_cast<int>(centers.size()),
-                                                     (int) (2.5 * static_cast<int>(centers.size())),
-                                                     _alpha, _beta, _epsilon);
-                        
-                        som.init_cities(&cx[0], &cy[0]);
-                        som.make_circle(0.1);
-                        som.compute_path(session, _print);
-                        som.get_path(path);
+                std::vector<double> cx;
+                std::vector<double> cy;
+                for (size_t i = 0; i < centers.size(); i++) {
+                        cx.push_back((double) centers[i].first / (double) mask.width());
+                        cy.push_back((double) centers[i].second / (double) mask.height());
                 }
-                // else if (0) {
                         
-                //         std::vector<float> cx;
-                //         std::vector<float> cy;
-                //         for (size_t i = 0; i < centers.size(); i++) {
-                //                 cx.push_back((float) centers[i].first / (float) mask->width);
-                //                 cy.push_back((float) centers[i].second / (float) mask->height);
-                //         }
-
-                //         {
-                //                 std::ofstream file;
-                //                 file.open("centres.txt");
-                //                 for (size_t i = 0; i < centers.size(); i++)
-                //                         file << cx[i] << "\t" << cy[i] << std::endl;
-                //                 file.close();
-                //         }
+                {
+                        std::ofstream file;
+                        file.open("centres.txt");
+                        for (size_t i = 0; i < centers.size(); i++)
+                                file << cx[i] << "\t" << cy[i] << std::endl;
+                        file.close();
+                }
                 
-                //         SelfOrganizedMap<float> som(_alpha, _beta, _epsilon);
-                //         som.trace_path(session, &cx[0], &cy[0], centers.size(), path, _print);
-
-                //         printf(" **** USING FLOAT *******\n");
-                //         printf(" **** alpha %f *******\n", _alpha);
-                //         printf(" **** beta %f *******\n", _beta);
-                //         printf(" **** epsilon %f *******\n", _epsilon);
+                SelfOrganizedMap<double> som(static_cast<int>(centers.size()),
+                                             (int) (2.5 * static_cast<int>(centers.size())),
+                                             _alpha, _beta, _epsilon);
                         
-                // } 
-                //         else if (1) {
-                        
-                //         std::vector<Double> cx;
-                //         std::vector<Double> cy;
-                //         for (size_t i = 0; i < centers.size(); i++) {
-                //                 cx.push_back((double) centers[i].first / (double) mask->width);
-                //                 cy.push_back((double) centers[i].second / (double) mask->height);
-                //         }
+                som.init_cities(&cx[0], &cy[0]);
+                som.make_circle(0.1);
+                som.compute_path(session, _print);
 
-                //         {
-                //                 std::ofstream file;
-                //                 file.open("centres.txt");
-                //                 for (size_t i = 0; i < centers.size(); i++)
-                //                         file << cx[i].to_double() << "\t"
-                //                              << cy[i].to_double() << std::endl;
-                //                 file.close();
-                //         }
+                Path path;
+                som.get_path(path);
                 
-                //         SelfOrganizedMap<Double> som(_alpha, _beta, _epsilon);
-                //         som.trace_path(session, &cx[0], &cy[0], centers.size(),
-                //                        path, _print);
-
-                //         printf(" **** USING Double class *******\n");
-                //         printf(" **** alpha %f *******\n", _alpha);
-                //         printf(" **** beta %f *******\n", _beta);
-                //         printf(" **** epsilon %f *******\n", _epsilon);
-                // }
-                
-                return true;
+                return path;
         }
 }

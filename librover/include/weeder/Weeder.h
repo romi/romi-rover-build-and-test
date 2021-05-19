@@ -49,8 +49,9 @@ namespace romi {
                 ISession &session_;
 
                 void scale_to_range(Path &path);
-                void rotate_path_to_starting_point(Path &path, Path &out);
-                void adjust_path(Path &path, Path &out);
+                void rotate_path_to_starting_point(Path &path);
+                void adjust_path(Path &path);
+                void append_path(Path& combined, Path& extension);
                 void move_arm_to_camera_position();
                 void move_arm_to_start_position(v3 p);
                 void stop_spindle_and_move_arm_up();
@@ -62,15 +63,15 @@ namespace romi {
                 void travel(Path& path, double v);
                 void grab_image(Image& image);
                 void camera_grab(Image& image);
-                void analyse_image(Image& image, Path& path);
-                void compute_path(Image& image, Path& path);
-                void store_svg(Path& path);
+                std::vector<Path> analyse_image(Image& image);
+                void store_svg(Path& path, size_t index);
                 void store_svg_path(rpp::MemBuffer& buffer, Path& path);
+                void store_svg_centers(rpp::MemBuffer& buffer, Path& path);
 
         public:
 
                 Weeder(ICamera& camera, IPipeline& pipeline, ICNC& cnc,
-                   double z0, double speed, ISession &session);
+                       double z0, double speed, ISession &session);
                 
                 ~Weeder() override = default;
 

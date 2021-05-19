@@ -76,11 +76,26 @@ namespace romi {
         void Weeder::try_hoe()
         {
                 Image image;
-                Path path;
-                
                 grab_image(image);
-                compute_path(image, path);
-                do_hoe(path);
+                
+                std::vector<Path> paths = analyse_image(image);
+                
+                for (size_t i = 0; i < paths.size(); i++) {
+                        adjust_path(paths[i]);
+                        store_svg(paths[i], i);
+                }
+
+                if (paths.size() > 0) {
+                        
+                        Path path = paths[0];
+                        for (size_t i = 1; i < paths.size(); i++) {
+                                append_path(path, paths[i]);
+                        }
+                        
+                        store_svg(path, paths.size());
+                        
+                        do_hoe(path);
+                }
         }
 
         void Weeder::grab_image(Image& image)
@@ -97,74 +112,80 @@ namespace romi {
                 }
         }
 
-        void Weeder::compute_path(Image& image, Path& path)
-        {
-                Path normalized_path;
-                analyse_image(image, normalized_path);
-                adjust_path(normalized_path, path);
-                store_svg(normalized_path);
-        }
-
-        void Weeder::store_svg(Path& path)
+        void Weeder::store_svg(Path& path, size_t index)
         {
                 rpp::MemBuffer buffer;
-                // The dimensions are in meter. Convert to mm.
+                // The dimensions are in meter. Convert to pixels, width 1000 px/m.
                 v3 dimensions = _range.dimensions();
-                double w = dimensions.x() * 1000.0;
-                double h = dimensions.y() * 1000.0;
+                int w = (int) (dimensions.x() * 1000.0);
+                int h = (int) (dimensions.y() * 1000.0);
                 buffer.printf("<?xml version=\"1.0\" "
                               "encoding=\"UTF-8\" standalone=\"no\"?>"
                               "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" "
                               "xmlns=\"http://www.w3.org/2000/svg\" "
                               "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
                               "version=\"1.0\" "
-                              "width=\"%.2fmm\" height=\"%.2fmm\">\n",
+                              "width=\"%dpx\" height=\"%dpx\">\n",
                               w, h);
                 
                 buffer.printf("    <image xlink:href=\"crop.png\" "
                               "x=\"0mm\" y=\"0mm\" "
-                              "width=\"%.2fmm\" height=\"%.2fmm\" />\n",
+                              "width=\"%dpx\" height=\"%dpx\" />\n",
                               w, h);
                 store_svg_path(buffer, path);
+                store_svg_centers(buffer, path);
                 buffer.printf("</svg>\n");
 
-                session_.store_svg("path.svg", buffer.tostring());
+                char filename[64];
+                snprintf(filename, sizeof(filename), "path-%02zu.svg", index);
+                
+                session_.store_svg(filename, buffer.tostring());
         }
 
         void Weeder::store_svg_path(rpp::MemBuffer& buffer, Path& path)
         {
-                // The points in a polygon are expressed in user coordinate system.
-                // 1 cm equals 35.43307 px (and therefore 35.43307 user units)
-                // 1 m equals 3.543307 px
-                buffer.printf("    <g transform=\"scale(3.543307)\">\n");
-                buffer.printf("    <path d=\"");
+                if (path.size() > 1) {
+                        buffer.printf("    <path d=\"");
 
+                        v3 dimensions = _range.dimensions();
+                        double h = dimensions.y() * 1000.0;
+                
+                        v3 p = path[0];
+                        buffer.printf("M %d,%d L",
+                                      (int) (1000.0 * p.x()),
+                                      (int) (h - 1000.0 * p.y()));
+
+                        for (size_t index = 1; index < path.size(); index++) {
+                                p = path[index];
+                                buffer.printf(" %d,%d",
+                                              (int) (1000.0 * p.x()),
+                                              (int) (h - 1000.0 * p.y()));
+                        }
+
+                        buffer.printf("\" id=\"path\" style=\"fill:none;stroke:#0000ce;"
+                                      "stroke-width:5;stroke-linecap:butt;"
+                                      "stroke-linejoin:miter;stroke-miterlimit:4;"
+                                      "stroke-opacity:1;stroke-dasharray:none\" />\n");
+                }
+        }
+
+        void Weeder::store_svg_centers(rpp::MemBuffer& buffer, Path& path)
+        {
                 v3 dimensions = _range.dimensions();
                 double h = dimensions.y() * 1000.0;
                 
-                v3 p = path[0];
-                buffer.printf("M %.3f,%.3f L", 1000.0 * p.x(), h - 1000.0 * p.y());
-
-                for (size_t index = 1; index < path.size(); index++) {
-                        p = path[index];
-                        buffer.printf(" %.3f,%.3f", 1000.0 * p.x(), h - 1000.0 * p.y());
+                for (size_t index = 0; index < path.size(); index++) {
+                        v3 p = path[index];
+                        buffer.printf("    <circle cx=\"%dpx\" cy=\"%dpx\" "
+                                      "r=\"3px\" fill=\"red\" stroke=\"none\" />\n",
+                                      (int) (1000.0 * p.x()),
+                                      (int) (h - 1000.0 * p.y()));
                 }
-
-                buffer.printf("\" id=\"path\" style=\"fill:none;stroke:#0000ce;"
-                              "stroke-width:5;stroke-linecap:butt;"
-                              "stroke-linejoin:miter;stroke-miterlimit:4;"
-                              "stroke-opacity:1;stroke-dasharray:none\" />\n");
-                buffer.printf("    </g>\n");
         }
         
-        void Weeder::analyse_image(Image& image, Path& path)
+        std::vector<Path> Weeder::analyse_image(Image& image)
         {
-//                IFolder &folder = _filecabinet.start_new_folder();
-                
-                if (!_pipeline.run(session_, image, _diameter_tool, path)) {
-                        r_err("Weeder: pipeline run failed");
-                        throw std::runtime_error("Weeder: pipeline run failed");
-                }
+                return _pipeline.run(session_, image, _diameter_tool);
         }
         
         void Weeder::do_hoe(Path &path)
@@ -198,19 +219,32 @@ namespace romi {
                 moveto(ICNC::UNCHANGED, ICNC::UNCHANGED, 0.0);
         }
         
-        void Weeder::adjust_path(Path &path, Path &out)
+        void Weeder::adjust_path(Path& path)
         {
                 r_debug("Weeder::adjust_path");
                 scale_to_range(path);
-                rotate_path_to_starting_point(path, out);
-                
-                for (size_t i = 0; i < out.size(); i++) {
-                        r_debug("Point: %.3f, %.3f, %.3f",
-                                out[i].x(), out[i].y(), out[i].z());
-                }
-        }
 
-        void Weeder::scale_to_range(Path &path)
+                // TODO: TSP paths aren't necessary closed loops!
+                //rotate_path_to_starting_point(path);
+                
+                // for (size_t i = 0; i < out.size(); i++) {
+                //         r_debug("Point: %.3f, %.3f, %.3f",
+                //                 out[i].x(), out[i].y(), out[i].z());
+                // }
+        }
+        
+        void Weeder::append_path(Path& combined, Path& extension)
+        {
+                v3 from = combined.back();
+                v3 to = extension.front();
+
+                // Move to next path at z=0, i.e. with arm lifted.
+                combined.emplace_back(v3(from.x(), from.y(), 0.0));
+                combined.emplace_back(v3(to.x(), to.y(), 0.0));
+                combined.insert(combined.end(), extension.begin(), extension.end());
+        }
+        
+        void Weeder::scale_to_range(Path& path)
         {
                 r_debug("Weeder::scale_to_range");
 
@@ -229,15 +263,18 @@ namespace romi {
                         throw std::runtime_error("Computed path out of range");
         }
         
-        void Weeder::rotate_path_to_starting_point(Path &path, Path &out)
+        void Weeder::rotate_path_to_starting_point(Path& path)
         {
                 r_debug("Weeder::rotate_path_to_starting_point");
                 v3 starting_point(0.0, _range.max.y(), _z0);
                 int closest_index = path.closest_point(starting_point);
-                if (closest_index >= 0)
-                        path.rotate(out, (size_t)closest_index);
-                else
+                if (closest_index >= 0) {
+                        Path out;
+                        path.rotate(out, (size_t) closest_index);
+                        path = out;
+                } else {
                         throw std::runtime_error("rotate_path_to_starting_point empty path, no closest point");
+                }
         }
         
         void Weeder::travel(Path& path, double v)

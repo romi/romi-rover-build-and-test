@@ -22,23 +22,21 @@
 
  */
 
-#ifndef __ROMI_I_PIPELINE_H
-#define __ROMI_I_PIPELINE_H
+#ifndef __ROMI_CONNECTED_COMPONENTS_H
+#define __ROMI_CONNECTED_COMPONENTS_H
 
-#include "api/Path.h"
-#include "cv/Image.h"
-#include "session/ISession.h"
+#include "IConnectedComponents.h"
 
 namespace romi {
-        
-        class IPipeline
+
+        class ConnectedComponents : public IConnectedComponents
         {
         public:
-                virtual ~IPipeline() = default;
+                ConnectedComponents();
+                ~ConnectedComponents() override = default;
                 
-                virtual std::vector<Path> run(ISession &session, Image &camera,
-                                              double tool_diameter) = 0;
+                void compute(ISession& session, Image &mask, Image &components) override;
         };
 }
 
-#endif // __ROMI_I_PIPELINE_H
+#endif // __ROMI_I_CONNECTED_COMPONENTS_H

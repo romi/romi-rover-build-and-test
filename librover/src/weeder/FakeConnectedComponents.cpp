@@ -21,24 +21,22 @@
   <http://www.gnu.org/licenses/>.
 
  */
-
-#ifndef __ROMI_I_PIPELINE_H
-#define __ROMI_I_PIPELINE_H
-
-#include "api/Path.h"
-#include "cv/Image.h"
-#include "session/ISession.h"
+#include "weeder/FakeConnectedComponents.h"
 
 namespace romi {
-        
-        class IPipeline
-        {
-        public:
-                virtual ~IPipeline() = default;
-                
-                virtual std::vector<Path> run(ISession &session, Image &camera,
-                                              double tool_diameter) = 0;
-        };
-}
 
-#endif // __ROMI_I_PIPELINE_H
+        FakeConnectedComponents::FakeConnectedComponents(Image& components)
+                : components_()
+        {
+                components_ = components;
+        }
+                
+        void FakeConnectedComponents::compute(ISession& session, Image &mask,
+                                              Image &components)
+        {
+                (void) session;
+                (void) mask;
+                
+                components = components_;
+        }
+}

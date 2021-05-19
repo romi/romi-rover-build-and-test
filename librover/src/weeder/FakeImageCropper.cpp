@@ -22,23 +22,29 @@
 
  */
 
-#ifndef __ROMI_I_PIPELINE_H
-#define __ROMI_I_PIPELINE_H
-
-#include "api/Path.h"
-#include "cv/Image.h"
-#include "session/ISession.h"
+#include "weeder/FakeImageCropper.h"
 
 namespace romi {
         
-        class IPipeline
+        FakeImageCropper::FakeImageCropper(Image& cropped_image, double meters_to_pixels)
+                : cropped_image_(),
+                  meters_to_pixels_(meters_to_pixels)
         {
-        public:
-                virtual ~IPipeline() = default;
+                cropped_image_ = cropped_image;
+        }
+        
+        double FakeImageCropper::map_meters_to_pixels(double meters)
+        {
+                return meters_to_pixels_ * meters;
+        }
                 
-                virtual std::vector<Path> run(ISession &session, Image &camera,
-                                              double tool_diameter) = 0;
-        };
+        bool FakeImageCropper::crop(ISession &session, Image &camera_image,
+                                    double tool_diameter, Image &cropped_image)
+        {
+                (void) session;
+                (void) camera_image;
+                (void) tool_diameter;
+                cropped_image = cropped_image_;
+                return true;
+        }
 }
-
-#endif // __ROMI_I_PIPELINE_H

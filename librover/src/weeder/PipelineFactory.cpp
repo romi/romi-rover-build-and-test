@@ -23,10 +23,13 @@
  */
 
 #include <constraintsolver/GConstraintSolver.h>
+#include <cv/ImageCropper.h>
+#include <cv/ImageIO.h>
+
 #include "weeder/PipelineFactory.h"
 #include "weeder/Pipeline.h"
-#include "cv/ImageCropper.h"
-
+#include "weeder/ConnectedComponents.h"
+#include "weeder/FakeConnectedComponents.h"
 #include "svm/SVMSegmentation.h"
 #include "unet/Unet.h"
 #include "som/SOM.h"
@@ -34,62 +37,85 @@
 
 namespace romi {
         
-        void PipelineFactory::build_cropper(CNCRange &range, JsonCpp weeder)
+        std::unique_ptr<IImageCropper>
+        PipelineFactory::build_cropper(CNCRange &range, JsonCpp weeder)
         {
                 const char *name = (const char *) weeder["cropper"];
                 JsonCpp properties = weeder[name];
-                _cropper = std::make_unique<ImageCropper>(range, properties);
+                return std::make_unique<ImageCropper>(range, properties);
         }
         
-        void PipelineFactory::build_segmentation(JsonCpp weeder)
+        std::unique_ptr<IImageSegmentation> 
+        PipelineFactory::build_segmentation(JsonCpp weeder)
         {
                 const char *name = (const char *) weeder["segmentation"];
-                build_segmentation(name, weeder);
+                return build_segmentation(name, weeder);
         }
         
-        void PipelineFactory::build_segmentation(const std::string& name, JsonCpp& weeder)
+        std::unique_ptr<IImageSegmentation> 
+        PipelineFactory::build_segmentation(const std::string& name, JsonCpp& weeder)
         {
                 if (name == "svm") {
                         JsonCpp properties = weeder["svm"];                
-                        _segmentation = std::make_unique<SVMSegmentation>(properties);
+                        return std::make_unique<SVMSegmentation>(properties);
                 } else if (name == "unet") {
-                        _segmentation = std::make_unique<Unet>();
+                        return std::make_unique<Unet>();
                 } else {
                         r_err("Failed to find the segmentation class: %s", name.c_str());
                         throw std::runtime_error("Invalid segmentation class");
                 }
         }
+                
+        std::unique_ptr<IConnectedComponents>
+        PipelineFactory::build_connected_components(romi::GetOpt& options)
+        {
+                std::string path = options.get_value("components");
+                if (path.empty()) {
+                    return std::make_unique<ConnectedComponents>();
+                } else {
+                        Image image;
+                        if (!romi::ImageIO::load(image, path.c_str()))
+                                throw std::runtime_error("Couldn't load components image");
+                        return std::make_unique<FakeConnectedComponents>(image);
+                }
+        }
         
-        void PipelineFactory::build_planner(JsonCpp weeder)
+        std::unique_ptr<IPathPlanner>
+        PipelineFactory::build_planner(JsonCpp weeder)
         {
                 std::string name = (const char *) weeder["path"];
                 JsonCpp properties = weeder[name.c_str()];
-                build_planner(name, properties);
+                return build_planner(name, properties);
         }
         
-        void PipelineFactory::build_planner(const std::string& name, JsonCpp& properties)
+        std::unique_ptr<IPathPlanner>
+        PipelineFactory::build_planner(const std::string& name, JsonCpp& properties)
         {
                 if (name == "quincunx") {
-                        _planner = std::make_unique<Quincunx>(properties);
+                        return std::make_unique<Quincunx>(properties);
                 } else if (name ==  "som") {
-                        _planner = std::make_unique<SOM>(properties);
+                        return std::make_unique<SOM>(properties);
                 } else if (name ==  "ortools") {
-                        _planner = std::make_unique<GConstraintSolver>(properties);
+                        return std::make_unique<GConstraintSolver>(properties);
                 } else {
                         r_err("Failed to find the path planner class: %s", name.c_str());
                         throw std::runtime_error("Invalid path planner class");
                 }
         }
         
-        IPipeline& PipelineFactory::build(CNCRange &range, JsonCpp& config)
+        IPipeline& PipelineFactory::build(CNCRange &range, JsonCpp& config,
+                                          romi::GetOpt& options)
         {
                 JsonCpp weeder = config["weeder"];
-                build_cropper(range, weeder);
-                build_segmentation(weeder);
-                build_planner(weeder);
-                _pipeline = std::make_unique<Pipeline>(*_cropper,
-                                                       *_segmentation,
-                                                       *_planner);
+
+                auto cropper = build_cropper(range, weeder);
+                auto connected_components = build_connected_components(options);
+                
+                auto segmentation = build_segmentation(weeder);
+                auto planner = build_planner(weeder);
+                
+                _pipeline = std::make_unique<Pipeline>(cropper, segmentation,
+                                                       connected_components, planner);
                 return *_pipeline;
         }
 }

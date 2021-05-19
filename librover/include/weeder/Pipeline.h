@@ -27,48 +27,47 @@
 
 #include <JsonCpp.h>
 #include <MemBuffer.h>
-#include "api/CNCRange.h"
-#include "IPipeline.h"
+#include <api/CNCRange.h>
+#include <cv/IImageCropper.h>
+
 #include "IPathPlanner.h"
-#include "cv/IImageCropper.h"
 #include "IImageSegmentation.h"
+#include "IConnectedComponents.h"
+#include "IPipeline.h"
 
 namespace romi {
         
         class Pipeline : public IPipeline
         {
         protected:
-                IImageCropper& _cropper;
-                IImageSegmentation& _segmentation;
-                IPathPlanner& _planner;
+                std::unique_ptr<IImageCropper> cropper_;
+                std::unique_ptr<IImageSegmentation> segmentation_;
+                std::unique_ptr<IConnectedComponents> connected_components_;
+                std::unique_ptr<IPathPlanner> planner_;
                 
                 void create_mask(ISession& session, Image &crop, Image &mask);
 
-                void trace_path(ISession& session, Image& mask, double tool_diameter,
-                                double meters_to_pixels, Path& path);
+                Path trace_path(ISession& session, Centers& centers, Image& mask);
                 
                 void crop_image(ISession& session, Image& camera,
                                 double tool_diameter, Image& crop);
-                
-                void try_run(ISession& session, Image& camera,
-                             double tool_diameter, Path& path);
 
-                std::vector<size_t> check_path(ISession& session, Image& image, Path& path);
-                bool segment_crosses_plant(rpp::MemBuffer& buffer,
-                                           Image& image, v3 start, v3 end);
+                void check_path(ISession& session, Image& mask, Path& path,
+                                Path& result, size_t index);
+                void check_segment(rpp::MemBuffer& buffer,
+                                   Image& image, v3 start, v3 end,
+                                   Path& path);
 
         public:
-                Pipeline(IImageCropper& cropper,
-                         IImageSegmentation& segmentation,
-                         IPathPlanner& planner)
-                        : _cropper(cropper),
-                          _segmentation(segmentation),
-                          _planner(planner) {}
+                Pipeline(std::unique_ptr<IImageCropper>& cropper,
+                         std::unique_ptr<IImageSegmentation>& segmentation,
+                         std::unique_ptr<IConnectedComponents>& connected_components,
+                         std::unique_ptr<IPathPlanner>& planner);
 
                 ~Pipeline() override = default;
                 
-                bool run(ISession& session, Image& camera,
-                         double tool_diameter, Path& path) override;
+                std::vector<Path> run(ISession& session, Image& camera,
+                                      double tool_diameter) override;
         };
 }
 
