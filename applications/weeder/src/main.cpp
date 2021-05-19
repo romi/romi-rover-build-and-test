@@ -237,7 +237,7 @@ int main(int argc, char** argv)
                         throw std::runtime_error("Failed to get the ICNC range");
 
                 romi::PipelineFactory factory;
-                romi::IPipeline& pipeline = factory.build(range, config);
+                romi::IPipeline& pipeline = factory.build(range, config, options);
 
                 rpp::Linux linux;
                 romi::RomiDeviceData romiDeviceData;

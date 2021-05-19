@@ -38,7 +38,6 @@
 #include "session/Session.h"
 #include "data_provider/Gps.h"
 #include "data_provider/GpsLocationProvider.h"
-//#include "RoverConfiguration.h"
 
 #include "Clock.h"
 #include "ClockAccessor.h"
@@ -56,6 +55,31 @@ void SignalHandler(int signal)
         }
 }
 
+
+static std::vector<romi::Option> eval_options = {
+        { "help", false, nullptr,
+          "Print help message" },
+
+        // File paths
+                
+        { romi::RoverOptions::config, true, "config.json",
+          "Path of the config file" },
+                
+        { romi::RoverOptions::session_directory, true, ".",
+          "The session directory where the output "
+          "files are stored (logs, images...)"},
+                
+        { romi::RoverOptions::camera_image, true, nullptr,
+          "The path of the image file for the file camera."},
+                
+        { "components", true, nullptr,
+          "The connected components image "},
+                
+        { "mask", true, nullptr,
+          "The mask "}
+};
+
+
 int main(int argc, char** argv)
 {
         std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
@@ -67,13 +91,14 @@ int main(int argc, char** argv)
         std::signal(SIGINT, SignalHandler);
         
         try {
-                romi::RoverOptions options;
+                romi::GetOpt options(eval_options);
                 options.parse(argc, argv);
-                options.exit_if_help_requested();
-                
-                JsonCpp config_file = JsonCpp::load(options.get_config_file().c_str());
 
-                //RoverConfiguration configuration(options, config_file);
+                std::string path = options.get_value(romi::RoverOptions::config);
+                if (path.empty())
+                        throw std::runtime_error("No configuration file was given");
+
+                JsonCpp config_file = JsonCpp::load(path.c_str());
                 
                 // Session
                 rpp::Linux linux;
@@ -112,7 +137,7 @@ int main(int argc, char** argv)
 
                 // Weeding pipeline
                 romi::PipelineFactory factory;
-                romi::IPipeline& pipeline = factory.build(range, config_file);
+                romi::IPipeline& pipeline = factory.build(range, config_file, options);
 
                 // Weeder
                 double z0 = (double) config_file["weeder"]["z0"];

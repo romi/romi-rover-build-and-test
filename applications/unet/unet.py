@@ -57,6 +57,8 @@ def get_pred(folder):
    cv2.imwrite(folder+"/mask.png", seg_img[:,:,0])
     
 
+
+    
 def handle_unet_request(params):
     folder = params["path"]
     print(f"New request, path {folder}")
