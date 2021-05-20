@@ -19,5 +19,19 @@
         "actions": [
             {"action": "hoe"}
         ]
+    },
+    {
+        "id": "start-recording",
+        "title": "Start recording",
+        "actions": [
+            {"action": "start-recording"}
+        ]
+    },
+    {
+        "id": "stop-recording",
+        "title": "Stop recording",
+        "actions": [
+            {"action": "stop-recording"}
+        ]
     }
 ]

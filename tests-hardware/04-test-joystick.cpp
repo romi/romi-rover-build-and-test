@@ -52,6 +52,12 @@
 #include <ui/CrystalDisplay.h>
 #include <ui/JoystickInputDevice.h>
 #include <hal/BrushMotorDriver.h>
+#include <camera/FakeImager.h>
+#include <data_provider/RomiDeviceData.h>
+#include <data_provider/SoftwareVersion.h>
+#include <session/Session.h>
+#include <data_provider/Gps.h>
+#include <data_provider/GpsLocationProvider.h>
 
 #include "Clock.h"
 #include "ClockAccessor.h"
@@ -142,16 +148,31 @@ int main(int argc, char** argv)
                 // Notifications
                 romi::FakeNotifications notifications;
 
+                // Session
+                romi::RomiDeviceData romiDeviceData;
+                romi::SoftwareVersion softwareVersion;
+                romi::Gps gps;
+                std::unique_ptr<romi::ILocationProvider> locationPrivider
+                        = std::make_unique<romi::GpsLocationProvider>(gps);
+                std::string session_directory = romi::get_session_directory(options, config);
+
+                romi::Session session(linux, session_directory, romiDeviceData,
+                                      softwareVersion, std::move(locationPrivider));
+
+                // Imager
+                romi::FakeImager imager;
+
                 // Rover
                 romi::Rover rover(input_device,
-                            display,
-                            speed_controller,
-                            navigation,
-                            event_timer,
-                            menu,
-                            script_engine,
-                            notifications,
-                            weeder);
+                                  display,
+                                  speed_controller,
+                                  navigation,
+                                  event_timer,
+                                  menu,
+                                  script_engine,
+                                  notifications,
+                                  weeder,
+                                  imager);
 
                 // State machine
                 romi::RoverStateMachine state_machine(rover);

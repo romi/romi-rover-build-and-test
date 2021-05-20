@@ -38,6 +38,12 @@
 #include <rover/RoverScriptEngine.h>
 #include <rover/RoverStateMachine.h>
 #include <fake/FakeWeeder.h>
+#include <camera/FakeImager.h>
+#include <data_provider/RomiDeviceData.h>
+#include <data_provider/SoftwareVersion.h>
+#include <session/Session.h>
+#include <data_provider/Gps.h>
+#include <data_provider/GpsLocationProvider.h>
 
 #include "UIFactory.h"
 
@@ -106,16 +112,31 @@ int main(int argc, char** argv)
 
                 romi::IWeeder& weeder = ui_factory.create_weeder(options, config);
 
-                romi::Rover rover(input_device,
-                            display,
-                            speed_controller,
-                            navigation,
-                            event_timer,
-                            menu,
-                            script_engine,
-                            notifications,
-                            weeder);
 
+                rpp::Linux linux;
+                romi::RomiDeviceData romiDeviceData;
+                romi::SoftwareVersion softwareVersion;
+                romi::Gps gps;
+                std::unique_ptr<romi::ILocationProvider> locationPrivider
+                        = std::make_unique<romi::GpsLocationProvider>(gps);
+                std::string session_directory = romi::get_session_directory(options, config);
+
+                romi::Session session(linux, session_directory, romiDeviceData,
+                                      softwareVersion, std::move(locationPrivider));
+                
+                romi::FakeImager imager;
+
+                romi::Rover rover(input_device,
+                                  display,
+                                  speed_controller,
+                                  navigation,
+                                  event_timer,
+                                  menu,
+                                  script_engine,
+                                  notifications,
+                                  weeder,
+                                  imager);
+                
                 romi::RoverStateMachine state_machine(rover);
                 romi::RoverInterface interface(rover, state_machine);
 

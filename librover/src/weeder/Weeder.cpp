@@ -36,7 +36,7 @@ namespace romi {
                        ICNC& cnc,
                        double z0,
                        double speed,
-                       ISession &session)
+                       ISession& session)
                 : _camera(camera),
                   _pipeline(pipeline),
                   _cnc(cnc),

@@ -22,8 +22,8 @@
 
  */
 
-#ifndef __ROMI_DEFAULT_WEEDER_H
-#define __ROMI_DEFAULT_WEEDER_H
+#ifndef __ROMI_WEEDER_H
+#define __ROMI_WEEDER_H
 
 #include <string>
 
@@ -92,4 +92,4 @@ namespace romi {
         };
 }
 
-#endif // __ROMI_DEFAULT_WEEDER_H
+#endif // __ROMI_WEEDER_H

@@ -26,13 +26,14 @@
 #include <memory>
 #include <atomic>
 #include <syslog.h>
-
 #include <string.h>
+
 #include <RSerial.h>
 #include <RomiSerialClient.h>
-
 #include <Linux.h>
-#include "configuration/ConfigurationProvider.h"
+#include <Clock.h>
+#include <ClockAccessor.h>
+#include <configuration/ConfigurationProvider.h>
 #include <rover/Rover.h>
 #include <rover/RoverOptions.h>
 #include <rover/RoverInterface.h>
@@ -61,14 +62,12 @@
 #include <oquam/StepperSettings.h>
 #include <oquam/Oquam.h>
 #include <weeder/PipelineFactory.h>
-
-#include "Clock.h"
-#include "ClockAccessor.h"
-#include "data_provider/RomiDeviceData.h"
-#include "data_provider/SoftwareVersion.h"
-#include "session/Session.h"
-#include "data_provider/Gps.h"
-#include "data_provider/GpsLocationProvider.h"
+#include <camera/Imager.h>
+#include <data_provider/RomiDeviceData.h>
+#include <data_provider/SoftwareVersion.h>
+#include <session/Session.h>
+#include <data_provider/Gps.h>
+#include <data_provider/GpsLocationProvider.h>
 
 std::atomic<bool> quit(false);
 
@@ -120,10 +119,12 @@ int main(int argc, char** argv)
                 romi::RomiDeviceData romiDeviceData;
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
-                std::unique_ptr<romi::ILocationProvider> locationPrivider = std::make_unique<romi::GpsLocationProvider>(gps);
+                std::unique_ptr<romi::ILocationProvider> locationProvider
+                        = std::make_unique<romi::GpsLocationProvider>(gps);
                 std::string session_directory = romi::get_session_directory(options, config);
 
-                romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+                romi::Session session(linux, session_directory, romiDeviceData,
+                                      softwareVersion, std::move(locationProvider));
                 session.start("hw_observation_id");
 
                 // Display
@@ -242,17 +243,21 @@ int main(int argc, char** argv)
                 r_info("main: Creating sound notifications");
                 romi::FluidSoundNotifications notifications(soundfont, sound_setup);
 
+                // Imager
+                romi::Imager imager(session, *camera);
+                
                 // Rover
                 r_info("main: Creating rover");
                 romi::Rover rover(input_device,
-                            display,
-                            speed_controller,
-                            navigation,
-                            event_timer,
-                            menu,
-                            script_engine,
-                            notifications,
-                            weeder);
+                                  display,
+                                  speed_controller,
+                                  navigation,
+                                  event_timer,
+                                  menu,
+                                  script_engine,
+                                  notifications,
+                                  weeder,
+                                  imager);
 
                 // State machine
                 r_info("main: Creating state machine");

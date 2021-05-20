@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 
 set(SRCS
-        src/tests_main.cpp)
+  src/tests_main.cpp)
 
-add_executable( rover_unit_tests
-                ${SRCS})
+add_executable(rover_unit_tests ${SRCS})
 
-target_link_libraries( rover_unit_tests
+target_link_libraries(rover_unit_tests
                         gtest
                         gmock
+                        romimocks
                         rover)
 
 target_include_directories(rover_unit_tests
