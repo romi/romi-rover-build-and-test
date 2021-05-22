@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 project(test-hardware)
 
+add_executable(03-tests-navigation-distance 03-tests-navigation/navigation-distance.cpp)
+target_link_libraries(03-tests-navigation-distance romi)
+
+#
+
 add_executable(04-test-joystick 04-test-joystick.cpp)
 target_link_libraries(04-test-joystick romi)
 install(TARGETS 04-test-joystick DESTINATION bin)
