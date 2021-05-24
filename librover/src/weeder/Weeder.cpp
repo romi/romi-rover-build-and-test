@@ -235,13 +235,15 @@ namespace romi {
         
         void Weeder::append_path(Path& combined, Path& extension)
         {
-                v3 from = combined.back();
-                v3 to = extension.front();
+                if (extension.size() > 0) {
+                        v3 from = combined.back();
+                        v3 to = extension.front();
 
-                // Move to next path at z=0, i.e. with arm lifted.
-                combined.emplace_back(v3(from.x(), from.y(), 0.0));
-                combined.emplace_back(v3(to.x(), to.y(), 0.0));
-                combined.insert(combined.end(), extension.begin(), extension.end());
+                        // Move to next path at z=0, i.e. with arm lifted.
+                        combined.emplace_back(v3(from.x(), from.y(), 0.0));
+                        combined.emplace_back(v3(to.x(), to.y(), 0.0));
+                        combined.insert(combined.end(), extension.begin(), extension.end());
+                }
         }
         
         void Weeder::scale_to_range(Path& path)

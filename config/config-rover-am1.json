@@ -1,179 +1,54 @@
-{    
-    "oquam": {
-        
-        "cnc-range": [[0, 0.560], [0, 0.600], [-0.160, 0]],
-        
-        "path-slice-duration": 0.020,
-        
-        "path-maximum-deviation": 0.01,
-
-        "controller-classname": "stepper-controller",
-
-        "stepper-settings": {
-            "steps-per-revolution": [ 200.0, 200.0, 200.0 ],
-            "microsteps": [ 8.0, 8.0, 1.0 ],
-            "gears-ratio": [ 1.0, 1.0, 1.0 ],
-            "maximum-rpm": [ 300.0, 300.0, 300.0 ],
-            "displacement-per-revolution": [ 0.04, 0.04, -0.002 ],
-            "maximum-acceleration": [ 0.3, 0.3, 0.03 ]
-        }
-    },
-    
+{
     "navigation": {
-
-        "rover": {
-            "wheel_diameter": 0.47,
-            "wheel_base": 1.0,
-            "encoder_steps": 1536,
-            "maximum_speed": 1.5
-        },
-        
-        "motor-driver": "brush-motor-driver",
-
         "brush-motor-driver": {
-            "maximum_signal_amplitude": 40,
-            "use_pid": true,
-            "pid": {
-                "kp": 0.6,
-                "ki": 0.3,
-                "kd": 0.1
-            },
             "encoder_directions": {
                 "left": -1,
                 "right": 1
-            }
-        }
-    },
-    
-    "weeder": {
-        "z0": -0.110,
-        "speed": 0.8,
-        
-        "camera-classname": "remote-camera",
-        "cnc-classname": "remote-cnc",
-        
-        "cropper": "imagecropper",
-        "segmentation": "svm",
-        "path": "som",
-
-        "usb-camera": {
-            "width": 1920,
-            "height": 1080
-        },
-        
-        "imagecropper": {
-            "workspace": [562, 59, 700, 728]
-        },
-        "svm": {
-            "a": [-0.04152306,  0.0472676 , -0.00709334],
-            "b": 0.66209273
-        }, 
-        "quincunx": {
-            "threshold": 0.5,
-            "distance_plants": 0.30,
-            "distance_rows": 0.25,
-            "radius_zones": 0.10
-        },
-        "som": {
-            "alpha": 0.2,
-            "beta": 1.2,
-            "epsilon": 0.01,
-            "print": false
-        } 
-    },
-    
-    "user-interface": {
-
-        "display-classname": "crystal-display",
-        "navigation-classname": "remote-navigation",
-        "input-device-classname": "joystick",
-        "notifications": "fluid-sounds",
-        "weeder-classname": "fake-weeder",
-        
-        "speed-controller": {
-            "fast": {
-                "use-speed-curve": true,
-                "speed-curve-exponent": 1.5,
-                "use-direction-curve": true,
-                "direction-curve-exponent": 1.5,
-                "speed-multiplier": 1.0,
-                "direction-multiplier": 0.4
             },
-            "accurate": {
-                "use-speed-curve": true,
-                "speed-curve-exponent": 1.0,
-                "use-direction-curve": true,
-                "direction-curve-exponent": 1.0,
-                "speed-multiplier": 0.5,
-                "direction-multiplier": 0.4
-            }
+            "maximum_signal_amplitude": 40,
+            "pid": {
+                "kd": 0.030000,
+                "ki": 0.100000,
+                "kp": 0.500000
+            },
+            "use_pid": true
         },
-
-        "remote-navigation": {
-            "server-name": "navigation"
-        },
-
-        "fluid-sounds": {
-            "soundfont": "notifications.sf2",
-            "sounds": {
-                "startup": {
-                    "preset": 4,
-                    "volume": 90
-                },
-                "confirm-menu-mode": {
-                    "preset": 22,
-                    "volume": 90
-                },
-                "leave-menu-mode": {
-                    "preset": 21,
-                    "volume": 90
-                },
-                "change-menu": {
-                    "preset": 1,
-                    "volume": 90
-                },
-                "menu-confirmed": {
-                    "preset": 22,
-                    "volume": 90
-                },
-                "script-finished": {
-                    "preset": 10,
-                    "volume": 90
-                },
-                "confirm-navigation-mode": {
-                    "preset": 16,
-                    "volume": 90
-                },
-                "leave-navigation-mode": {
-                    "preset": 21,
-                    "volume": 90
-                },
-                "moving": {
-                    "preset": 7,
-                    "volume": 90
-                }
-            }
-        },
-        
-        "script-engine": {
-            "script": "scripts.json"
+        "motor-driver": "brush-motor-driver",
+        "rover": {
+            "encoder_steps": 1536,
+            "maximum_speed": 1.000000,
+            "wheel_base": 1,
+            "wheel_diameter": 0.470000
         }
     },
-    
+    "oquam": {
+        "cnc-range": [[0, 0.560000], [0, 0.600000], [-0.160000, 0]],
+        "controller-classname": "stepper-controller",
+        "path-maximum-deviation": 0.010000,
+        "path-slice-duration": 0.020000,
+        "stepper-settings": {
+            "displacement-per-revolution": [0.040000, 0.040000, -0.002000],
+            "gears-ratio": [1, 1, 1],
+            "maximum-acceleration": [0.300000, 0.300000, 0.030000],
+            "maximum-rpm": [300, 300, 300],
+            "microsteps": [8, 8, 1],
+            "steps-per-revolution": [200, 200, 200]
+        }
+    },
     "ports": {
-        "joystick": {
-            "port": "/dev/input/js0", 
-            "type": "input-device"
-        }, 
-        "display-device": {
-            "port": "/dev/ttyACM1", 
+        "brush-motor-driver": {
+            "port": "/dev/ttyACM1",
             "type": "serial"
         },
-        "oquam": {
+        "display-device": {
             "port": "/dev/ttyACM0",
             "type": "serial"
         },
-        "brush-motor-driver": {
+        "joystick": {
+            "port": "/dev/input/js0",
+            "type": "input-device"
+        },
+        "oquam": {
             "port": "/dev/ttyACM2",
             "type": "serial"
         },
@@ -181,5 +56,112 @@
             "port": "/dev/video0",
             "type": "video"
         }
+    },
+    "user-interface": {
+        "display-classname": "crystal-display",
+        "fluid-sounds": {
+            "soundfont": "notifications.sf2",
+            "sounds": {
+                "change-menu": {
+                    "preset": 1,
+                    "volume": 90
+                },
+                "confirm-menu-mode": {
+                    "preset": 22,
+                    "volume": 90
+                },
+                "confirm-navigation-mode": {
+                    "preset": 16,
+                    "volume": 90
+                },
+                "leave-menu-mode": {
+                    "preset": 21,
+                    "volume": 90
+                },
+                "leave-navigation-mode": {
+                    "preset": 21,
+                    "volume": 90
+                },
+                "menu-confirmed": {
+                    "preset": 22,
+                    "volume": 90
+                },
+                "moving": {
+                    "preset": 7,
+                    "volume": 90
+                },
+                "script-finished": {
+                    "preset": 10,
+                    "volume": 90
+                },
+                "startup": {
+                    "preset": 4,
+                    "volume": 90
+                }
+            }
+        },
+        "input-device-classname": "joystick",
+        "navigation-classname": "remote-navigation",
+        "notifications": "fluid-sounds",
+        "remote-navigation": {
+            "server-name": "navigation"
+        },
+        "script-engine": {
+            "script": "scripts.json"
+        },
+        "speed-controller": {
+            "accurate": {
+                "direction-curve-exponent": 1,
+                "direction-multiplier": 0.200000,
+                "speed-curve-exponent": 1,
+                "speed-multiplier": 0.200000,
+                "use-direction-curve": true,
+                "use-speed-curve": true
+            },
+            "fast": {
+                "direction-curve-exponent": 1.500000,
+                "direction-multiplier": 0.400000,
+                "speed-curve-exponent": 1.500000,
+                "speed-multiplier": 1,
+                "use-direction-curve": true,
+                "use-speed-curve": true
+            }
+        },
+        "weeder-classname": "fake-weeder"
+    },
+    "weeder": {
+        "camera-classname": "remote-camera",
+        "cnc-classname": "remote-cnc",
+        "cropper": "imagecropper",
+        "imagecropper": {
+            "workspace": [562, 59, 700, 728]
+        },
+        "ortools": {
+            "print": false
+        },
+        "path": "ortools",
+        "quincunx": {
+            "distance_plants": 0.300000,
+            "distance_rows": 0.250000,
+            "radius_zones": 0.100000,
+            "threshold": 0.500000
+        },
+        "segmentation": "svm",
+        "som": {
+            "alpha": 0.200000,
+            "beta": 1.200000,
+            "epsilon": 0.010000,
+            "print": false
+        },
+        "speed": 0.800000,
+        "svm": {
+            "a": [-0.041523, 0.047268, -0.007093],
+            "b": 0.662093
+        },
+        "usb-camera": {
+            "height": 1080,
+            "width": 1920
+        },
+        "z0": -0.110000
     }
 }

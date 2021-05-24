@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+LAN=wlan0
+ETH=eth0
+#WLAN=wlp0s20f3
+#ETH=enp40s0
 
 # From https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md
 # And https://cdn-learn.adafruit.com/downloads/pdf/setting-up-a-raspberry-pi-as-a-wifi-access-point.pdf
@@ -17,7 +21,7 @@ then
 fi
 
 cat<<EOF >> /etc/dhcpcd.conf
-interface wlan0
+interface $WLAN
     static ip_address=10.10.10.1/24
     nohook wpa_supplicant
 EOF
@@ -29,13 +33,13 @@ net.ipv4.ip_forward=1
 EOF
 
 
-iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+iptables -t nat -A POSTROUTING -o $ETH -j MASQUERADE
+iptables -A FORWARD -i $ETH -o $WLAN -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i $WLAN -o $ETH -j ACCEPT
 
 iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
-iptables -A FORWARD -i eth1 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i wlan0 -o eth1 -j ACCEPT
+iptables -A FORWARD -i eth1 -o $WLAN -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i $WLAN -o eth1 -j ACCEPT
 
 netfilter-persistent save
 
@@ -48,7 +52,7 @@ then
 fi
 
 cat<<EOF >> /etc/dnsmasq.conf
-interface=wlan0 # Listening interface
+interface=$WLAN # Listening interface
 dhcp-range=10.10.10.2,10.10.10.20,255.255.255.0,24h
                 # Pool of IP addresses served via DHCP
 domain=wlan     # Local wireless DNS domain
@@ -66,7 +70,7 @@ fi
 
 cat<<EOF >> /etc/hostapd/hostapd.conf
 country_code=FR
-interface=wlan0
+interface=$WLAN
 ssid2="Romi Rover"
 hw_mode=g
 channel=10
