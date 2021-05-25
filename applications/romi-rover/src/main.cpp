@@ -63,6 +63,7 @@
 #include <oquam/Oquam.h>
 #include <weeder/PipelineFactory.h>
 #include <camera/Imager.h>
+#include <unet/UnetImager.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <session/Session.h>
@@ -244,8 +245,10 @@ int main(int argc, char** argv)
                 romi::FluidSoundNotifications notifications(soundfont, sound_setup);
 
                 // Imager
-                romi::Imager imager(session, *camera);
-                
+                //romi::Imager imager(session, *camera);
+                romi::UnetImager imager(session, *camera);
+
+        
                 // Rover
                 r_info("main: Creating rover");
                 romi::Rover rover(input_device,
