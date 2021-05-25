@@ -23,6 +23,7 @@ set(SOURCES
         include/som/SOM.h
         include/som/Superpixels.h
         include/unet/Unet.h
+        include/unet/UnetImager.h
         include/weeder/Weeder.h
         include/weeder/IConnectedComponents.h
         include/weeder/IImageSegmentation.h
@@ -43,6 +44,7 @@ set(SOURCES
         src/som/slic.cpp
 
         src/unet/Unet.cpp
+        src/unet/UnetImager.cpp
 
         src/astar/AStar.cpp
         

@@ -21,6 +21,7 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#include <cv/cv.h>
 #include "weeder/ConnectedComponents.h"
 
 namespace romi {
@@ -28,10 +29,10 @@ namespace romi {
         ConnectedComponents::ConnectedComponents() {
         }
                 
-        void ConnectedComponents::compute(ISession& session, Image &mask, Image &components)
+        void ConnectedComponents::compute(ISession& session,
+                                          Image &mask, Image &components)
         {
                 (void) session;
-                (void) mask;
-                components = mask; // TODO
+                compute_connected_components(mask, components);
         }
 }

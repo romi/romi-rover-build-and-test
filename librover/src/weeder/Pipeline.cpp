@@ -28,6 +28,8 @@
 #include "astar/AStar.hpp"
 
 namespace romi {
+
+        static const size_t kAstarResolution = 9;
         
         Pipeline::Pipeline(std::unique_ptr<IImageCropper>& cropper,
                            std::unique_ptr<IImageSegmentation>& segmentation,
@@ -58,8 +60,18 @@ namespace romi {
                 romi::filter_mask(mask, mask, 8);
                 session.store_png("mask", mask);
 
+                Image dilated_mask;
+                
+                // TODO
+                if (false) {
+                        mask.dilate(kAstarResolution, dilated_mask);
+                        session.store_png("dilated-mask", dilated_mask);
+                } else {
+                        dilated_mask = mask;
+                }
+                
                 Image components;
-                connected_components_->compute(session, mask, components);
+                connected_components_->compute(session, dilated_mask, components);
                 session.store_png("components", components);
 
                 double diameter_pixels = cropper_->map_meters_to_pixels(tool_diameter);
@@ -169,7 +181,7 @@ namespace romi {
 
         void go_around(rpp::MemBuffer& buffer, Image& mask, v3 start, v3 end, Path& path)
         {
-                int d = 9;
+                int d = (int) kAstarResolution;
                 int d2 = d / 2;
                 int w = (int) mask.width();
                 int h = (int) mask.height();

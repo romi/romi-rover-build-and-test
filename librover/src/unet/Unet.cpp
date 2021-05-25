@@ -28,7 +28,7 @@
 
 namespace romi {
 
-        Unet::Unet() : counter_(0)
+        Unet::Unet()
         {
         }
                 
@@ -48,8 +48,17 @@ namespace romi {
         void Unet::try_create_mask(ISession &session, Image &image, Image &mask)
         {
                 store_image(session, image);
-                send_python_request(session);
+                std::string path = get_image_path(session);
+                send_python_request(path, "mask");
                 load_mask(session, mask);
+        }
+
+        std::string Unet::get_image_path(ISession &session)
+        {
+                std::filesystem::path dir = session.current_path();
+                std::filesystem::path path = dir /= "unet.jpg";
+                session.current_path();
+                return path.string();
         }
 
         void Unet::store_image(ISession &session, Image &image)
@@ -59,13 +68,15 @@ namespace romi {
                 }
         }
 
-        void Unet::send_python_request(ISession &session)
+        void Unet::send_python_request(const std::string& path,
+                                       const std::string& output_name)
         {
                 JsonCpp response;
                 romi::RPCError error;
                 
-                JsonCpp params = JsonCpp::construct("{\"path\": \"%s\"}",
-                                                    session.current_path().string().c_str());
+                JsonCpp params = JsonCpp::construct("{\"path\": \"%s\", "
+                                                    "\"output-name\": \"%s\"}",
+                                                    path.c_str(), output_name.c_str());
         
                 auto rpc = romi::RcomClient::create("python", 30);
                 rpc->execute("unet", params, response, error);

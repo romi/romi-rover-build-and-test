@@ -23,29 +23,24 @@
  */
 
 #ifndef __ROMI_UNET_H
-#define __ROMI_UNET_H
+#define __ROMI_UNET_IMAGER_H
 
-#include <string> 
-#include "weeder/IImageSegmentation.h"
+#include <camera/Imager.h>
+#include "Unet.h"
 
 namespace romi {
 
-        class Unet : public IImageSegmentation
+        class UnetImager : public Unet, public Imager
         {
         protected:
-                void try_create_mask(ISession &session, Image &image, Image &mask);
-                void store_image(ISession &session, Image &image);
-                void send_python_request(const std::string& image_path,
-                                         const std::string& output_name);
-                void load_mask(ISession &session, Image& mask);
-                std::string get_image_path(ISession &session);
                 
+                bool grab();
+                std::string make_output_name();
+
         public:
-                Unet();
-                ~Unet() override = default;
-                
-                bool create_mask(ISession &session, Image &image, Image &mask) override;
+                UnetImager(ISession& session, ICamera& camera);
+                ~UnetImager() override = default;
         };
 }
 
-#endif // __ROMI_UNET_H
+#endif // __ROMI_UNET_IMAGER_H
