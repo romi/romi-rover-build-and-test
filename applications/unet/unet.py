@@ -7,6 +7,7 @@ from keras_segmentation.models.all_models import model_from_name
 import cv2
 import time
 import numpy as np
+import os
 
 model = None
 model_config = None
@@ -23,46 +24,49 @@ def load_model(model_path):
     model.load_weights(weights)
 
 
-def get_pred(folder):
-   img = cv2.imread(folder + "/unet.jpg")
-   h, w, _ = img.shape
-   img = cv2.resize(img, (model_config['input_width'],
-                          model_config['input_height']))
-   img = img.astype(np.float32)
-   img[:, :, 0] -= 103.939
-   img[:, :, 1] -= 116.779
-   img[:, :, 2] -= 123.68
-   img = img[:, :, ::-1]
-
-   t0 = time.time()
-   pr = model.predict(np.array([img]))[0]
-   
-   pr = pr.reshape((model.output_height,
-                    model.output_width,
-                    model.n_classes)).argmax(axis=2)
-
-   colors=[[0,0,0], [255,255,255], [0,0,255]]
-
-   seg_img = np.zeros((model.output_height, model.output_width, 3))
-
-   for c in range(model.n_classes):
-      seg_arr_c = pr[:, :] == c
-      seg_img[:, :, 0] += ((seg_arr_c)*(colors[c][0])).astype('uint8')
-      seg_img[:, :, 1] += ((seg_arr_c)*(colors[c][1])).astype('uint8')
-      seg_img[:, :, 2] += ((seg_arr_c)*(colors[c][2])).astype('uint8')
-
-   seg_img = cv2.resize(seg_img, (w, h))
-   
-   cv2.imwrite(folder+"/mask_rgb.png", seg_img)
-   cv2.imwrite(folder+"/mask.png", seg_img[:,:,0])
+def get_pred(path, output_name):
+    folder = os.path.dirname(path)
+    filename = os.path.basename(path)
+    img = cv2.imread(path)
+    h, w, _ = img.shape
+    img = cv2.resize(img, (model_config['input_width'],
+                           model_config['input_height']))
+    img = img.astype(np.float32)
+    img[:, :, 0] -= 103.939
+    img[:, :, 1] -= 116.779
+    img[:, :, 2] -= 123.68
+    img = img[:, :, ::-1]
+    
+    t0 = time.time()
+    pr = model.predict(np.array([img]))[0]
+    
+    pr = pr.reshape((model.output_height,
+                     model.output_width,
+                     model.n_classes)).argmax(axis=2)
+    
+    colors=[[0,0,0], [255,255,255], [0,0,255]]
+    
+    seg_img = np.zeros((model.output_height, model.output_width, 3))
+    
+    for c in range(model.n_classes):
+        seg_arr_c = pr[:, :] == c
+        seg_img[:, :, 0] += ((seg_arr_c)*(colors[c][0])).astype('uint8')
+        seg_img[:, :, 1] += ((seg_arr_c)*(colors[c][1])).astype('uint8')
+        seg_img[:, :, 2] += ((seg_arr_c)*(colors[c][2])).astype('uint8')
+        
+        seg_img = cv2.resize(seg_img, (w, h))
+        
+        cv2.imwrite(folder + "/" + output_name + "_rgb.png", seg_img)
+        cv2.imwrite(folder + "/" + output_name + ".png", seg_img[:,:,0])
     
 
 
     
 def handle_unet_request(params):
-    folder = params["path"]
-    print(f"New request, path {folder}")
-    return get_pred(folder)
+    image_path = params["path"]
+    output_name = params["output-name"]
+    print(f"New request, image {image_path}")
+    return get_pred(image_path, output_name)
 
 async def server_callback(websocket, path):
     global server
