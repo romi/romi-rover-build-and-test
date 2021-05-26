@@ -44,6 +44,16 @@ namespace romi {
         
         class PipelineFactory
         {
+        public:
+
+                static constexpr const char *kPythonUnet = "python-unet";
+                static constexpr const char *kPythonSVM = "python-svm";
+                static constexpr const char *kSVM = "svm";
+
+                static constexpr const char *kQuincunx = "quincunx"; 
+                static constexpr const char *kSOM = "som";
+                static constexpr const char *kORTools = "ortools";
+               
         protected:
                 std::unique_ptr<IPipeline> _pipeline;
                 

@@ -22,7 +22,9 @@ set(SOURCES
         include/som/slic.h
         include/som/SOM.h
         include/som/Superpixels.h
-        include/unet/Unet.h
+        include/unet/PythonSegmentation.h
+        include/unet/PythonSVM.h
+        include/unet/PythonUnet.h
         include/unet/UnetImager.h
         include/weeder/Weeder.h
         include/weeder/IConnectedComponents.h
@@ -43,7 +45,9 @@ set(SOURCES
         src/som/fixed.c
         src/som/slic.cpp
 
-        src/unet/Unet.cpp
+        src/unet/PythonSegmentation.cpp
+        src/unet/PythonSVM.cpp
+        src/unet/PythonUnet.cpp
         src/unet/UnetImager.cpp
 
         src/astar/AStar.cpp

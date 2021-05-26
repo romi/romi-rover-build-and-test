@@ -22,25 +22,20 @@
 
  */
 
-#ifndef __ROMI_UNET_H
-#define __ROMI_UNET_IMAGER_H
+#ifndef __ROMI_PYTHON_UNET_H
+#define __ROMI_PYTHON_UNET_H
 
-#include <camera/Imager.h>
-#include "unet/PythonUnet.h"
+#include <string> 
+#include "unet/PythonSegmentation.h"
 
 namespace romi {
 
-        class UnetImager : public PythonUnet, public Imager
+        class PythonUnet : public PythonSegmentation
         {
-        protected:
-                
-                bool grab();
-                std::string make_output_name();
-
         public:
-                UnetImager(ISession& session, ICamera& camera);
-                ~UnetImager() override = default;
+                PythonUnet();
+                ~PythonUnet() override = default;
         };
 }
 
-#endif // __ROMI_UNET_IMAGER_H
+#endif // __ROMI_PYTHON_UNET_H

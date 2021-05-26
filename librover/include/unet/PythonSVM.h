@@ -22,30 +22,20 @@
 
  */
 
-#ifndef __ROMI_UNET_H
-#define __ROMI_UNET_H
+#ifndef __ROMI_PYTHON_SVM_H
+#define __ROMI_PYTHON_SVM_H
 
 #include <string> 
-#include "weeder/IImageSegmentation.h"
+#include "unet/PythonSegmentation.h"
 
 namespace romi {
 
-        class Unet : public IImageSegmentation
+        class PythonSVM : public PythonSegmentation
         {
-        protected:
-                void try_create_mask(ISession &session, Image &image, Image &mask);
-                void store_image(ISession &session, Image &image);
-                void send_python_request(const std::string& image_path,
-                                         const std::string& output_name);
-                void load_mask(ISession &session, Image& mask);
-                std::string get_image_path(ISession &session);
-                
         public:
-                Unet();
-                ~Unet() override = default;
-                
-                bool create_mask(ISession &session, Image &image, Image &mask) override;
+                PythonSVM();
+                ~PythonSVM() override = default;
         };
 }
 
-#endif // __ROMI_UNET_H
+#endif // __ROMI_PYTHON_SVM_H

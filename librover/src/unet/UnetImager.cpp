@@ -28,7 +28,7 @@
 namespace romi {
         
         UnetImager::UnetImager(ISession& session, ICamera& camera)
-                : Unet(), Imager(session, camera) 
+                : PythonUnet(), Imager(session, camera) 
         {
         }
 

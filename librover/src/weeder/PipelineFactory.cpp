@@ -31,7 +31,8 @@
 #include "weeder/ConnectedComponents.h"
 #include "weeder/FakeConnectedComponents.h"
 #include "svm/SVMSegmentation.h"
-#include "unet/Unet.h"
+#include "unet/PythonUnet.h"
+#include "unet/PythonSVM.h"
 #include "som/SOM.h"
 #include "quincunx/Quincunx.h"
 
@@ -55,11 +56,16 @@ namespace romi {
         std::unique_ptr<IImageSegmentation> 
         PipelineFactory::build_segmentation(const std::string& name, JsonCpp& weeder)
         {
-                if (name == "svm") {
+                if (name == kSVM) {
                         JsonCpp properties = weeder["svm"];                
                         return std::make_unique<SVMSegmentation>(properties);
-                } else if (name == "unet") {
-                        return std::make_unique<Unet>();
+                        
+                } else if (name == kPythonUnet) {
+                        return std::make_unique<PythonUnet>();
+                        
+                } else if (name == kPythonSVM) {
+                        return std::make_unique<PythonSVM>();
+                        
                 } else {
                         r_err("Failed to find the segmentation class: %s", name.c_str());
                         throw std::runtime_error("Invalid segmentation class");
@@ -91,11 +97,11 @@ namespace romi {
         std::unique_ptr<IPathPlanner>
         PipelineFactory::build_planner(const std::string& name, JsonCpp& properties)
         {
-                if (name == "quincunx") {
+                if (name == kQuincunx) {
                         return std::make_unique<Quincunx>(properties);
-                } else if (name ==  "som") {
+                } else if (name ==  kSOM) {
                         return std::make_unique<SOM>(properties);
-                } else if (name ==  "ortools") {
+                } else if (name ==  kORTools) {
                         return std::make_unique<GConstraintSolver>(properties);
                 } else {
                         r_err("Failed to find the path planner class: %s", name.c_str());

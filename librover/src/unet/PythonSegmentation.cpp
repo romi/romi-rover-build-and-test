@@ -24,15 +24,16 @@
 
 #include <cv/ImageIO.h>
 #include <rpc/RcomClient.h>
-#include "unet/Unet.h"
+#include "unet/PythonSegmentation.h"
 
 namespace romi {
 
-        Unet::Unet()
+        PythonSegmentation::PythonSegmentation(const std::string& function_name)
+                : function_name_(function_name)
         {
         }
                 
-        bool Unet::create_mask(ISession &session, Image &image, Image &mask)
+        bool PythonSegmentation::create_mask(ISession &session, Image &image, Image &mask)
         {
                 bool success = false;
                 try {
@@ -40,36 +41,38 @@ namespace romi {
                         success = true;
                         
                 } catch (std::exception& e) {
-                        r_warn("Unet::create_mask: caught exception: %s", e.what());
+                        r_warn("PythonSegmentation::create_mask: caught exception: %s",
+                               e.what());
                 }
                 return success;
         }
 
-        void Unet::try_create_mask(ISession &session, Image &image, Image &mask)
+        void PythonSegmentation::try_create_mask(ISession &session, Image &image,
+                                                 Image &mask)
         {
                 store_image(session, image);
                 std::string path = get_image_path(session);
-                send_python_request(path, "mask");
+                send_python_request(path, kDefaultMaskName);
                 load_mask(session, mask);
         }
 
-        std::string Unet::get_image_path(ISession &session)
+        std::string PythonSegmentation::get_image_path(ISession &session)
         {
                 std::filesystem::path dir = session.current_path();
-                std::filesystem::path path = dir /= "unet.jpg";
+                std::filesystem::path path = dir /= kDefaultImageName;
                 session.current_path();
                 return path.string();
         }
 
-        void Unet::store_image(ISession &session, Image &image)
+        void PythonSegmentation::store_image(ISession &session, Image &image)
         {
-                if (!session.store_jpg("unet.jpg", image)) {
+                if (!session.store_jpg(kDefaultImageName, image)) {
                         throw std::runtime_error("Failed to save the image");
                 }
         }
 
-        void Unet::send_python_request(const std::string& path,
-                                       const std::string& output_name)
+        void PythonSegmentation::send_python_request(const std::string& path,
+                                                     const std::string& output_name)
         {
                 JsonCpp response;
                 romi::RPCError error;
@@ -79,7 +82,7 @@ namespace romi {
                                                     path.c_str(), output_name.c_str());
         
                 auto rpc = romi::RcomClient::create("python", 30);
-                rpc->execute("unet", params, response, error);
+                rpc->execute(function_name_, params, response, error);
                 
                 if (error.code != 0) {
                         r_warn("Failed to call Python: %s", error.message.c_str());
@@ -92,12 +95,14 @@ namespace romi {
                 }
         }
                 
-        void Unet::load_mask(ISession &session, Image& mask)
+        void PythonSegmentation::load_mask(ISession &session, Image& mask)
         {
+                std::string filename = kDefaultMaskName;
+                filename += ".png";
                 std::filesystem::path dir = session.current_path();
-                std::filesystem::path path = dir /= "mask.png";
+                std::filesystem::path path = dir /= filename;
                 
-                r_info("Unet: loading mask %s", path.string().c_str());
+                r_info("PythonSegmentation: loading mask %s", path.string().c_str());
                 
                 if (!ImageIO::load(mask, path.string().c_str())) {
                         r_warn("Failed to load the mask at %s", path.string().c_str());
