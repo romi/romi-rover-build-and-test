@@ -31,23 +31,38 @@ namespace romi {
                 : PythonUnet(), Imager(session, camera) 
         {
         }
-
+ 
         std::string UnetImager::make_output_name()
         {
                 char buffer[64];
                 snprintf(buffer, sizeof(buffer), "mask-%06zu", counter_);
                 return std::string(buffer);
         }
+ 
+        std::string UnetImager::get_image_path()
+        {
+                std::filesystem::path dir = session_.current_path();
+                std::filesystem::path path = dir /= make_image_name();
+                return path;
+        }
+ 
+        void UnetImager::try_unet(std::string image_path,
+                                  std::string output_name)
+        {
+                try {
+                        send_python_request(image_path, output_name);
+                } catch (const std::runtime_error& e) {
+                        r_err("UnetImager: exception: %s", e.what());
+                }
+        }
          
         bool UnetImager::grab()
         {
                 bool success = false;
                 if (Imager::grab()) {
-                        std::string path = make_image_name();
+                        std::string path = get_image_path();
                         std::string name = make_output_name();
-                        std::thread t([this, path, name]() {
-                                        send_python_request(path, name);
-                                });
+                        std::thread t([this, path, name]() { try_unet(path, name); });
                         t.detach();
                         success = true;
                 }
