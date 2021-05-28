@@ -69,6 +69,7 @@
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
+#include <RegistryServer.h>
 
 std::atomic<bool> quit(false);
 
@@ -112,6 +113,11 @@ int main(int argc, char** argv)
                 std::string config_file = options.get_config_file();
                 r_info("Romi Rover: Using configuration file: '%s'", config_file.c_str());
                 JsonCpp config = JsonCpp::load(config_file.c_str());
+
+                // Registry
+                std::string registry = options.get_value(romi::RoverOptions::registry);
+                if (!registry.empty())
+                        rcom::RegistryServer::set_address(registry.c_str());
                 
                 rpp::Linux linux;
 
@@ -159,7 +165,7 @@ int main(int argc, char** argv)
                 double slice_duration = (double) config["oquam"]["path-slice-duration"];
                 double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
 
-                romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
+                romi::AxisIndex homing[3] = { romi::kAxisZ, romi::kAxisX, romi::kAxisY };
                 //romi::AxisIndex homing[3] = { romi::kNoAxis, romi::kNoAxis, romi::kNoAxis };
                 romi::OquamSettings oquam_settings(range,
                                                    stepper_settings.maximum_speed,

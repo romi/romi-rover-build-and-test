@@ -34,8 +34,11 @@ namespace romi {
         {
         protected:
                 
-                bool grab();
+                bool grab() override;
                 std::string make_output_name();
+                std::string get_image_path();
+                void try_unet(std::string image_path,
+                              std::string output_name);
 
         public:
                 UnetImager(ISession& session, ICamera& camera);

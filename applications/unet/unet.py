@@ -34,7 +34,7 @@ def load_svm_model(path):
     global svm_coeff
     global svm_intercepts
     svm_coeff = np.loadtxt(f"{path}/%s_coefs.txt" % svm_name)
-    svm_intercepts = np.loadtxt("{path}/%s_intercepts.txt" % svm_name)
+    svm_intercepts = np.loadtxt(f"{path}/%s_intercepts.txt" % svm_name)
 
 
 def erode_dilate(mask, er_it=5, dil_it=25):
@@ -88,8 +88,10 @@ def get_pred_unet(path, output_name):
     filename = os.path.basename(path)
     img = cv2.imread(path)
     h, w, _ = img.shape
+    
     img = cv2.resize(img, (model_config['input_width'],
                            model_config['input_height']))
+    
     img = img.astype(np.float32)
     img[:, :, 0] -= 103.939
     img[:, :, 1] -= 116.779
@@ -97,12 +99,12 @@ def get_pred_unet(path, output_name):
     img = img[:, :, ::-1]
     
     t0 = time.time()
+
     pr = model.predict(np.array([img]))[0]
     
     pr = pr.reshape((model.output_height,
                      model.output_width,
                      model.n_classes)).argmax(axis=2)
-    
     colors=[[0,0,0], [255,255,255], [0,0,255]]
     
     seg_img = np.zeros((model.output_height, model.output_width, 3))
@@ -112,21 +114,19 @@ def get_pred_unet(path, output_name):
         seg_img[:, :, 0] += ((seg_arr_c)*(colors[c][0])).astype('uint8')
         seg_img[:, :, 1] += ((seg_arr_c)*(colors[c][1])).astype('uint8')
         seg_img[:, :, 2] += ((seg_arr_c)*(colors[c][2])).astype('uint8')
+
+    seg_img = cv2.resize(seg_img, (w, h))
         
-        seg_img = cv2.resize(seg_img, (w, h))
-        
-        cv2.imwrite(folder + "/" + output_name + "_rgb.png", seg_img)
-        cv2.imwrite(folder + "/" + output_name + ".png", seg_img[:,:,0])
-    
+    cv2.imwrite(folder + "/" + output_name + "_rgb.png", seg_img)
+    cv2.imwrite(folder + "/" + output_name + ".png", seg_img[:,:,0])
 
 
     
 def handle_unet_request(params):
     image_path = params["path"]
     output_name = params["output-name"]
-    print(f"New request, image {image_path}")
+    print(f"New request, image: {image_path}, output name: {output_name}")
     return get_pred_unet(image_path, output_name)
-
 
 async def server_callback(websocket, path):
     global server
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     
     server = Server("python",
                     {
-                        "unet": handle_unet_request
+                        "unet": handle_unet_request,
                         "svm": handle_svm_request
                     },
                     args.registry, args.ip)

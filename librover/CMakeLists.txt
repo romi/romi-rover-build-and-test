@@ -19,7 +19,6 @@ set(SOURCES
         include/som/fixed.h
         include/som/Real.h
         include/som/SelfOrganizedMap.h
-        include/som/slic.h
         include/som/SOM.h
         include/som/Superpixels.h
         include/unet/PythonSegmentation.h
@@ -43,7 +42,6 @@ set(SOURCES
         src/som/SOM.cpp
         src/som/Superpixels.cpp
         src/som/fixed.c
-        src/som/slic.cpp
 
         src/unet/PythonSegmentation.cpp
         src/unet/PythonSVM.cpp
