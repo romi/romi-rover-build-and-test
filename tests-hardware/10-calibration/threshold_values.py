@@ -4,9 +4,7 @@ import numpy as np
 def nothing(x):
     pass
 
-file="/home/kodda/Data/robot_chatelain_2020/calibration-20200903/calibration-0.000-0.285-0.315.jpg"
-
-file="/home/hanappe/projects/ROMI/DATA/2020/Chatelain/calibration-20200910/calibration-0.000-0.570-0.000.jpg"
+file="images/calibration-0.000-0.450--0.180.jpg"
 # (hMin = 130 , sMin = 197, vMin = 109), (hMax = 154 , sMax = 255, vMax = 255)
 
 # Load image

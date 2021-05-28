@@ -5,11 +5,11 @@
                 "left": -1,
                 "right": 1
             },
-            "maximum_signal_amplitude": 40,
+            "maximum_signal_amplitude": 20,
             "pid": {
-                "kd": 0.030000,
-                "ki": 0.100000,
-                "kp": 0.500000
+                "kd": 0.000000,
+                "ki": 0.000000,
+                "kp": 1.200000
             },
             "use_pid": true
         },
@@ -22,7 +22,7 @@
         }
     },
     "oquam": {
-        "cnc-range": [[0, 0.560000], [0, 0.600000], [-0.160000, 0]],
+        "cnc-range": [[0, 0.950000], [0, 0.900000], [-0.180000, 0]],
         "controller-classname": "stepper-controller",
         "path-maximum-deviation": 0.010000,
         "path-slice-duration": 0.020000,
@@ -134,7 +134,7 @@
         "cnc-classname": "remote-cnc",
         "cropper": "imagecropper",
         "imagecropper": {
-            "workspace": [562, 59, 700, 728]
+            "workspace": [335, 79, 934, 888]
         },
         "ortools": {
             "print": false

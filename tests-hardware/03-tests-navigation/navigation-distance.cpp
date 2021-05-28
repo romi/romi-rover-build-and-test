@@ -59,9 +59,35 @@ void SignalHandler(int signal)
 int main(int argc, char** argv)
 {
         romi::RoverOptions options;
+        romi::Option distance_option = { "distance", true, "1.0", "The travel distance" };
+        options.add_option(distance_option);
+        romi::Option speed_option = { "speed", true, "0.1", "The travel speed" };
+        options.add_option(speed_option);
         options.parse(argc, argv);
         options.exit_if_help_requested();
 
+        std::string distance_value = options.get_value("distance");
+        if (distance_value.empty()) {
+                r_err("No distance");
+                return 1;
+        }
+        double distance = std::stod(distance_value);
+        std::string speed_value = options.get_value("speed");
+        double speed = std::stod(speed_value);
+
+        if (distance < -10.0 || distance > 10.0) {
+                r_err("Invalid distance: %f (must be in [-10, 10] range", distance);
+                return 1;
+        }
+
+        if (speed < -1.0 || speed > 1.0) {
+                r_err("Invalid speed: %f (must be in [-1, 1] range", speed);
+                return 1;
+        }
+        
+        r_info("Navigating %f meters at speed of %.0f%% of maximum speed",
+               distance, 100.0 * speed);
+        
         r_log_init();
         r_log_set_app("navigation");
 
@@ -79,7 +105,8 @@ int main(int argc, char** argv)
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 
                 std::string device = romi::get_brush_motor_device(options, config);
-                std::shared_ptr<romiserial::RSerial>serial = std::make_shared<romiserial::RSerial>(device, 115200, 1);
+                std::shared_ptr<romiserial::RSerial>serial
+                        = std::make_shared<romiserial::RSerial>(device, 115200, 1);
                 auto romi_serial = romiserial::RomiSerialClient::create(device);
                 //romi_serial.set_debug(true);
 
@@ -90,7 +117,7 @@ int main(int argc, char** argv)
 
                 romi::Navigation navigation(driver, rover);
 
-                navigation.move(1.0, 0.3);
+                navigation.move(distance, speed);
                 
         } catch (std::exception& e) {
                 r_err(e.what());

@@ -3,7 +3,7 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as pl
 import cv2
 
-folder = "/home/hanappe/projects/ROMI/DATA/2020/Chatelain/calibration-20200910"
+folder = "images"
 
 
 def reg_direct(x, y, plotit=False):

@@ -35,6 +35,12 @@ install(TARGETS 06-tests-remote-camera-grab DESTINATION bin)
 
 #
 
+
+add_executable(10-calibration-move-and-grab 10-calibration/move-and-grab.cpp)
+target_link_libraries(10-calibration-move-and-grab romi r)
+
+#
+
 set(GPIO_SOURCES
   07-tests-gpio/GpioFileDescriptor.cpp
   07-tests-gpio/GpioFileDescriptor.h
