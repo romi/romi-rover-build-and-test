@@ -74,9 +74,9 @@ namespace romi {
                 connected_components_->compute(session, dilated_mask, components);
                 session.store_png("components", components);
 
-                double diameter_pixels = cropper_->map_meters_to_pixels(tool_diameter);
-                size_t max_centers = (size_t) (1.1
-                                               * (double) (mask.width() * mask.height())
+                double diameter_pixels = cropper_->map_meters_to_pixels(tool_diameter
+                                                                        + 0.010);
+                size_t max_centers = (size_t) ((double) (mask.width() * mask.height())
                                                / (diameter_pixels * diameter_pixels));
 
                 Centers centers = romi::calculate_centers(mask, max_centers);
