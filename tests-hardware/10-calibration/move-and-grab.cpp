@@ -154,6 +154,7 @@ int main(int argc, char** argv)
                                                    stepper_settings.steps_per_meter,
                                                    maximum_deviation,
                                                    slice_duration,
+                                                   1.0,
                                                    homing);
                 romi::Oquam oquam(cnc_controller, oquam_settings, session);
 

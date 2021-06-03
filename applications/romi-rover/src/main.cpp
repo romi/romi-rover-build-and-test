@@ -167,12 +167,15 @@ int main(int argc, char** argv)
 
                 romi::AxisIndex homing[3] = { romi::kAxisZ, romi::kAxisX, romi::kAxisY };
                 //romi::AxisIndex homing[3] = { romi::kNoAxis, romi::kNoAxis, romi::kNoAxis };
+                double max_steps_per_block = 32000.0; // Should be less than 2^16/2
+                double max_slice_duration = stepper_settings.compute_minimum_duration(max_steps_per_block);
                 romi::OquamSettings oquam_settings(range,
                                                    stepper_settings.maximum_speed,
                                                    stepper_settings.maximum_acceleration,
                                                    stepper_settings.steps_per_meter,
                                                    maximum_deviation,
                                                    slice_duration,
+                                                   max_slice_duration,
                                                    homing);
                 romi::Oquam oquam(cnc_controller, oquam_settings, session);
 
@@ -300,7 +303,7 @@ int main(int argc, char** argv)
 
                 
         } catch (JSONError& je) {
-                r_err("main: Failed to read the configuration file: %s", je.what());
+                r_err("main: Invalid configuration file: %s", je.what());
                 
         } catch (std::exception& e) {
                 r_err("main: exception: %s", e.what());

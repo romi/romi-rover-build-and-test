@@ -49,6 +49,19 @@ namespace romi {
         std::vector<Path> Pipeline::run(ISession& session, Image& camera,
                                         double tool_diameter)
         {
+                std::vector<Path> result;
+                try {
+                        result = try_run(session, camera, tool_diameter);
+                } catch (const std::exception& e) {
+                        r_warn("Pipeline::run: caught exception: %s", e.what());
+                        r_warn("The path computation failed. Returning an empty path.");
+                }
+                return result;
+        }
+        
+        std::vector<Path> Pipeline::try_run(ISession& session, Image& camera,
+                                            double tool_diameter)
+        {       
                 Image crop;
                 crop_image(session, camera, tool_diameter, crop);
                 session.store_png("crop", crop);
@@ -63,7 +76,7 @@ namespace romi {
                 Image dilated_mask;
                 
                 // TODO
-                if (false) {
+                if (true) {
                         mask.dilate(kAstarResolution, dilated_mask);
                         session.store_png("dilated-mask", dilated_mask);
                 } else {
@@ -74,9 +87,9 @@ namespace romi {
                 connected_components_->compute(session, dilated_mask, components);
                 session.store_png("components", components);
 
-                double diameter_pixels = cropper_->map_meters_to_pixels(tool_diameter);
-                size_t max_centers = (size_t) (1.1
-                                               * (double) (mask.width() * mask.height())
+                double diameter_pixels = cropper_->map_meters_to_pixels(tool_diameter
+                                                                        + 0.010);
+                size_t max_centers = (size_t) ((double) (mask.width() * mask.height())
                                                / (diameter_pixels * diameter_pixels));
 
                 Centers centers = romi::calculate_centers(mask, max_centers);
@@ -101,9 +114,45 @@ namespace romi {
                         snprintf(filename, sizeof(filename), "path-initial-%02zu", i);
                         session.store_path(filename, 0, initial_path);
 
+                        {
+                                rpp::MemBuffer buffer;
+                                int w = (int) mask.width();
+                                int h = (int) mask.height();
+                                v3 scale((double) mask.width(), (double) mask.height(), 1.0);
+
+                                buffer.printf("<?xml version=\"1.0\" "
+                                              "encoding=\"UTF-8\" standalone=\"no\"?>"
+                                              "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" "
+                                              "xmlns=\"http://www.w3.org/2000/svg\" "
+                                              "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
+                                              "version=\"1.0\" "
+                                              "width=\"%dpx\" height=\"%dpx\">\n",
+                                              w, h);
+
+                                buffer.printf("    <image xlink:href=\"crop.png\" "
+                                              "x=\"0\" y=\"0\" "
+                                              "width=\"%dpx\" height=\"%dpx\" />\n",
+                                              w, h);
+
+                                for (size_t k = 0; k < initial_path.size(); k++) {
+                                        double x = initial_path[k].x() * scale.x();
+                                        double y = initial_path[k].y() * scale.y();
+                                        buffer.printf("    <circle cx=\"%dpx\" cy=\"%dpx\" "
+                                                      "r=\"3px\" fill=\"red\" stroke=\"none\" />\n",
+                                                      (int) x, (int) y);
+                                }
+
+                                buffer.printf("</svg>\n");
+                
+                                char filename[64];
+                                snprintf(filename, sizeof(filename), "path-debug-%02zu.svg", i);
+                                session.store_svg(filename, buffer.tostring());
+                        }
+                        
                         // check path for plant crossings
                         Path path;
                         check_path(session, mask, initial_path, path, i);
+                        
                         snprintf(filename, sizeof(filename), "path-%02zu", i);
                         session.store_path(filename, 0, path);
 
@@ -224,6 +273,9 @@ namespace romi {
                 
                 // TODO
                 if (length == 0) {
+                        r_debug("Pipeline: A*: Failed to find a path");
+                        r_debug("From: %f, %f", start.x(), start.y());
+                        r_debug("To:   %f, %f", end.x(), end.y());
                         throw std::runtime_error("*** A*: FAILED TO FIND A PATH ***");
                 }
 

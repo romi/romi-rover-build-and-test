@@ -93,6 +93,9 @@ int main(int argc, char** argv)
 
                 romi::ICNCController& controller = factory.create_controller(options, config);
 
+                double max_steps_per_block = 32000.0; // Should be less than 2^16/2
+                double max_slice_duration = stepper_settings.compute_minimum_duration(max_steps_per_block);
+                
                 romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
                 romi::OquamSettings oquam_settings(range,
                                                    stepper_settings.maximum_speed,
@@ -100,6 +103,7 @@ int main(int argc, char** argv)
                                                    stepper_settings.steps_per_meter,
                                                    maximum_deviation,
                                                    slice_duration,
+                                                   max_slice_duration,
                                                    homing);
                 romi::Oquam oquam(controller, oquam_settings, session);
 

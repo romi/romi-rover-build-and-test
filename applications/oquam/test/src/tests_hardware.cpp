@@ -44,7 +44,7 @@ protected:
 	hardware_tests()
                 : range(xmin, xmax),
                   settings(range, vmax, amax, scale, 0.005,
-                           slice_interval, homing),
+                           slice_interval, 1.0, homing),
                   linux(),
                   romiDeviceData(),
                   softwareVersion(),
