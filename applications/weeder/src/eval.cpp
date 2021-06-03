@@ -28,7 +28,6 @@
 #include <rover/RoverOptions.h>
 #include <camera/FileCamera.h>
 #include <weeder/Weeder.h>
-#include <weeder/PipelineFactory.h>
 #include <fake/FakeCNC.h>
 #include <oquam/Oquam.h>
 #include <oquam/StepperSettings.h>
@@ -39,6 +38,7 @@
 #include "data_provider/Gps.h"
 #include "data_provider/GpsLocationProvider.h"
 
+#include <FakePipelineFactory.h>
 #include "Clock.h"
 #include "ClockAccessor.h"
 
@@ -54,6 +54,11 @@ void SignalHandler(int signal)
                 r_err("Unknown signam received %d", signal);
         }
 }
+
+static const std::string cropper("cropper");
+const std::string meters_to_pixels("meters_to_pixels");
+const std::string components("components");
+const std::string mask("mask");
 
 
 static std::vector<romi::Option> eval_options = {
@@ -71,11 +76,16 @@ static std::vector<romi::Option> eval_options = {
                 
         { romi::RoverOptions::camera_image, true, nullptr,
           "The path of the image file for the file camera."},
-                
-        { "components", true, nullptr,
+
+        { cropper.c_str(), true, nullptr,
+                "The cropped image"},
+        { meters_to_pixels.c_str(), true, "1000",
+                "The cropped image"},
+
+        { components.c_str(), true, nullptr,
           "The connected components image "},
                 
-        { "mask", true, nullptr,
+        { mask.c_str(), true, nullptr,
           "The mask "}
 };
 
@@ -136,7 +146,7 @@ int main(int argc, char** argv)
                 romi::FileCamera camera(options.get_value("camera-image"));
 
                 // Weeding pipeline
-                romi::PipelineFactory factory;
+                romi::FakePipelineFactory factory;
                 romi::IPipeline& pipeline = factory.build(range, config_file, options);
 
                 // Weeder

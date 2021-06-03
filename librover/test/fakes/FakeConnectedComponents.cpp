@@ -21,30 +21,22 @@
   <http://www.gnu.org/licenses/>.
 
  */
-
-#include "weeder/FakeImageCropper.h"
+#include "FakeConnectedComponents.h"
 
 namespace romi {
-        
-        FakeImageCropper::FakeImageCropper(Image& cropped_image, double meters_to_pixels)
-                : cropped_image_(),
-                  meters_to_pixels_(meters_to_pixels)
+
+        FakeConnectedComponents::FakeConnectedComponents(Image& components)
+                : components_()
         {
-                cropped_image_ = cropped_image;
-        }
-        
-        double FakeImageCropper::map_meters_to_pixels(double meters)
-        {
-                return meters_to_pixels_ * meters;
+                components_ = components;
         }
                 
-        bool FakeImageCropper::crop(ISession &session, Image &camera_image,
-                                    double tool_diameter, Image &cropped_image)
+        void FakeConnectedComponents::compute(ISession& session, Image &mask,
+                                              Image &components)
         {
                 (void) session;
-                (void) camera_image;
-                (void) tool_diameter;
-                cropped_image = cropped_image_;
-                return true;
+                (void) mask;
+                
+                components = components_;
         }
 }

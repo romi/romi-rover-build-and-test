@@ -30,8 +30,6 @@ set(SOURCES
         include/weeder/IImageSegmentation.h
         include/weeder/IPathPlanner.h
         include/weeder/IPipeline.h
-        include/weeder/FakeConnectedComponents.h
-        include/weeder/FakeImageCropper.h
         include/weeder/PipelineFactory.h
         include/weeder/Pipeline.h
 
@@ -51,8 +49,6 @@ set(SOURCES
         src/astar/AStar.cpp
         
         src/weeder/ConnectedComponents.cpp
-        src/weeder/FakeImageCropper.cpp
-        src/weeder/FakeConnectedComponents.cpp
         src/weeder/Pipeline.cpp
         src/weeder/PipelineFactory.cpp
         src/weeder/Weeder.cpp
@@ -75,7 +71,7 @@ target_include_directories(rover
 target_link_libraries(rover pthread romi)
 
 # Always build the mocks library.
-#add_subdirectory(test/mocks)
+add_subdirectory(test/fakes)
 if(BUILD_TESTS)
     add_subdirectory(test)
 endif()

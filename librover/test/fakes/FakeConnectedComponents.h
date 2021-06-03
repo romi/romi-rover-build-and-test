@@ -21,22 +21,25 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "weeder/FakeConnectedComponents.h"
+
+#ifndef __ROMI_FAKE_CONNECTED_COMPONENTS_H
+#define __ROMI_FAKE_CONNECTED_COMPONENTS_H
+
+#include "weeder/IConnectedComponents.h"
 
 namespace romi {
 
-        FakeConnectedComponents::FakeConnectedComponents(Image& components)
-                : components_()
+        class FakeConnectedComponents : public IConnectedComponents
         {
-                components_ = components;
-        }
+        protected:
+                Image components_;
                 
-        void FakeConnectedComponents::compute(ISession& session, Image &mask,
-                                              Image &components)
-        {
-                (void) session;
-                (void) mask;
+        public:
+                FakeConnectedComponents(Image& components);
+                ~FakeConnectedComponents() override = default;
                 
-                components = components_;
-        }
+                void compute(ISession& session, Image &mask, Image &components) override;
+        };
 }
+
+#endif // __ROMI_FAKE_CONNECTED_COMPONENTS_H

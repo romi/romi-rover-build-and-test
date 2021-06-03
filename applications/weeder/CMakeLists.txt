@@ -9,7 +9,7 @@ target_link_libraries(weeder rcompp-lite rpp  romi rover)
 
 add_executable(weeder_eval src/eval.cpp)
 
-target_link_libraries(weeder_eval rcompp-lite rpp m  romi rover)
+target_link_libraries(weeder_eval rcompp-lite rpp m  romi rover roverfakes)
 
 if(BUILD_TESTS)
     add_subdirectory(test)

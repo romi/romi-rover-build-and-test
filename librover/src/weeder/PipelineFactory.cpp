@@ -22,14 +22,17 @@
 
  */
 
+// TBD: NO FAKE CODE IN PRODUCTION CODE!
+// TBD: Override this class with FakePipelineFactory (In romifakes library)
+// TBD: Move all the fake code to FakePipelineFactory.
+// In build_pipeline build fake if it's in config OR options. If not call base class and build real class.
+
 #include <constraintsolver/GConstraintSolver.h>
 #include <cv/ImageCropper.h>
-#include <cv/ImageIO.h>
 
 #include "weeder/PipelineFactory.h"
 #include "weeder/Pipeline.h"
 #include "weeder/ConnectedComponents.h"
-#include "weeder/FakeConnectedComponents.h"
 #include "svm/SVMSegmentation.h"
 #include "unet/PythonUnet.h"
 #include "unet/PythonSVM.h"
@@ -39,7 +42,7 @@
 namespace romi {
         
         std::unique_ptr<IImageCropper>
-        PipelineFactory::build_cropper(CNCRange &range, JsonCpp weeder)
+        PipelineFactory::build_cropper(CNCRange &range, JsonCpp& weeder)
         {
                 const char *name = (const char *) weeder["cropper"];
                 JsonCpp properties = weeder[name];
@@ -47,7 +50,7 @@ namespace romi {
         }
         
         std::unique_ptr<IImageSegmentation> 
-        PipelineFactory::build_segmentation(JsonCpp weeder)
+        PipelineFactory::build_segmentation(JsonCpp& weeder)
         {
                 const char *name = (const char *) weeder["segmentation"];
                 return build_segmentation(name, weeder);
@@ -73,21 +76,13 @@ namespace romi {
         }
                 
         std::unique_ptr<IConnectedComponents>
-        PipelineFactory::build_connected_components(romi::GetOpt& options)
+        PipelineFactory::build_connected_components()
         {
-                std::string path = options.get_value("components");
-                if (path.empty()) {
                     return std::make_unique<ConnectedComponents>();
-                } else {
-                        Image image;
-                        if (!romi::ImageIO::load(image, path.c_str()))
-                                throw std::runtime_error("Couldn't load components image");
-                        return std::make_unique<FakeConnectedComponents>(image);
-                }
         }
         
         std::unique_ptr<IPathPlanner>
-        PipelineFactory::build_planner(JsonCpp weeder)
+        PipelineFactory::build_planner(JsonCpp& weeder)
         {
                 std::string name = (const char *) weeder["path"];
                 JsonCpp properties = weeder[name.c_str()];
@@ -109,13 +104,12 @@ namespace romi {
                 }
         }
         
-        IPipeline& PipelineFactory::build(CNCRange &range, JsonCpp& config,
-                                          romi::GetOpt& options)
+        IPipeline& PipelineFactory::build(CNCRange &range, JsonCpp& config)
         {
                 JsonCpp weeder = config["weeder"];
 
                 auto cropper = build_cropper(range, weeder);
-                auto connected_components = build_connected_components(options);
+                auto connected_components = build_connected_components();
                 
                 auto segmentation = build_segmentation(weeder);
                 auto planner = build_planner(weeder);
