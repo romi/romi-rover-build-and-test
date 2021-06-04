@@ -24,6 +24,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <log.h>
 #include <cv/cv.h>
 #include "constraintsolver/GConstraintSolver.h"
 
@@ -109,21 +110,20 @@ namespace romi {
                                            const std::vector<std::vector<int>> &locations,
                                            const Image &mask)
         {
-                std::cout << "Problem solved in " << routing.solver()->wall_time() << "ms\r\n";
-
+                r_info("TSP route calculated in %lld ms\r\n", routing.solver()->wall_time());
                 int64_t print_index = routing.Start(0);
                 std::stringstream output_route;
                 Path path;
-                
-                while (routing.IsEnd(print_index) == false) {
-                        auto location_index = (size_t) manager.IndexToNode(print_index).value();
-                        double x = locations[location_index][0] / (double) mask.width();
-                        double y = locations[location_index][1] / (double) mask.height();
-                        path.push_back(v3(x, y, 0));
-                        output_route << "{" << x << ", " << y << "},\r\n";
-                        print_index = solution.Value(routing.NextVar(print_index));
+
+                while (!routing.IsEnd(print_index)) {
+                    auto location_index = (size_t) manager.IndexToNode(print_index).value();
+                    double x = locations[location_index][0] / (double) mask.width();
+                    double y = locations[location_index][1] / (double) mask.height();
+                    path.push_back(v3(x, y, 0));
+                    print_index = solution.Value(routing.NextVar(print_index));
+
                 }
-                std::cout << "Route: \r\n" << output_route.str();
+                r_info("Distance %lld\r\n", solution.ObjectiveValue());
                 return path;
         }
 
@@ -151,10 +151,12 @@ namespace romi {
                 operations_research::RoutingSearchParameters searchParameters
                         = operations_research::DefaultRoutingSearchParameters();
                 searchParameters.set_first_solution_strategy(
-                        operations_research::FirstSolutionStrategy::PATH_CHEAPEST_ARC);
+                        operations_research::FirstSolutionStrategy::SAVINGS);
                 const operations_research::Assignment *solution
                         = routing.SolveWithParameters(searchParameters);
-                
+                if (solution == nullptr)
+                    throw std::runtime_error("Contraint Solver failed to find path.");
+
                 return build_path(manager, routing, *solution, locations, mask);
         }
 }
