@@ -56,30 +56,27 @@ namespace romi {
                
         protected:
                 std::unique_ptr<IPipeline> _pipeline;
-                
-                std::unique_ptr<IImageCropper>
-                build_cropper(CNCRange &range, JsonCpp weeder);
 
-                std::unique_ptr<IImageSegmentation>
-                build_segmentation(JsonCpp weeder);
-                
+            std::unique_ptr<IImageCropper>
+            build_cropper(CNCRange &range, JsonCpp& weeder);
+
+            std::unique_ptr<IImageSegmentation> build_segmentation(JsonCpp& weeder);
+
+            std::unique_ptr<IConnectedComponents> build_connected_components();
+
+            std::unique_ptr<IPathPlanner> build_planner(JsonCpp& weeder);
+
+        private:
                 std::unique_ptr<IImageSegmentation>
                 build_segmentation(const std::string& name, JsonCpp& weeder_props);
-                
-                std::unique_ptr<IConnectedComponents>
-                build_connected_components(romi::GetOpt& options);
-                
-                
-                std::unique_ptr<IPathPlanner> build_planner(JsonCpp weeder);
-                
                 std::unique_ptr<IPathPlanner> build_planner(const std::string& name,
                                                             JsonCpp& properties);
-                
+
         public:
                 PipelineFactory() : _pipeline() {}
                 virtual ~PipelineFactory() = default;
-                
-                IPipeline& build(CNCRange &range, JsonCpp& config, romi::GetOpt& options);
+
+                IPipeline& build(CNCRange &range, JsonCpp& config);
         };
 }
 

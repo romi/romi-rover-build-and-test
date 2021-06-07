@@ -1,21 +1,16 @@
-{    
+{
     "oquam": {
-        
-        "cnc-range": [[0, 0.560], [0, 0.600], [-0.160, 0]],
-        
-        "path-slice-duration": 0.020,
-        
-        "path-maximum-deviation": 0.01,
-
+        "cnc-range": [[0, 0.950000], [0, 0.900000], [-0.180000, 0]],
         "controller-classname": "stepper-controller",
-
+        "path-maximum-deviation": 0.010000,
+        "path-slice-duration": 0.020000,
         "stepper-settings": {
-            "steps-per-revolution": [ 200.0, 200.0, 200.0 ],
-            "microsteps": [ 8.0, 8.0, 1.0 ],
-            "gears-ratio": [ 1.0, 1.0, 1.0 ],
-            "maximum-rpm": [ 300.0, 300.0, 300.0 ],
-            "displacement-per-revolution": [ 0.04, 0.04, -0.002 ],
-            "maximum-acceleration": [ 0.3, 0.3, 0.03 ]
+            "displacement-per-revolution": [0.040000, 0.040000, -0.002000],
+            "gears-ratio": [1, 1, 1],
+            "maximum-acceleration": [0.300000, 0.300000, 0.030000],
+            "maximum-rpm": [300, 300, 300],
+            "microsteps": [8, 8, 1],
+            "steps-per-revolution": [200, 200, 200]
         }
     },
     
@@ -53,7 +48,7 @@
         "cnc-classname": "remote-cnc",
         
         "cropper": "imagecropper",
-        "segmentation": "unet",
+        "segmentation": "svm",
         "path": "ortools",
 
         "usb-camera": {
@@ -62,7 +57,7 @@
         },
         
         "imagecropper": {
-            "workspace": [562, 59, 700, 728]
+            "workspace": [335, 79, 934, 888]
         },
         "svm": {
             "a": [-0.04152306,  0.0472676 , -0.00709334],

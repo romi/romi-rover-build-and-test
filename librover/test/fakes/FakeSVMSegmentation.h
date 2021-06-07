@@ -22,24 +22,24 @@
 
  */
 
-#ifndef __ROMI_FAKE_CONNECTED_COMPONENTS_H
-#define __ROMI_FAKE_CONNECTED_COMPONENTS_H
+#ifndef __ROMI_FAKE_SVM_SEGMENTATION_H
+#define __ROMI_FAKE_SVM_SEGMENTATION_H
 
-#include "IConnectedComponents.h"
+#include "session/ISession.h"
+#include "weeder/IImageSegmentation.h"
 
 namespace romi {
 
-        class FakeConnectedComponents : public IConnectedComponents
+        class FakeSVMSegmentation : public IImageSegmentation
         {
-        protected:
-                Image components_;
-                
         public:
-                FakeConnectedComponents(Image& components);
-                ~FakeConnectedComponents() override = default;
-                
-                void compute(ISession& session, Image &mask, Image &components) override;
+                explicit FakeSVMSegmentation(Image& mask);
+
+                virtual ~FakeSVMSegmentation() override = default;
+                bool create_mask(ISession &session, Image &image, Image &mask) override;
+        private:
+            romi::Image mask_;
         };
 }
 
-#endif // __ROMI_FAKE_CONNECTED_COMPONENTS_H
+#endif // __ROMI_SVM_SEGMENTATION_H

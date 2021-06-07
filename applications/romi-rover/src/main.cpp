@@ -205,7 +205,7 @@ int main(int argc, char** argv)
                 // Weeder pipeline
                 r_info("main: Creating weeder pipeline");
                 romi::PipelineFactory pipeline_factory;
-                romi::IPipeline& pipeline = pipeline_factory.build(range, config, options);
+                romi::IPipeline& pipeline = pipeline_factory.build(range, config);
 
                 // Weeder
                 r_info("main: Creating weeder");
