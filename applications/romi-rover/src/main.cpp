@@ -224,9 +224,11 @@ int main(int argc, char** argv)
                                               static_cast<int>(rover_config.encoder_steps),
                                               rover_config.max_revolutions_per_sec);
                 
+                romi::WheelOdometry wheelodometry(rover_config, driver);
+                
                 // Navigation
                 r_info("main: Creating navigation");
-                romi::Navigation navigation(driver, rover_config);
+                romi::Navigation navigation(driver, rover_config, wheelodometry, session);
 
                 // SpeedController
                 r_info("main: Creating speed controller");

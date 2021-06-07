@@ -24,19 +24,26 @@
 #include <exception>
 #include <atomic>
 #include <csignal>
-
 #include <syslog.h>
-#include <rpc/RcomServer.h>
+
 #include <RomiSerialClient.h>
 #include <RSerial.h>
+#include <Linux.h>
+#include <ClockAccessor.h>
 
 #include <hal/BrushMotorDriver.h>
 #include <rover/Navigation.h>
 #include <rover/NavigationSettings.h>
-#include "configuration/ConfigurationProvider.h"
+#include <configuration/ConfigurationProvider.h>
 #include <rover/RoverOptions.h>
+#include <rover/WheelOdometry.h>
+#include <data_provider/RomiDeviceData.h>
+#include <data_provider/SoftwareVersion.h>
+#include <data_provider/Gps.h>
+#include <data_provider/GpsLocationProvider.h>
+#include <session/Session.h>
 #include <rpc/NavigationAdaptor.h>
-#include <thread>
+#include <rpc/RcomServer.h>
 
 std::atomic<bool> quit(false);
 
@@ -77,8 +84,23 @@ int main(int argc, char** argv)
                 r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
                 JsonCpp config = JsonCpp::load(config_file.c_str());
 
+                // Session
+                r_info("main: Creating session");
+                rpp::Linux linux;
+                romi::RomiDeviceData romiDeviceData;
+                romi::SoftwareVersion softwareVersion;
+                romi::Gps gps;
+                std::unique_ptr<romi::ILocationProvider> locationProvider
+                        = std::make_unique<romi::GpsLocationProvider>(gps);
+                std::string session_directory = romi::get_session_directory(options, config);
+
+                romi::Session session(linux, session_directory, romiDeviceData,
+                                      softwareVersion, std::move(locationProvider));
+                session.start("hw_observation_id");
+
+                
                 JsonCpp rover_settings = config["navigation"]["rover"];
-                romi::NavigationSettings rover(rover_settings);
+                romi::NavigationSettings navigation_settings(rover_settings);
                 
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 
@@ -89,17 +111,19 @@ int main(int argc, char** argv)
 
                 romi::BrushMotorDriver driver(romi_serial,
                                               driver_settings,
-                                              static_cast<int>(rover.encoder_steps),
-                                              rover.max_revolutions_per_sec);
+                                              (int) navigation_settings.encoder_steps,
+                                              navigation_settings.max_revolutions_per_sec);
 
-                romi::Navigation navigation(driver, rover);
+                romi::WheelOdometry wheelodometry(navigation_settings, driver);
+                romi::Navigation navigation(driver, navigation_settings,
+                                            wheelodometry, session);
 
                 romi::NavigationAdaptor adaptor(navigation);
                 auto server = romi::RcomServer::create("navigation", adaptor);
 
                 while (!quit) {
                         server->handle_events();
-                        std::this_thread::sleep_for(std::chrono::milliseconds (10));
+                        rpp::ClockAccessor::GetInstance()->sleep(0.010);
                 }
                 
         } catch (std::exception& e) {

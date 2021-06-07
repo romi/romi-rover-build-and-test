@@ -60,13 +60,13 @@ namespace romi {
         {
                 std::filesystem::path dir = session.current_path();
                 std::filesystem::path path = dir /= kDefaultImageName;
-                session.current_path();
                 return path.string();
         }
 
         void PythonSegmentation::store_image(ISession &session, Image &image)
         {
                 if (!session.store_jpg(kDefaultImageName, image)) {
+                        r_err("PythonSegmentation::store_image: store_jpg failed");
                         throw std::runtime_error("Failed to save the image");
                 }
         }

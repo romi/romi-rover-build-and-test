@@ -92,7 +92,7 @@ namespace romi {
                 size_t max_centers = (size_t) ((double) (mask.width() * mask.height())
                                                / (diameter_pixels * diameter_pixels));
 
-                Centers centers = romi::calculate_centers(mask, max_centers);
+                Centers centers = romi::calculate_centers(dilated_mask, max_centers);
 
                 {
                         rpp::MemBuffer buffer;
