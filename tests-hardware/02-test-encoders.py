@@ -6,21 +6,25 @@ import traceback
 from testlib import *
 from motor_controller import MotorController
 
+kTestSpeed = 300
+kTestDuration = 2.0
+
 def ask_prerequisites():
     request_confirmation("Did you run the motor tests?")
     request_confirmation("Are the encoders wired?")
     request_confirmation("Are the encoders values in the config file correct (encoder steps/rotation x gears ratio?")
 
 def test_encoder(controller, index):
+    global kTestSpeed
     encoders_before = controller.get_encoder_values()
     if index == 0:
-        left = 200
+        left = kTestSpeed
         right = 0
     elif index == 1:
         left = 0
-        right = 200
+        right = kTestSpeed
     controller.moveat(left, right)
-    time.sleep(1)
+    time.sleep(kTestDuration)
     controller.moveat(0, 0)
     encoders_after = controller.get_encoder_values()
     print("Encoder: before: {0}, after {1}".format(encoders_before[index],
