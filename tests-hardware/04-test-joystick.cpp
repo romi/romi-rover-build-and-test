@@ -58,6 +58,8 @@
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
+#include <data_provider/RomiDeviceData.h>
+#include <data_provider/SoftwareVersion.h>
 
 #include "Clock.h"
 #include "ClockAccessor.h"
@@ -105,7 +107,21 @@ int main(int argc, char** argv)
                 std::string config_file = options.get_config_file();
                 r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
                 JsonCpp config = JsonCpp::load(config_file.c_str());
-                
+
+                rpp::Linux linux;
+
+                // Session
+                romi::RomiDeviceData romiDeviceData;
+                romi::SoftwareVersion softwareVersion;
+                romi::Gps gps;
+                std::unique_ptr<romi::ILocationProvider> locationPrivider
+                        = std::make_unique<romi::GpsLocationProvider>(gps);
+                std::string session_directory = romi::get_session_directory(options, config);
+
+                romi::Session session(linux, session_directory, romiDeviceData,
+                                      softwareVersion, std::move(locationPrivider));
+                session.start("hw_observation_id");
+
                 // Display
                 const char *display_device = (const char *) config["ports"]["crystal-display"]["port"];
                 
@@ -114,7 +130,6 @@ int main(int argc, char** argv)
                 display.show(0, "Initializing");
                 
                 // Joystick
-                rpp::Linux linux;
                 const char *joystick_device = (const char *) config["ports"]["joystick"]["port"];
                 romi::LinuxJoystick joystick(linux, joystick_device);
                 romi::UIEventMapper joystick_event_mapper;
@@ -132,7 +147,8 @@ int main(int argc, char** argv)
                 romi::BrushMotorDriver driver(driver_serial, driver_settings,
                                               static_cast<int>(rover_config.encoder_steps),
                                               rover_config.max_revolutions_per_sec);
-                romi::Navigation navigation(driver, rover_config);
+                romi::WheelOdometry wheelodometry(rover_config, driver);
+                romi::Navigation navigation(driver, rover_config, wheelodometry, session);
 
                 // SpeedController
                 romi::SpeedController speed_controller(navigation, config);
@@ -147,17 +163,6 @@ int main(int argc, char** argv)
 
                 // Notifications
                 romi::FakeNotifications notifications;
-
-                // Session
-                romi::RomiDeviceData romiDeviceData;
-                romi::SoftwareVersion softwareVersion;
-                romi::Gps gps;
-                std::unique_ptr<romi::ILocationProvider> locationPrivider
-                        = std::make_unique<romi::GpsLocationProvider>(gps);
-                std::string session_directory = romi::get_session_directory(options, config);
-
-                romi::Session session(linux, session_directory, romiDeviceData,
-                                      softwareVersion, std::move(locationPrivider));
 
                 // Imager
                 romi::FakeImager imager;
