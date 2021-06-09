@@ -14,6 +14,7 @@ add_subdirectory(navigation)
 add_subdirectory(oquam)
 add_subdirectory(romi-rover)
 add_subdirectory(rcdiscover)
+add_subdirectory(scratch-test)
 
 if(${PI_BUILD})
     add_subdirectory(romi-camera)
