@@ -136,19 +136,19 @@ int main(int argc, char** argv)
                 //romi::Imager imager(session, *camera);
                 std::string observation_id("observe");
                 romi::UnetImager imager(session, *camera);
-                imager.start_recording(observation_id, 500, 500.00);
+                imager.start_recording(observation_id, 5, 500.00);
 
                 while (!quit) {
                         
                         try {
                             using namespace std::chrono_literals;
-                            std::this_thread::sleep_for(500ms);
                             if (!imager.is_recording())
                             {
-                                std::this_thread::sleep_for(500ms);
-//                                quit = true;
+                                imager.stop_recording();
+                                quit = true;
                                 r_info("Recording stopped Quitting Application");
                             }
+                            std::this_thread::sleep_for(500ms);
                         } catch (std::exception& e) {
                             quit = true;
                                 throw;

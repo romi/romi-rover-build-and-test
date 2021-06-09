@@ -43,6 +43,8 @@ namespace romi {
         private:
             ThreadsafeQueue<UnetImagerParams> grab_queue_;
             std::atomic<bool> quit_;
+            std::unique_ptr<std::thread> unet_thread_;
+            void stop_unet_processing();
         protected:
                 
                 bool grab() override;
@@ -53,6 +55,11 @@ namespace romi {
         public:
                 UnetImager(ISession& session, ICamera& camera);
                 ~UnetImager() override;
+            bool start_recording(const std::string& observation_id,
+                                 size_t max_images,
+                                 double max_duration) override;
+            bool stop_recording() override;
+            bool is_recording() override;
         };
 }
 

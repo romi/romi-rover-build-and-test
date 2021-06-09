@@ -29,10 +29,8 @@
 namespace romi {
         
         UnetImager::UnetImager(ISession& session, ICamera& camera)
-                : PythonUnet(), Imager(session, camera), grab_queue_(), quit_(false)
+                : PythonUnet(), Imager(session, camera), grab_queue_(), quit_(false), unet_thread_()
         {
-            std::thread t([this]() { try_unet(quit_); });
-            t.detach();
         }
  
         std::string UnetImager::make_output_name()
@@ -51,7 +49,6 @@ namespace romi {
  
         void UnetImager::try_unet(std::atomic<bool>& quit)
         {
-            r_debug("try_unet: thread started");
             while (!quit)
             {
                 try {
@@ -69,7 +66,7 @@ namespace romi {
                     r_err("try_unet: exception: %s", e.what());
                 }
             }
-            r_debug("try_unet: thread stopped");
+            r_debug("try_unet: quit");
         }
          
         bool UnetImager::grab()
@@ -79,14 +76,37 @@ namespace romi {
                         std::string path = get_image_path();
                         std::string name = make_output_name();
                         grab_queue_.push(UnetImagerParams{path, name});
-//                        std::thread t([this, path, name]() { try_unet(path, name); });
-//                        t.detach();
                         success = true;
                 }
                 return success;
         }
 
     UnetImager::~UnetImager() {
+        stop_unet_processing();
+    }
+
+    bool UnetImager::start_recording(const std::string &observation_id, size_t max_images, double max_duration) {
+        quit_ = false;
+        unet_thread_ = std::make_unique<std::thread>([this]() { try_unet(quit_); });
+        return Imager::start_recording(observation_id, max_images, max_duration);
+    }
+
+    bool UnetImager::stop_recording() {
+        stop_unet_processing();
+        return Imager::stop_recording();
+    }
+
+    bool UnetImager::is_recording() {
+            if (Imager::is_recording() || grab_queue_.size() > 0)
+                return true;
+            return false;
+    }
+
+    void UnetImager::stop_unet_processing() {
         quit_ = true;
+        if (unet_thread_) {
+            unet_thread_->join();
+            unet_thread_ = nullptr;
+        }
     }
 }
