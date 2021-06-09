@@ -123,7 +123,7 @@ int main(int argc, char** argv)
                 session.start("hw_observation_id");
 
                 // Display
-                const char *display_device = (const char *) config["ports"]["crystal-display"]["port"];
+                const char *display_device = (const char *) config["ports"]["display-device"]["port"];
                 
                 auto display_serial = romiserial::RomiSerialClient::create(display_device);
                 romi::CrystalDisplay display(display_serial);
