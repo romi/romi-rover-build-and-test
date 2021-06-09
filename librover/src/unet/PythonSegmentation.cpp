@@ -23,14 +23,16 @@
  */
 
 #include <cv/ImageIO.h>
-#include <rpc/RcomClient.h>
 #include "unet/PythonSegmentation.h"
 
 namespace romi {
 
         PythonSegmentation::PythonSegmentation(const std::string& function_name)
-                : function_name_(function_name)
+                : rpc_(), function_name_(function_name)
         {
+            rpc_ = romi::RcomClient::create("python", 30);
+            if (rpc_== nullptr)
+                throw std::runtime_error("rpc failed to connect.");
         }
                 
         bool PythonSegmentation::create_mask(ISession &session, Image &image, Image &mask)
@@ -80,9 +82,8 @@ namespace romi {
                 JsonCpp params = JsonCpp::construct("{\"path\": \"%s\", "
                                                     "\"output-name\": \"%s\"}",
                                                     path.c_str(), output_name.c_str());
-        
-                auto rpc = romi::RcomClient::create("python", 30);
-                rpc->execute(function_name_, params, response, error);
+
+                rpc_->execute(function_name_, params, response, error);
                 
                 if (error.code != 0) {
                         r_warn("Failed to call Python: %s", error.message.c_str());
