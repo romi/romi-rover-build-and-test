@@ -5,3 +5,5 @@ thirdparty
 *venv*
 *~
 *_deps/*
+/librcom/libr/*
+/libromi/libr/*
