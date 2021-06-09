@@ -24,12 +24,15 @@
 
 #include <functional>
 #include "unet/UnetImager.h"
+#include <ClockAccessor.h>
 
 namespace romi {
         
         UnetImager::UnetImager(ISession& session, ICamera& camera)
-                : PythonUnet(), Imager(session, camera) 
+                : PythonUnet(), Imager(session, camera), grab_queue_(), quit_(false)
         {
+            std::thread t([this]() { try_unet(quit_); });
+            t.detach();
         }
  
         std::string UnetImager::make_output_name()
@@ -46,14 +49,27 @@ namespace romi {
                 return path;
         }
  
-        void UnetImager::try_unet(std::string image_path,
-                                  std::string output_name)
+        void UnetImager::try_unet(std::atomic<bool>& quit)
         {
+            r_debug("try_unet: thread started");
+            while (!quit)
+            {
                 try {
-                        send_python_request(image_path, output_name);
+                    if (grab_queue_.size())
+                    {
+                        auto imager_params = grab_queue_.pop();
+                        if (imager_params.has_value())
+                        {
+                            send_python_request(imager_params->image_path, imager_params->output_name);
+                        }
+                    }
+                    else
+                        rpp::ClockAccessor::GetInstance()->sleep(0.020);
                 } catch (const std::runtime_error& e) {
-                        r_err("UnetImager: exception: %s", e.what());
+                    r_err("try_unet: exception: %s", e.what());
                 }
+            }
+            r_debug("try_unet: thread stopped");
         }
          
         bool UnetImager::grab()
@@ -62,10 +78,15 @@ namespace romi {
                 if (Imager::grab()) {
                         std::string path = get_image_path();
                         std::string name = make_output_name();
-                        std::thread t([this, path, name]() { try_unet(path, name); });
-                        t.detach();
+                        grab_queue_.push(UnetImagerParams{path, name});
+//                        std::thread t([this, path, name]() { try_unet(path, name); });
+//                        t.detach();
                         success = true;
                 }
                 return success;
         }
+
+    UnetImager::~UnetImager() {
+        quit_ = true;
+    }
 }

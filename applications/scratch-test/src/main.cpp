@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 
 //            std::string registry = "192.168.0.179";
 //            if (!registry.empty())
-                rcom::RegistryServer::set_address("192.168.1.22");
+                rcom::RegistryServer::set_address("192.168.0.179");
 
                 romi::PythonUnet pythonUnet;
                 std::string image_file("./camera.jpg");

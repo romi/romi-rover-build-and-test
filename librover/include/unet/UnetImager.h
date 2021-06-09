@@ -22,27 +22,37 @@
 
  */
 
-#ifndef __ROMI_UNET_H
+#ifndef __ROMI_UNET_IMAGER_H
 #define __ROMI_UNET_IMAGER_H
-
+#include <atomic>
+#include <ThreadsafeQueue.h>
 #include <camera/Imager.h>
 #include "unet/PythonUnet.h"
+
+class UnetImagerParams
+{
+public:
+    std::string image_path;
+    std::string output_name;
+};
 
 namespace romi {
 
         class UnetImager : public PythonUnet, public Imager
         {
+        private:
+            ThreadsafeQueue<UnetImagerParams> grab_queue_;
+            std::atomic<bool> quit_;
         protected:
                 
                 bool grab() override;
                 std::string make_output_name();
                 std::string get_image_path();
-                void try_unet(std::string image_path,
-                              std::string output_name);
+                void try_unet(std::atomic<bool>& quit);
 
         public:
                 UnetImager(ISession& session, ICamera& camera);
-                ~UnetImager() override = default;
+                ~UnetImager() override;
         };
 }
 
