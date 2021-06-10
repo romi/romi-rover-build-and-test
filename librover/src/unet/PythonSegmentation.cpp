@@ -28,13 +28,38 @@
 namespace romi {
 
         PythonSegmentation::PythonSegmentation(const std::string& function_name)
-                : rpc_(), function_name_(function_name)
+                : rpc_(),
+                  function_name_(function_name)
         {
-            rpc_ = romi::RcomClient::create("python", 30);
-            if (rpc_== nullptr)
-                throw std::runtime_error("rpc failed to connect.");
         }
+
+        void PythonSegmentation::assert_connected_to_python()
+        {
+                if (rpc_== nullptr) {
+                        r_err("PythonSegmentation: No RPC connection.");
+                        throw std::runtime_error("No RPC connection.");
+                }
+        }
+
+        void PythonSegmentation::connect_to_python()
+        {
+                // If there's still a rpc connection open, close it
+                // now.
+                disconnect_from_python();
+
+                // Establish a new RPC connection.
+                rpc_ = romi::RcomClient::create("python", 30);
                 
+                assert_connected_to_python();
+        }
+        
+        void PythonSegmentation::disconnect_from_python()
+        {
+                if (rpc_) {
+                        rpc_ = nullptr;
+                }
+        }
+
         bool PythonSegmentation::create_mask(ISession &session, Image &image, Image &mask)
         {
                 bool success = false;
@@ -54,7 +79,9 @@ namespace romi {
         {
                 store_image(session, image);
                 std::string path = get_image_path(session);
+                connect_to_python();
                 send_python_request(path, kDefaultMaskName);
+                disconnect_from_python();
                 load_mask(session, mask);
         }
 
@@ -82,6 +109,7 @@ namespace romi {
                 JsonCpp params = JsonCpp::construct("{\"path\": \"%s\", "
                                                     "\"output-name\": \"%s\"}",
                                                     path.c_str(), output_name.c_str());
+                assert_connected_to_python();
 
                 rpc_->execute(function_name_, params, response, error);
                 

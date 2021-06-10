@@ -76,7 +76,7 @@ namespace romi {
                 Image dilated_mask;
                 
                 // TODO
-                if (true) {
+                if (false) {
                         mask.dilate(kAstarResolution, dilated_mask);
                         session.store_png("dilated-mask", dilated_mask);
                 } else {

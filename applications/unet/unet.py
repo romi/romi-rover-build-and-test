@@ -20,12 +20,12 @@ svm_intercepts = None
 def load_unet_model(model_path):
     global model
     global model_config
-    config_path = f"{model_path}/submission1/Weedelec_Haricot/_config.json"
+    config_path = f"{model_path}/_config.json"
     model_config = json.loads(open(config_path, "r").read())
     model = model_from_name[model_config['model_class']](model_config['n_classes'],
                                                      input_height=model_config['input_height'],
                                                      input_width=model_config['input_width'])
-    weights = f"{model_path}/submission1/Weedelec_Haricot/.14"
+    weights = f"{model_path}/.4"
     model.load_weights(weights)
 
 
@@ -123,11 +123,15 @@ def get_pred_unet(path, output_name):
 
     
 def handle_unet_request(params):
+    start_time = time.time()
     image_path = params["path"]
     output_name = params["output-name"]
     print(f"New request, image: {image_path}, output name: {output_name}")
-    return get_pred_unet(image_path, output_name)
-
+    get_pred_unet(image_path, output_name)
+    now = time.time()
+    print(f"handle_unet_request: {now-start_time:0.3f} seconds")
+    return True
+    
 async def server_callback(websocket, path):
     global server
     await server.handle_client(websocket)

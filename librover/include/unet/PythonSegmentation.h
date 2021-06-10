@@ -49,6 +49,10 @@ namespace romi {
                 void load_mask(ISession &session, Image& mask);
                 std::string get_image_path(ISession &session);
                 
+                void assert_connected_to_python();
+                void connect_to_python();
+                void disconnect_from_python();
+                
         public:
                 PythonSegmentation(const std::string& function_name);
                 ~PythonSegmentation() override = default;
