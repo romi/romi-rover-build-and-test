@@ -24,23 +24,30 @@
 #include <exception>
 #include <syslog.h>
 
-#include "Linux.h"
+#include <Linux.h>
+#include <Clock.h>
+#include <ClockAccessor.h>
+#include <RSerial.h>
+#include <RomiSerialClient.h>
 #include <rover/RoverOptions.h>
 #include <camera/FileCamera.h>
+#include <camera/USBCamera.h>
+#include <rpc/RcomClient.h>
+#include <rpc/RemoteCamera.h>
 #include <weeder/Weeder.h>
 #include <fake/FakeCNC.h>
 #include <oquam/Oquam.h>
 #include <oquam/StepperSettings.h>
+#include <oquam/StepperController.h>
 #include <oquam/FakeCNCController.h>
-#include "data_provider/RomiDeviceData.h"
-#include "data_provider/SoftwareVersion.h"
-#include "session/Session.h"
-#include "data_provider/Gps.h"
-#include "data_provider/GpsLocationProvider.h"
+#include <data_provider/RomiDeviceData.h>
+#include <data_provider/SoftwareVersion.h>
+#include <session/Session.h>
+#include <data_provider/Gps.h>
+#include <data_provider/GpsLocationProvider.h>
+#include <configuration/ConfigurationProvider.h>
 
 #include <FakePipelineFactory.h>
-#include "Clock.h"
-#include "ClockAccessor.h"
 
 void SignalHandler(int signal)
 {
@@ -56,7 +63,7 @@ void SignalHandler(int signal)
 }
 
 static const std::string cropper("cropper");
-const std::string meters_to_pixels("meters_to_pixels");
+const std::string meters_to_pixels("meters-to-pixels");
 const std::string components("components");
 const std::string mask("mask");
 
@@ -74,13 +81,17 @@ static std::vector<romi::Option> eval_options = {
           "The session directory where the output "
           "files are stored (logs, images...)"},
                 
+        { romi::RoverOptions::camera_classname, true, romi::FileCamera::ClassName,
+          "The classname of the camera to instanciate (default: file-camera)."},
+                
         { romi::RoverOptions::camera_image, true, nullptr,
           "The path of the image file for the file camera."},
 
         { cropper.c_str(), true, nullptr,
-                "The cropped image"},
+          "The cropped image"},
+        
         { meters_to_pixels.c_str(), true, "1000",
-                "The cropped image"},
+          "Meters to pixels conversion"},
 
         { components.c_str(), true, nullptr,
           "The connected components image "},
@@ -112,7 +123,7 @@ int main(int argc, char** argv)
                 if (path.empty())
                         throw std::runtime_error("No configuration file was given");
 
-                JsonCpp config_file = JsonCpp::load(path.c_str());
+                JsonCpp config = JsonCpp::load(path.c_str());
                 
                 // Session
                 rpp::Linux linux;
@@ -127,7 +138,7 @@ int main(int argc, char** argv)
                 r_info("Session directory is %s", session_directory.c_str());
 
                 // CNC
-                JsonCpp oquam_config = config_file["oquam"];
+                JsonCpp oquam_config = config["oquam"];
                 JsonCpp range_data = oquam_config["cnc-range"];
                 double slice_duration = (double) oquam_config["path-slice-duration"];
                 double maximum_deviation = (double) oquam_config["path-maximum-deviation"];
@@ -135,7 +146,17 @@ int main(int argc, char** argv)
                 
                 romi::CNCRange range(range_data);                
                 romi::StepperSettings stepper_settings(stepper_data);
-                romi::FakeCNCController controller = romi::FakeCNCController();
+
+                
+                r_info("main: Creating CNC controller");
+                std::unique_ptr<romi::ICNCController> controller;
+                if (true) {
+                        const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
+                        auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device);
+                        controller = std::make_unique<romi::StepperController>(cnc_serial);
+                } else {
+                        controller = std::make_unique<romi::FakeCNCController>();
+                }
                 romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
                 romi::OquamSettings oquam_settings(range,
                                                    stepper_settings.maximum_speed,
@@ -145,19 +166,42 @@ int main(int argc, char** argv)
                                                    slice_duration,
                                                    1.0,
                                                    homing);
-                romi::Oquam oquam(controller, oquam_settings, session);
+                romi::Oquam oquam(*controller, oquam_settings, session);
 
                 // File camera
-                romi::FileCamera camera(options.get_value("camera-image"));
+                //romi::FileCamera camera(options.get_value("camera-image"));
+
+                // Camera
+                // TBD: Use refactored functions. get_camera_class
+                r_info("main: Creating camera");
+                std::unique_ptr<romi::ICamera> camera;
+                std::string camera_classname = get_camera_classname(options, config);
+                
+                if (camera_classname == romi::FileCamera::ClassName) {
+                        std::string image_file = get_camera_image(options, config);
+                        r_info("Loading image %s", image_file.c_str());
+                        camera = std::make_unique<romi::FileCamera>(image_file);
+                        
+                } else if (camera_classname == romi::USBCamera::ClassName) {
+                        std::string camera_device = get_camera_device(options, config);
+                        double width = (double) config["weeder"]["usb-camera"]["width"];
+                        double height = (double) config["weeder"]["usb-camera"]["height"];
+                        camera = std::make_unique<romi::USBCamera>(camera_device, width, height);
+                } else if (camera_classname == romi::RemoteCamera::ClassName) {
+                        auto client = romi::RcomClient::create("camera", 10.0);
+                        camera = std::make_unique<romi::RemoteCamera>(client);
+                } else {
+                        throw std::runtime_error("Unknown camera classname");
+                }
 
                 // Weeding pipeline
                 romi::FakePipelineFactory factory;
-                romi::IPipeline& pipeline = factory.build(range, config_file, options);
+                romi::IPipeline& pipeline = factory.build(range, config, options);
 
                 // Weeder
-                double z0 = (double) config_file["weeder"]["z0"];
-                double speed = (double) config_file["weeder"]["speed"];
-                romi::Weeder weeder(camera, pipeline, oquam, z0, speed, session);
+                double z0 = (double) config["weeder"]["z0"];
+                double speed = (double) config["weeder"]["speed"];
+                romi::Weeder weeder(*camera, pipeline, oquam, z0, speed, session);
                 
                 weeder.hoe();
                 
