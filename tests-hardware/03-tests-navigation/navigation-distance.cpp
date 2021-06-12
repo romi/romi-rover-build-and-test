@@ -61,24 +61,40 @@ void SignalHandler(int signal)
                 r_err("Unknown signam received %d", signal);
         }
 }
-        
+
+static const char *kDistanceString = "distance";
+static const char *kSpeedString = "speed";
+static const char *kControllerString = "controller";
+static const char *kDriverString = "driver";
+static const char *kNavigationString = "navigation";
+
 int main(int argc, char** argv)
 {
+        
         romi::RoverOptions options;
-        romi::Option distance_option = { "distance", true, "1.0", "The travel distance" };
+        romi::Option distance_option = { kDistanceString, true, "1.0",
+                                         "The travel distance" };
         options.add_option(distance_option);
-        romi::Option speed_option = { "speed", true, "0.1", "The travel speed" };
+        
+        romi::Option speed_option = { kSpeedString, true, "0.1", "The travel speed" };
         options.add_option(speed_option);
+        
+        romi::Option ctrl_option = { kControllerString, true, kDriverString,
+                                     "The controller to use (brush-motor-controller "
+                                     "or navigation)" };
+        options.add_option(ctrl_option);
+        
         options.parse(argc, argv);
         options.exit_if_help_requested();
 
-        std::string distance_value = options.get_value("distance");
+        std::string distance_value = options.get_value(kDistanceString);
         if (distance_value.empty()) {
                 r_err("No distance");
                 return 1;
         }
         double distance = std::stod(distance_value);
-        std::string speed_value = options.get_value("speed");
+        
+        std::string speed_value = options.get_value(kSpeedString);
         double speed = std::stod(speed_value);
 
         if (distance < -10.0 || distance > 10.0) {
@@ -140,7 +156,24 @@ int main(int argc, char** argv)
                 romi::WheelOdometry wheelodometry(rover_config, driver);
                 romi::Navigation navigation(driver, rover_config, wheelodometry, session);
 
-                navigation.move(distance, speed);
+
+                std::string controller = options.get_value(kControllerString);
+                
+                driver.start_recording_pid();
+                
+                if (controller == kDriverString) {
+                        r_info("Using motor driver");
+                        driver.moveat(speed, speed);
+                        rpp::ClockAccessor::GetInstance()->sleep(5.0);
+                        driver.moveat(0.0, 0.0);
+                        rpp::ClockAccessor::GetInstance()->sleep(5.0);
+                        
+                } else if (controller == kNavigationString) {
+                        r_info("Using navigation controller");
+                        navigation.move(distance, speed);
+                }
+                
+                driver.stop_recording_pid();
                 
         } catch (std::exception& e) {
                 r_err(e.what());

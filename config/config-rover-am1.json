@@ -5,18 +5,18 @@
                 "left": -1,
                 "right": 1
             },
-            "maximum_signal_amplitude": 20,
+            "maximum_signal_amplitude": 50,
             "pid": {
-                "kd": 0.000000,
-                "ki": 0.000000,
-                "kp": 1.200000
+                "kd": 0.02000,
+                "ki": 0.05,
+                "kp": 1.00000
             },
             "use_pid": true
         },
         "motor-driver": "brush-motor-driver",
         "rover": {
             "encoder_steps": 1536,
-            "maximum_speed": 1.000000,
+            "maximum_speed": 1,
             "wheel_base": 1,
             "wheel_diameter": 0.470000
         }
@@ -37,7 +37,7 @@
     },
     "ports": {
         "brush-motor-driver": {
-            "port": "/dev/ttyACM1",
+            "port": "/dev/ttyACM2",
             "type": "serial"
         },
         "display-device": {
@@ -49,7 +49,7 @@
             "type": "input-device"
         },
         "oquam": {
-            "port": "/dev/ttyACM2",
+            "port": "/dev/ttyACM1",
             "type": "serial"
         },
         "usb-camera": {
