@@ -103,7 +103,11 @@ int main(int argc, char** argv)
         try {
                 romi::GetOpt options(eval_options);
                 options.parse(argc, argv);
-
+                if (options.is_help_requested()) {
+                        options.print_usage();
+                        exit(0);
+                }
+ 
                 std::string path = options.get_value(romi::RoverOptions::config);
                 if (path.empty())
                         throw std::runtime_error("No configuration file was given");
