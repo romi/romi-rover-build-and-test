@@ -115,14 +115,22 @@ namespace romi {
                         size_t cx = (size_t) (*it).first;
                         size_t cy = (size_t) (*it).second;
 
-                        if (cx < x0)
+                        if (cx < x0)  {
+                                r_debug("Changing x coordinate from %zu to %zu", cx, x0);
                                 cx = x0;
-                        if (cx > x1)
+                        }
+                        if (cx > x1) {
+                                r_debug("Changing x coordinate from %zu to %zu", cx, x1);
                                 cx = x1;
-                        if (cy < y0)
+                        }
+                        if (cy < y0) {
+                                r_debug("Changing y coordinate from %zu to %zu", cy, y0);
                                 cy = y0;
-                        if (cy > y1)
+                        }
+                        if (cy > y1) {
+                                r_debug("Changing y coordinate from %zu to %zu", cy, y1);
                                 cy = y1;
+                        }
 
                         float value = dilated_mask.get(Image::kGreyChannel, cx, cy);
                         if (value > 0.0f) {
@@ -191,9 +199,35 @@ namespace romi {
                         Path normalized_path;
                         for (size_t i = 0; i < path.size(); i++) {
                                 v3 p = path[i];
-                                normalized_path.emplace_back((p.x() - (double) x0) / (double) (x1 - x0),
-                                                             (p.y() - (double) y0) / (double) (y1 - y0),
-                                                             0.0);
+
+                                size_t cx = (size_t) p.x();
+                                size_t cy = (size_t) p.y();
+
+                                if (cx < x0)  {
+                                        r_debug("*** Changing x coordinate from %zu to %zu", cx, x0);
+                                        cx = x0;
+                                }
+                                if (cx > x1) {
+                                        r_debug("*** Changing x coordinate from %zu to %zu", cx, x1);
+                                        cx = x1;
+                                }
+                                if (cy < y0) {
+                                        r_debug("*** Changing y coordinate from %zu to %zu", cy, y0);
+                                        cy = y0;
+                                }
+                                if (cy > y1) {
+                                        r_debug("*** Changing y coordinate from %zu to %zu", cy, y1);
+                                        cy = y1;
+                                }
+
+                                float value = dilated_mask.get(Image::kGreyChannel, cx, cy);
+                                if (value > 0.0f) {
+                                        r_err("*** NEW COORDINATE FALLS IN CROP ZONE %zu, %zu", cx, cy);
+                                }
+                                
+                                normalized_path.emplace_back(((double) cx - (double) x0) / (double) (x1 - x0),
+                                                             ((double) cy - (double) y0) / (double) (y1 - y0),
+                                                                     0.0);
                         }
                         
                         paths.emplace_back(normalized_path);
@@ -302,55 +336,59 @@ namespace romi {
                         }
                 }
 
-                r_debug("Generate path ... ");
+                r_debug("Path crosses a crop, generate a new path ... ");
                 auto new_path = generator.findPath(
                         { (int) (start.x() / (double) d), (int) (start.y() / (double) d) },
                         { (int) (end.x() / (double) d), (int) (end.y() / (double) d) });
                 
                 int length = (int) new_path.size();
-
-
                 
                 // TODO
                 if (length == 0) {
                         r_debug("Pipeline: A*: Failed to find a path");
                         r_debug("From: %f, %f", start.x(), start.y());
                         r_debug("To:   %f, %f", end.x(), end.y());
-                        throw std::runtime_error("*** A*: FAILED TO FIND A PATH ***");
-                }
-
-                
-                
-                buffer.printf("    <g>\n");
-                buffer.printf("    <path d=\"M %d,%d L %d,%d\" "
-                              "fill=\"transparent\" stroke=\"blue\"/>\n",
-                              (int) start.x(), (int) start.y(),
-                              (int) end.x(), (int) end.y());
-                
-                
-                path.emplace_back(start.x() / (double) mask.width(),
-                                  start.y() / (double) mask.width(),
-                                  0.0);
-                
-                // The A* algorithm returns the path from end to
-                // start. So we have to iterate backwards. Don't add
-                // the last point. This is the start point... and it
-                // has already been added above. Don't add the first
-                // point (which is the end point) because it will be
-                // added by the next segment (to avoid duplicates).
-                
-                for (int i = length-2; i > 0; i--) {
-                        int x = (int) d * new_path[(size_t)i].x + d2;
-                        int y = (int) d * new_path[(size_t)i].y + d2;
-                        buffer.printf("    <circle cx=\"%dpx\" cy=\"%dpx\" "
-                                      "r=\"3px\" fill=\"red\" stroke=\"none\" />\n",
-                                      x, y);
-                        path.emplace_back((double) x / (double) mask.width(),
-                                          (double) y / (double) mask.height(),
-                                          0.0);
                         
+                        buffer.printf("    <g>\n");
+                        buffer.printf("    <path d=\"M %d,%d L %d,%d\" "
+                                      "fill=\"transparent\" stroke=\"red\"/>\n",
+                                      (int) start.x(), (int) start.y(),
+                                      (int) end.x(), (int) end.y());
+                        buffer.printf("    </g>\n");
+                        
+                } else {
+                
+                        buffer.printf("    <g>\n");
+                        buffer.printf("    <path d=\"M %d,%d L %d,%d\" "
+                                      "fill=\"transparent\" stroke=\"blue\"/>\n",
+                                      (int) start.x(), (int) start.y(),
+                                      (int) end.x(), (int) end.y());
+                
+                
+                        path.emplace_back(start.x() / (double) mask.width(),
+                                          start.y() / (double) mask.width(),
+                                          0.0);
+                
+                        // The A* algorithm returns the path from end to
+                        // start. So we have to iterate backwards. Don't add
+                        // the last point. This is the start point... and it
+                        // has already been added above. Don't add the first
+                        // point (which is the end point) because it will be
+                        // added by the next segment (to avoid duplicates).
+                
+                        for (int i = length-2; i > 0; i--) {
+                                int x = (int) d * new_path[(size_t)i].x + d2;
+                                int y = (int) d * new_path[(size_t)i].y + d2;
+                                buffer.printf("    <circle cx=\"%dpx\" cy=\"%dpx\" "
+                                              "r=\"3px\" fill=\"red\" stroke=\"none\" />\n",
+                                              x, y);
+                                path.emplace_back((double) x / (double) mask.width(),
+                                                  (double) y / (double) mask.height(),
+                                                  0.0);
+                        
+                        }
+                        buffer.printf("    </g>\n");
                 }
-                buffer.printf("    </g>\n");
         }
 
         void Pipeline::check_segment(rpp::MemBuffer& buffer,
