@@ -82,7 +82,7 @@ namespace romi {
                 som.compute_path(session, _print);
 
                 Path path;
-                som.get_path(path);
+                som.get_path(path, (double) mask.width(), (double) mask.height());
                 
                 return path;
         }

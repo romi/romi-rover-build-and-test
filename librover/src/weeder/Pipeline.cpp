@@ -92,7 +92,7 @@ namespace romi {
                 size_t max_centers = (size_t) ((double) (mask.width() * mask.height())
                                                / (diameter_pixels * diameter_pixels));
 
-                Centers centers = romi::calculate_centers(mask, max_centers);
+                Centers centers = romi::calculate_centers(dilated_mask, max_centers);
 
                 {
                         rpp::MemBuffer buffer;
@@ -101,6 +101,39 @@ namespace romi {
                         session.store_txt("centers", buffer.tostring());
                 }
 
+
+                double diameter = cropper_->map_meters_to_pixels(tool_diameter);
+                size_t border = (size_t) (diameter / 2.0);
+                size_t x0 = border;
+                size_t x1 = mask.width() - border;
+                size_t y0 = border;
+                size_t y1 = mask.height() - border;
+
+                auto it = centers.begin();
+                while (it != centers.end()) {
+
+                        size_t cx = (size_t) (*it).first;
+                        size_t cy = (size_t) (*it).second;
+
+                        if (cx < x0)
+                                cx = x0;
+                        if (cx > x1)
+                                cx = x1;
+                        if (cy < y0)
+                                cy = y0;
+                        if (cy > y1)
+                                cy = y1;
+
+                        float value = dilated_mask.get(Image::kGreyChannel, cx, cy);
+                        if (value > 0.0f) {
+                                it = centers.erase(it);
+                        } else {
+                                (*it).first = (uint32_t) cx;
+                                (*it).second = (uint32_t) cy;
+                                it++;
+                        }
+                }
+                
                 std::vector<Centers> component_centers
                         = romi::sort_centers(centers, components);
 
@@ -118,7 +151,6 @@ namespace romi {
                                 rpp::MemBuffer buffer;
                                 int w = (int) mask.width();
                                 int h = (int) mask.height();
-                                v3 scale((double) mask.width(), (double) mask.height(), 1.0);
 
                                 buffer.printf("<?xml version=\"1.0\" "
                                               "encoding=\"UTF-8\" standalone=\"no\"?>"
@@ -135,8 +167,8 @@ namespace romi {
                                               w, h);
 
                                 for (size_t k = 0; k < initial_path.size(); k++) {
-                                        double x = initial_path[k].x() * scale.x();
-                                        double y = initial_path[k].y() * scale.y();
+                                        double x = initial_path[k].x();
+                                        double y = initial_path[k].y();
                                         buffer.printf("    <circle cx=\"%dpx\" cy=\"%dpx\" "
                                                       "r=\"3px\" fill=\"red\" stroke=\"none\" />\n",
                                                       (int) x, (int) y);
@@ -156,7 +188,15 @@ namespace romi {
                         snprintf(filename, sizeof(filename), "path-%02zu", i);
                         session.store_path(filename, 0, path);
 
-                        paths.emplace_back(path);
+                        Path normalized_path;
+                        for (size_t i = 0; i < path.size(); i++) {
+                                v3 p = path[i];
+                                normalized_path.emplace_back((p.x() - (double) x0) / (double) (x1 - x0),
+                                                             (p.y() - (double) y0) / (double) (y1 - y0),
+                                                             0.0);
+                        }
+                        
+                        paths.emplace_back(normalized_path);
                 }
 
                 // double meters_to_pixels = cropper_->map_meters_to_pixels(1.0);
@@ -317,12 +357,8 @@ namespace romi {
                                      Image& mask, v3 start, v3 end,
                                      Path& path)
         {
-                v3 scale((double) mask.width(), (double) mask.height(), 1.0);
-                v3 start_pixels = start * scale;
-                v3 end_pixels = end * scale;
-
-                if (segment_crosses_white_area(mask, start_pixels, end_pixels)) {
-                        go_around(buffer, mask, start_pixels, end_pixels, path);
+                if (segment_crosses_white_area(mask, start, end)) {
+                        go_around(buffer, mask, start, end, path);
                 } else {
                         path.emplace_back(start);
                 }

@@ -128,7 +128,7 @@ namespace romi {
                               "width=\"%dpx\" height=\"%dpx\">\n",
                               w, h);
                 
-                buffer.printf("    <image xlink:href=\"crop.png\" "
+                buffer.printf("    <image xlink:href=\"workspace.jpg\" "
                               "x=\"0mm\" y=\"0mm\" "
                               "width=\"%dpx\" height=\"%dpx\" />\n",
                               w, h);

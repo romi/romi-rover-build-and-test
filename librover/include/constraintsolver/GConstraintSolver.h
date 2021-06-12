@@ -61,8 +61,7 @@ namespace romi {
                 Path build_path(const operations_research::RoutingIndexManager &manager,
                                 const operations_research::RoutingModel &routing,
                                 const operations_research::Assignment &solution,
-                                const std::vector<std::vector<int>> &locations,
-                                const Image &mask);
+                                const std::vector<std::vector<int>> &locations);
                 bool print_;
         };
 }
