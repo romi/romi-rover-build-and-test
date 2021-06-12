@@ -62,10 +62,11 @@ void SignalHandler(int signal)
         }
 }
 
-static const std::string cropper("cropper");
-const std::string meters_to_pixels("meters-to-pixels");
-const std::string components("components");
-const std::string mask("mask");
+static const std::string kCroppedImage("cropper");
+static const std::string kMetersToPixels("meters-to-pixels");
+static const std::string kComponents("components");
+static const std::string kMask("mask");
+static const std::string kCNCControllerClassname("cnc-controller-classname");
 
 
 static std::vector<romi::Option> eval_options = {
@@ -82,21 +83,26 @@ static std::vector<romi::Option> eval_options = {
           "files are stored (logs, images...)"},
                 
         { romi::RoverOptions::camera_classname, true, romi::FileCamera::ClassName,
-          "The classname of the camera to instanciate (default: file-camera)."},
+          "The classname of the camera to instanciate "
+          "(default: file-camera)."},
                 
         { romi::RoverOptions::camera_image, true, nullptr,
           "The path of the image file for the file camera."},
+                
+        { kCNCControllerClassname.c_str(), true, romi::FakeCNCController::ClassName,
+          "The classname of the CNC controller to instanciate "
+          "(default: fake-cnc-controller)."},
 
-        { cropper.c_str(), true, nullptr,
+        { kCroppedImage.c_str(), true, nullptr,
           "The cropped image"},
         
-        { meters_to_pixels.c_str(), true, "1000",
+        { kMetersToPixels.c_str(), true, "1000",
           "Meters to pixels conversion"},
 
-        { components.c_str(), true, nullptr,
+        { kComponents.c_str(), true, nullptr,
           "The connected components image "},
                 
-        { mask.c_str(), true, nullptr,
+        { kMask.c_str(), true, nullptr,
           "The mask "}
 };
 
@@ -150,12 +156,18 @@ int main(int argc, char** argv)
                 
                 r_info("main: Creating CNC controller");
                 std::unique_ptr<romi::ICNCController> controller;
-                if (true) {
+                std::string cnc_controller_classname
+                        = options.get_value(kCNCControllerClassname);
+                
+                if (cnc_controller_classname == romi::StepperController::ClassName) {
                         const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
                         auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device);
                         controller = std::make_unique<romi::StepperController>(cnc_serial);
-                } else {
+                        
+                } else if (cnc_controller_classname == romi::FakeCNCController::ClassName) {
                         controller = std::make_unique<romi::FakeCNCController>();
+                } else {
+                        throw std::runtime_error("Unknown CNC controller classname");
                 }
                 romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
                 romi::OquamSettings oquam_settings(range,
