@@ -7,6 +7,10 @@ folder = "images"
 
 
 def reg_direct(x, y, plotit=False):
+
+    print(p_cnc)
+    print(p_im)
+    
     N = len(x)
 
     ax = ((N*np.sum(x[:,0] * y[:,0]) - np.sum(x[:,0]) * np.sum(y[:,0]))

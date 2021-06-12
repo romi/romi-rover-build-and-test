@@ -29,9 +29,11 @@ for i, file in enumerate(sel_files):
 
     #lower = np.array([20,96,142])
     #upper = np.array([31,187,255])
-    lower = np.array([156 , 79, 0])
-    upper = np.array([173 , 202, 255])
-
+    #lower = np.array([156 , 79, 0])
+    #upper = np.array([173 , 202, 255])
+    lower = np.array([136, 75, 0])
+    upper = np.array([177, 206, 255])
+    
     mask = cv2.inRange(im_hsv, lower, upper)
     kernel = np.array([[0, 1, 0],
                        [1, 1, 1],
