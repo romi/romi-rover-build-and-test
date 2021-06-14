@@ -7,9 +7,9 @@
             },
             "maximum_signal_amplitude": 50,
             "pid": {
-                "kd": 0.02000,
-                "ki": 0.05,
-                "kp": 1.00000
+                "kd": 0.020000,
+                "ki": 0.050000,
+                "kp": 1
             },
             "use_pid": true
         },
@@ -112,9 +112,9 @@
         "speed-controller": {
             "accurate": {
                 "direction-curve-exponent": 1,
-                "direction-multiplier": 0.200000,
+                "direction-multiplier": 0.100000,
                 "speed-curve-exponent": 1,
-                "speed-multiplier": 0.200000,
+                "speed-multiplier": 0.400000,
                 "use-direction-curve": true,
                 "use-speed-curve": true
             },
