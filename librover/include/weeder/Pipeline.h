@@ -60,6 +60,9 @@ namespace romi {
                 std::vector<Path> try_run(ISession& session, Image& camera,
                                           double tool_diameter);
 
+                void go_around(rpp::MemBuffer& buffer, Image& mask,
+                               v3 start, v3 end, Path& path);
+
         public:
                 Pipeline(std::unique_ptr<IImageCropper>& cropper,
                          std::unique_ptr<IImageSegmentation>& segmentation,

@@ -76,7 +76,7 @@ namespace romi {
                 Image dilated_mask;
                 
                 // TODO
-                if (false) {
+                if (true) {
                         mask.dilate(kAstarResolution, dilated_mask);
                         session.store_png("dilated-mask", dilated_mask);
                 } else {
@@ -115,22 +115,14 @@ namespace romi {
                         size_t cx = (size_t) (*it).first;
                         size_t cy = (size_t) (*it).second;
 
-                        if (cx < x0)  {
-                                r_debug("Changing x coordinate from %zu to %zu", cx, x0);
+                        if (cx < x0)
                                 cx = x0;
-                        }
-                        if (cx > x1) {
-                                r_debug("Changing x coordinate from %zu to %zu", cx, x1);
+                        if (cx > x1)
                                 cx = x1;
-                        }
-                        if (cy < y0) {
-                                r_debug("Changing y coordinate from %zu to %zu", cy, y0);
+                        if (cy < y0)
                                 cy = y0;
-                        }
-                        if (cy > y1) {
-                                r_debug("Changing y coordinate from %zu to %zu", cy, y1);
+                        if (cy > y1)
                                 cy = y1;
-                        }
 
                         float value = dilated_mask.get(Image::kGreyChannel, cx, cy);
                         if (value > 0.0f) {
@@ -182,10 +174,28 @@ namespace romi {
                                                       (int) x, (int) y);
                                 }
 
+                                if (initial_path.size() > 0) {
+                                        buffer.printf("    <g>\n");
+                                        double x = initial_path[0].x();
+                                        double y = initial_path[0].y();
+                                        buffer.printf("    <path d=\"M %d,%d",
+                                                      (int) x, (int) y);
+
+                                        for (size_t k = 1; k < initial_path.size(); k++) {
+                                                x = initial_path[k].x();
+                                                y = initial_path[k].y();
+                                                buffer.printf(" L %d,%d",
+                                                              (int) x, (int) y); 
+                                        }
+                                        buffer.printf("\" fill=\"none\" "
+                                                      "stroke=\"blue\"/>\n");
+                                        buffer.printf("    <g>\n");
+                                }
+
                                 buffer.printf("</svg>\n");
                 
                                 char filename[64];
-                                snprintf(filename, sizeof(filename), "path-debug-%02zu.svg", i);
+                                snprintf(filename, sizeof(filename), "path-pre-check-%02zu.svg", i);
                                 session.store_svg(filename, buffer.tostring());
                         }
                         
@@ -199,35 +209,9 @@ namespace romi {
                         Path normalized_path;
                         for (size_t i = 0; i < path.size(); i++) {
                                 v3 p = path[i];
-
-                                size_t cx = (size_t) p.x();
-                                size_t cy = (size_t) p.y();
-
-                                if (cx < x0)  {
-                                        r_debug("*** Changing x coordinate from %zu to %zu", cx, x0);
-                                        cx = x0;
-                                }
-                                if (cx > x1) {
-                                        r_debug("*** Changing x coordinate from %zu to %zu", cx, x1);
-                                        cx = x1;
-                                }
-                                if (cy < y0) {
-                                        r_debug("*** Changing y coordinate from %zu to %zu", cy, y0);
-                                        cy = y0;
-                                }
-                                if (cy > y1) {
-                                        r_debug("*** Changing y coordinate from %zu to %zu", cy, y1);
-                                        cy = y1;
-                                }
-
-                                float value = dilated_mask.get(Image::kGreyChannel, cx, cy);
-                                if (value > 0.0f) {
-                                        r_err("*** NEW COORDINATE FALLS IN CROP ZONE %zu, %zu", cx, cy);
-                                }
-                                
-                                normalized_path.emplace_back(((double) cx - (double) x0) / (double) (x1 - x0),
-                                                             ((double) cy - (double) y0) / (double) (y1 - y0),
-                                                                     0.0);
+                                normalized_path.emplace_back((p.x() - (double) x0) / (double) (x1 - x0),
+                                                             (p.y() - (double) y0) / (double) (y1 - y0),
+                                                             0.0);
                         }
                         
                         paths.emplace_back(normalized_path);
@@ -301,8 +285,19 @@ namespace romi {
                 snprintf(filename, sizeof(filename), "plant-crossings-%02zu.svg", index);
                 session.store_svg(filename, buffer.tostring());
         }
+        
+        void Pipeline::check_segment(rpp::MemBuffer& buffer,
+                                     Image& mask, v3 start, v3 end,
+                                     Path& path)
+        {
+                if (segment_crosses_white_area(mask, start, end)) {
+                        go_around(buffer, mask, start, end, path);
+                } else {
+                        path.emplace_back(start);
+                }
+        }
 
-        void go_around(rpp::MemBuffer& buffer, Image& mask, v3 start, v3 end, Path& path)
+        void Pipeline::go_around(rpp::MemBuffer& buffer, Image& mask, v3 start, v3 end, Path& path)
         {
                 int d = (int) kAstarResolution;
                 int d2 = d / 2;
@@ -336,70 +331,51 @@ namespace romi {
                         }
                 }
 
-                r_debug("Path crosses a crop, generate a new path ... ");
+                r_debug("Using A* to go around plant, from (%.1f,%.1f) to (%.1f,%.1f)",
+                        start.x(), start.y(), end.x(), end.y());
+                
                 auto new_path = generator.findPath(
                         { (int) (start.x() / (double) d), (int) (start.y() / (double) d) },
                         { (int) (end.x() / (double) d), (int) (end.y() / (double) d) });
                 
                 int length = (int) new_path.size();
+
+
                 
                 // TODO
                 if (length == 0) {
                         r_debug("Pipeline: A*: Failed to find a path");
                         r_debug("From: %f, %f", start.x(), start.y());
                         r_debug("To:   %f, %f", end.x(), end.y());
-                        
-                        buffer.printf("    <g>\n");
-                        buffer.printf("    <path d=\"M %d,%d L %d,%d\" "
-                                      "fill=\"transparent\" stroke=\"red\"/>\n",
-                                      (int) start.x(), (int) start.y(),
-                                      (int) end.x(), (int) end.y());
-                        buffer.printf("    </g>\n");
-                        
-                } else {
-                
-                        buffer.printf("    <g>\n");
-                        buffer.printf("    <path d=\"M %d,%d L %d,%d\" "
-                                      "fill=\"transparent\" stroke=\"blue\"/>\n",
-                                      (int) start.x(), (int) start.y(),
-                                      (int) end.x(), (int) end.y());
-                
-                
-                        path.emplace_back(start.x() / (double) mask.width(),
-                                          start.y() / (double) mask.width(),
-                                          0.0);
-                
-                        // The A* algorithm returns the path from end to
-                        // start. So we have to iterate backwards. Don't add
-                        // the last point. This is the start point... and it
-                        // has already been added above. Don't add the first
-                        // point (which is the end point) because it will be
-                        // added by the next segment (to avoid duplicates).
-                
-                        for (int i = length-2; i > 0; i--) {
-                                int x = (int) d * new_path[(size_t)i].x + d2;
-                                int y = (int) d * new_path[(size_t)i].y + d2;
-                                buffer.printf("    <circle cx=\"%dpx\" cy=\"%dpx\" "
-                                              "r=\"3px\" fill=\"red\" stroke=\"none\" />\n",
-                                              x, y);
-                                path.emplace_back((double) x / (double) mask.width(),
-                                                  (double) y / (double) mask.height(),
-                                                  0.0);
-                        
-                        }
-                        buffer.printf("    </g>\n");
+                        throw std::runtime_error("*** A*: FAILED TO FIND A PATH ***");
                 }
-        }
 
-        void Pipeline::check_segment(rpp::MemBuffer& buffer,
-                                     Image& mask, v3 start, v3 end,
-                                     Path& path)
-        {
-                if (segment_crosses_white_area(mask, start, end)) {
-                        go_around(buffer, mask, start, end, path);
-                } else {
-                        path.emplace_back(start);
+                
+                
+                buffer.printf("    <g>\n");
+                buffer.printf("    <path d=\"M %d,%d L %d,%d\" "
+                              "fill=\"transparent\" stroke=\"blue\"/>\n",
+                              (int) start.x(), (int) start.y(),
+                              (int) end.x(), (int) end.y());
+                
+                
+                path.emplace_back(start.x(), start.y(), 0.0);
+                
+                // The A* algorithm returns the path from end to
+                // start. So we have to iterate backwards. Don't add
+                // the last point. This is the start point... and it
+                // has already been added above. Don't add the first
+                // point (which is the end point) because it will be
+                // added by the next segment (to avoid duplicates).
+                
+                for (int i = length-2; i > 0; i--) {
+                        int x = (int) d * new_path[(size_t)i].x + d2;
+                        int y = (int) d * new_path[(size_t)i].y + d2;
+                        buffer.printf("    <circle cx=\"%dpx\" cy=\"%dpx\" "
+                                      "r=\"3px\" fill=\"red\" stroke=\"none\" />\n",
+                                      x, y);
+                        path.emplace_back((double) x, (double) y, 0.0);                        
                 }
+                buffer.printf("    </g>\n");
         }
-
 }
