@@ -50,7 +50,7 @@ std::atomic<bool> quit(false);
 void SignalHandler(int signal)
 {
         if (signal == SIGSEGV){
-                syslog(1, "rcom-registry segmentation fault");
+                syslog(1, "navigation segmentation fault");
                 exit(signal);
         }
         else if (signal == SIGINT){
@@ -59,7 +59,7 @@ void SignalHandler(int signal)
                 quit = true;
         }
         else{
-                r_err("Unknown signam received %d", signal);
+                r_err("Unknown signal received %d", signal);
         }
 }
         
