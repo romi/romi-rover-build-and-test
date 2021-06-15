@@ -1,9 +1,9 @@
 .idea
 thirdparty
 *build*
-*_main.c
+*_main.cs
 *venv*
 *~
 *_deps/*
-/librcom/libr/*
-/libromi/libr/*
+*librcom/libr
+*libromi/libr

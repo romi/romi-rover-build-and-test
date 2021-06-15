@@ -82,18 +82,21 @@ namespace romi {
                 } else {
                         dilated_mask = mask;
                 }
-                
+
+                r_debug("Pipeline: connected_components_->compute");
                 Image components;
                 connected_components_->compute(session, dilated_mask, components);
                 session.store_png("components", components);
+                r_debug("Pipeline: connected_components done");
 
                 double diameter_pixels = cropper_->map_meters_to_pixels(tool_diameter
                                                                         + 0.010);
                 size_t max_centers = (size_t) ((double) (mask.width() * mask.height())
                                                / (diameter_pixels * diameter_pixels));
 
+                r_info("calculate_centers (slic): start");
                 Centers centers = romi::calculate_centers(dilated_mask, max_centers);
-
+                r_info("calculate_centers (slic): done");
                 {
                         rpp::MemBuffer buffer;
                         for (auto & center: centers)

@@ -127,6 +127,7 @@ int main(int argc, char** argv)
                 
                 auto display_serial = romiserial::RomiSerialClient::create(display_device);
                 romi::CrystalDisplay display(display_serial);
+                display.clear(display.count_lines());
                 display.show(0, "Initializing");
                 
                 // Joystick
