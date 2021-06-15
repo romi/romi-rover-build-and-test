@@ -172,6 +172,9 @@ int main(int argc, char** argv)
                         r_info("Using navigation controller");
                         navigation.move(distance, speed);
                 }
+
+                r_info("Recording PID and navigation speed data for 10 seconds...");
+                rpp::ClockAccessor::GetInstance()->sleep(10.0);
                 
                 driver.stop_recording_pid();
                 
