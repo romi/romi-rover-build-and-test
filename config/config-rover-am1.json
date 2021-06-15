@@ -5,11 +5,11 @@
                 "left": -1,
                 "right": 1
             },
-            "maximum_signal_amplitude": 50,
+            "maximum_signal_amplitude": 60,
             "pid": {
-                "kd": 0.020000,
-                "ki": 0.050000,
-                "kp": 1
+                "kd": 0,
+                "ki": 0,
+                "kp": 1.050000
             },
             "use_pid": true
         },
