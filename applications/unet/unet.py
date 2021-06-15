@@ -136,6 +136,14 @@ async def server_callback(websocket, path):
     global server
     await server.handle_client(websocket)
 
+def pre_load_libs():
+    image_path = "./dummy_image.png"
+    output_name = "./dummy_image_out.png"
+    image = np.zeros([10,10,3]).astype(np.uint8)
+    cv2.imwrite(image_path, image)
+    get_pred_unet(image_path, output_name)
+    run_svm(image_path, output_name)
+    return
     
 async def init():    
     global server
@@ -161,14 +169,15 @@ if __name__ == "__main__":
 
     load_unet_model(args.model_path)
     load_svm_model(args.svm_path)
-    
+    pre_load_libs()
+
     server = Server("python",
                     {
                         "unet": handle_unet_request,
                         "svm": handle_svm_request
                     },
                     args.registry, args.ip)
-    
+
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init())
     asyncio.get_event_loop().run_forever()
