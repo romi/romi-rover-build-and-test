@@ -293,7 +293,7 @@ namespace romi {
                               w, h);
 
                 for (size_t i = 0; i < path.size() - 1; i++) {
-                        check_segment(buffer, mask, path[i], path[i+1], paths);
+                        check_segment(session, buffer, mask, path[i], path[i+1], paths);
                 }
                 paths.back().emplace_back(path.back());
 
@@ -304,19 +304,23 @@ namespace romi {
                 session.store_svg(filename, buffer.tostring());
         }
         
-        void Pipeline::check_segment(rpp::MemBuffer& buffer,
+        void Pipeline::check_segment(ISession& session,
+                                     rpp::MemBuffer& buffer,
                                      Image& mask, v3 start, v3 end,
                                      std::vector<Path>& paths)
         {
                 if (segment_crosses_white_area(mask, start, end)) {
-                        go_around(buffer, mask, start, end, paths);
+                        go_around(session, buffer, mask, start, end, paths);
                 } else {
                         //path.emplace_back(start);
                         paths.back().emplace_back(start);
                 }
         }
 
-        void Pipeline::go_around(rpp::MemBuffer& buffer, Image& mask, v3 start, v3 end,
+        void Pipeline::go_around(ISession& session,
+                                 rpp::MemBuffer& buffer,
+                                 Image& mask,
+                                 v3 start, v3 end,
                                  std::vector<Path>& paths)
         {
                 int d = (int) kAstarResolution;
@@ -331,11 +335,15 @@ namespace romi {
                 generator.setHeuristic(AStar::Heuristic::euclidean);
                 generator.setDiagonalMovement(true);
 
+                size_t iw = (mask.width() / kAstarResolution) * kAstarResolution;
+                size_t ih = (mask.height() / kAstarResolution) * kAstarResolution;
+                Image mask_astar(Image::BW, iw, ih);
+                
                 for (int y = d2; y < h - d2; y += d) {
                         for (int x = d2; x < w - d2; x += d) {
                                 int off = y * w + x;
 
-                                // sum the values over an area of size
+                                // Sum the values over an area of size
                                 // dxd and centered on (x,y)
                                 sum = 0.0f;
                                 for (int j = -d2; j <= d2; j++) {
@@ -345,12 +353,34 @@ namespace romi {
                                         }
                                 }
                                 
-                                if (sum > 0.0f)
+                                if (sum > 0.0f) {
                                         generator.addCollision(AStar::Vec2i((int)(x / d),
                                                                             (int)(y / d)));
+
+                                        for (size_t yi = (size_t) (y - d2); yi < (size_t) (y + d2); yi++) { 
+                                                for (size_t xi = (size_t) (x - d2); xi < (size_t) (x + d2); xi++) { 
+                                                        mask_astar.set(Image::kGreyChannel,
+                                                                       xi, yi, 1.0f);
+                                                }
+                                        }
+                                }
                         }
                 }
 
+                
+                size_t x0 = (size_t) start.x();
+                size_t y0 = (size_t) start.y();
+                size_t x1 = (size_t) end.x();
+                size_t y1 = (size_t) end.y();
+                mask_astar.set(Image::kGreyChannel, x0, y0, 0.5f);
+                mask_astar.set(Image::kGreyChannel, x1, y1, 0.5f);
+                
+                
+                char filename[64];
+                snprintf(filename, sizeof(filename), "mask-astart-%04d-%04d",
+                         (int) start.x(), (int) start.y());
+                session.store_png(filename, mask_astar);
+                
                 r_debug("Using A* to go around plant, from (%.1f,%.1f) to (%.1f,%.1f)",
                         start.x(), start.y(), end.x(), end.y());
                 

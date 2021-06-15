@@ -57,11 +57,15 @@ namespace romi {
 
                 void check_path(ISession& session, Image& mask, Path& path,
                                 std::vector<Path>& paths, size_t index);
-                void check_segment(rpp::MemBuffer& buffer,
+                void check_segment(ISession& session,
+                                   rpp::MemBuffer& buffer,
                                    Image& image, v3 start, v3 end,
                                    std::vector<Path>& paths);
-                void go_around(rpp::MemBuffer& buffer, Image& mask,
-                               v3 start, v3 end, std::vector<Path>& paths);
+                void go_around(ISession& session,
+                               rpp::MemBuffer& buffer,
+                               Image& mask,
+                               v3 start, v3 end,
+                               std::vector<Path>& paths);
 
         public:
                 Pipeline(std::unique_ptr<IImageCropper>& cropper,
