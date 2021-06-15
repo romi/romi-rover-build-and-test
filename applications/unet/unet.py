@@ -169,14 +169,15 @@ if __name__ == "__main__":
 
     load_unet_model(args.model_path)
     load_svm_model(args.svm_path)
-    
+    pre_load_libs()
+
     server = Server("python",
                     {
                         "unet": handle_unet_request,
                         "svm": handle_svm_request
                     },
                     args.registry, args.ip)
-    pre_load_libs()
+
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init())
     asyncio.get_event_loop().run_forever()
