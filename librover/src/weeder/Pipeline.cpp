@@ -29,7 +29,7 @@
 
 namespace romi {
 
-        static const size_t kAstarResolution = 9;
+        static const size_t kAstarResolution = 25;
         
         Pipeline::Pipeline(std::unique_ptr<IImageCropper>& cropper,
                            std::unique_ptr<IImageSegmentation>& segmentation,
@@ -76,8 +76,8 @@ namespace romi {
                 Image dilated_mask;
                 
                 // TODO
-                if (false) {
-                        mask.dilate(kAstarResolution, dilated_mask);
+                if (true) {
+                        mask.dilate(1 + kAstarResolution / 2, dilated_mask);
                         session.store_png("dilated-mask", dilated_mask);
                 } else {
                         dilated_mask = mask;
@@ -115,22 +115,14 @@ namespace romi {
                         size_t cx = (size_t) (*it).first;
                         size_t cy = (size_t) (*it).second;
 
-                        if (cx < x0)  {
-                                r_debug("Changing x coordinate from %zu to %zu", cx, x0);
+                        if (cx < x0)
                                 cx = x0;
-                        }
-                        if (cx > x1) {
-                                r_debug("Changing x coordinate from %zu to %zu", cx, x1);
+                        if (cx > x1)
                                 cx = x1;
-                        }
-                        if (cy < y0) {
-                                r_debug("Changing y coordinate from %zu to %zu", cy, y0);
+                        if (cy < y0)
                                 cy = y0;
-                        }
-                        if (cy > y1) {
-                                r_debug("Changing y coordinate from %zu to %zu", cy, y1);
+                        if (cy > y1)
                                 cy = y1;
-                        }
 
                         float value = dilated_mask.get(Image::kGreyChannel, cx, cy);
                         if (value > 0.0f) {
@@ -145,8 +137,11 @@ namespace romi {
                 std::vector<Centers> component_centers
                         = romi::sort_centers(centers, components);
 
+                r_debug("Pipeline: number of components : %zu", component_centers.size());
+                
                 char filename[64];
                 std::vector<Path> paths;
+                paths.push_back(Path());
                 
                 for (size_t i = 0; i < component_centers.size(); i++) {
 
@@ -182,71 +177,78 @@ namespace romi {
                                                       (int) x, (int) y);
                                 }
 
+                                if (initial_path.size() > 0) {
+                                        buffer.printf("    <g>\n");
+                                        double x = initial_path[0].x();
+                                        double y = initial_path[0].y();
+                                        buffer.printf("    <path d=\"M %d,%d",
+                                                      (int) x, (int) y);
+
+                                        for (size_t k = 1; k < initial_path.size(); k++) {
+                                                x = initial_path[k].x();
+                                                y = initial_path[k].y();
+                                                buffer.printf(" L %d,%d",
+                                                              (int) x, (int) y); 
+                                        }
+                                        buffer.printf("\" fill=\"none\" "
+                                                      "stroke=\"blue\"/>\n");
+                                        buffer.printf("    <g>\n");
+                                }
+
                                 buffer.printf("</svg>\n");
                 
                                 char filename[64];
-                                snprintf(filename, sizeof(filename), "path-debug-%02zu.svg", i);
+                                snprintf(filename, sizeof(filename), "path-pre-check-%02zu.svg", i);
                                 session.store_svg(filename, buffer.tostring());
                         }
                         
                         // check path for plant crossings
-                        Path path;
-                        check_path(session, mask, initial_path, path, i);
+                        check_path(session, mask, initial_path, paths, i);
                         
-                        snprintf(filename, sizeof(filename), "path-%02zu", i);
-                        session.store_path(filename, 0, path);
-
-                        Path normalized_path;
-                        for (size_t i = 0; i < path.size(); i++) {
-                                v3 p = path[i];
-
-                                size_t cx = (size_t) p.x();
-                                size_t cy = (size_t) p.y();
-
-                                if (cx < x0)  {
-                                        r_debug("*** Changing x coordinate from %zu to %zu", cx, x0);
-                                        cx = x0;
-                                }
-                                if (cx > x1) {
-                                        r_debug("*** Changing x coordinate from %zu to %zu", cx, x1);
-                                        cx = x1;
-                                }
-                                if (cy < y0) {
-                                        r_debug("*** Changing y coordinate from %zu to %zu", cy, y0);
-                                        cy = y0;
-                                }
-                                if (cy > y1) {
-                                        r_debug("*** Changing y coordinate from %zu to %zu", cy, y1);
-                                        cy = y1;
-                                }
-
-                                float value = dilated_mask.get(Image::kGreyChannel, cx, cy);
-                                if (value > 0.0f) {
-                                        r_err("*** NEW COORDINATE FALLS IN CROP ZONE %zu, %zu", cx, cy);
-                                }
-                                
-                                normalized_path.emplace_back(((double) cx - (double) x0) / (double) (x1 - x0),
-                                                             ((double) cy - (double) y0) / (double) (y1 - y0),
-                                                                     0.0);
-                        }
-                        
-                        paths.emplace_back(normalized_path);
+                        // snprintf(filename, sizeof(filename), "path-%02zu", i);
+                        // session.store_path(filename, 0, paths.back());
                 }
 
-                // double meters_to_pixels = cropper_->map_meters_to_pixels(1.0);
+                r_debug("Pipeline: number of paths: %zu", paths.size());
+                
+                std::vector<Path> normalized_paths;
+                for (size_t k = 0; k < paths.size(); k++) {
+                                
+                        Path path = paths[k]; 
+                        Path normalized_path;
+                                
+                        for (size_t i = 0; i < path.size(); i++) {
+                                double x = path[i].x();
+                                double y = path[i].y();
+                                
+                                if (x < (double) x0) {
+                                        x = (double) x0;
+                                } else if (x > (double) x1) {
+                                        x = (double) x1;
+                                }
+                                
+                                if (y < (double) y0) {
+                                        y = (double) y0;
+                                } else if (y > (double) y1) {
+                                        y = (double) y1;
+                                }
 
-                // Path initial_path;
-                // trace_path(session, mask, tool_diameter, meters_to_pixels, initial_path);
-                // session.store_path("path0", 0, initial_path);
-
-                // Path path;
-                // check_path(session, mask, initial_path, path);
-                // session.store_path("path", 0, path);
-
-                // std::vector<Path> paths;
-                // paths.emplace_back(path);
-
-                return paths;
+                                float value = mask.get(Image::kGreyChannel, (size_t) x,
+                                                       (size_t) y);
+                                if (value > 0.0f) {
+                                        r_err("Pipeline::try_run: Failed to re-route path "
+                                              "inside workspace without hurting a plant");
+                                        throw std::runtime_error("Failed to re-route path");
+                                }
+                                
+                                normalized_path.emplace_back((x - (double) x0) / (double) (x1 - x0),
+                                                             (y - (double) y0) / (double) (y1 - y0),
+                                                             0.0);
+                        }
+                        normalized_paths.emplace_back(normalized_path);
+                }
+                
+                return normalized_paths;
         }
 
         void Pipeline::crop_image(ISession& session, Image& camera,
@@ -270,7 +272,7 @@ namespace romi {
         }
 
         void Pipeline::check_path(ISession& session, Image& mask, Path& path,
-                                  Path& result, size_t index)
+                                  std::vector<Path>& paths, size_t index)
         {
                 rpp::MemBuffer buffer;
                 int w = (int) mask.width();
@@ -291,9 +293,9 @@ namespace romi {
                               w, h);
 
                 for (size_t i = 0; i < path.size() - 1; i++) {
-                        check_segment(buffer, mask, path[i], path[i+1], result);
+                        check_segment(buffer, mask, path[i], path[i+1], paths);
                 }
-                path.emplace_back(path.back());
+                paths.back().emplace_back(path.back());
 
                 buffer.printf("</svg>\n");
                 
@@ -301,8 +303,21 @@ namespace romi {
                 snprintf(filename, sizeof(filename), "plant-crossings-%02zu.svg", index);
                 session.store_svg(filename, buffer.tostring());
         }
+        
+        void Pipeline::check_segment(rpp::MemBuffer& buffer,
+                                     Image& mask, v3 start, v3 end,
+                                     std::vector<Path>& paths)
+        {
+                if (segment_crosses_white_area(mask, start, end)) {
+                        go_around(buffer, mask, start, end, paths);
+                } else {
+                        //path.emplace_back(start);
+                        paths.back().emplace_back(start);
+                }
+        }
 
-        void go_around(rpp::MemBuffer& buffer, Image& mask, v3 start, v3 end, Path& path)
+        void Pipeline::go_around(rpp::MemBuffer& buffer, Image& mask, v3 start, v3 end,
+                                 std::vector<Path>& paths)
         {
                 int d = (int) kAstarResolution;
                 int d2 = d / 2;
@@ -336,25 +351,28 @@ namespace romi {
                         }
                 }
 
-                r_debug("Path crosses a crop, generate a new path ... ");
+                r_debug("Using A* to go around plant, from (%.1f,%.1f) to (%.1f,%.1f)",
+                        start.x(), start.y(), end.x(), end.y());
+                
                 auto new_path = generator.findPath(
                         { (int) (start.x() / (double) d), (int) (start.y() / (double) d) },
                         { (int) (end.x() / (double) d), (int) (end.y() / (double) d) });
                 
                 int length = (int) new_path.size();
+
+
                 
                 // TODO
                 if (length == 0) {
                         r_debug("Pipeline: A*: Failed to find a path");
                         r_debug("From: %f, %f", start.x(), start.y());
                         r_debug("To:   %f, %f", end.x(), end.y());
+                        r_debug("Starting new path");
+                        paths.back().emplace_back(start);
+                        //throw std::runtime_error("*** A*: FAILED TO FIND A PATH ***");
                         
-                        buffer.printf("    <g>\n");
-                        buffer.printf("    <path d=\"M %d,%d L %d,%d\" "
-                                      "fill=\"transparent\" stroke=\"red\"/>\n",
-                                      (int) start.x(), (int) start.y(),
-                                      (int) end.x(), (int) end.y());
-                        buffer.printf("    </g>\n");
+                        // Start a new path
+                        paths.push_back(Path());
                         
                 } else {
                 
@@ -364,10 +382,8 @@ namespace romi {
                                       (int) start.x(), (int) start.y(),
                                       (int) end.x(), (int) end.y());
                 
-                
-                        path.emplace_back(start.x() / (double) mask.width(),
-                                          start.y() / (double) mask.width(),
-                                          0.0);
+                        paths.back().emplace_back(start);
+                        //path.emplace_back(start.x(), start.y(), 0.0);
                 
                         // The A* algorithm returns the path from end to
                         // start. So we have to iterate backwards. Don't add
@@ -382,24 +398,10 @@ namespace romi {
                                 buffer.printf("    <circle cx=\"%dpx\" cy=\"%dpx\" "
                                               "r=\"3px\" fill=\"red\" stroke=\"none\" />\n",
                                               x, y);
-                                path.emplace_back((double) x / (double) mask.width(),
-                                                  (double) y / (double) mask.height(),
-                                                  0.0);
-                        
+                                paths.back().emplace_back((double) x, (double) y, 0.0);
+                                //path.emplace_back((double) x, (double) y, 0.0);                        
                         }
                         buffer.printf("    </g>\n");
                 }
         }
-
-        void Pipeline::check_segment(rpp::MemBuffer& buffer,
-                                     Image& mask, v3 start, v3 end,
-                                     Path& path)
-        {
-                if (segment_crosses_white_area(mask, start, end)) {
-                        go_around(buffer, mask, start, end, path);
-                } else {
-                        path.emplace_back(start);
-                }
-        }
-
 }
