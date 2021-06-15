@@ -147,7 +147,6 @@ def pre_load_libs():
     
 async def init():    
     global server
-    pre_load_libs()
     loop = asyncio.get_event_loop()
     registration = loop.create_task(server.register())
     await registration
@@ -177,7 +176,7 @@ if __name__ == "__main__":
                         "svm": handle_svm_request
                     },
                     args.registry, args.ip)
-    
+    pre_load_libs()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init())
     asyncio.get_event_loop().run_forever()
