@@ -23,12 +23,10 @@ def load_model(model_path):
     
 def pre_load_libs():
     image_path = "./dummy_image.png"
-    output_name = "./dummy_image_out.png"
+    output_name = "dummy_image_out"
     image = np.zeros([10,10,3]).astype(np.uint8)
     cv2.imwrite(image_path, image)
     get_pred_unet(image_path, output_name)
-    run_svm(image_path, output_name)
-    return
 
 
 def get_pred_unet(path, output_name):
