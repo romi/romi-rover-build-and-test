@@ -43,6 +43,7 @@
 #include <session/Session.h>
 #include <rover/RoverOptions.h>
 #include <rpc/NavigationAdaptor.h>
+#include <fake/FakeMotorDriver.h>
 
 std::atomic<bool> quit(false);
 
@@ -140,26 +141,30 @@ int main(int argc, char** argv)
                 JsonCpp rover_settings = config["navigation"]["rover"];
                 romi::NavigationSettings rover_config(rover_settings);
                 
-                JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
+                // JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 
-                std::string device = romi::get_brush_motor_device(options, config);
-                std::shared_ptr<romiserial::RSerial>serial
-                        = std::make_shared<romiserial::RSerial>(device, 115200, 1);
-                auto romi_serial = romiserial::RomiSerialClient::create(device);
-                //romi_serial.set_debug(true);
+                // std::string device = romi::get_brush_motor_device(options, config);
+                // std::shared_ptr<romiserial::RSerial>serial
+                //         = std::make_shared<romiserial::RSerial>(device, 115200, 1);
+                // auto romi_serial = romiserial::RomiSerialClient::create(device);
+                        
+                // romi::BrushMotorDriver driver(romi_serial,
+                //                               driver_settings,
+                //                               static_cast<int>(rover_config.encoder_steps),
+                //                               rover_config.max_revolutions_per_sec);
 
-                romi::BrushMotorDriver driver(romi_serial,
-                                              driver_settings,
-                                              static_cast<int>(rover_config.encoder_steps),
-                                              rover_config.max_revolutions_per_sec);
 
+
+                romi::FakeMotorDriver driver;
+
+                
                 romi::WheelOdometry wheelodometry(rover_config, driver);
                 romi::Navigation navigation(driver, rover_config, wheelodometry, session);
 
 
                 std::string controller = options.get_value(kControllerString);
                 
-                driver.start_recording_pid();
+                //driver.start_recording_pid();
                 
                 if (controller == kDriverString) {
                         r_info("Using motor driver");
@@ -176,7 +181,7 @@ int main(int argc, char** argv)
                 r_info("Recording PID and navigation speed data for 10 seconds...");
                 rpp::ClockAccessor::GetInstance()->sleep(10.0);
                 
-                driver.stop_recording_pid();
+                //driver.stop_recording_pid();
                 
         } catch (std::exception& e) {
                 r_err(e.what());
