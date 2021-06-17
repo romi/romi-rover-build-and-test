@@ -17,23 +17,24 @@
     "navigation": {
 
         "rover": {
-            "wheel_diameter": 0.47,
-            "wheel_base": 1.0,
-            "encoder_steps": 1536,
-            "maximum_speed": 1.5
+            "wheel-diameter": 0.47,
+            "wheel-base": 1.0,
+            "encoder-steps": 1536,
+            "maximum-speed": 1.5,
+            "maximum-acceleration": 0.1
         },
         
         "motor-driver": "brush-motor-driver",
 
         "brush-motor-driver": {
-            "maximum_signal_amplitude": 40,
-            "use_pid": true,
+            "maximum-signal-amplitude": 40,
+            "use-pid": true,
             "pid": {
                 "kp": 0.280,
                 "ki": 0.000,
                 "kd": 0.010
             },
-            "encoder_directions": {
+            "encoder-directions": {
                 "left": -1,
                 "right": 1
             }

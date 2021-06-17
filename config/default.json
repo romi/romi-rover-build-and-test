@@ -1,24 +1,25 @@
 {
     "navigation": {
         "brush-motor-driver": {
-            "encoder_directions": {
+            "encoder-directions": {
                 "left": -1,
                 "right": 1
             },
-            "maximum_signal_amplitude": 40,
+            "maximum-signal-amplitude": 40,
             "pid": {
                 "kd": 0.010000,
                 "ki": 0,
                 "kp": 0.280000
             },
-            "use_pid": true
+            "use-pid": true
         },
         "motor-driver": "brush-motor-driver",
         "rover": {
-            "encoder_steps": 1536,
-            "maximum_speed": 1.500000,
-            "wheel_base": 1,
-            "wheel_diameter": 0.470000
+            "encoder-steps": 1536,
+            "maximum-speed": 1.500000,
+            "maximum-acceleration": 0.1,
+            "wheel-base": 1,
+            "wheel-diameter": 0.470000
         }
     },
     "oquam": {
