@@ -9,9 +9,6 @@ output_compile_flags()
 ############################################################
 
 add_subdirectory(weeder)
-add_subdirectory(user-interface)
-add_subdirectory(navigation)
-add_subdirectory(oquam)
 add_subdirectory(romi-rover)
 add_subdirectory(rcdiscover)
 add_subdirectory(scratch-test)

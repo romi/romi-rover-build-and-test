@@ -40,6 +40,8 @@
 #include <rover/RoverScriptEngine.h>
 #include <rover/RoverStateMachine.h>
 #include <rover/SpeedController.h>
+#include <rover/ZeroNavigationController.h>
+#include <rover/LocationTracker.h>
 #include <api/EventTimer.h>
 #include <ui/ScriptList.h>
 #include <ui/ScriptMenu.h>
@@ -226,10 +228,15 @@ int main(int argc, char** argv)
                                               rover_config.max_revolutions_per_sec);
 
                 romi::WheelOdometry wheelodometry(rover_config, driver);
-
+                romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
+                romi::ZeroNavigationController navigation_controller;
+                
                 // Navigation
                 r_info("main: Creating navigation");
-                romi::Navigation navigation(driver, rover_config, wheelodometry, session);
+                
+                romi::Navigation navigation(rover_config, driver, location_tracker,
+                                            location_tracker, navigation_controller,
+                                            session);
 
                 // SpeedController
                 r_info("main: Creating speed controller");

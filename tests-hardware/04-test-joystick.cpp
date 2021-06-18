@@ -42,6 +42,8 @@
 #include <ui/ScriptList.h>
 #include <ui/ScriptMenu.h>
 #include <rover/Navigation.h>
+#include <rover/ZeroNavigationController.h>
+#include <rover/LocationTracker.h>
 #include <ui/JoystickInputDevice.h>
 #include <fake/FakeWeeder.h>
 #include <fake/FakeScriptEngine.h>
@@ -149,7 +151,12 @@ int main(int argc, char** argv)
                                               static_cast<int>(rover_config.encoder_steps),
                                               rover_config.max_revolutions_per_sec);
                 romi::WheelOdometry wheelodometry(rover_config, driver);
-                romi::Navigation navigation(driver, rover_config, wheelodometry, session);
+                romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
+                romi::ZeroNavigationController navigation_controller;
+
+                romi::Navigation navigation(rover_config, driver, location_tracker,
+                                            location_tracker, navigation_controller,
+                                            session);
 
                 // SpeedController
                 romi::SpeedController speed_controller(navigation, config);

@@ -35,6 +35,8 @@
 #include <hal/BrushMotorDriver.h>
 #include <rover/Navigation.h>
 #include <rover/NavigationSettings.h>
+#include <rover/ZeroNavigationController.h>
+#include <rover/LocationTracker.h>
 #include <configuration/ConfigurationProvider.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
@@ -156,10 +158,14 @@ int main(int argc, char** argv)
 
 
                 romi::FakeMotorDriver driver;
-
                 
                 romi::WheelOdometry wheelodometry(rover_config, driver);
-                romi::Navigation navigation(driver, rover_config, wheelodometry, session);
+                romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
+                romi::ZeroNavigationController navigation_controller;
+
+                romi::Navigation navigation(rover_config, driver, location_tracker,
+                                            location_tracker, navigation_controller,
+                                            session);
 
 
                 std::string controller = options.get_value(kControllerString);
