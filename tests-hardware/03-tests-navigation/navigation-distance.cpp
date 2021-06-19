@@ -100,8 +100,8 @@ int main(int argc, char** argv)
         std::string speed_value = options.get_value(kSpeedString);
         double speed = std::stod(speed_value);
 
-        if (distance < -10.0 || distance > 10.0) {
-                r_err("Invalid distance: %f (must be in [-10, 10] range", distance);
+        if (distance < -50.0 || distance > 50.0) {
+                r_err("Invalid distance: %f (must be in [-50, 50] range", distance);
                 return 1;
         }
 
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
                 return 1;
         }
         
-        r_info("Navigating %f meters at speed of %.0f%% of maximum speed",
+        r_info("Navigating %f meters at speed of %.1f%% of maximum speed",
                distance, 100.0 * speed);
         
         r_log_init();
