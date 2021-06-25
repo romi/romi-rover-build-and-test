@@ -27,6 +27,7 @@ jobs:
           
       - name: Install dependencies
         run: |
+          sudo apt get update
           sudo apt install libfluidsynth-dev
           # Only needed when gpsd is added to the build.
           # sudo apt-get install libgps-dev
