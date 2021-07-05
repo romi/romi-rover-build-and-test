@@ -26,51 +26,25 @@
 #include <memory>
 #include <atomic>
 #include <syslog.h>
-#include <string.h>
 #include <thread>
 
-#include <RSerial.h>
-#include <RomiSerialClient.h>
 #include <Linux.h>
 #include <Clock.h>
 #include <ClockAccessor.h>
-#include <configuration/ConfigurationProvider.h>
-#include <rover/Rover.h>
 #include <rover/RoverOptions.h>
-#include <rover/RoverInterface.h>
-#include <rover/RoverScriptEngine.h>
-#include <rover/RoverStateMachine.h>
-#include <rover/SpeedController.h>
-#include <api/EventTimer.h>
-#include <ui/ScriptList.h>
-#include <ui/ScriptMenu.h>
-#include <notifications/FluidSoundNotifications.h>
-#include <rover/Navigation.h>
-#include <ui/CrystalDisplay.h>
-#include <ui/JoystickInputDevice.h>
-#include <weeder/Weeder.h>
-#include <api/IDisplay.h>
-#include <ui/LinuxJoystick.h>
-#include <ui/UIEventMapper.h>
-#include <ui/CrystalDisplay.h>
-#include <ui/JoystickInputDevice.h>
-#include <camera/FileCamera.h>
-#include <camera/USBCamera.h>
+
 #include <rpc/RemoteCamera.h>
 #include <rpc/RcomClient.h>
-#include <hal/BrushMotorDriver.h>
-#include <oquam/StepperController.h>
+
 #include <oquam/StepperSettings.h>
-#include <oquam/Oquam.h>
-#include <weeder/PipelineFactory.h>
-#include <camera/Imager.h>
-#include <unet/UnetImager.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
 #include <RegistryServer.h>
+#include <MessageLink.h>
+
 
 std::atomic<bool> quit(false);
 
@@ -126,35 +100,66 @@ int main(int argc, char** argv)
 
 //            std::string registry = "192.168.0.179";
 //            if (!registry.empty())
-                rcom::RegistryServer::set_address("192.168.0.179");
+                rcom::RegistryServer::set_address("10.0.3.35");
 
-                romi::PythonUnet pythonUnet;
-                std::string image_file("./camera.jpg");
-                std::unique_ptr<romi::FileCamera> camera = std::make_unique<romi::FileCamera>(image_file);
+   //             auto rpc_ = romi::RcomClient::create("python", 30);
 
-                // Imager
-                //romi::Imager imager(session, *camera);
-                std::string observation_id("observe");
-                romi::UnetImager imager(session, *camera);
-                imager.start_recording(observation_id, 5, 500.00);
+            double timeout_seconds = 10;
+            r_debug("Main::Create Link");
+            std::unique_ptr<rcom::IMessageLink> link
+                    = std::make_unique<rcom::MessageLink>("python", timeout_seconds);
+            r_debug("Main::Create done");
+
+            std::string path("");
+            std::string output_name("");
+            std::string function_name("unet");
+            JsonCpp response;
+            romi::RPCError error;
+            JsonCpp params = JsonCpp::construct("{\"path\": \"%s\", "
+                                                "\"output-name\": \"%s\"}",
+                                                path.c_str(), output_name.c_str());
+
+
+
+//                auto client = std::make_unique<romi::RcomClient>(link, timeout_seconds);;
+//                client->execute(function_name, params, response, error);
+
+
+//                romi::PythonUnet pythonUnet;
+//                std::string image_file("./camera.jpg");
+//                std::unique_ptr<romi::FileCamera> camera = std::make_unique<romi::FileCamera>(image_file);
+//
+//                // Imager
+//                //romi::Imager imager(session, *camera);
+//                std::string observation_id("observe");
+//                romi::UnetImager imager(session, *camera);
+//                imager.start_recording(observation_id, 5, 500.00);
 
                 while (!quit) {
                         
                         try {
                             using namespace std::chrono_literals;
-                            if (!imager.is_recording())
-                            {
-                                imager.stop_recording();
-                                quit = true;
-                                r_info("Recording stopped Quitting Application");
-                            }
-                            std::this_thread::sleep_for(500ms);
+//                            if (!imager.is_recording())
+//                            {
+//                                imager.stop_recording();
+//                                quit = true;
+//                                r_info("Recording stopped Quitting Application");
+//                            }
+/////////////////////////////////////// Loop Create Link
+//                            r_debug("Main::Create Link");
+//                            std::unique_ptr<rcom::IMessageLink> link
+//                                    = std::make_unique<rcom::MessageLink>("python", timeout_seconds);
+//                            r_debug("Main::Create client");
+//                            auto client = std::make_unique<romi::RcomClient>(link, timeout_seconds);;
+//                            client->execute(function_name, params, response, error);
+/////////////////////////////////////////////////////////////////////////////////////////////////
+                            std::this_thread::sleep_for(5ms);
                         } catch (std::exception& e) {
                             quit = true;
                                 throw;
                         }
                 }
-                imager.stop_recording();
+//                imager.stop_recording();
 
                 retval = 0;
 
