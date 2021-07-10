@@ -92,7 +92,7 @@ void MakeInfoString(const std::string& device_name)
         info_string_ += "\"]";
 }
 
-void SendInfo(romiserial::RomiSerial *romi_serial, int16_t *, const char *)
+void SendInfo(romiserial::IRomiSerial *romi_serial, int16_t *, const char *)
 {
         romi_serial->send(info_string_.c_str());
         sent_info = true;
