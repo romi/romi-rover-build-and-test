@@ -45,6 +45,8 @@
 #include <api/EventTimer.h>
 #include <ui/ScriptList.h>
 #include <ui/ScriptMenu.h>
+#include <rpc/ScriptHub.h>
+#include <rpc/ScriptHubListener.h>
 #include <notifications/FluidSoundNotifications.h>
 #include <rover/Navigation.h>
 #include <ui/CrystalDisplay.h>
@@ -107,9 +109,6 @@ int main(int argc, char** argv)
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
-        // TBD: Check with Peter.
-//        app_init(&argc, argv);
-//        app_set_name("romi-rover");
 
         try {
                 std::string config_file = options.get_config_file();
@@ -157,7 +156,6 @@ int main(int argc, char** argv)
                 const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
                 auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device);
                 romi::StepperController cnc_controller(cnc_serial);
-
                 
                 // CNC
                 r_info("main: Creating CNC");
@@ -267,7 +265,9 @@ int main(int argc, char** argv)
                 //romi::Imager imager(session, *camera);
                 romi::UnetImager imager(session, *camera);
 
-        
+                auto scriptHubListener = std::make_shared<ScriptHubListener>(scripts);
+                ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
+
                 // Rover
                 r_info("main: Creating rover");
                 romi::Rover rover(input_device,
