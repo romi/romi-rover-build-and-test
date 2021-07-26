@@ -49,6 +49,7 @@
 #include <ui/ScriptMenu.h>
 #include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
+#include <rover/EventsAndStates.h>
 
 
 std::atomic<bool> quit(false);
@@ -107,7 +108,9 @@ int main(int argc, char** argv)
 
                 const std::string test_script_filename = "./test_data/scripts.json";
                 romi::ScriptList scripts(test_script_filename);
-                auto scriptHubListener = std::make_shared<ScriptHubListener>(scripts);
+                romi::RoverScriptEngine script_engine(scripts, romi::event_script_finished,
+                                                  romi::event_script_error);
+                auto scriptHubListener = std::make_shared<ScriptHubListener>(scripts, script_engine);
                 ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
 
                 while (!quit) {
@@ -122,13 +125,12 @@ int main(int argc, char** argv)
                                 throw;
                         }
                 }
-//                imager.stop_recording();
 
                 retval = 0;
 
                 
         } catch (JSONError& je) {
-                r_err("main: Invalid configuration file: %s", je.what());
+                r_err("main: Json Error: %s", je.what());
                 
         } catch (std::exception& e) {
                 r_err("main: exception: %s", e.what());

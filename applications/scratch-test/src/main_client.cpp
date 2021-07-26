@@ -124,9 +124,23 @@ int main(int argc, char** argv)
                 {
                     std::cout << "receive erro<r " << recv << ">" << std::endl;
                 }
+                memBuffer.clear();
+
+            memBuffer.printf(R"({ "request" : "execute", "id" : "weeding"})");
+            webclient->send(memBuffer, rcom::kTextMessage );
+            recv = webclient->recv(memBuffer, 2.0);
+
+            if (recv ==  rcom::RecvStatus::kRecvText)
+            {
+                std::cout << memBuffer.tostring() << std::endl;
+            }
+            else
+            {
+                std::cout << "receive erro<r " << recv << ">" << std::endl;
+            }
 
                 while (!quit) {
-                        
+
                         try {
                             using namespace std::chrono_literals;
                             std::this_thread::sleep_for(5ms);
@@ -135,7 +149,6 @@ int main(int argc, char** argv)
                                 throw;
                         }
                 }
-//                imager.stop_recording();
 
                 retval = 0;
 
