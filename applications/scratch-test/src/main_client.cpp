@@ -71,7 +71,27 @@ void SignalHandler(int signal)
                 r_err("Unknown signam received %d", signal);
         }
 }
+bool send_execute_script(std::unique_ptr<rcom::IWebSocket>& webclient, romi::Script& script)
+{
+            rpp::MemBuffer memBuffer;
+            memBuffer.printf(R"({ "request" : "execute", "id" : "%s"})", script.id.c_str());
+            std::cout << "sending: " << memBuffer.tostring() << std::endl;
 
+            webclient->send(memBuffer, rcom::kTextMessage );
+            auto recv = webclient->recv(memBuffer, 2.0);
+
+            if (recv ==  rcom::RecvStatus::kRecvText)
+            {
+
+                std::cout << "success received: " << memBuffer.tostring() << std::endl;
+                return true;
+            }
+            else
+            {
+                std::cout << "receive error <" << recv << ">" << std::endl;
+                return false;
+            }
+}
 int main(int argc, char** argv)
 {
         std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
@@ -108,7 +128,6 @@ int main(int argc, char** argv)
 
                 rcom::Address remote_address(ScriptHubListeningPort);
 
-
                 rcom::SocketFactory  socketFactory;
                 auto webclient = socketFactory.new_client_side_websocket(remote_address);
                 rpp::MemBuffer memBuffer;
@@ -116,34 +135,47 @@ int main(int argc, char** argv)
                 webclient->send(memBuffer, rcom::kTextMessage );
                 auto recv = webclient->recv(memBuffer, 2.0);
 
-                if (recv ==  rcom::RecvStatus::kRecvText)
-                {
-                    std::cout << memBuffer.tostring() << std::endl;
-                }
-                else
-                {
-                    std::cout << "receive erro<r " << recv << ">" << std::endl;
-                }
-                memBuffer.clear();
+                JsonCpp jsonScripts = JsonCpp::parse(memBuffer);
 
-            memBuffer.printf(R"({ "request" : "execute", "id" : "weeding"})");
-            webclient->send(memBuffer, rcom::kTextMessage );
-            recv = webclient->recv(memBuffer, 2.0);
-
-            if (recv ==  rcom::RecvStatus::kRecvText)
-            {
-                std::cout << memBuffer.tostring() << std::endl;
-            }
-            else
-            {
-                std::cout << "receive erro<r " << recv << ">" << std::endl;
-            }
+                romi::ScriptList scriptList(jsonScripts);
+                if (recv !=  rcom::RecvStatus::kRecvText)
+                {
+                    std::cout << "Unable to retrive script list error <" << recv << ">" << std::endl;
+                    quit = true;
+                }
 
                 while (!quit) {
 
                         try {
                             using namespace std::chrono_literals;
+
+                            std::cout << std::endl << "SCRIPTS" <<  std::endl << "=======" << std::endl << std::endl;
+                            size_t index = 0;
+                            for (index = 0; index < scriptList.size(); index++)
+                            {
+                                auto script = scriptList[index];
+                                std::cout << index << ">\t" << script.id << "\t(" << script.title << ")" << std::endl;
+                            }
+                            size_t max_selection = index;
+                            std::cout << max_selection << ">\tQuit" << std::endl << std::endl;
+                            std::string line;
+                            std::cout << "Select > ";
+                            std::getline(std::cin, line);
+
+                            if (!line.empty())
+                            {
+                                size_t selection = std::stoul(line);
+                                if (selection == max_selection)
+                                    quit = true;
+                                if (selection < max_selection)
+                                {
+                                    auto script = scriptList[selection];
+                                    send_execute_script(webclient, script);
+                                }
+                            }
+
                             std::this_thread::sleep_for(5ms);
+
                         } catch (std::exception& e) {
                             quit = true;
                                 throw;
@@ -162,3 +194,4 @@ int main(int argc, char** argv)
         
         return retval;
 }
+

@@ -6,7 +6,7 @@ set(SOURCES
   )
 
 add_executable(scratch-test ${SOURCES})
-target_link_libraries(scratch-test romi rover rcompp-lite)
+target_link_libraries(scratch-test romi rover rcompp-lite gmock romimocks)
 
 set(SOURCES_CLIENT
         src/main_client.cpp

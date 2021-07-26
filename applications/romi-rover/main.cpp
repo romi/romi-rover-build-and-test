@@ -265,9 +265,6 @@ int main(int argc, char** argv)
                 //romi::Imager imager(session, *camera);
                 romi::UnetImager imager(session, *camera);
 
-                auto scriptHubListener = std::make_shared<ScriptHubListener>(scripts);
-                ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
-
                 // Rover
                 r_info("main: Creating rover");
                 romi::Rover rover(input_device,
@@ -280,6 +277,9 @@ int main(int argc, char** argv)
                                   notifications,
                                   weeder,
                                   imager);
+
+            auto scriptHubListener = std::make_shared<ScriptHubListener>(scripts, rover);
+            ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
 
                 // State machine
                 r_info("main: Creating state machine");
