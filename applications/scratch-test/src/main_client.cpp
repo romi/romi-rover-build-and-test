@@ -31,6 +31,7 @@
 #include <Linux.h>
 #include <Clock.h>
 #include <ClockAccessor.h>
+#include <MemBuffer.h>
 #include <rover/RoverOptions.h>
 
 #include <rpc/RemoteCamera.h>
@@ -49,6 +50,8 @@
 #include <ui/ScriptMenu.h>
 #include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
+#include <Socket.h>
+#include <SocketFactory.h>
 
 
 std::atomic<bool> quit(false);
@@ -101,21 +104,31 @@ int main(int argc, char** argv)
 
                 romi::Session session(linux, session_directory, romiDeviceData,
                                       softwareVersion, std::move(locationProvider));
-//                session.start("hw_observation_id");
 
 
+                rcom::Address remote_address(ScriptHubListeningPort);
 
-                const std::string test_script_filename = "./test_data/scripts.json";
-                romi::ScriptList scripts(test_script_filename);
-                auto scriptHubListener = std::make_shared<ScriptHubListener>(scripts);
-                ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
+
+                rcom::SocketFactory  socketFactory;
+                auto webclient = socketFactory.new_client_side_websocket(remote_address);
+                rpp::MemBuffer memBuffer;
+                memBuffer.printf(R"({ "request" : "list" })");
+                webclient->send(memBuffer, rcom::kTextMessage );
+                auto recv = webclient->recv(memBuffer, 2.0);
+
+                if (recv ==  rcom::RecvStatus::kRecvText)
+                {
+                    std::cout << memBuffer.tostring() << std::endl;
+                }
+                else
+                {
+                    std::cout << "receive erro<r " << recv << ">" << std::endl;
+                }
 
                 while (!quit) {
                         
                         try {
                             using namespace std::chrono_literals;
-                            scriptHub.handle_events();
-
                             std::this_thread::sleep_for(5ms);
                         } catch (std::exception& e) {
                             quit = true;
