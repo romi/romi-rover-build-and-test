@@ -301,6 +301,7 @@ int main(int argc, char** argv)
                         
                         try {
                                 user_interface.handle_events();
+                                scriptHub.handle_events();
                         
                         } catch (std::exception& e) {
                                 
