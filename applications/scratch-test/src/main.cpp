@@ -139,7 +139,7 @@ int main(int argc, char** argv)
                 romi::Rover rover(mockInputDevice, mockDisplay, mockSpeedController, mockNavigation, mockEventTimer,
                                   mockMenu, script_engine, mockNotifications, mockWeeder, mockImager);
 
-                auto scriptHubListener = std::make_shared<ScriptHubListener>(scripts, rover);
+                auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
                 ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
 
                 while (!quit) {

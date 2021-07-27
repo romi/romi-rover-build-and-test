@@ -278,8 +278,8 @@ int main(int argc, char** argv)
                                   weeder,
                                   imager);
 
-            auto scriptHubListener = std::make_shared<ScriptHubListener>(scripts, rover);
-            ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
+                auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
+                ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
 
                 // State machine
                 r_info("main: Creating state machine");
