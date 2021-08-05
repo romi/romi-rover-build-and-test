@@ -238,7 +238,7 @@ int main(int argc, char** argv)
                                                     driver_settings,
                                                     rover_config.compute_max_angular_speed(),
                                                     rover_config.compute_max_angular_acceleration());
-
+                
                 romi::WheelOdometry wheelodometry(rover_config, motor_driver);
                 romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
 
@@ -322,8 +322,10 @@ int main(int argc, char** argv)
                 r_info("main: Starting event loop");
 
                 // FIXME
-                std::string kWheelOdometryOrientation = "wheel-odometry-orientation";
-                std::string kPCAOrientation = "pca-orientation";
+                // std::string kWheelOdometryOrientation = "wheel-odometry-orientation";
+                // std::string kPCAOrientation = "pca-orientation";
+
+                motor_driver.start_recording_speeds();
                 
                 while (!quit) {
                         
@@ -333,11 +335,10 @@ int main(int argc, char** argv)
                                 scriptHub.handle_events();
 
                                 // FIXME
-                                double now = clock->time();
-                                romi::log_data(now, kWheelOdometryOrientation, wheelodometry.get_orientation());
-                                romi::log_data(now, kPCAOrientation, track_follower.get_orientation_error());
-                                
-                                clock->sleep(0.020);
+                                // double now = clock->time();
+                                // romi::log_data(now, kWheelOdometryOrientation, wheelodometry.get_orientation());
+                                // romi::log_data(now, kPCAOrientation, track_follower.get_orientation_error());
+                                // clock->sleep(0.020);
                         
                         } catch (std::exception& e) {
                                 
