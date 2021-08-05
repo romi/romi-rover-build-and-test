@@ -39,6 +39,8 @@ option(BUILD_COVERAGE "Build coverage." ON)
 option(BUILD_EXAMPLES "Build example applications." OFF)
 
 ############################################################
+include(${CMAKE_MODULES_DIRECTORY}/DownloadProject.cmake)
+
 
 # Test early on if all the complimentary options are enabled. Exit if flags aren't correct.
 # This avoids downloading libs and supporting tools when the configure won't work later on.
@@ -60,7 +62,6 @@ if(BUILD_TESTS)
             set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
         endif()
 
-        include(${CMAKE_MODULES_DIRECTORY}/DownloadProject.cmake)
         download_project(   PROJ                googletest
                 GIT_REPOSITORY      https://github.com/google/googletest.git
                 GIT_TAG             v1.10.x
