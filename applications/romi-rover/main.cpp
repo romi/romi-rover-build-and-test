@@ -41,6 +41,8 @@
 #include <rover/RoverStateMachine.h>
 #include <rover/SpeedController.h>
 #include <rover/ZeroNavigationController.h>
+#include <rover/L1NavigationController.h>
+#include <rover/PythonTrackFollower.h>
 #include <rover/LocationTracker.h>
 #include <api/EventTimer.h>
 #include <ui/ScriptList.h>
@@ -74,6 +76,7 @@
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
 #include <RegistryServer.h>
+#include <api/DataLogAccessor.h>
 
 std::atomic<bool> quit(false);
 
@@ -91,6 +94,16 @@ void SignalHandler(int signal)
         else{
                 r_err("Unknown signam received %d", signal);
         }
+}
+
+double compute_pixels_per_meter(JsonCpp& config)
+{
+        double width = config.get("oquam").get("cnc-range").get(0).num(1);
+        double pixels = config.get("weeder").get("imagecropper").get("workspace").num(2);
+        r_debug("Pixels-per-meter: %f px/m", pixels / width);
+        return pixels / width;
+        // (void) config;
+        // return 188.0 * 2.0;
 }
 
 int main(int argc, char** argv)
@@ -221,19 +234,30 @@ int main(int argc, char** argv)
                 const char *driver_device = (const char *) config["ports"]["brush-motor-driver"]["port"];
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 auto driver_serial = romiserial::RomiSerialClient::create(driver_device);
-                romi::BrushMotorDriver driver(driver_serial, driver_settings,
-                                              static_cast<int>(rover_config.encoder_steps),
-                                              rover_config.max_revolutions_per_sec);
+                romi::BrushMotorDriver motor_driver(driver_serial,
+                                                    driver_settings,
+                                                    rover_config.compute_max_angular_speed(),
+                                                    rover_config.compute_max_angular_acceleration());
 
-                romi::WheelOdometry wheelodometry(rover_config, driver);
+                romi::WheelOdometry wheelodometry(rover_config, motor_driver);
                 romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
-                romi::ZeroNavigationController navigation_controller;
+
+                
+                //romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
+                auto python_client = romi::RcomClient::create("python", 10.0);
+                double pixels_per_meter = compute_pixels_per_meter(config);
+                romi::PythonTrackFollower track_follower(*camera, python_client,
+                                                         "nav", pixels_per_meter, session);
+
+                
+                //romi::ZeroNavigationController navigation_controller;
+                romi::L1NavigationController navigation_controller(rover_config.wheel_base, 2.0);
                 
                 // Navigation
                 r_info("main: Creating navigation");
                 
-                romi::Navigation navigation(rover_config, driver, location_tracker,
-                                            location_tracker, navigation_controller,
+                romi::Navigation navigation(rover_config, motor_driver, location_tracker,
+                                            track_follower, navigation_controller,
                                             session);
 
                 // SpeedController
@@ -296,12 +320,24 @@ int main(int argc, char** argv)
                         throw std::runtime_error("start-up failed");
                 
                 r_info("main: Starting event loop");
+
+                // FIXME
+                std::string kWheelOdometryOrientation = "wheel-odometry-orientation";
+                std::string kPCAOrientation = "pca-orientation";
                 
                 while (!quit) {
                         
                         try {
                                 user_interface.handle_events();
+
                                 scriptHub.handle_events();
+
+                                // FIXME
+                                double now = clock->time();
+                                romi::log_data(now, kWheelOdometryOrientation, wheelodometry.get_orientation());
+                                romi::log_data(now, kPCAOrientation, track_follower.get_orientation_error());
+                                
+                                clock->sleep(0.020);
                         
                         } catch (std::exception& e) {
                                 

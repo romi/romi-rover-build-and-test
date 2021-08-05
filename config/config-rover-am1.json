@@ -5,25 +5,23 @@
                 "left": -1,
                 "right": 1
             },
-            "maximum-signal-amplitude": 60,
+            "encoder-steps": 16000,
+            "maximum-signal-amplitude": 500,
             "pid": {
-                "kd": 0,
-                "ki": 0,
-                "kp": 1.050000
-            },
-            "use-pid": true
+                "ki": [3, 100],
+                "kp": [100, 100]
+            }
         },
         "motor-driver": "brush-motor-driver",
         "rover": {
-            "encoder-steps": 1536,
-            "maximum-speed": 1,
-            "maximum-acceleration": 0.1,
+            "maximum-acceleration": 0.500000,
+            "maximum-speed": 3,
             "wheel-base": 1,
             "wheel-diameter": 0.470000
         }
     },
     "oquam": {
-        "cnc-range": [[0, 0.950000], [0, 0.900000], [-0.180000, 0]],
+        "cnc-range": [[0, 0.750000], [0, 0.900000], [-0.180000, 0]],
         "controller-classname": "stepper-controller",
         "path-maximum-deviation": 0.010000,
         "path-slice-duration": 0.020000,
@@ -121,7 +119,7 @@
             },
             "fast": {
                 "direction-curve-exponent": 1.500000,
-                "direction-multiplier": 0.400000,
+                "direction-multiplier": 1,
                 "speed-curve-exponent": 1.500000,
                 "speed-multiplier": 1,
                 "use-direction-curve": true,

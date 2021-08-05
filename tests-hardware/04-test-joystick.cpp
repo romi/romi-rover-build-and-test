@@ -148,8 +148,8 @@ int main(int argc, char** argv)
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
                 auto driver_serial = romiserial::RomiSerialClient::create(driver_device);
                 romi::BrushMotorDriver driver(driver_serial, driver_settings,
-                                              static_cast<int>(rover_config.encoder_steps),
-                                              rover_config.max_revolutions_per_sec);
+                                              rover_config.compute_max_angular_speed(),
+                                              rover_config.compute_max_angular_acceleration());
                 romi::WheelOdometry wheelodometry(rover_config, driver);
                 romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
                 romi::ZeroNavigationController navigation_controller;

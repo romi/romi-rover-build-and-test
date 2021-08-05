@@ -152,8 +152,8 @@ int main(int argc, char** argv)
                         
                 romi::BrushMotorDriver driver(romi_serial,
                                               driver_settings,
-                                              static_cast<int>(rover_config.encoder_steps),
-                                              rover_config.max_revolutions_per_sec);
+                                              rover_config.compute_max_angular_speed(),
+                                              rover_config.compute_max_angular_acceleration());
 
 
 
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
                 std::string controller = options.get_value(kControllerString);
                 
                 //driver.start_recording_pid();
-                driver.start_recording_speeds();
+                // driver.start_recording_speeds();
                 
                 if (controller == kDriverString) {
                         r_info("Using motor driver");
@@ -189,7 +189,7 @@ int main(int argc, char** argv)
                 rpp::ClockAccessor::GetInstance()->sleep(10.0);
                 
                 //driver.stop_recording_pid();
-                driver.stop_recording_speeds();
+                // driver.stop_recording_speeds();
                 
         } catch (std::exception& e) {
                 r_err(e.what());
