@@ -22,17 +22,21 @@ int main(int argc, char **argv)
         }
         
         try {
-                romi::V2CameraSettings settings(romi::kV2HalfWidth,
-                                                romi::kV2HalfHeight);
-                romi::PiCamera camera(settings);
-                romi::CameraAdaptor adaptor(camera);
+                // romi::V2CameraSettings settings(romi::kV2HalfWidth,
+                //                                 romi::kV2HalfHeight);
+                romi::V2VideoCameraSettings settings(romi::kV2HalfWidth,
+                                                     romi::kV2HalfHeight,
+                                                     5);
+                
+                auto camera = romi::PiCamera::create(settings);
+                romi::CameraAdaptor adaptor(*camera);
                 auto server = romi::RcomServer::create("camera", adaptor);
 
                 quit_on_control_c();
                 
                 while (!quit) {
                         server->handle_events();
-                        clock->sleep(0.050);
+                        clock->sleep(0.001);
                 }
 
         } catch (std::exception& e) {
