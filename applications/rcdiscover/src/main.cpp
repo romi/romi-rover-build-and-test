@@ -16,6 +16,8 @@ const std::map<std::string, std::string> serial_device_to_json_key = {
         { "Azhoo", "brush-motor-driver" },
         { "CrystalDisplay", "display-device" },
         { "Oquam", "oquam" },
+        { "Steering", "steering" },
+        { "IMU", "imu" },
         { "ToolCarrierJrkG2", "tool_carrier" }
 };
 
