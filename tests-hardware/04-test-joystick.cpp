@@ -62,6 +62,8 @@
 #include <data_provider/GpsLocationProvider.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
+#include <rover/WheelOdometry.h>
+#include <rover/DifferentialSteering.h>
 
 #include "Clock.h"
 #include "ClockAccessor.h"
@@ -154,9 +156,11 @@ int main(int argc, char** argv)
                 romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
                 romi::ZeroNavigationController navigation_controller;
 
-                romi::Navigation navigation(rover_config, driver, location_tracker,
+                romi::DifferentialSteering steering(driver, rover_config);
+
+                romi::Navigation navigation(rover_config, location_tracker,
                                             location_tracker, navigation_controller,
-                                            session);
+                                            steering, session);
 
                 // SpeedController
                 romi::SpeedController speed_controller(navigation, config);

@@ -44,13 +44,18 @@
 #include <rover/L1NavigationController.h>
 #include <rover/PythonTrackFollower.h>
 #include <rover/LocationTracker.h>
+#include <rover/IMUTrackFollower.h>
+#include <rover/WheelOdometry.h>
+#include <rover/Navigation.h>
+#include <rover/DifferentialSteering.h>
+#include <rover/StepperSteering.h>
+#include <rover/DoubleSteering.h>
 #include <api/EventTimer.h>
 #include <ui/ScriptList.h>
 #include <ui/ScriptMenu.h>
 #include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
 #include <notifications/FluidSoundNotifications.h>
-#include <rover/Navigation.h>
 #include <ui/CrystalDisplay.h>
 #include <ui/JoystickInputDevice.h>
 #include <weeder/Weeder.h>
@@ -240,26 +245,62 @@ int main(int argc, char** argv)
                                                     rover_config.compute_max_angular_acceleration());
                 
                 romi::WheelOdometry wheelodometry(rover_config, motor_driver);
-                romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
+                romi::LocationTracker distance_measure(wheelodometry, wheelodometry);
+
+                // Track follower
+                
+                romi::LocationTracker track_follower(wheelodometry, wheelodometry);
+                
+                // auto python_client = romi::RcomClient::create("python", 10.0);
+                // double pixels_per_meter = compute_pixels_per_meter(config);
+                // romi::PythonTrackFollower track_follower(*camera, python_client,
+                //                                          "nav", pixels_per_meter, session);
+                // const char *imu_device = (const char *) config["ports"]["imu"]["port"];
+                // auto imu_serial = romiserial::RomiSerialClient::create(imu_device);
+                // romi::IMUTrackFollower imu_track_follower(imu_serial);
 
                 
-                //romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
-                auto python_client = romi::RcomClient::create("python", 10.0);
-                double pixels_per_meter = compute_pixels_per_meter(config);
-                romi::PythonTrackFollower track_follower(*camera, python_client,
-                                                         "nav", pixels_per_meter, session);
-
+                // Navigation controller
                 
                 //romi::ZeroNavigationController navigation_controller;
-                romi::L1NavigationController navigation_controller(rover_config.wheel_base, 2.0);
+                romi::L1NavigationController navigation_controller(2.0);
+
+
+                // Steering
                 
+                romi::DifferentialSteering steering(motor_driver, rover_config);
+
+                // romi::DifferentialSteering differential_steering(motor_driver, rover_config);
+                
+                // const char *steering_device = (const char *) config["ports"]["steering"]["port"];
+                // auto steering_serial = romiserial::RomiSerialClient::create(steering_device);
+                // romi::StepperController steering_controller(steering_serial);
+                // double max_rpm = 500; // From the motor specs
+                // double max_rps = max_rpm / 60.0;
+                // double default_rps = max_rps / 2.0; // Turn at 1/2th of max speed
+                // double steps_per_revolution = 200; // From the motor specs
+                // double microsteps = 2;  // Driver jumper settings
+                // double gears = 76.0 + 49.0/64.0; // From the motor specs
+                // double belt = 34.0 / 34.0;
+                // int16_t steps_per_second = (int16_t) ceil(default_rps
+                //                                           * steps_per_revolution
+                //                                           * microsteps);
+                // double total_steps_per_revolution = (steps_per_revolution
+                //                                      * microsteps * gears * belt);
+                
+                // romi::StepperSteering wheel_steering(steering_controller, rover_config,
+                //                                      steps_per_second,
+                //                                      total_steps_per_revolution);
+
+                // romi::DoubleSteering steering(differential_steering, wheel_steering);
+                        
                 // Navigation
                 r_info("main: Creating navigation");
                 
-                romi::Navigation navigation(rover_config, motor_driver, location_tracker,
+                romi::Navigation navigation(rover_config, distance_measure,
                                             track_follower, navigation_controller,
-                                            session);
-
+                                            steering, session);
+                
                 // SpeedController
                 r_info("main: Creating speed controller");
                 romi::SpeedController speed_controller(navigation, config);
@@ -324,8 +365,11 @@ int main(int argc, char** argv)
                 // FIXME
                 // std::string kWheelOdometryOrientation = "wheel-odometry-orientation";
                 // std::string kPCAOrientation = "pca-orientation";
+                std::string kIMUOrientation = "imu-orientation";
 
                 motor_driver.start_recording_speeds();
+
+                //imu_track_follower.start_line();
                 
                 while (!quit) {
                         
@@ -335,11 +379,13 @@ int main(int argc, char** argv)
                                 scriptHub.handle_events();
 
                                 // FIXME
-                                // double now = clock->time();
-                                // romi::log_data(now, kWheelOdometryOrientation, wheelodometry.get_orientation());
+                                double now = clock->time();
+                                romi::log_data(now, kWheelOdometryOrientation, wheelodometry.get_orientation());
                                 // romi::log_data(now, kPCAOrientation, track_follower.get_orientation_error());
                                 // clock->sleep(0.020);
-                        
+                                // romi::log_data(now, kIMUOrientation,
+                                //                imu_track_follower.get_orientation_error());
+                                
                         } catch (std::exception& e) {
                                 
                                 navigation.stop();

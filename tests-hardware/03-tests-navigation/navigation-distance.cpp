@@ -44,8 +44,12 @@
 #include <data_provider/GpsLocationProvider.h>
 #include <session/Session.h>
 #include <rover/RoverOptions.h>
+#include <rover/WheelOdometry.h>
 #include <rpc/NavigationAdaptor.h>
 #include <fake/FakeMotorDriver.h>
+#include <rover/IMUTrackFollower.h>
+#include <rover/L1NavigationController.h>
+#include <rover/DifferentialSteering.h>
 
 std::atomic<bool> quit(false);
 
@@ -82,9 +86,11 @@ int main(int argc, char** argv)
         romi::Option speed_option = { kSpeedString, true, "0.1", "The travel speed" };
         options.add_option(speed_option);
         
-        romi::Option ctrl_option = { kControllerString, true, kDriverString,
-                                     "The controller to use (brush-motor-controller "
-                                     "or navigation)" };
+        romi::Option ctrl_option = { kControllerString, true,
+                                     //kDriverString,
+                                     kNavigationString,
+                                     "The controller to use ('driver'=brush-motor-controller "
+                                     "or 'navigation'=navigation controller)" };
         options.add_option(ctrl_option);
         
         options.parse(argc, argv);
@@ -160,12 +166,21 @@ int main(int argc, char** argv)
                 //romi::FakeMotorDriver driver;
                 
                 romi::WheelOdometry wheelodometry(rover_config, driver);
-                romi::LocationTracker location_tracker(wheelodometry, wheelodometry);
-                romi::ZeroNavigationController navigation_controller;
+                
+                romi::LocationTracker distance_measure(wheelodometry, wheelodometry);
+                
+                const char *imu_device = (const char *) config["ports"]["imu"]["port"];
+                auto imu_serial = romiserial::RomiSerialClient::create(imu_device);
+                romi::IMUTrackFollower track_follower(imu_serial);
+                
+                //romi::ZeroNavigationController navigation_controller;
+                romi::L1NavigationController navigation_controller(2.0);
 
-                romi::Navigation navigation(rover_config, driver, location_tracker,
-                                            location_tracker, navigation_controller,
-                                            session);
+                romi::DifferentialSteering steering(driver, rover_config);
+                
+                romi::Navigation navigation(rover_config, distance_measure,
+                                            track_follower, navigation_controller,
+                                            steering, session);
 
 
                 std::string controller = options.get_value(kControllerString);

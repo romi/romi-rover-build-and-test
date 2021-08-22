@@ -16,8 +16,9 @@
         "rover": {
             "maximum-acceleration": 0.500000,
             "maximum-speed": 3,
-            "wheel-base": 1,
-            "wheel-diameter": 0.470000
+            "wheel-diameter": 0.470000,
+            "wheelbase": 1.350000,
+            "wheeltrack": 1.150000
         }
     },
     "oquam": {
@@ -36,11 +37,15 @@
     },
     "ports": {
         "brush-motor-driver": {
-            "port": "/dev/ttyACM2",
+            "port": "/dev/ttyACM1",
             "type": "serial"
         },
         "display-device": {
-            "port": "/dev/ttyACM0",
+            "port": "/dev/ttyACM3",
+            "type": "serial"
+        },
+        "imu": {
+            "port": "/dev/ttyUSB0",
             "type": "serial"
         },
         "joystick": {
@@ -48,7 +53,11 @@
             "type": "input-device"
         },
         "oquam": {
-            "port": "/dev/ttyACM1",
+            "port": "/dev/ttyACM2",
+            "type": "serial"
+        },
+        "steering": {
+            "port": "/dev/ttyACM0",
             "type": "serial"
         },
         "usb-camera": {
