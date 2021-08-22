@@ -363,8 +363,8 @@ int main(int argc, char** argv)
                 r_info("main: Starting event loop");
 
                 // FIXME
-                // std::string kWheelOdometryOrientation = "wheel-odometry-orientation";
-                // std::string kPCAOrientation = "pca-orientation";
+                std::string kWheelOdometryOrientation = "wheel-odometry-orientation";
+                std::string kPCAOrientation = "pca-orientation";
                 std::string kIMUOrientation = "imu-orientation";
 
                 motor_driver.start_recording_speeds();
