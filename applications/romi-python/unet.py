@@ -30,13 +30,18 @@ def pre_load_libs():
 
 
 def get_pred_unet(path, output_name):
+    start_time = time.time()
     folder = os.path.dirname(path)
     filename = os.path.basename(path)
     img = cv2.imread(path)
     h, w, _ = img.shape
+
+    print(f"get_pred_unet: imread {now-start_time:0.3f} seconds")
     
     img = cv2.resize(img, (model_config['input_width'],
                            model_config['input_height']))
+    
+    print(f"get_pred_unet: resize {now-start_time:0.3f} seconds")
     
     img = img.astype(np.float32)
     img[:, :, 0] -= 103.939
@@ -44,9 +49,9 @@ def get_pred_unet(path, output_name):
     img[:, :, 2] -= 123.68
     img = img[:, :, ::-1]
     
-    t0 = time.time()
-
     pr = model.predict(np.array([img]))[0]
+
+    print(f"get_pred_unet: predict {now-start_time:0.3f} seconds")
     
     pr = pr.reshape((model.output_height,
                      model.output_width,
@@ -62,10 +67,13 @@ def get_pred_unet(path, output_name):
         seg_img[:, :, 2] += ((seg_arr_c)*(colors[c][2])).astype('uint8')
 
     seg_img = cv2.resize(seg_img, (w, h))
-        
+
+    print(f"get_pred_unet: segment {now-start_time:0.3f} seconds")
+    
     cv2.imwrite(folder + "/" + output_name + "_rgb.png", seg_img)
     cv2.imwrite(folder + "/" + output_name + ".png", seg_img[:,:,0])
 
+    print(f"get_pred_unet: imwrite {now-start_time:0.3f} seconds")
 
 
 
