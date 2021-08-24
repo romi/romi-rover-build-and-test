@@ -50,6 +50,7 @@
 #include <rover/DifferentialSteering.h>
 #include <rover/StepperSteering.h>
 #include <rover/DoubleSteering.h>
+#include <rover/ManualTrackFollower.h>
 #include <api/EventTimer.h>
 #include <ui/ScriptList.h>
 #include <ui/ScriptMenu.h>
@@ -249,7 +250,9 @@ int main(int argc, char** argv)
 
                 // Track follower
                 
-                romi::LocationTracker track_follower(wheelodometry, wheelodometry);
+                //romi::LocationTracker track_follower(wheelodometry, wheelodometry);
+
+                romi::ManualTrackFollower track_follower(input_device, 10.0);
                 
                 // auto python_client = romi::RcomClient::create("python", 10.0);
                 // double pixels_per_meter = compute_pixels_per_meter(config);
@@ -260,6 +263,7 @@ int main(int argc, char** argv)
                 // romi::IMUTrackFollower imu_track_follower(imu_serial);
 
                 
+                
                 // Navigation controller
                 
                 //romi::ZeroNavigationController navigation_controller;
@@ -268,31 +272,31 @@ int main(int argc, char** argv)
 
                 // Steering
                 
-                romi::DifferentialSteering steering(motor_driver, rover_config);
+                //romi::DifferentialSteering steering(motor_driver, rover_config);
 
-                // romi::DifferentialSteering differential_steering(motor_driver, rover_config);
+                romi::DifferentialSteering differential_steering(motor_driver, rover_config);
                 
-                // const char *steering_device = (const char *) config["ports"]["steering"]["port"];
-                // auto steering_serial = romiserial::RomiSerialClient::create(steering_device);
-                // romi::StepperController steering_controller(steering_serial);
-                // double max_rpm = 500; // From the motor specs
-                // double max_rps = max_rpm / 60.0;
-                // double default_rps = max_rps / 2.0; // Turn at 1/2th of max speed
-                // double steps_per_revolution = 200; // From the motor specs
-                // double microsteps = 2;  // Driver jumper settings
-                // double gears = 76.0 + 49.0/64.0; // From the motor specs
-                // double belt = 34.0 / 34.0;
-                // int16_t steps_per_second = (int16_t) ceil(default_rps
-                //                                           * steps_per_revolution
-                //                                           * microsteps);
-                // double total_steps_per_revolution = (steps_per_revolution
-                //                                      * microsteps * gears * belt);
+                const char *steering_device = (const char *) config["ports"]["steering"]["port"];
+                auto steering_serial = romiserial::RomiSerialClient::create(steering_device);
+                romi::StepperController steering_controller(steering_serial);
+                double max_rpm = 500; // From the motor specs
+                double max_rps = max_rpm / 60.0;
+                double default_rps = max_rps / 2.0; // Turn at 1/2th of max speed
+                double steps_per_revolution = 200; // From the motor specs
+                double microsteps = 2;  // Driver jumper settings
+                double gears = 76.0 + 49.0/64.0; // From the motor specs
+                double belt = 34.0 / 34.0;
+                int16_t steps_per_second = (int16_t) ceil(default_rps
+                                                          * steps_per_revolution
+                                                          * microsteps);
+                double total_steps_per_revolution = (steps_per_revolution
+                                                     * microsteps * gears * belt);
                 
-                // romi::StepperSteering wheel_steering(steering_controller, rover_config,
-                //                                      steps_per_second,
-                //                                      total_steps_per_revolution);
+                romi::StepperSteering wheel_steering(steering_controller, rover_config,
+                                                     steps_per_second,
+                                                     total_steps_per_revolution);
 
-                // romi::DoubleSteering steering(differential_steering, wheel_steering);
+                romi::DoubleSteering steering(differential_steering, wheel_steering);
                         
                 // Navigation
                 r_info("main: Creating navigation");
