@@ -36,11 +36,13 @@ def get_pred_unet(path, output_name):
     img = cv2.imread(path)
     h, w, _ = img.shape
 
+    now = time.time()
     print(f"get_pred_unet: imread {now-start_time:0.3f} seconds")
     
     img = cv2.resize(img, (model_config['input_width'],
                            model_config['input_height']))
     
+    now = time.time()
     print(f"get_pred_unet: resize {now-start_time:0.3f} seconds")
     
     img = img.astype(np.float32)
@@ -51,6 +53,7 @@ def get_pred_unet(path, output_name):
     
     pr = model.predict(np.array([img]))[0]
 
+    now = time.time()
     print(f"get_pred_unet: predict {now-start_time:0.3f} seconds")
     
     pr = pr.reshape((model.output_height,
@@ -68,11 +71,13 @@ def get_pred_unet(path, output_name):
 
     seg_img = cv2.resize(seg_img, (w, h))
 
+    now = time.time()
     print(f"get_pred_unet: segment {now-start_time:0.3f} seconds")
     
     cv2.imwrite(folder + "/" + output_name + "_rgb.png", seg_img)
     cv2.imwrite(folder + "/" + output_name + ".png", seg_img[:,:,0])
 
+    now = time.time()
     print(f"get_pred_unet: imwrite {now-start_time:0.3f} seconds")
 
 
@@ -92,3 +97,10 @@ def unet_handle_request(params):
     print(f"handle_unet_request: {now-start_time:0.3f} seconds")
     return True
 
+if __name__ == "__main__":
+    unet_init("/home/romi/ACRE/models/unet_model_chatelain_20210605")
+
+    for i in range(10):
+        print(f"========================= {i+1}")
+        unet_handle_request({'path': '/home/romi/acre/sessions/20210824-182501/Rover_deadbeef_20210824-183416.164/camera-000001.jpg',
+                         'output-name': 'mask-000001-test'})
