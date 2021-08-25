@@ -4,6 +4,7 @@ ROOT_DIR=..
 CAMERA_IP=10.10.10.16
 CAMERA_USERNAME=romi
 CAMERA_REMOTE_BIN=/home/romi/romi-rover-build-and-test/build/bin/romi-camera
+CAMERA_FPS=5
 NAME=rover-am1
 
 #-----------------------------------------
@@ -31,10 +32,10 @@ CONFIG_FILE=$CONFIG_DIR/config-$NAME.json
 SCRIPT_FILE=$SCRIPT_DIR/scripts-$NAME.json
 SOUNDFONT_FILE=$ASSETS_DIR/notifications.sf2
 SESSION_DIR=$ROOT_DIR/sessions/$DATE
-LOG_DIR=$CONFIG_DIR/logs/$DATE
+LOG_DIR=$ROOT_DIR/logs/$DATE
 
 
-bash rover-am1-stop
+bash $NAME-stop
 
 mkdir -p $SESSION_DIR
 mkdir -p $LOG_DIR
@@ -52,7 +53,7 @@ echo
 echo "==================================================================="
 echo "Starting registry"
 $BIN_DIR/rcom-registry > $LOG_DIR/registry.txt &
-echo "$! " > rover-am1.pid
+echo "$! " > $NAME.pid
 sleep 2
 
 
@@ -61,8 +62,8 @@ ssh $CAMERA_USERNAME@$CAMERA_IP killall romi-camera
 sleep 2
 
 echo "Starting camera"
-ssh $CAMERA_USERNAME@$CAMERA_IP /home/romi/romi-rover-build-and-test/build/bin/romi-camera $IP > $LOG_DIR/camera.txt &
-echo "$! " >> rover-am1.pid
+ssh $CAMERA_USERNAME@$CAMERA_IP $CAMERA_REMOTE_BIN $IP $CAMERA_FPS > $LOG_DIR/camera.txt &
+echo "$! " >> $NAME.pid
 sleep 1
 
 echo "Starting Python"
@@ -71,7 +72,7 @@ python3 $APPLICATION_DIR/romi-python/main.py \
         --registry $IP \
         --ip $IP \
         > $LOG_DIR/python.txt &
-echo "$! " >> rover-am1.pid
+echo "$! " >> $NAME.pid
 sleep 3
 
 echo "Starting rover"
@@ -82,7 +83,7 @@ $BIN_DIR/romi-rover \
     --script $SCRIPT_FILE \
     --soundfont $SOUNDFONT_FILE \
     > $LOG_DIR/rover.txt &
-echo "$! " >> rover-am1.pid
+echo "$! " >> $NAME.pid
 
 echo "Ready"
 
