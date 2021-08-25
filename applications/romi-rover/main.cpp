@@ -56,7 +56,8 @@
 #include <ui/ScriptMenu.h>
 #include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
-#include <notifications/FluidSoundNotifications.h>
+//#include <notifications/FluidSoundNotifications.h>
+#include <notifications/DummyNotifications.h>
 #include <ui/CrystalDisplay.h>
 #include <ui/JoystickInputDevice.h>
 #include <weeder/Weeder.h>
@@ -108,8 +109,6 @@ double compute_pixels_per_meter(JsonCpp& config)
         double pixels = config.get("weeder").get("imagecropper").get("workspace").num(2);
         r_debug("Pixels-per-meter: %f px/m", pixels / width);
         return pixels / width;
-        // (void) config;
-        // return 188.0 * 2.0;
 }
 
 int main(int argc, char** argv)
@@ -324,12 +323,13 @@ int main(int argc, char** argv)
                                                       romi::event_script_error);
 
                 // Notifications
-                std::string soundfont = get_sound_font_file(options, config);
-                r_info("main: Loading soundfont %s", soundfont.c_str());
-                JsonCpp sound_setup = config["user-interface"]["fluid-sounds"]["sounds"];
-                r_info("main: Creating sound notifications");
-                romi::FluidSoundNotifications notifications(soundfont, sound_setup);
-
+                // std::string soundfont = get_sound_font_file(options, config);
+                // r_info("main: Loading soundfont %s", soundfont.c_str());
+                // JsonCpp sound_setup = config["user-interface"]["fluid-sounds"]["sounds"];
+                // r_info("main: Creating sound notifications");
+                // romi::FluidSoundNotifications notifications(soundfont, sound_setup);
+                romi::DummyNotifications notifications;
+                
                 // Imager
                 //romi::Imager imager(session, *camera);
                 romi::UnetImager imager(session, *camera);
