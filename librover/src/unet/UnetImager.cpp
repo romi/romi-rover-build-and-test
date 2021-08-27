@@ -41,6 +41,7 @@ namespace romi {
         {
                 r_debug("UnetImager::~UnetImager");
                 stop_unet_processing();
+                disconnect_from_python();
         }
  
         std::string UnetImager::make_output_name()
@@ -94,15 +95,14 @@ namespace romi {
         {
                 quit_ = false;
                 connect_to_python();
-                unet_thread_ = std::make_unique<std::thread>([this]() { try_unet(quit_); });
+                if (unet_thread_ == nullptr)
+                    unet_thread_ = std::make_unique<std::thread>([this]() { try_unet(quit_); });
                 return Imager::start_recording(observation_id, max_images, max_duration);
         }
 
         bool UnetImager::stop_recording()
         {
                 bool success = Imager::stop_recording();
-                stop_unet_processing();
-                disconnect_from_python();
                 return success;
         }
 
