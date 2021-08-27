@@ -251,7 +251,7 @@ int main(int argc, char** argv)
                 
                 //romi::LocationTracker track_follower(wheelodometry, wheelodometry);
 
-                romi::ManualTrackFollower track_follower(input_device, 10.0 * M_PI / 180.0);
+                romi::ManualTrackFollower track_follower(input_device, 5.0 * M_PI / 180.0);
                 
                 // auto python_client = romi::RcomClient::create("python", 10.0);
                 // double pixels_per_meter = compute_pixels_per_meter(config);

@@ -17,8 +17,8 @@
             "maximum-acceleration": 0.500000,
             "maximum-speed": 3,
             "wheel-diameter": 0.470000,
-            "wheelbase": 1.350000,
-            "wheeltrack": 1.150000
+            "wheelbase": 1.450000,
+            "wheeltrack": 1.350000
         }
     },
     "oquam": {

@@ -182,7 +182,9 @@ int main(int argc, char** argv)
                         throw std::runtime_error("Unknown camera classname");
                 }
 
-                assert_homing(oquam);
+                
+                oquam.power_up();
+                //assert_homing(oquam);
 
                 double x0 = range.min.x();
                 double y0 = range.min.y();
