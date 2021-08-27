@@ -3,6 +3,8 @@
 #include <string>
 #include <future>
 #include <thread>
+#include <chrono>
+#include <atomic>
 
 #include <r.h>
 #include <RomiSerial.h>
@@ -13,6 +15,7 @@
 #include "SerialPortDiscover.h"
 #include "TestUtil.hpp"
 
+using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 using testing::UnorderedElementsAre;
 using testing::Return;
@@ -100,38 +103,46 @@ void SendInfo(romiserial::IRomiSerial *romi_serial, int16_t *, const char *)
 
 int FakeSerialDeviceFunction(const std::string& port,
                              const std::string& device_name,
-                             std::condition_variable *cv)
+                             std::condition_variable *cv,
+                             std::atomic<bool>& force_quit)
 {
+
+
+    try {
         // FIXME
         MakeInfoString(device_name);
         sent_info = false;
-        
+
         romiserial::MessageHandler handlers[] = {
                 { '?', 0, false, SendInfo }
         };
-        
+
         romiserial::RSerial serial(port, 115200, 0);
         romiserial::RomiSerial romi_serial(serial, serial, handlers, 1);
-        
+
         std::cout << "FakeSerialDeviceFunction: Notify " << std::endl;
         {
-                std::lock_guard<std::mutex> lk(thread_mutex);
-                fake_serial_ready = true;
-                cv->notify_one();
-        }
-        
-        while (!sent_info) {
-                romi_serial.handle_input();
+            std::lock_guard<std::mutex> lk(thread_mutex);
+            fake_serial_ready = true;
+            cv->notify_one();
         }
 
-        return sent_info? 0 : -1;
+        while (!sent_info && !force_quit) {
+            romi_serial.handle_input();
+        }
+    }
+    catch (std::exception& e ) {
+        std::cout << "FakeSerialDeviceFunction Exception: " << e.what() << std::endl;
+    }
+
+    return sent_info? 0 : -1;
 }
 
 void wait_notification(std::condition_variable& cv)
 {
         std::cout << "Wait for notify " << std::endl;
         std::unique_lock<std::mutex> lk(thread_mutex);
-        cv.wait(lk, [] { return fake_serial_ready == true; });
+        cv.wait_for(lk, 10s,[] { return fake_serial_ready == true; });
         std::cout << "Received notify " << std::endl;
 }
 
@@ -146,12 +157,14 @@ TEST_F(SerialPortDiscover_tests, SerialPortDiscover_ConnectedDevice_returns_when
         std::string port1 = CppLinuxSerial::TestUtil::GetInstance().GetDevice1Name();
 
         SerialPortDiscover SerialPortDiscover(device_to_json_key);
-        auto future = std::async(FakeSerialDeviceFunction, port1, serial_device_name, &cv);
+        std::atomic<bool> quit_fake_port(false);
+        auto future = std::async(FakeSerialDeviceFunction, port1, serial_device_name, &cv, std::ref(quit_fake_port));
 
         wait_notification(cv);
         
         // Act
         actual_device = SerialPortDiscover.ConnectedDevice(port0);
+        quit_fake_port = true;
         int thread_success = future.get();
 
         // Assert
@@ -170,12 +183,14 @@ TEST_F(SerialPortDiscover_tests, SerialPortDiscover_ConnectedDevice_returns_when
         std::string port1 = CppLinuxSerial::TestUtil::GetInstance().GetDevice1Name();
 
         SerialPortDiscover SerialPortDiscover(device_to_json_key);
-        auto future = std::async(FakeSerialDeviceFunction, port1, serial_device_name, &cv);
+        std::atomic<bool> quit_fake_port(false);
+        auto future = std::async(FakeSerialDeviceFunction, port1, serial_device_name, &cv, std::ref(quit_fake_port));
 
         wait_notification(cv);
         
         // Act
         actual_device = SerialPortDiscover.ConnectedDevice(port0);
+        quit_fake_port = true;
         int thread_success = future.get();
 
         // Assert
@@ -194,12 +209,14 @@ TEST_F(SerialPortDiscover_tests, SerialPortDiscover_ConnectedDevice_returns_conn
         std::string port1 = CppLinuxSerial::TestUtil::GetInstance().GetDevice1Name();
 
         SerialPortDiscover SerialPortDiscover(device_to_json_key);
-        auto future = std::async(FakeSerialDeviceFunction, port1, serial_device_name, &cv);
+        std::atomic<bool> quit_fake_port(false);
+        auto future = std::async(FakeSerialDeviceFunction, port1, serial_device_name, &cv, std::ref(quit_fake_port));
 
         wait_notification(cv);
         
         // Act
         actual_device = SerialPortDiscover.ConnectedDevice(port0);
+        quit_fake_port = true;
         int thread_success = future.get();
 
         // Assert
