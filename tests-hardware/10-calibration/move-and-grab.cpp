@@ -45,6 +45,7 @@
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
+#include <ui/LinuxJoystick.h>
 
 std::atomic<bool> quit(false);
 
@@ -130,6 +131,12 @@ int main(int argc, char** argv)
                                       softwareVersion, std::move(locationProvider));
                 session.start("calibration");
 
+                // Joystick
+                r_info("main: Creating joystick");
+                const char *joystick_device = (const char *) config["ports"]["joystick"]["port"];
+                romi::LinuxJoystick joystick(linux, joystick_device);
+
+                
                 // CNC controller
                 r_info("main: Creating CNC controller");
                 const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
