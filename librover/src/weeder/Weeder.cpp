@@ -193,7 +193,8 @@ namespace romi {
                 r_debug("Weeder::do_hoe");
                 move_arm_to_start_position(path[0]);
                 travel(path, 0.4);
-                stop_spindle_and_move_arm_up();                
+                stop_spindle_and_move_arm_up();
+                move_arm_to_camera_position();
         }
         
         void Weeder::move_arm_to_camera_position()
