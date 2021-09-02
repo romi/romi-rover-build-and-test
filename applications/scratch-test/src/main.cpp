@@ -53,6 +53,7 @@
 #include <rover/RoverScriptEngine.h>
 
 #include "mock_inputdevice.h"
+#include "mock_remotestateinputdevice.h"
 #include "mock_display.h"
 #include "mock_speedcontroller.h"
 #include "mock_navigation.h"
@@ -126,6 +127,7 @@ int main(int argc, char** argv)
                 MockNotifications mockNotifications;
                 MockWeeder mockWeeder;
                 MockImager mockImager;
+                MockRemoteStateInputDevice mockRemoteStateInputDevice;
 
 //                session.start("hw_observation_id");
 
@@ -137,7 +139,7 @@ int main(int argc, char** argv)
                                                   romi::event_script_error);
 
                 romi::Rover rover(mockInputDevice, mockDisplay, mockSpeedController, mockNavigation, mockEventTimer,
-                                  mockMenu, script_engine, mockNotifications, mockWeeder, mockImager);
+                                  mockMenu, script_engine, mockNotifications, mockWeeder, mockImager, mockRemoteStateInputDevice);
 
                 auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
                 ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);

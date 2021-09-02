@@ -66,6 +66,7 @@
 #include <ui/UIEventMapper.h>
 #include <ui/CrystalDisplay.h>
 #include <ui/JoystickInputDevice.h>
+#include <ui/RemoteStateInputDevice.h>
 #include <camera/FileCamera.h>
 #include <camera/USBCamera.h>
 #include <rpc/RemoteCamera.h>
@@ -333,6 +334,7 @@ int main(int argc, char** argv)
                 // Imager
                 //romi::Imager imager(session, *camera);
                 romi::UnetImager imager(session, *camera);
+                romi::RemoteStateInputDevice remoteStateInputDevice;
 
                 // Rover
                 r_info("main: Creating rover");
@@ -345,7 +347,8 @@ int main(int argc, char** argv)
                                   script_engine,
                                   notifications,
                                   weeder,
-                                  imager);
+                                  imager,
+                                  remoteStateInputDevice);
 
                 auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
                 ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
