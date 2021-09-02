@@ -1,29 +1,28 @@
 {
     "navigation": {
         "brush-motor-driver": {
-            "encoder-directions": {
+            "encoder_directions": {
                 "left": -1,
                 "right": 1
             },
-            "maximum-signal-amplitude": 40,
+            "maximum_signal_amplitude": 40,
             "pid": {
                 "kd": 0,
-                "ki": 1.200000,
-                "kp": 0.080000
+                "ki": 0,
+                "kp": 1.200000
             },
-            "use-pid": true
+            "use_pid": true
         },
         "motor-driver": "brush-motor-driver",
         "rover": {
-            "encoder-steps": 13250,
-            "maximum-acceleration": 1,
-            "maximum-speed": 1,
-            "wheel-base": 1,
-            "wheel-diameter": 0.322000
+            "encoder_steps": 1536,
+            "maximum_speed": 1,
+            "wheel_base": 1,
+            "wheel_diameter": 0.470000
         }
     },
     "oquam": {
-        "cnc-range": [[0, 0.560000], [0, 0.600000], [-0.160000, 0]],
+        "cnc-range": [[0, 0.950000], [0, 0.900000], [-0.180000, 0]],
         "controller-classname": "stepper-controller",
         "path-maximum-deviation": 0.010000,
         "path-slice-duration": 0.020000,
@@ -37,23 +36,27 @@
         }
     },
     "ports": {
-        "joystick": {
-            "port": "/dev/input/js0",
-            "type": "input-device"
-        },
-        "oquam": {
-            "port": "/dev/ttyUSB0",
+        "brush-motor-driver": {
+            "port": "/dev/ttyACM2",
             "type": "serial"
         },
-        "usb-camera": {
-            "port": "/dev/video0",
-            "type": "video"
+        "display-device": {
+            "port": "/dev/ttyACM0",
+            "type": "serial"
+        },
+        "joystick": {
+            "port": "/dev/input/js0",
+            "type": "joystick"
+        },
+        "oquam": {
+            "port": "/dev/ttyACM1",
+            "type": "serial"
         }
     },
     "user-interface": {
         "display-classname": "crystal-display",
         "fluid-sounds": {
-            "soundfont": "notifications.sf2",
+            "soundfont": "/home/romi/romi-rover/assets/notifications.sf2",
             "sounds": {
                 "change-menu": {
                     "preset": 1,
@@ -100,43 +103,40 @@
             "server-name": "navigation"
         },
         "script-engine": {
-            "script": "scripts.json"
+            "script": "/home/romi/romi-rover/config/scripts.json"
         },
         "speed-controller": {
             "accurate": {
                 "direction-curve-exponent": 1,
-                "direction-multiplier": 0.150000,
+                "direction-multiplier": 0.050000,
                 "speed-curve-exponent": 1,
-                "speed-multiplier": 0.300000,
+                "speed-multiplier": 0.200000,
                 "use-direction-curve": true,
                 "use-speed-curve": true
             },
             "fast": {
-                "direction-curve-exponent": 2,
+                "direction-curve-exponent": 1.500000,
                 "direction-multiplier": 0.400000,
-                "speed-curve-exponent": 2,
+                "speed-curve-exponent": 1.500000,
                 "speed-multiplier": 1,
                 "use-direction-curve": true,
                 "use-speed-curve": true
             }
         },
-        "weeder-classname": "remote-weeder"
+        "weeder-classname": "fake-weeder"
     },
     "weeder": {
-        "camera-classname": "usb-camera",
+        "camera-classname": "remote-camera",
         "cnc-classname": "remote-cnc",
         "cropper": "imagecropper",
         "imagecropper": {
-            "workspace": [562, 59, 700, 728]
+            "workspace": [335, 79, 934, 888]
         },
-        "path": "som",
-        "quincunx": {
-            "distance_plants": 0.300000,
-            "distance_rows": 0.250000,
-            "radius_zones": 0.100000,
-            "threshold": 0.500000
+        "ortools": {
+            "print": false
         },
-        "segmentation": "svm",
+        "path": "ortools",
+        "segmentation": "python-svm",
         "som": {
             "alpha": 0.200000,
             "beta": 1.200000,
@@ -144,14 +144,6 @@
             "print": false
         },
         "speed": 0.800000,
-        "svm": {
-            "a": [-0.041523, 0.047268, -0.007093],
-            "b": 0.662093
-        },
-        "usb-camera": {
-            "height": 1080,
-            "width": 1920
-        },
         "z0": -0.110000
     }
 }
