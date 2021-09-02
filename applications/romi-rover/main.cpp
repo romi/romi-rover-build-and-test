@@ -83,6 +83,7 @@
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
 #include <RegistryServer.h>
+#include <api/DataLog.h>
 #include <api/DataLogAccessor.h>
 
 std::atomic<bool> quit(false);
@@ -153,6 +154,13 @@ int main(int argc, char** argv)
                                       softwareVersion, std::move(locationProvider));
                 session.start("hw_observation_id");
 
+                // Datalog
+                const std::filesystem::path filepath = session.create_session_file("datalog.txt");
+                auto datalog = std::make_shared<romi::DataLog>(filepath);
+                romi::DataLogAccessor::set(datalog);
+                r_info("main: Storing datalog in %s", filepath.string().c_str());
+
+                
                 // Display
                 r_info("main: Creating display");
                 const char *display_device = (const char *) config["ports"]["display-device"]["port"];
@@ -251,12 +259,14 @@ int main(int argc, char** argv)
                 
                 //romi::LocationTracker track_follower(wheelodometry, wheelodometry);
 
-                romi::ManualTrackFollower track_follower(input_device, 10.0 * M_PI / 180.0);
+                //romi::ManualTrackFollower track_follower(input_device, 5.0 * M_PI / 180.0);
                 
-                // auto python_client = romi::RcomClient::create("python", 10.0);
-                // double pixels_per_meter = compute_pixels_per_meter(config);
-                // romi::PythonTrackFollower track_follower(*camera, python_client,
-                //                                          "nav", pixels_per_meter, session);
+                auto python_client = romi::RcomClient::create("python", 10.0);
+                double pixels_per_meter = compute_pixels_per_meter(config);
+                romi::PythonTrackFollower track_follower(*camera, python_client,
+                                                         "nav", pixels_per_meter, session);
+                
+                
                 // const char *imu_device = (const char *) config["ports"]["imu"]["port"];
                 // auto imu_serial = romiserial::RomiSerialClient::create(imu_device);
                 // romi::IMUTrackFollower imu_track_follower(imu_serial);
@@ -266,7 +276,7 @@ int main(int argc, char** argv)
                 // Navigation controller
                 
                 //romi::ZeroNavigationController navigation_controller;
-                romi::L1NavigationController navigation_controller(2.0);
+                romi::L1NavigationController navigation_controller(4.0);
 
 
                 // Steering

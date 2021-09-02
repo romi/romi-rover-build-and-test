@@ -6,6 +6,11 @@ target_link_libraries(03-tests-navigation-distance romi)
 
 #
 
+add_executable(03-tests-steering 03-tests-steering/test-steering.cpp)
+target_link_libraries(03-tests-steering romi)
+
+#
+
 add_executable(04-test-joystick 04-test-joystick.cpp)
 target_link_libraries(04-test-joystick romi)
 install(TARGETS 04-test-joystick DESTINATION bin)

@@ -45,6 +45,7 @@
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
+#include <ui/LinuxJoystick.h>
 
 std::atomic<bool> quit(false);
 
@@ -94,6 +95,128 @@ void move_and_grab(romi::Session& session,
         session.store_jpg(filename, image);
 }
 
+void run_calibration(romi::Session& session,
+                     romi::CNCRange& range,
+                     romi::Oquam& oquam,
+                     romi::ICamera& camera)
+{
+        double x0 = range.min.x();
+        double y0 = range.min.y();
+        double z0 = range.min.z();
+                
+        double x1 = range.max.x();
+        double y1 = range.max.y();
+        double z1 = range.max.z();
+
+        double dx = (x1 - x0) / 10.0;
+        double dy = (y1 - y0) / 10.0;
+
+        double x = x0;
+        double y = y0;
+
+        assert_moveto(oquam, x0, y0, z0);
+                
+        for (y = y0; y <= y1; y += dy) {
+                move_and_grab(session, oquam, camera, x0, y, z0);
+        }
+
+        for (x = x0+dx; x <= x1; x += dx) {
+                move_and_grab(session, oquam, camera, x, y1, z0);
+        }
+                
+        for (y = y1-dy; y >= y0; y -= dy) {
+                move_and_grab(session, oquam, camera, x1, y, z0);
+        }
+
+        for (x = x1-dx; x >= x0; x -= dx) {
+                move_and_grab(session, oquam, camera, x, y0, z0);
+        }
+
+        assert_moveto(oquam, x0, y0, z1);
+}
+
+static const uint8_t kXButton = 0;
+static const uint8_t kLeftAxisUpDown = 1;
+static const uint8_t kRightAxisUpDown = 3;
+
+bool handle_axis_event(romi::CNCRange& range,
+                       romi::Oquam& oquam,
+                       romi::IJoystick& joystick,
+                       romi::JoystickEvent& event)
+{
+        bool success = true;
+        if (event.number == kLeftAxisUpDown) {
+                double v = joystick.get_axis(event.number);
+                if (v == 0.0) {
+                        success = oquam.moveat(0, 0, 0);
+                        romi::v3 pos;
+                        success = oquam.get_position(pos);
+                        if (success) {
+                                r_debug("setting z0 to %f", pos.z());
+                                range.min.set(romi::kZ, pos.z());
+                        } else {
+                                r_err("get_position failed");
+                        }
+
+                } else if (v < 0.0) {
+                        success = oquam.moveat(0, 0, -900);
+                        
+                } else {
+                        success = oquam.moveat(0, 0, 900);
+                } 
+        }
+        if (!success) {
+                r_err("moveat failed");
+                oquam.moveat(0, 0, 0);
+                oquam.power_down();
+                
+        }
+        return !success;
+}
+
+bool handle_button_event(romi::IJoystick& joystick, romi::JoystickEvent& event)
+{
+        if (event.number == kXButton
+                && joystick.is_button_pressed(kXButton))
+                r_debug("X pressed");
+        
+        return (event.number == kXButton
+                && joystick.is_button_pressed(kXButton));
+}
+
+bool handle_joystick_event(romi::CNCRange& range,
+                           romi::Oquam& oquam,
+                           romi::IJoystick& joystick)
+{
+        bool done = false;
+        romi::JoystickEvent& event = joystick.get_next_event();
+
+        switch (event.type) {
+        default:
+        case romi::JoystickEvent::kNone:
+                break;
+        case romi::JoystickEvent::kButton:
+                done = handle_button_event(joystick, event);
+                break;
+        case romi::JoystickEvent::kAxis:
+                done = handle_axis_event(range, oquam, joystick, event);
+                break;
+        }
+        
+        return done;
+}
+
+void set_height(romi::CNCRange& range, romi::Oquam& oquam, romi::IJoystick& joystick)
+{
+        bool done = false;
+
+        while (!done) {
+                done = handle_joystick_event(range, oquam, joystick);
+        }
+
+        r_info("Finished setting the height");
+}
+
 int main(int argc, char** argv)
 {
         std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
@@ -130,6 +253,12 @@ int main(int argc, char** argv)
                                       softwareVersion, std::move(locationProvider));
                 session.start("calibration");
 
+                // Joystick
+                r_info("main: Creating joystick");
+                const char *joystick_device = (const char *) config["ports"]["joystick"]["port"];
+                romi::LinuxJoystick joystick(linux, joystick_device);
+
+                
                 // CNC controller
                 r_info("main: Creating CNC controller");
                 const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
@@ -182,41 +311,17 @@ int main(int argc, char** argv)
                         throw std::runtime_error("Unknown camera classname");
                 }
 
-                assert_homing(oquam);
-
-                double x0 = range.min.x();
-                double y0 = range.min.y();
-                double z0 = range.min.z();
                 
-                double x1 = range.max.x();
-                double y1 = range.max.y();
-                double z1 = range.max.z();
+                oquam.power_up();
+                //assert_homing(oquam);
 
-                double dx = (x1 - x0) / 10.0;
-                double dy = (y1 - y0) / 10.0;
-
-                double x = x0;
-                double y = y0;
-
-                assert_moveto(oquam, x0, y0, z0);
+                r_info("Set the height of the z-axis.");
+                set_height(range, oquam, joystick);
                 
-                for (y = y0; y <= y1; y += dy) {
-                        move_and_grab(session, oquam, *camera, x0, y, z0);
-                }
+                r_info("Running the calibration.");
+                run_calibration(session, range, oquam, *camera);
 
-                for (x = x0+dx; x <= x1; x += dx) {
-                        move_and_grab(session, oquam, *camera, x, y1, z0);
-                }
-                
-                for (y = y1-dy; y >= y0; y -= dy) {
-                        move_and_grab(session, oquam, *camera, x1, y, z0);
-                }
-
-                for (x = x1-dx; x >= x0; x -= dx) {
-                        move_and_grab(session, oquam, *camera, x, y0, z0);
-                }
-
-                assert_moveto(oquam, x0, y0, z1);
+                r_info("Finished.");
 
                 retval = 0;
 
