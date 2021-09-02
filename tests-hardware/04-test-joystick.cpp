@@ -53,6 +53,7 @@
 #include <ui/UIEventMapper.h>
 #include <ui/CrystalDisplay.h>
 #include <ui/JoystickInputDevice.h>
+#include <ui/RemoteStateInputDevice.h>
 #include <hal/BrushMotorDriver.h>
 #include <camera/FakeImager.h>
 #include <data_provider/RomiDeviceData.h>
@@ -179,6 +180,8 @@ int main(int argc, char** argv)
                 // Imager
                 romi::FakeImager imager;
 
+                romi::RemoteStateInputDevice remoteStateInputDevice;
+
                 // Rover
                 romi::Rover rover(input_device,
                                   display,
@@ -189,7 +192,8 @@ int main(int argc, char** argv)
                                   script_engine,
                                   notifications,
                                   weeder,
-                                  imager);
+                                  imager,
+                                  remoteStateInputDevice);
 
                 // State machine
                 romi::RoverStateMachine state_machine(rover);
