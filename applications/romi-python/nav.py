@@ -76,8 +76,8 @@ def get_center_mask(mask):
     h, w = mask.shape
     x1 = int(0.2 * w)
     x2 = w - x1
-    y1 = int(0.2 * h)
-    y2 = h - y1
+    y1 = int(0.0 * h)
+    y2 = h - int(0.2 * h)
     center_mask = mask
     center_mask[0:y1, :] = 0
     center_mask[y2:h, :] = 0
