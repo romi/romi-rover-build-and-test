@@ -257,21 +257,33 @@ int main(int argc, char** argv)
                 romi::LocationTracker distance_measure(wheelodometry, wheelodometry);
 
                 // Track follower
-                
-                //romi::LocationTracker track_follower(wheelodometry, wheelodometry);
 
-                //romi::ManualTrackFollower track_follower(input_device, 5.0 * M_PI / 180.0);
-                
-                auto python_client = romi::RcomClient::create("python", 10.0);
-                double pixels_per_meter = compute_pixels_per_meter(config);
-                romi::PythonTrackFollower track_follower(*camera, python_client,
-                                                         "nav", pixels_per_meter, session);
-                
-                
-                // const char *imu_device = (const char *) config["ports"]["imu"]["port"];
-                // auto imu_serial = romiserial::RomiSerialClient::create(imu_device);
-                // romi::IMUTrackFollower imu_track_follower(imu_serial);
+                std::string track_follower_name = config["navigation"].str("track-follower");
+                std::unique_ptr<romi::ITrackFollower> track_follower;
 
+                if (track_follower_name == "odometry") {
+                        track_follower = std::make_unique<romi::LocationTracker>(wheelodometry,
+                                                                                 wheelodometry);
+                } else if (track_follower_name == "manual") {
+                        track_follower = std::make_unique<romi::ManualTrackFollower>(input_device,
+                                                                        5.0 * M_PI / 180.0);
+
+                } else if (track_follower_name == "python") {
+                        auto python_client = romi::RcomClient::create("python", 10.0);
+                        double pixels_per_meter = compute_pixels_per_meter(config);
+                        track_follower = std::make_unique<romi::PythonTrackFollower>(*camera,
+                                                                                     python_client,
+                                                                                     "nav",
+                                                                                     pixels_per_meter,
+                                                                                     session);
+                } else if (track_follower_name == "imu") {
+                        const char *imu_device = (const char *) config["ports"]["imu"]["port"];
+                        auto imu_serial = romiserial::RomiSerialClient::create(imu_device);
+                        track_follower = std::make_unique<romi::IMUTrackFollower>(imu_serial);
+                } else {
+                        r_err("Unknown track follower: %s", track_follower_name.c_str());
+                        throw std::runtime_error("Unknown track follower");
+                }
                 
                 
                 // Navigation controller
@@ -312,7 +324,7 @@ int main(int argc, char** argv)
                 r_info("main: Creating navigation");
                 
                 romi::Navigation navigation(rover_config, distance_measure,
-                                            track_follower, navigation_controller,
+                                            *track_follower, navigation_controller,
                                             steering, session);
                 
                 // SpeedController
@@ -342,11 +354,20 @@ int main(int argc, char** argv)
                 romi::DummyNotifications notifications;
                 
                 // Imager
-                //romi::Imager imager(session, *camera);
-                romi::UnetImager imager(session, *camera);
+
+                std::string imager_name = config.str("imager");
+                std::unique_ptr<romi::IImager> imager;
+
+                if (imager_name == "unet") {
+                        imager = std::make_unique<romi::UnetImager>(session, *camera);
+                } else {
+                        imager = std::make_unique<romi::Imager>(session, *camera);
+                }
+
                 romi::RemoteStateInputDevice remoteStateInputDevice;
 
-                // Rover
+
+            // Rover
                 r_info("main: Creating rover");
                 romi::Rover rover(input_device,
                                   display,
@@ -357,7 +378,7 @@ int main(int argc, char** argv)
                                   script_engine,
                                   notifications,
                                   weeder,
-                                  imager,
+                                  *imager,
                                   remoteStateInputDevice);
 
                 auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
