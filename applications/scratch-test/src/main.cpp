@@ -42,15 +42,15 @@
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
-#include <RegistryServer.h>
-#include <MessageLink.h>
 
 #include <ui/ScriptList.h>
-#include <ui/ScriptMenu.h>
 #include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
 #include <rover/EventsAndStates.h>
 #include <rover/RoverScriptEngine.h>
+#include <ui/RemoteStateInputDevice.h>
+#include <rover/RoverStateMachine.h>
+#include <rover/RoverInterface.h>
 
 #include "mock_inputdevice.h"
 #include "mock_remotestateinputdevice.h"
@@ -118,20 +118,26 @@ int main(int argc, char** argv)
 
 
                 MockInputDevice mockInputDevice;
+                EXPECT_CALL(mockInputDevice, get_next_event()).WillRepeatedly(testing::Return(0));
+
                 MockDisplay mockDisplay;
                 MockSpeedController mockSpeedController;
                 MockNavigation mockNavigation;
+                EXPECT_CALL(mockNavigation, move(testing::_,testing::_)).WillRepeatedly(testing::Return(true));
+                EXPECT_CALL(mockNavigation, reset_activity()).WillRepeatedly(testing::Return(true));
+
                 MockEventTimer mockEventTimer;
+                EXPECT_CALL(mockEventTimer, get_next_event()).WillRepeatedly(testing::Return(0));
                 MockMenu mockMenu;
     //            MockScriptEngine mockScriptEngine;
                 MockNotifications mockNotifications;
                 MockWeeder mockWeeder;
+                EXPECT_CALL(mockWeeder, reset_activity()).WillRepeatedly(testing::Return(true));
+                EXPECT_CALL(mockWeeder, power_up()).WillRepeatedly(testing::Return(true));
                 MockImager mockImager;
-                MockRemoteStateInputDevice mockRemoteStateInputDevice;
 
-//                session.start("hw_observation_id");
-
-
+                romi::RemoteStateInputDevice remoteStateInputDevice;
+             //   MockRemoteStateInputDevice mockRemoteStateInputDevice;
 
                 const std::string test_script_filename = "./test_data/scripts.json";
                 romi::ScriptList scripts(test_script_filename);
@@ -139,16 +145,24 @@ int main(int argc, char** argv)
                                                   romi::event_script_error);
 
                 romi::Rover rover(mockInputDevice, mockDisplay, mockSpeedController, mockNavigation, mockEventTimer,
-                                  mockMenu, script_engine, mockNotifications, mockWeeder, mockImager, mockRemoteStateInputDevice);
+                                  mockMenu, script_engine, mockNotifications, mockWeeder, mockImager, remoteStateInputDevice);
 
                 auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
                 ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
+            // State machine
+                r_info("main: Creating state machine");
+                romi::RoverStateMachine state_machine(rover);
+
+                // User interface
+                r_info("main: Creating user interface");
+                romi::RoverInterface user_interface(rover, state_machine);
 
                 while (!quit) {
                         
                         try {
                             using namespace std::chrono_literals;
                             scriptHub.handle_events();
+                            user_interface.handle_events();
 
                             std::this_thread::sleep_for(5ms);
                         } catch (std::exception& e) {
