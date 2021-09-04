@@ -63,9 +63,13 @@ namespace romi {
                 while (!quit) {
                         try {
                                 if (grab_queue_.size()) {
+                                        r_debug("UnetImager: start");
                                         auto imager_params = grab_queue_.pop();
+                                        r_debug("UnetImager: pop");
                                         if (imager_params.has_value()) {
+                                                r_debug("UnetImager: send request");
                                                 send_python_request(imager_params->image_path, imager_params->output_name);
+                                                r_debug("UnetImager: got response");
                                         }
                                 } else {
                                         rpp::ClockAccessor::GetInstance()->sleep(0.020);
