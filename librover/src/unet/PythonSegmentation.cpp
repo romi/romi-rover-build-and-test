@@ -35,22 +35,28 @@ namespace romi {
 
         void PythonSegmentation::assert_connected_to_python()
         {
-                if (rpc_== nullptr) {
+                if (!connected_to_python()) {
                         r_err("PythonSegmentation: No RPC connection.");
                         throw std::runtime_error("No RPC connection.");
                 }
         }
 
+        bool PythonSegmentation::connected_to_python()
+        {
+                return (rpc_!= nullptr);
+        }
+        
         void PythonSegmentation::connect_to_python()
         {
                 // If there's still a rpc connection open, close it
                 // now.
-                disconnect_from_python();
+                //disconnect_from_python();
 
-                // Establish a new RPC connection.
-                rpc_ = romi::RcomClient::create("python", 30);
-                
-                assert_connected_to_python();
+                if (!connected_to_python()) {
+                        // Establish a new RPC connection.
+                        rpc_ = romi::RcomClient::create("python", 30);
+                        assert_connected_to_python();
+                }
         }
         
         void PythonSegmentation::disconnect_from_python()

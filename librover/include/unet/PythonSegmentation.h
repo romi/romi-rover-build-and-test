@@ -52,6 +52,7 @@ namespace romi {
                 void assert_connected_to_python();
                 void connect_to_python();
                 void disconnect_from_python();
+                bool connected_to_python();
                 
         public:
                 PythonSegmentation(const std::string& function_name);
