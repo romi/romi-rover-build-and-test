@@ -106,13 +106,17 @@ namespace romi {
                 JsonCpp response;
                 romi::RPCError error;
                 
+                r_debug("PythonSegmentation: @1");
                 JsonCpp params = JsonCpp::construct("{\"path\": \"%s\", "
                                                     "\"output-name\": \"%s\"}",
                                                     path.c_str(), output_name.c_str());
+                r_debug("PythonSegmentation: @2");
                 assert_connected_to_python();
 
+                r_debug("PythonSegmentation: @3");
                 rpc_->execute(function_name_, params, response, error);
                 
+                r_debug("PythonSegmentation: @4");
                 if (error.code != 0) {
                         r_warn("Failed to call Python: %s", error.message.c_str());
                         throw std::runtime_error("Failed to call Python");
@@ -122,6 +126,7 @@ namespace romi {
                         r_warn("Failed to call Python: %s", message);
                         throw std::runtime_error("Failed to call Python");
                 }
+                r_debug("PythonSegmentation: @5");
         }
                 
         void PythonSegmentation::load_mask(ISession &session, Image& mask)
