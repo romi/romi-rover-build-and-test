@@ -5,10 +5,6 @@ from romi.rpc import Server
 from unet import unet_init, unet_handle_request
 from svm import svm_init, svm_handle_request
 from svm0 import svm0_init, svm0_handle_request
-
-#from unet import unet_init, unet_handle_request
-#from svm import svm_init, svm_handle_request
-
 from nav import nav_init, nav_handle_request
 
 
@@ -41,14 +37,14 @@ if __name__ == "__main__":
                     help='The local IP address to use')
     args = parser.parse_args()
 
-    #unet_init(args.model_path)
+    unet_init(args.model_path)
     #svm_init(args.svm_path)
     svm0_init(args.svm_path)
     nav_init(args.nav_path)
 
     server = Server("python",
                     {
-                        #"unet": unet_handle_request,
+                        "unet": unet_handle_request,
                         #"svm": svm_handle_request,
                         "svm": svm0_handle_request,
                         "nav": nav_handle_request
