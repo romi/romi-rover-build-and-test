@@ -11,7 +11,7 @@ output_compile_flags()
 add_subdirectory(weeder)
 add_subdirectory(romi-rover)
 add_subdirectory(rcdiscover)
-add_subdirectory(scratch-test)
+add_subdirectory(romi-remote-client)
 add_subdirectory(batterymonitor)
 
 if(${PI_BUILD})
