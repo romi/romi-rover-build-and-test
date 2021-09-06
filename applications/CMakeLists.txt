@@ -12,6 +12,7 @@ add_subdirectory(weeder)
 add_subdirectory(romi-rover)
 add_subdirectory(rcdiscover)
 add_subdirectory(scratch-test)
+add_subdirectory(batterymonitor)
 
 if(${PI_BUILD})
     add_subdirectory(romi-camera)
