@@ -131,6 +131,10 @@ int main(int argc, char** argv)
         r_log_init();
         r_log_set_app("romi-rover");
 
+        std::string filename = "battery.txt";
+        auto datalog = std::make_shared<romi::DataLog>(filename);
+        romi::DataLogAccessor::set(datalog);
+        
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
         try {
