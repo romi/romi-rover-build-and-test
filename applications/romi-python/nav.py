@@ -7,6 +7,16 @@ import argparse
 svm_pars = None
 store_masks_flag = True
 
+image_width = 1640
+image_height = 1232
+#center_x = int(image_width / 2)
+center_x = 420
+center_y = int(image_height / 2)
+center_x1 = center_x - 200
+center_x2 = center_x + 200
+center_y1 = int(0.0 * image_height)
+center_y2 = image_height - int(0.2 * image_height)
+
 def nav_init(path):
     global svm_pars
     svm_pars = json.load(open(path, "r"))
@@ -19,6 +29,8 @@ def nav_handle_request(params):
 
 
 def get_cte_orientation(path):
+    global center_y
+    global center_x
     mask = get_mask(path)
     store_mask(path, "segmentation", mask)
     h, w = mask.shape
@@ -28,7 +40,8 @@ def get_cte_orientation(path):
     center_mask = get_center_mask(filtered_mask)
     store_mask(path, "center", center_mask)
     center, pc0, pc1 = get_pca(center_mask)
-    cte = get_cross_track_error([h/2,w/2], center, pc0)
+    #cte = get_cross_track_error([h/2, w/2], center, pc0)
+    cte = get_cross_track_error([center_y, center_x], center, pc0)
     orientation = get_rel_orientation(center, pc0)
     store_pca(path, center, pc0, pc1, cte, orientation)
     return cte, orientation
@@ -72,17 +85,17 @@ def get_center_mask_TODO(mask):
 
 
 def get_center_mask(mask):
+    global center_x1
+    global center_x2
+    global center_y1
+    global center_y2
     # Crop central window of (W, H) = (1000, 800)
     h, w = mask.shape
-    x1 = int(0.2 * w)
-    x2 = w - x1
-    y1 = int(0.0 * h)
-    y2 = h - int(0.2 * h)
     center_mask = mask
-    center_mask[0:y1, :] = 0
-    center_mask[y2:h, :] = 0
-    center_mask[:, 0:x1] = 0
-    center_mask[:, x2:w] = 0
+    center_mask[0:center_y1, :] = 0
+    center_mask[center_y2:h, :] = 0
+    center_mask[:, 0:center_x1] = 0
+    center_mask[:, center_x2:w] = 0
     return center_mask
 
 
