@@ -44,9 +44,7 @@
 std::atomic<bool> quit(false);
 static double last_print_time = 0;
 
-std::map<std::string, std::string> RelevantDataNames {{"V", "VOLTAGE"}, {"VS", "AUX_VOLTAGE"}, {"I","CURRENT"} , {"P", "INSTANT_POWER"}, {"CE", "CONSUMED_A-h"}, {"SOC", "STATE_OF_CHARGE"}, {"TTG", "TIME_TO_GO"}, {"ALARM", "ALARM_ACTIVE"}, {"AR", "ALARM_REASON"}};
-
-
+std::map<std::string, std::string> RelevantDataNames {{"V", "battery-voltage"}, {"VS", "battery-aux-voltage"}, {"I","battery-current"} , {"P", "battery-instant-power"}, {"CE", "battery-consumed-a-h"}, {"SOC", "battery-state-of-charge"}, {"TTG", "battery-time-to-go"}, {"ALARM", "battery-alarm-active"}, {"AR", "battery-alarm-reason"}};
 
 void SignalHandler(int signal)
 {
