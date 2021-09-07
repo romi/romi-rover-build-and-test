@@ -51,6 +51,7 @@
 #include <rover/StepperSteering.h>
 #include <rover/DoubleSteering.h>
 #include <rover/ManualTrackFollower.h>
+#include <rover/SteeringController.h>
 #include <api/EventTimer.h>
 #include <ui/ScriptList.h>
 #include <ui/ScriptMenu.h>
@@ -300,7 +301,7 @@ int main(int argc, char** argv)
                 
                 const char *steering_device = (const char *) config["ports"]["steering"]["port"];
                 auto steering_serial = romiserial::RomiSerialClient::create(steering_device);
-                romi::StepperController steering_controller(steering_serial);
+                romi::SteeringController steering_controller(steering_serial);
                 double max_rpm = 500; // From the motor specs
                 double max_rps = max_rpm / 60.0;
                 double default_rps = max_rps / 2.0; // Turn at 1/2th of max speed

@@ -3,7 +3,7 @@ import argparse
 from romi.rpc import Server
 
 from unet import unet_init, unet_handle_request
-from svm import svm_init, svm_handle_request
+#from svm import svm_init, svm_handle_request
 from svm0 import svm0_init, svm0_handle_request
 from nav import nav_init, nav_handle_request
 

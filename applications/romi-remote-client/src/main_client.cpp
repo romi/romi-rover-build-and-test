@@ -118,6 +118,27 @@ bool send_execute_state(std::unique_ptr<rcom::IWebSocket>& webclient, const char
 }
 
 
+std::unique_ptr<rcom::IWebSocket>
+try_create_remote_connection(rcom::Address& remote_address)
+{
+    rcom::SocketFactory socketFactory;
+    std::unique_ptr<rcom::IWebSocket> webclient(nullptr);
+    while (!quit && (webclient == nullptr)) {
+            try {
+                webclient = socketFactory.new_client_side_websocket(remote_address);
+            }
+            catch (std::runtime_error& e)
+            {
+                r_warn("Failed to connect to romi-rover retry in 2 seconds.");
+                std::this_thread::sleep_for(2s);
+            }
+        }
+    return webclient;
+}
+
+
+
+
 // OH MAY I BE ETERNALLY PUNISHED for committing this. It's a quick test, but I'm sure it will end up in the code base.
 // Must be refactored before being added to real code base.
 // 1) Build up a map of menu items -> commands to send
@@ -155,11 +176,14 @@ int main(int argc, char** argv)
             romi::Session session(linux, session_directory, romiDeviceData,
                                   softwareVersion, std::move(locationProvider));
 
-
             rcom::Address remote_address(ScriptHubListeningPort);
 
-            rcom::SocketFactory socketFactory;
-            auto webclient = socketFactory.new_client_side_websocket(remote_address);
+//            rcom::SocketFactory socketFactory;
+//            auto webclient = socketFactory.new_client_side_websocket(remote_address);
+//
+
+            auto webclient = try_create_remote_connection(remote_address);
+
             rpp::MemBuffer memBuffer;
             memBuffer.printf(R"({ "request" : "list" })");
             webclient->send(memBuffer, rcom::kTextMessage);
