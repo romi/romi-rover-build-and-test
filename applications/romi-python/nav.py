@@ -9,8 +9,8 @@ store_masks_flag = True
 
 image_width = 1640
 image_height = 1232
-#center_x = int(image_width / 2)
-center_x = 420
+center_x = int(image_width / 2)
+#center_x = 420
 center_y = int(image_height / 2)
 center_x1 = center_x - 200
 center_x2 = center_x + 200
@@ -18,11 +18,13 @@ center_y1 = int(0.0 * image_height)
 center_y2 = image_height - int(0.2 * image_height)
 
 def nav_init(path):
+    print("Running nav_init")
     global svm_pars
     svm_pars = json.load(open(path, "r"))
 
     
 def nav_handle_request(params):
+    print("Running nav_handle_request")
     image_path = params["path"]
     cte, orientation = get_cte_orientation(image_path)
     return { 'cross-track-error': cte, 'orientation-error': orientation }
