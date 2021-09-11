@@ -24,7 +24,6 @@
 
 #include "weeder/Weeder.h"
 
-const double diameter_tool_default = 0.05;
 // ToDo: Observation_id
 const std::string observation_id = "row_1";
 
@@ -36,6 +35,7 @@ namespace romi {
                        ICNC& cnc,
                        double z0,
                        double speed,
+                       double diameter_tool,
                        ISession& session)
                 : _camera(camera),
                   _pipeline(pipeline),
@@ -43,7 +43,7 @@ namespace romi {
                   _range(),
                   _z0(z0),
                   _speed(speed),
-                  _diameter_tool(diameter_tool_default),
+                  _diameter_tool(diameter_tool),
                   session_(session)
         {
                 _cnc.get_range(_range);
@@ -192,7 +192,7 @@ namespace romi {
         {
                 r_debug("Weeder::do_hoe");
                 move_arm_to_start_position(path[0]);
-                travel(path, 0.4);
+                travel(path, _speed);
                 stop_spindle_and_move_arm_up();
                 move_arm_to_camera_position();
         }

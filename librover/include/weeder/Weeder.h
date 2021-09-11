@@ -70,8 +70,8 @@ namespace romi {
 
         public:
 
-                Weeder(ICamera& camera, IPipeline& pipeline, ICNC& cnc,
-                       double z0, double speed, ISession &session);
+                Weeder(ICamera& camera, IPipeline& pipeline, ICNC& cnc, double z0,
+                       double speed, double diameter_tool, ISession &session);
                 
                 ~Weeder() override = default;
 
