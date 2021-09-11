@@ -83,11 +83,13 @@ def get_pred_unet(path, output_name):
 
 
 def unet_init(model_path):
+    print("Running unet_init")
     load_model(model_path)
     pre_load_libs()
 
     
 def unet_handle_request(params):
+    print("Running unet_handle_request")
     start_time = time.time()
     image_path = params["path"]
     output_name = params["output-name"]
