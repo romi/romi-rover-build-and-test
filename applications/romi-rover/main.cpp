@@ -240,7 +240,9 @@ int main(int argc, char** argv)
                 r_info("main: Creating weeder");
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];
-                romi::Weeder weeder(*camera, pipeline, oquam, z0, speed, session);
+                double diameter_tool = (double) config["weeder"]["diameter-tool"];
+                romi::Weeder weeder(*camera, pipeline, oquam, z0, speed,
+                                    diameter_tool, session);
 
                 // Motor driver
                 r_info("main: Creating motor driver");
@@ -290,7 +292,7 @@ int main(int argc, char** argv)
                 // Navigation controller
                 
                 //romi::ZeroNavigationController navigation_controller;
-                romi::L1NavigationController navigation_controller(4.0);
+                romi::L1NavigationController navigation_controller(2.0);
 
 
                 // Steering
@@ -301,7 +303,8 @@ int main(int argc, char** argv)
                 
                 const char *steering_device = (const char *) config["ports"]["steering"]["port"];
                 auto steering_serial = romiserial::RomiSerialClient::create(steering_device);
-                romi::SteeringController steering_controller(steering_serial);
+                //romi::SteeringController steering_controller(steering_serial);
+                romi::StepperController steering_controller(steering_serial);
                 double max_rpm = 500; // From the motor specs
                 double max_rps = max_rpm / 60.0;
                 double default_rps = max_rps / 2.0; // Turn at 1/2th of max speed
@@ -418,12 +421,13 @@ int main(int argc, char** argv)
                                 scriptHub.handle_events();
 
                                 // FIXME
-                                double now = clock->time();
-                                romi::log_data(now, kWheelOdometryOrientation, wheelodometry.get_orientation());
+                                //double now = clock->time();
+                                //romi::log_data(now, kWheelOdometryOrientation, wheelodometry.get_orientation());
                                 // romi::log_data(now, kPCAOrientation, track_follower.get_orientation_error());
-                                // clock->sleep(0.020);
                                 // romi::log_data(now, kIMUOrientation,
                                 //                imu_track_follower.get_orientation_error());
+                                
+                                clock->sleep(0.020);
                                 
                         } catch (std::exception& e) {
                                 
