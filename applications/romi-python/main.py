@@ -10,10 +10,12 @@ from nav import nav_init, nav_handle_request
 
 async def server_callback(websocket, path):
     global server
+    print("Handling new request")
     await server.handle_client(websocket)
     
 async def init():    
     global server
+    print("Running main.init")
     loop = asyncio.get_event_loop()
     registration = loop.create_task(server.register())
     await registration
@@ -35,13 +37,11 @@ if __name__ == "__main__":
                     help='Set the IP address of the registry')
     parser.add_argument('--ip', type=str, nargs='?', default="10.10.10.1",
                     help='The local IP address to use')
+
+    print("Parsing argumets")
     args = parser.parse_args()
 
-    unet_init(args.model_path)
-    #svm_init(args.svm_path)
-    svm0_init(args.svm_path)
-    nav_init(args.nav_path)
-
+    print("Starting server")
     server = Server("python",
                     {
                         "unet": unet_handle_request,
@@ -51,6 +51,12 @@ if __name__ == "__main__":
                     },
                     args.registry, args.ip)
 
+    unet_init(args.model_path)
+    #svm_init(args.svm_path)
+    svm0_init(args.svm_path)
+    nav_init(args.nav_path)
+
+    print("Starting event handling")
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init())
     asyncio.get_event_loop().run_forever()
