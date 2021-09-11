@@ -213,7 +213,8 @@ int main(int argc, char** argv)
                 // Weeder
                 double z0 = (double) config["weeder"]["z0"];
                 double speed = (double) config["weeder"]["speed"];
-                romi::Weeder weeder(*camera, pipeline, oquam, z0, speed, session);
+                double diameter = (double) config["weeder"]["diameter-tool"];
+                romi::Weeder weeder(*camera, pipeline, oquam, z0, speed, diameter, session);
                 
                 weeder.hoe();
                 
