@@ -141,6 +141,7 @@
         "camera-classname": "remote-camera",
         "cnc-classname": "remote-cnc",
         "cropper": "imagecropper",
+        "diameter-tool": 0.04,
         "imagecropper": {
             "workspace": [335, 79, 934, 888]
         },
