@@ -79,7 +79,7 @@ int main(int argc, char **argv)
                 
                 if (options.is_set(kRegistry)) {
                         std::string ip = options.get_value(kRegistry);
-                        r_info("Using registry IP %s", ip.c_str());
+                        r_info("Registry IP set to %s", ip.c_str());
                         rcom::RegistryServer::set_address(ip.c_str());
                 }
 
@@ -92,17 +92,19 @@ int main(int argc, char **argv)
                 size_t height = (size_t) std::stoul(height_value);
                 int32_t fps = (int32_t) std::stoi(fps_value);
                 
-                r_info("Camera set to %zux%zu, %d fps.",
+                r_info("Camera: %zux%zu, %d fps.",
                        width, height, (int) fps);
                 
                 std::unique_ptr<PiCameraSettings> settings;
 
                 if (mode == kVideo) {
+                        r_info("Camera: video mode.");
                         settings = std::make_unique<romi::V2VideoCameraSettings>(width,
                                                                                  height,
                                                                                  fps);
 
                 } else if (mode == kStill) {
+                        r_info("Camera: still mode.");
                         settings = std::make_unique<romi::V2CameraSettings>(width, height);
                 }
                 
