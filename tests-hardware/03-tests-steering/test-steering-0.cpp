@@ -47,6 +47,7 @@
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
 #include <rover/RoverOptions.h>
+#include <rover/SteeringController.h>
 #include <rpc/NavigationAdaptor.h>
 #include <fake/FakeMotorDriver.h>
 #include <oquam/StepperController.h>
@@ -94,8 +95,8 @@ int main(int argc, char** argv)
                 
                 const char *steering_device = (const char *) config["ports"]["steering"]["port"];
                 auto steering_serial = romiserial::RomiSerialClient::create(steering_device);
-                //romi::SteeringController steering_controller(steering_serial);
-                romi::StepperController steering_controller(steering_serial);
+                romi::SteeringController steering_controller(steering_serial);
+                //romi::StepperController steering_controller(steering_serial);
                 double max_rpm = 500; // From the motor specs
                 double max_rps = max_rpm / 60.0;
                 double default_rps = max_rps / 2.0; // Turn at 1/2th of max speed
