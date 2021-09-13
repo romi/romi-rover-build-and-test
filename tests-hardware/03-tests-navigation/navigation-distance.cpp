@@ -154,7 +154,8 @@ int main(int argc, char** argv)
                 std::string device = romi::get_brush_motor_device(options, config);
                 std::shared_ptr<romiserial::RSerial>serial
                         = std::make_shared<romiserial::RSerial>(device, 115200, 1);
-                auto romi_serial = romiserial::RomiSerialClient::create(device);
+                std::string client_name("navigation_distance_tests");
+                auto romi_serial = romiserial::RomiSerialClient::create(device, client_name);
                         
                 romi::BrushMotorDriver driver(romi_serial,
                                               driver_settings,
@@ -170,7 +171,8 @@ int main(int argc, char** argv)
                 romi::LocationTracker distance_measure(wheelodometry, wheelodometry);
                 
                 const char *imu_device = (const char *) config["ports"]["imu"]["port"];
-                auto imu_serial = romiserial::RomiSerialClient::create(imu_device);
+                client_name = "imu_device";
+                auto imu_serial = romiserial::RomiSerialClient::create(imu_device, client_name);
                 romi::IMUTrackFollower track_follower(imu_serial);
                 
                 //romi::ZeroNavigationController navigation_controller;

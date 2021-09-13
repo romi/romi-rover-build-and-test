@@ -129,8 +129,9 @@ int main(int argc, char** argv)
 
                 // Display
                 const char *display_device = (const char *) config["ports"]["display-device"]["port"];
-                
-                auto display_serial = romiserial::RomiSerialClient::create(display_device);
+
+                std::string client_name("display_device");
+                auto display_serial = romiserial::RomiSerialClient::create(display_device, client_name);
                 romi::CrystalDisplay display(display_serial);
                 display.clear(display.count_lines());
                 display.show(0, "Initializing");
@@ -149,7 +150,8 @@ int main(int argc, char** argv)
                 romi::NavigationSettings rover_config(rover_settings);
                 const char *driver_device = (const char *) config["ports"]["brush-motor-driver"]["port"];
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
-                auto driver_serial = romiserial::RomiSerialClient::create(driver_device);
+                client_name = ("driver_device");
+                auto driver_serial = romiserial::RomiSerialClient::create(driver_device, client_name);
                 romi::BrushMotorDriver driver(driver_serial, driver_settings,
                                               rover_config.compute_max_angular_speed(),
                                               rover_config.compute_max_angular_acceleration());

@@ -91,9 +91,9 @@ int main(int argc, char** argv)
 
                 JsonCpp rover_settings = config["navigation"]["rover"];
                 romi::NavigationSettings rover_config(rover_settings);
-                
                 const char *steering_device = (const char *) config["ports"]["steering"]["port"];
-                auto steering_serial = romiserial::RomiSerialClient::create(steering_device);
+                std::string client_name("steering_tests");
+                auto steering_serial = romiserial::RomiSerialClient::create(steering_device, client_name);
                 //romi::SteeringController steering_controller(steering_serial);
                 romi::StepperController steering_controller(steering_serial);
                 double max_rpm = 500; // From the motor specs

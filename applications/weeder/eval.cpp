@@ -161,7 +161,8 @@ int main(int argc, char** argv)
                 
                 if (cnc_controller_classname == romi::StepperController::ClassName) {
                         const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
-                        auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device);
+                        std::string client_name("cnc_device");
+                        auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
                         controller = std::make_unique<romi::StepperController>(cnc_serial);
                         
                 } else if (cnc_controller_classname == romi::FakeCNCController::ClassName) {

@@ -262,7 +262,8 @@ int main(int argc, char** argv)
                 // CNC controller
                 r_info("main: Creating CNC controller");
                 const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
-                auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device);
+                std::string client_name("cnc_device");
+                auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
                 romi::StepperController cnc_controller(cnc_serial);
 
                 

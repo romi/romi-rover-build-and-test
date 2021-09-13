@@ -166,8 +166,9 @@ int main(int argc, char** argv)
                 // Display
                 r_info("main: Creating display");
                 const char *display_device = (const char *) config["ports"]["display-device"]["port"];
-                
-                auto display_serial = romiserial::RomiSerialClient::create(display_device);
+
+                std::string client_name("display_device");
+                auto display_serial = romiserial::RomiSerialClient::create(display_device, client_name);
                 romi::CrystalDisplay display(display_serial);
                 display.clear(display.count_lines());
                 display.show(0, "Initializing");
@@ -182,7 +183,8 @@ int main(int argc, char** argv)
                 // CNC controller
                 r_info("main: Creating CNC controller");
                 const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
-                auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device);
+                client_name = "cnc_device";
+                auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
                 romi::StepperController cnc_controller(cnc_serial);
                 
                 // CNC
@@ -250,7 +252,8 @@ int main(int argc, char** argv)
                 romi::NavigationSettings rover_config(rover_settings);
                 const char *driver_device = (const char *) config["ports"]["brush-motor-driver"]["port"];
                 JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
-                auto driver_serial = romiserial::RomiSerialClient::create(driver_device);
+                client_name = "brush_motor_driver_device";
+                auto driver_serial = romiserial::RomiSerialClient::create(driver_device, client_name);
                 romi::BrushMotorDriver motor_driver(driver_serial,
                                                     driver_settings,
                                                     rover_config.compute_max_angular_speed(),
@@ -281,7 +284,8 @@ int main(int argc, char** argv)
                                                                                      session);
                 } else if (track_follower_name == "imu") {
                         const char *imu_device = (const char *) config["ports"]["imu"]["port"];
-                        auto imu_serial = romiserial::RomiSerialClient::create(imu_device);
+                        client_name = "imu_device";
+                        auto imu_serial = romiserial::RomiSerialClient::create(imu_device, client_name);
                         track_follower = std::make_unique<romi::IMUTrackFollower>(imu_serial);
                 } else {
                         r_err("Unknown track follower: %s", track_follower_name.c_str());
@@ -302,7 +306,8 @@ int main(int argc, char** argv)
                 romi::DifferentialSteering differential_steering(motor_driver, rover_config);
                 
                 const char *steering_device = (const char *) config["ports"]["steering"]["port"];
-                auto steering_serial = romiserial::RomiSerialClient::create(steering_device);
+                client_name = "steering_device";
+                auto steering_serial = romiserial::RomiSerialClient::create(steering_device, client_name);
                 //romi::SteeringController steering_controller(steering_serial);
                 romi::StepperController steering_controller(steering_serial);
                 double max_rpm = 500; // From the motor specs

@@ -39,8 +39,9 @@ std::string SerialPortDiscover::TryConnectedDevice(const std::string& path)
         std::string device;
         std::string name;
         JsonCpp response;
+        std::string client_name("SerialPortDiscover");
         
-        auto client = romiserial::RomiSerialClient::create(path);
+        auto client = romiserial::RomiSerialClient::create(path, client_name);
         
         while ((checked == false) && (retrycurrent++ < retrycount)) {
                 std::cout << "Attempt " << retrycurrent << std::endl;
