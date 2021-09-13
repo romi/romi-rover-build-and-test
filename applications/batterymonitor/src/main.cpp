@@ -43,6 +43,7 @@
 
 std::atomic<bool> quit(false);
 static double last_print_time = 0;
+static double print_interval = 1.0;
 
 std::map<std::string, std::string> RelevantDataNames {{"V", "battery-voltage"}, {"VS", "battery-aux-voltage"}, {"I","battery-current"} , {"P", "battery-instant-power"}, {"CE", "battery-consumed-a-h"}, {"SOC", "battery-state-of-charge"}, {"TTG", "battery-time-to-go"}, {"ALARM", "battery-alarm-active"}, {"AR", "battery-alarm-reason"}};
 
@@ -99,7 +100,7 @@ double ConvertDataVal(const char* veName, const char* veValue)
 void PrintData(const VeDirectFrameHandler& frameHandler) {
 
     auto current_print_time = rpp::ClockAccessor::GetInstance()->time();
-    if (current_print_time > last_print_time + 2)
+    if (current_print_time >= last_print_time + print_interval)
     {
         std::cout << std::endl << std::endl << std::endl;
         std::string current_name;
