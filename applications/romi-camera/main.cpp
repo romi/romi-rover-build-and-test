@@ -29,6 +29,7 @@
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
 #include <rpc/RcomServer.h>
+#include <configuration/GetOpt.h>
 #include <ClockAccessor.h>
 
 static bool quit = false;
