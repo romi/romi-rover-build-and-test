@@ -18,7 +18,8 @@ const std::map<std::string, std::string> serial_device_to_json_key = {
         { "Oquam", "oquam" },
         { "Steering", "steering" },
         { "IMU", "imu" },
-        { "ToolCarrierJrkG2", "tool_carrier" }
+        { "ToolCarrierJrkG2", "tool_carrier" },
+        { "BatteryMonitor", "battery-monitor" }
 };
 
 // LCOV_EXCL_START
