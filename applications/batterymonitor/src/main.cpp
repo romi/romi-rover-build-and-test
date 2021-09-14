@@ -103,13 +103,8 @@ void PrintData(const VeDirectFrameHandler& frameHandler) {
     if (current_print_time >= last_print_time + print_interval)
     {
         std::cout << std::endl << std::endl << std::endl;
-        std::string current_name;
         for ( int i = 0; i < frameHandler.veEnd; i++ ) {
-            current_name = frameHandler.veName[i];
-            if (RelevantData(current_name.c_str())) {
-                romi::log_data(RelevantDataNames[current_name], ConvertDataVal(frameHandler.veName[i], frameHandler.veValue[i]));
-                std::cout << RelevantDataNames[current_name] << ": \t" << ConvertDataVal(frameHandler.veName[i], frameHandler.veValue[i]) << std::endl;
-            }
+            std::cout << frameHandler.veName[i] << ": \t" << frameHandler.veValue[i] << std::endl;
         }
         last_print_time = rpp::ClockAccessor::GetInstance()->time();
     }
