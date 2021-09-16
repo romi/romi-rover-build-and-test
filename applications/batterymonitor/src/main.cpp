@@ -43,6 +43,7 @@
 
 std::atomic<bool> quit(false);
 static double last_print_time = 0;
+static double print_interval = 1.0;
 
 std::map<std::string, std::string> RelevantDataNames {{"V", "battery-voltage"}, {"VS", "battery-aux-voltage"}, {"I","battery-current"} , {"P", "battery-instant-power"}, {"CE", "battery-consumed-a-h"}, {"SOC", "battery-state-of-charge"}, {"TTG", "battery-time-to-go"}, {"ALARM", "battery-alarm-active"}, {"AR", "battery-alarm-reason"}};
 
@@ -99,16 +100,11 @@ double ConvertDataVal(const char* veName, const char* veValue)
 void PrintData(const VeDirectFrameHandler& frameHandler) {
 
     auto current_print_time = rpp::ClockAccessor::GetInstance()->time();
-    if (current_print_time > last_print_time + 2)
+    if (current_print_time >= last_print_time + print_interval)
     {
         std::cout << std::endl << std::endl << std::endl;
-        std::string current_name;
         for ( int i = 0; i < frameHandler.veEnd; i++ ) {
-            current_name = frameHandler.veName[i];
-            if (RelevantData(current_name.c_str())) {
-                romi::log_data(RelevantDataNames[current_name], ConvertDataVal(frameHandler.veName[i], frameHandler.veValue[i]));
-                std::cout << RelevantDataNames[current_name] << ": \t" << ConvertDataVal(frameHandler.veName[i], frameHandler.veValue[i]) << std::endl;
-            }
+            std::cout << frameHandler.veName[i] << ": \t" << frameHandler.veValue[i] << std::endl;
         }
         last_print_time = rpp::ClockAccessor::GetInstance()->time();
     }

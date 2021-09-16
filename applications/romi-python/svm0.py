@@ -8,6 +8,7 @@ svm_pars = None
 store_masks_flag = True
 
 def svm0_init(path):
+    print("Running svm0_init")
     global svm_pars
     print(f"svm0_init: loading {path}")
     svm_pars = json.load(open(path, "r"))
@@ -57,6 +58,7 @@ def run_svm(path, output_name):
     return True
 
 def svm0_handle_request(params):
+    print("Running svm0_handle_request")
     image_path = params["path"]
     output_name = params["output-name"]
     print(f"New request, image {image_path}")
