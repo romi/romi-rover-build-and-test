@@ -54,7 +54,8 @@ if __name__ == "__main__":
                         "unet": unet_handle_request,
                         #"svm": svm_handle_request,
                         "svm": svm0_handle_request,
-                        "nav": nav_handle_request
+                        "nav": nav_handle_request,
+                        "triple": triple_handle_request
                     },
                     args.registry, args.ip)
 
@@ -62,7 +63,7 @@ if __name__ == "__main__":
     #svm_init(args.svm_path)
     svm0_init(args.svm_path)
     nav_init(args.nav_path)
-    triple_init(args.triple-svm-1, args.triple-svm-2)
+    triple_init(args.triple_svm_1, args.triple_svm_2)
 
     print("Starting event handling")
     loop = asyncio.get_event_loop()

@@ -21,7 +21,7 @@ def triple_run(path, output_name):
     mask = get_pred_unet(path, "unet")
     include = include_module.run(path, "blue")
     exclude = exclude_module.run(path, "yellow")
-    result = (mask | include) & ~exclude 
+    result = ((mask > 0) | include) & ~exclude 
     store(result, f"{folder}/{output_name}.png")
     return result
     
@@ -37,7 +37,7 @@ def triple_handle_request(params):
     return True
 
 if __name__ == "__main__":
-    unit_init("/home/romi/ACRE/models/unet_model_chatelain_20210605")
+    unet_init("/home/romi/ACRE/models/unet_model_chatelain_20210605")
     triple_init("svm0/blue_tags.json", "svm0/yellow-hose_0010_1000.json")
     triple_run("svm0/test-triple-yellow.png", "triple")
 
