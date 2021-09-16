@@ -75,11 +75,14 @@ def get_pred_unet(path, output_name):
     print(f"get_pred_unet: segment {now-start_time:0.3f} seconds")
     
     cv2.imwrite(folder + "/" + output_name + "_rgb.png", seg_img)
-    cv2.imwrite(folder + "/" + output_name + ".png", seg_img[:,:,0])
+
+    mask = seg_img[:,:,0]
+    cv2.imwrite(folder + "/" + output_name + ".png", mask)
 
     now = time.time()
     print(f"get_pred_unet: imwrite {now-start_time:0.3f} seconds")
 
+    return mask
 
 
 def unet_init(model_path):
