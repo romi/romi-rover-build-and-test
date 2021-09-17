@@ -4,7 +4,7 @@
   Copyright (C) 2019-2020 Sony Computer Science Laboratories
   Author(s) Peter Hanappe
 
-  romi-rover is collection of applications for the Romi Rover.
+  romi-rover is the main app for the Romi Rover.
 
   romi-rover is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -319,8 +319,8 @@ int main(int argc, char** argv)
                 const char *steering_device = (const char *) config["ports"]["steering"]["port"];
                 client_name = "steering_device";
                 auto steering_serial = romiserial::RomiSerialClient::create(steering_device, client_name);
-                //romi::SteeringController steering_controller(steering_serial);
-                romi::StepperController steering_controller(steering_serial);
+                romi::SteeringController steering_controller(steering_serial);
+                
                 double max_rpm = 500; // From the motor specs
                 double max_rps = max_rpm / 60.0;
                 double default_rps = max_rps / 2.0; // Turn at 1/2th of max speed
