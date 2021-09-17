@@ -57,6 +57,7 @@
 #include <ui/ScriptMenu.h>
 #include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
+#include <battery_monitor/BatteryMonitor.h>
 //#include <notifications/FluidSoundNotifications.h>
 #include <notifications/DummyNotifications.h>
 #include <ui/CrystalDisplay.h>
@@ -186,7 +187,16 @@ int main(int argc, char** argv)
                 client_name = "cnc_device";
                 auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
                 romi::StepperController cnc_controller(cnc_serial);
-                
+
+                // Battery Monitor
+                r_info("main: Creating Battery Monitor");
+                const char *battery_monotor_device = (const char *) config["ports"]["battery-monitor"]["port"];
+                client_name = "battery-monitor";
+                auto battery_serial = romiserial::RomiSerialClient::create(battery_monotor_device, client_name);
+
+                romi::BatteryMonitor battery_monitor(battery_serial, datalog, quit);
+                battery_monitor.enable();
+
                 // CNC
                 r_info("main: Creating CNC");
                 JsonCpp r = config["oquam"]["cnc-range"];
