@@ -87,13 +87,22 @@ int main(int argc, char** argv)
 
             rpp::Linux linux;
             // Battery Monitor
-            r_info("main: Creating Battery Monitor");
-            const char *battery_monotor_device = "/dev/ttyACM0";
-            auto client_name = "battery-monitor";
-            auto battery_serial = romiserial::RomiSerialClient::create(battery_monotor_device, client_name);
 
-            romi::BatteryMonitor battery_monitor(battery_serial, datalog, quit);
-            battery_monitor.enable();
+            std::unique_ptr<romi::BatteryMonitor> battery_mon(nullptr);
+
+            try {
+                // Battery Monitor
+                r_info("main: Creating Battery Monitor");
+                const char *battery_monotor_device = "/dev/ttyACM0";
+                auto client_name = "battery-monitor";
+                auto battery_serial = romiserial::RomiSerialClient::create(battery_monotor_device, client_name);
+
+                battery_mon = std::make_unique<romi::BatteryMonitor>(battery_serial, datalog, quit);
+                battery_mon->enable();
+            }
+            catch (std::exception& e){
+                r_err("main: Unable to create battery monitor: %s", e.what());
+            }
 
             // Session
             r_info("main: Creating session");

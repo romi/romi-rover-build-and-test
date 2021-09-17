@@ -199,7 +199,7 @@ int main(int argc, char** argv)
                     client_name = "battery-monitor";
                     auto battery_serial = romiserial::RomiSerialClient::create(battery_monotor_device, client_name);
 
-                    std::make_unique<romi::BatteryMonitor>(battery_serial, datalog, quit);
+                    battery_mon = std::make_unique<romi::BatteryMonitor>(battery_serial, datalog, quit);
                     battery_mon->enable();
                 }
                 catch (std::exception& e){
