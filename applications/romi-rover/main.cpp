@@ -171,7 +171,8 @@ int main(int argc, char** argv)
                 std::string client_name("display_device");
                 auto display_serial = romiserial::RomiSerialClient::create(display_device, client_name);
                 romi::CrystalDisplay display(display_serial);
-                display.clear(display.count_lines());
+                display.clear(0);
+                display.clear(1);
                 display.show(0, "Initializing");
 
                 // Joystick
