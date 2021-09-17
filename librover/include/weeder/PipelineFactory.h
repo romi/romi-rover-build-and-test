@@ -48,6 +48,7 @@ namespace romi {
 
                 static constexpr const char *kPythonUnet = "python-unet";
                 static constexpr const char *kPythonSVM = "python-svm";
+                static constexpr const char *kPythonTriple = "python-triple";
                 static constexpr const char *kSVM = "svm";
 
                 static constexpr const char *kQuincunx = "quincunx"; 
