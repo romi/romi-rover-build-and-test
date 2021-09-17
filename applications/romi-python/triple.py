@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import os
 import argparse
+import time
 from SupportVectorMachine import SupportVectorMachine
 
 def triple_init(svm_path_1, svm_path_2):
