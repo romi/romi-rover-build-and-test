@@ -38,14 +38,12 @@
 #include <RSerial.h>
 #include <api/DataLogAccessor.h>
 #include <iostream>
-#include "VeDirectFrameHandler.h"
+#include <battery_monitor/BatteryMonitor.h>
 
 
 std::atomic<bool> quit(false);
-static double last_print_time = 0;
-static double print_interval = 1.0;
 
-std::map<std::string, std::string> RelevantDataNames {{"V", "battery-voltage"}, {"VS", "battery-aux-voltage"}, {"I","battery-current"} , {"P", "battery-instant-power"}, {"CE", "battery-consumed-a-h"}, {"SOC", "battery-state-of-charge"}, {"TTG", "battery-time-to-go"}, {"ALARM", "battery-alarm-active"}, {"AR", "battery-alarm-reason"}};
+//std::map<std::string, std::string> RelevantDataNames {{"V", "battery-voltage"}, {"VS", "battery-aux-voltage"}, {"I","battery-current"} , {"P", "battery-instant-power"}, {"CE", "battery-consumed-a-h"}, {"SOC", "battery-state-of-charge"}, {"TTG", "battery-time-to-go"}, {"ALARM", "battery-alarm-active"}, {"AR", "battery-alarm-reason"}};
 
 void SignalHandler(int signal)
 {
@@ -63,52 +61,6 @@ void SignalHandler(int signal)
         }
 }
 
-
-bool RelevantData(const char *veName)
-{
-    bool relevant = false;
-    std::string name(veName);
-
-    if (RelevantDataNames.find(name) != RelevantDataNames.end()) {
-        relevant = true;
-    }
-    return relevant;
-}
-
-double ConvertDataVal(const char* veName, const char* veValue)
-{
-    std::string string_value(veValue);
-    double value = 0;
-    try {
-        if(string_value == "OFF")
-            value = 0;
-        else if(string_value == "ON")
-            value = 1;
-        else
-            value = std::strtod(string_value.c_str(), nullptr);
-    }
-    catch (std::exception& e)
-    {
-        r_err("Failed to convert field<%s> value<value> to double. ", veName, veValue);
-        throw;
-    }
-
-    return value;
-}
-
-
-void PrintData(const VeDirectFrameHandler& frameHandler) {
-
-    auto current_print_time = rpp::ClockAccessor::GetInstance()->time();
-    if (current_print_time >= last_print_time + print_interval)
-    {
-        std::cout << std::endl << std::endl << std::endl;
-        for ( int i = 0; i < frameHandler.veEnd; i++ ) {
-            std::cout << frameHandler.veName[i] << ": \t" << frameHandler.veValue[i] << std::endl;
-        }
-        last_print_time = rpp::ClockAccessor::GetInstance()->time();
-    }
-}
 
 int main(int argc, char** argv)
 {
@@ -134,8 +86,23 @@ int main(int argc, char** argv)
         try {
 
             rpp::Linux linux;
-            romiserial::RSerial serial(port, 19200, 0);
-            VeDirectFrameHandler veDirectFrameHandler;
+            // Battery Monitor
+
+            std::unique_ptr<romi::BatteryMonitor> battery_mon(nullptr);
+
+            try {
+                // Battery Monitor
+                r_info("main: Creating Battery Monitor");
+                const char *battery_monotor_device = "/dev/ttyACM0";
+                auto client_name = "battery-monitor";
+                auto battery_serial = romiserial::RomiSerialClient::create(battery_monotor_device, client_name);
+
+                battery_mon = std::make_unique<romi::BatteryMonitor>(battery_serial, datalog, quit);
+                battery_mon->enable();
+            }
+            catch (std::exception& e){
+                r_err("main: Unable to create battery monitor: %s", e.what());
+            }
 
             // Session
             r_info("main: Creating session");
@@ -146,13 +113,6 @@ int main(int argc, char** argv)
                     using namespace std::chrono_literals;
                     std::string output;
 
-                    while ( serial.available() ) {
-                        char next;
-                        serial.read(next);
-                        veDirectFrameHandler.rxData((uint8_t) next);
-                    }
-
-                    PrintData(veDirectFrameHandler);
                     std::this_thread::sleep_for(5ms);
                 } catch (std::exception &e) {
                     quit = true;
