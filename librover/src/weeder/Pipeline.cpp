@@ -76,7 +76,7 @@ namespace romi {
                 Image dilated_mask;
                 
                 // TODO
-                if (true) {
+                if (false) {
                         mask.dilate(1 + kAstarResolution / 2, dilated_mask);
                         session.store_png("dilated-mask", dilated_mask);
                 } else {
@@ -144,7 +144,7 @@ namespace romi {
                 
                 char filename[64];
                 std::vector<Path> paths;
-                paths.push_back(Path());
+                //paths.push_back(Path());
                 
                 for (size_t i = 0; i < component_centers.size(); i++) {
 
@@ -295,6 +295,7 @@ namespace romi {
                               "width=\"%dpx\" height=\"%dpx\" />\n",
                               w, h);
 
+                paths.push_back(Path());
                 for (size_t i = 0; i < path.size() - 1; i++) {
                         check_segment(session, buffer, mask, path[i], path[i+1], paths);
                 }
