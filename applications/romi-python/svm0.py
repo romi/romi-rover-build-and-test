@@ -38,7 +38,7 @@ def store_svm_mask(pred, output_path):
 
 def clip_mask(mask):
     h, w = mask.shape
-    x1 = int(0.3 * w)
+    x1 = int(0.0 * w)
     x2 = w - x1
     y1 = int(0.0 * h)
     y2 = h - int(0.0 * h)
@@ -52,7 +52,7 @@ def clip_mask(mask):
 def run_svm(path, output_name):
     folder = os.path.dirname(path)
     pred = get_pred_svm(path)
-    pred = erode_dilate(pred, er_it=10, dil_it=50)
+    pred = erode_dilate(pred, er_it=10, dil_it=10)
     pred = clip_mask(pred)
     store_svm_mask(pred, f"{folder}/{output_name}.png")
     return True
