@@ -88,6 +88,8 @@
 #include <RegistryServer.h>
 #include <api/DataLog.h>
 #include <api/DataLogAccessor.h>
+#include <oquam/FakeCNCController.h>
+
 
 std::atomic<bool> quit(false);
 
@@ -188,6 +190,7 @@ int main(int argc, char** argv)
                 client_name = "cnc_device";
                 auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
                 romi::StepperController cnc_controller(cnc_serial);
+                //romi::FakeCNCController cnc_controller;
 
 
                 std::unique_ptr<romi::BatteryMonitor> battery_mon(nullptr);
