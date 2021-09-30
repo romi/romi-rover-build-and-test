@@ -17,7 +17,7 @@ def load_model(model_path):
     model = model_from_name[model_config['model_class']](model_config['n_classes'],
                                                      input_height=model_config['input_height'],
                                                      input_width=model_config['input_width'])
-    weights = f"{model_path}/.4"
+    weights = f"{model_path}/.14"
     model.load_weights(weights)
 
     
@@ -75,11 +75,14 @@ def get_pred_unet(path, output_name):
     print(f"get_pred_unet: segment {now-start_time:0.3f} seconds")
     
     cv2.imwrite(folder + "/" + output_name + "_rgb.png", seg_img)
-    cv2.imwrite(folder + "/" + output_name + ".png", seg_img[:,:,0])
+
+    mask = seg_img[:,:,0]
+    cv2.imwrite(folder + "/" + output_name + ".png", mask)
 
     now = time.time()
     print(f"get_pred_unet: imwrite {now-start_time:0.3f} seconds")
 
+    return mask
 
 
 def unet_init(model_path):
@@ -100,9 +103,9 @@ def unet_handle_request(params):
     return True
 
 if __name__ == "__main__":
-    unet_init("/home/romi/ACRE/models/unet_model_chatelain_20210605")
+    unet_init("/home/romi/ACRE/models/unet_ACRE_20210922")
 
     for i in range(10):
         print(f"========================= {i+1}")
-        unet_handle_request({'path': '/home/romi/acre/sessions/20210824-182501/Rover_deadbeef_20210824-183416.164/camera-000001.jpg',
-                         'output-name': 'mask-000001-test'})
+        unet_handle_request({'path': '/home/romi/acre/sessions/20210921-184538/Rover_ROMI1_20210921-184748.397/camera-000568.jpg',
+                         'output-name': 'mask-000568-test'})

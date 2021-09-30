@@ -23,6 +23,7 @@ set(SOURCES
         include/som/Superpixels.h
         include/unet/PythonSegmentation.h
         include/unet/PythonSVM.h
+        include/unet/PythonTriple.h
         include/unet/PythonUnet.h
         include/unet/UnetImager.h
         include/weeder/Weeder.h
@@ -43,6 +44,7 @@ set(SOURCES
 
         src/unet/PythonSegmentation.cpp
         src/unet/PythonSVM.cpp
+        src/unet/PythonTriple.cpp
         src/unet/PythonUnet.cpp
         src/unet/UnetImager.cpp
 

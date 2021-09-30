@@ -36,6 +36,7 @@
 #include "svm/SVMSegmentation.h"
 #include "unet/PythonUnet.h"
 #include "unet/PythonSVM.h"
+#include "unet/PythonTriple.h"
 #include "som/SOM.h"
 #include "quincunx/Quincunx.h"
 
@@ -68,6 +69,9 @@ namespace romi {
                         
                 } else if (name == kPythonSVM) {
                         return std::make_unique<PythonSVM>();
+                        
+                } else if (name == kPythonTriple) {
+                        return std::make_unique<PythonTriple>();
                         
                 } else {
                         r_err("Failed to find the segmentation class: %s", name.c_str());
