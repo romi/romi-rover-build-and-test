@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(romi-rover)
 
 set(SOURCES
@@ -7,6 +7,6 @@ set(SOURCES
   )
 
 add_executable(batterymonitor ${SOURCES})
-target_link_libraries(batterymonitor romi rover rcompp-lite romimocks)
+target_link_libraries(batterymonitor romi rover rcom romimocks)
 
 
