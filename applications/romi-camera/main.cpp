@@ -28,9 +28,12 @@
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
+#include <rpc/GimbalAdaptor.h>
 #include <rpc/RcomServer.h>
+#include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
 #include <ClockAccessor.h>
+#include <RomiSerialClient.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
@@ -44,6 +47,8 @@ static const char *kStill = "still";
 static const char *kWidth = "width";
 static const char *kHeight = "height";
 static const char *kFPS = "fps";
+static const char *kBitrate = "bitrate";
+static const char *kGimbal = "gimbal";
 
 static std::vector<romi::Option> option_list = {
         { "help", false, nullptr,
@@ -51,6 +56,9 @@ static std::vector<romi::Option> option_list = {
                 
         { kRegistry, true, nullptr,
           "The IP address of the registry."},
+
+        { kCameraVersion, true, "v2",
+          "The camera version: 'v2' or 'hq' (v2)"},
                 
         { kMode, true, kVideo,
           "The camera mode: 'video' or 'still'."},
@@ -62,7 +70,10 @@ static std::vector<romi::Option> option_list = {
           "The image height (1232)"},
 
         { kFPS, true, "5",
-          "The frame rate, for video mode only (5 fps)"}
+          "The frame rate, for video mode only (5 fps)"},
+
+        { kBitrate, true, "17000000",
+          "The average bitrate (video only) (17000000)"},
 
         { kGimbal, true, nullptr,
           "Connect to the gimbal with the given device path"}
@@ -91,25 +102,58 @@ int main(int argc, char **argv)
                 std::string width_value = options.get_value(kWidth);
                 std::string height_value = options.get_value(kHeight);
                 std::string fps_value = options.get_value(kFPS);
+		std::string version = options.get_value(kCameraVersion);
+		std::string bitrate_value = options.get_value(kBitrate);
 
                 size_t width = (size_t) std::stoul(width_value);
                 size_t height = (size_t) std::stoul(height_value);
                 int32_t fps = (int32_t) std::stoi(fps_value);
+                uint32_t bitrate = (uint32_t) std::stoi(bitrate_value);
+		
+                r_info("Camera: %zux%zu.", width, height);
                 
-                r_info("Camera: %zux%zu, %d fps.",
-                       width, height, (int) fps);
+                std::unique_ptr<romi::PiCameraSettings> settings;
+
+                if (version == "v2") {
+		  if (mode == kVideo) {
+		    r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
+		    settings = std::make_unique<romi::V2VideoCameraSettings>(width,
+									     height,
+									     fps);
+		    settings->bitrate_ = bitrate;
+
+		  } else if (mode == kStill) {
+		    r_info("Camera: still mode.");
+		    settings = std::make_unique<romi::V2StillCameraSettings>(width, height);
+		  }
+		  
+		} else if (version == "hq") {
+		  if (mode == kVideo) {
+		    r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
+		    settings = std::make_unique<romi::HQVideoCameraSettings>(width,
+									     height,
+									     fps);
+		    settings->bitrate_ = bitrate;
+
+		  } else if (mode == kStill) {
+		    r_info("Camera: still mode.");
+		    settings = std::make_unique<romi::HQStillCameraSettings>(width, height);
+		  }
+		}
+
+                std::unique_ptr<romiserial::IRomiSerialClient> gimbal_serial;
+                std::unique_ptr<romi::BldcGimbal> gimbal;
+                std::unique_ptr<romi::GimbalAdaptor> gimbal_adaptor;
+                std::unique_ptr<romi::IRPCServer> gimbal_server; 
                 
-                std::unique_ptr<PiCameraSettings> settings;
-
-                if (mode == kVideo) {
-                        r_info("Camera: video mode.");
-                        settings = std::make_unique<romi::V2VideoCameraSettings>(width,
-                                                                                 height,
-                                                                                 fps);
-
-                } else if (mode == kStill) {
-                        r_info("Camera: still mode.");
-                        settings = std::make_unique<romi::V2CameraSettings>(width, height);
+                if (options.is_set(kGimbal)) {
+                        std::string device = options.get_value(kGimbal);
+                        r_info("Connecting to gimbal at %s", device.c_str());
+                        gimbal_serial = romiserial::RomiSerialClient::create(device,
+                                                                             "BldcGimbal");
+                        gimbal = std::make_unique<romi::BldcGimbal>(*gimbal_serial);
+                        gimbal_adaptor = std::make_unique<romi::GimbalAdaptor>(*gimbal);
+                        gimbal_server = romi::RcomServer::create("gimbal", *gimbal_adaptor);
                 }
 
                 std::unique_ptr<IRomiSerialClient> gimbal_serial;
