@@ -28,12 +28,12 @@ function showImage(buffer)
     }
 }
 
-function initCamera(registry)
+function initCamera(name, registry)
 {
     registrySocket = new WebSocket("ws://" + registry + ":10101");
 
     registrySocket.onopen = function (event) {
-        var request = { "request": "get", "topic": "camera" };
+        var request = { "request": "get", "topic": name };
         registrySocket.send(JSON.stringify(request));
     };
 
