@@ -56,6 +56,9 @@ static std::vector<romi::Option> option_list = {
                 
         { kRegistry, true, nullptr,
           "The IP address of the registry."},
+                
+        { kTopic, true, "camera",
+          "The topic used for the registration."},
 
         { kCameraVersion, true, "v2",
           "The camera version: 'v2' or 'hq' (v2)"},
@@ -155,25 +158,11 @@ int main(int argc, char **argv)
                         gimbal_adaptor = std::make_unique<romi::GimbalAdaptor>(*gimbal);
                         gimbal_server = romi::RcomServer::create("gimbal", *gimbal_adaptor);
                 }
-
-                std::unique_ptr<IRomiSerialClient> gimbal_serial;
-                std::make_unique<BldcGimbal> gimbal;
-                std::make_unique<GimbalAdaptor> gimbal_adaptor;
-                std::unique_ptr<IRPCServer> gimbal_server; 
                 
-                if (options.is_set(kGimbal)) {
-                        std::string device = options.get_value(kGimbal);
-                        r_info("Connecting to gimbal at %s", device.c_str());
-                        gimbal_serial = romiserial::RomiSerialClient::create(device,
-                                                                             "BldcGimbal");
-                        gimbal = std::make_unique<BldcGimbal>(*serial);
-                        gimbal_adaptor = std::make_unique<GimbalAdaptor>(*gimbal);
-                        gimbal_server = romi::RcomServer::create("camera", *gimbal_adaptor);
-                }
-                
+                std::string topic = options.get_value(kTopic);
                 auto camera = romi::PiCamera::create(*settings);
                 romi::CameraAdaptor adaptor(*camera);
-                auto camera_server = romi::RcomServer::create("camera", adaptor);
+                auto camera_server = romi::RcomServer::create(topic, adaptor);
                 
                 quit_on_control_c();
                 
