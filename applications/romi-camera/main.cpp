@@ -63,6 +63,9 @@ static std::vector<romi::Option> option_list = {
 
         { kFPS, true, "5",
           "The frame rate, for video mode only (5 fps)"}
+
+        { kGimbal, true, nullptr,
+          "Connect to the gimbal with the given device path"}
 };
 
 int main(int argc, char **argv)
@@ -108,15 +111,32 @@ int main(int argc, char **argv)
                         r_info("Camera: still mode.");
                         settings = std::make_unique<romi::V2CameraSettings>(width, height);
                 }
+
+                std::unique_ptr<IRomiSerialClient> gimbal_serial;
+                std::make_unique<BldcGimbal> gimbal;
+                std::make_unique<GimbalAdaptor> gimbal_adaptor;
+                std::unique_ptr<IRPCServer> gimbal_server; 
+                
+                if (options.is_set(kGimbal)) {
+                        std::string device = options.get_value(kGimbal);
+                        r_info("Connecting to gimbal at %s", device.c_str());
+                        gimbal_serial = romiserial::RomiSerialClient::create(device,
+                                                                             "BldcGimbal");
+                        gimbal = std::make_unique<BldcGimbal>(*serial);
+                        gimbal_adaptor = std::make_unique<GimbalAdaptor>(*gimbal);
+                        gimbal_server = romi::RcomServer::create("camera", *gimbal_adaptor);
+                }
                 
                 auto camera = romi::PiCamera::create(*settings);
                 romi::CameraAdaptor adaptor(*camera);
-                auto server = romi::RcomServer::create("camera", adaptor);
-
+                auto camera_server = romi::RcomServer::create("camera", adaptor);
+                
                 quit_on_control_c();
                 
                 while (!quit) {
-                        server->handle_events();
+                        camera_server->handle_events();
+                        if (gimbal_server)
+                                gimbal_server->handle_events();
                         clock->sleep(0.001);
                 }
 
