@@ -89,6 +89,7 @@
 #include <api/DataLog.h>
 #include <api/DataLogAccessor.h>
 #include <oquam/FakeCNCController.h>
+#include <WebSocketServerFactory.h>
 
 
 std::atomic<bool> quit(false);
@@ -412,8 +413,9 @@ int main(int argc, char** argv)
                                   *imager,
                                   remoteStateInputDevice);
 
+                auto webserver_socket_factory = rcom::WebSocketServerFactory::create();
                 auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
-                ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
+                ScriptHub scriptHub(scriptHubListener, webserver_socket_factory, ScriptHubListeningPort);
 
                 // State machine
                 r_info("main: Creating state machine");

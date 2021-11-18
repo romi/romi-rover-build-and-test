@@ -33,9 +33,6 @@
 #include <ClockAccessor.h>
 #include <rover/RoverOptions.h>
 
-#include <rpc/RemoteCamera.h>
-#include <rpc/RcomClient.h>
-
 #include <oquam/StepperSettings.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
@@ -59,10 +56,10 @@
 #include "mock_navigation.h"
 #include "mock_eventtimer.h"
 #include "mock_menu.h"
-//#include "mock_scriptengine.h"
 #include "mock_notifications.h"
 #include "mock_weeder.h"
 #include "mock_imager.h"
+#include "WebSocketServerFactory.h"
 
 
 std::atomic<bool> quit(false);
@@ -147,8 +144,9 @@ int main(int argc, char** argv)
                 romi::Rover rover(mockInputDevice, mockDisplay, mockSpeedController, mockNavigation, mockEventTimer,
                                   mockMenu, script_engine, mockNotifications, mockWeeder, mockImager, remoteStateInputDevice);
 
+                auto webserver_socket_factory = rcom::WebSocketServerFactory::create();
                 auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
-                ScriptHub scriptHub(scriptHubListener, ScriptHubListeningPort);
+                ScriptHub scriptHub(scriptHubListener, webserver_socket_factory, ScriptHubListeningPort);
             // State machine
                 r_info("main: Creating state machine");
                 romi::RoverStateMachine state_machine(rover);
