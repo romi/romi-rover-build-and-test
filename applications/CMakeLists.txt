@@ -13,6 +13,7 @@ add_subdirectory(romi-rover)
 add_subdirectory(rcdiscover)
 add_subdirectory(romi-remote-client)
 add_subdirectory(batterymonitor)
+add_subdirectory(oquam)
 
 if(${PI_BUILD})
     add_subdirectory(romi-camera)
