@@ -1,0 +1,22 @@
+{
+    "oquam": {
+        "cnc-range": [[0, 0.750000], [0, 0.750000], [-100000, 100000]],
+        "path-slice-duration": 0.020000,
+        "path-maximum-deviation": 0.010000,
+        "controller-classname": "stepper-controller",
+        "stepper-settings": {
+            "displacement-per-revolution": [0.040000, 0.040000, 6.283185307179586],
+            "gears-ratio": [1, 1, 1],
+            "maximum-acceleration": [0.200000, 0.200000, 3.0000],
+            "maximum-rpm": [300, 300, 300],
+            "microsteps": [16, 16, 16],
+            "steps-per-revolution": [200, 200, 200]
+        }
+    },
+    "ports": {
+        "oquam": {
+            "port": "/dev/ttyUSB0",
+            "type": "serial"
+        }
+    }
+}
