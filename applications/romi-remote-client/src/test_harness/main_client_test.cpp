@@ -172,7 +172,7 @@ int main(int argc, char** argv)
                 retval = 0;
 
                 
-        } catch (JSONError& je) {
+        } catch (nlohmann::json::exception& je) {
                 r_err("main: Json Error: %s", je.what());
                 
         } catch (std::exception& e) {

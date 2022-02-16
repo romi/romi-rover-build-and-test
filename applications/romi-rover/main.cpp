@@ -110,10 +110,10 @@ void SignalHandler(int signal)
         }
 }
 
-double compute_pixels_per_meter(JsonCpp& config)
+double compute_pixels_per_meter(nlohmann::json& config)
 {
-        double width = config.get("oquam").get("cnc-range").get(0).num(1);
-        double pixels = config.get("weeder").get("imagecropper").get("workspace").num(2);
+        double width = config["oquam"]["cnc-range"][0][1];
+        double pixels = config["weeder"]["imagecropper"]["workspace"][2];
         r_debug("Pixels-per-meter: %f px/m", pixels / width);
         return pixels / width;
 }
@@ -138,7 +138,10 @@ int main(int argc, char** argv)
         try {
                 std::string config_file = options.get_config_file();
                 r_info("Romi Rover: Using configuration file: '%s'", config_file.c_str());
-                JsonCpp config = JsonCpp::load(config_file.c_str());
+
+                // TBD: Create standard JSON load functionality.
+                std::ifstream ifs(config_file);
+                nlohmann::json config = nlohmann::json::parse(ifs);
 
                 // Registry
                 std::string registry = options.get_value(romi::RoverOptions::registry);
@@ -169,7 +172,7 @@ int main(int argc, char** argv)
                 
                 // Display
                 r_info("main: Creating display");
-                const char *display_device = (const char *) config["ports"]["display-device"]["port"];
+                std::string display_device = config["ports"]["display-device"]["port"];
 
                 std::string client_name("display_device");
                 auto display_serial = romiserial::RomiSerialClient::create(display_device, client_name);
@@ -180,14 +183,14 @@ int main(int argc, char** argv)
 
                 // Joystick
                 r_info("main: Creating joystick");
-                const char *joystick_device = (const char *) config["ports"]["joystick"]["port"];
+                std::string joystick_device = config["ports"]["joystick"]["port"];
                 romi::LinuxJoystick joystick(linux, joystick_device);
                 romi::UIEventMapper joystick_event_mapper;
                 romi::JoystickInputDevice input_device(joystick, joystick_event_mapper);
 
                 // CNC controller
                 r_info("main: Creating CNC controller");
-                const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
+                std::string cnc_device = config["ports"]["oquam"]["port"];
                 client_name = "cnc_device";
                 auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
                 romi::StepperController cnc_controller(cnc_serial);
@@ -199,7 +202,7 @@ int main(int argc, char** argv)
                 try {
                     // Battery Monitor
                     r_info("main: Creating Battery Monitor");
-                    const char *battery_monotor_device = (const char *) config["ports"]["battery-monitor"]["port"];
+                    std::string battery_monotor_device = config["ports"]["battery-monitor"]["port"];
                     client_name = "battery-monitor";
                     auto battery_serial = romiserial::RomiSerialClient::create(battery_monotor_device, client_name);
 
@@ -212,12 +215,12 @@ int main(int argc, char** argv)
 
                 // CNC
                 r_info("main: Creating CNC");
-                JsonCpp r = config["oquam"]["cnc-range"];
+                nlohmann::json r = config.at("oquam").at("cnc-range");
                 romi::CNCRange range(r);
-                JsonCpp s = config["oquam"]["stepper-settings"];
+                nlohmann::json s = config.at("oquam").at("stepper-settings");
                 romi::StepperSettings stepper_settings(s);
-                double slice_duration = (double) config["oquam"]["path-slice-duration"];
-                double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
+                double slice_duration = config["oquam"]["path-slice-duration"];
+                double maximum_deviation = config["oquam"]["path-maximum-deviation"];
 
                 romi::AxisIndex homing[3] = { romi::kAxisZ, romi::kAxisX, romi::kAxisY };
                 //romi::AxisIndex homing[3] = { romi::kNoAxis, romi::kNoAxis, romi::kNoAxis };
@@ -271,10 +274,10 @@ int main(int argc, char** argv)
 
                 // Motor driver
                 r_info("main: Creating motor driver");
-                JsonCpp rover_settings = config["navigation"]["rover"];
+                nlohmann::json rover_settings = config.at("navigation").at("rover");
                 romi::NavigationSettings rover_config(rover_settings);
-                const char *driver_device = (const char *) config["ports"]["brush-motor-driver"]["port"];
-                JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
+                std::string driver_device = config["ports"]["brush-motor-driver"]["port"];
+                nlohmann::json driver_settings = config.at("navigation").at("brush-motor-driver");
                 client_name = "brush_motor_driver_device";
                 auto driver_serial = romiserial::RomiSerialClient::create(driver_device, client_name);
                 romi::BrushMotorDriver motor_driver(driver_serial,
@@ -287,7 +290,7 @@ int main(int argc, char** argv)
 
                 // Track follower
 
-                std::string track_follower_name = config["navigation"].str("track-follower");
+                std::string track_follower_name = config["navigation"]["track-follower"];
                 std::unique_ptr<romi::ITrackFollower> track_follower;
 
                 if (track_follower_name == "odometry") {
@@ -306,7 +309,7 @@ int main(int argc, char** argv)
                                                                                      pixels_per_meter,
                                                                                      session);
                 } else if (track_follower_name == "imu") {
-                        const char *imu_device = (const char *) config["ports"]["imu"]["port"];
+                        std::string imu_device = config["ports"]["imu"]["port"];
                         client_name = "imu_device";
                         auto imu_serial = romiserial::RomiSerialClient::create(imu_device, client_name);
                         track_follower = std::make_unique<romi::IMUTrackFollower>(imu_serial);
@@ -328,11 +331,12 @@ int main(int argc, char** argv)
 
                 romi::DifferentialSteering differential_steering(motor_driver, rover_config);
                 
-                const char *steering_device = (const char *) config["ports"]["steering"]["port"];
+                std::string steering_device = config["ports"]["steering"]["port"];
                 client_name = "steering_device";
                 auto steering_serial = romiserial::RomiSerialClient::create(steering_device, client_name);
                 romi::SteeringController steering_controller(steering_serial);
-                
+
+                // REFACTOR. ADD THESE TO A STEERING CONSTANTS FILE.
                 double max_rpm = 500; // From the motor specs
                 double max_rps = max_rpm / 60.0;
                 double default_rps = max_rps / 2.0; // Turn at 1/2th of max speed
@@ -380,14 +384,14 @@ int main(int argc, char** argv)
                 // Notifications
                 // std::string soundfont = get_sound_font_file(options, config);
                 // r_info("main: Loading soundfont %s", soundfont.c_str());
-                // JsonCpp sound_setup = config["user-interface"]["fluid-sounds"]["sounds"];
+                // nlohmann::json sound_setup = config.at("user-interface").at(["fluid-sounds").at("sounds");
                 // r_info("main: Creating sound notifications");
                 // romi::FluidSoundNotifications notifications(soundfont, sound_setup);
                 romi::DummyNotifications notifications;
                 
                 // Imager
 
-                std::string imager_name = config.str("imager");
+                std::string imager_name = config["imager"];
                 std::unique_ptr<romi::IImager> imager;
 
                 if (imager_name == "unet") {
@@ -468,7 +472,7 @@ int main(int argc, char** argv)
                 retval = 0;
 
                 
-        } catch (JSONError& je) {
+        } catch (nlohmann::json::exception& je) {
                 r_err("main: Invalid configuration file: %s", je.what());
                 
         } catch (std::exception& e) {

@@ -39,6 +39,16 @@ TEST_F(PortConfigurationGenerator_tests, PortConfigurationGenerator_can_construc
     ASSERT_NO_THROW(PortConfigurationGenerator PortConfigurationGenerator);
 }
 
+TEST_F(PortConfigurationGenerator_tests, PortConfigurationGenerator_json_throws_as_expected)
+{
+    // Arrange
+    nlohmann::json config;
+    // Act
+    // Assert
+    ASSERT_THROW(double width = config["oquam"]["cnc-range"][0][1]; std::cout << width << std::endl;, nlohmann::json::exception);
+    ASSERT_THROW(std::string display_device = config["ports"]["display-device"]["port"];std::cout << display_device << std::endl;, nlohmann::json::exception);
+}
+
 TEST_F(PortConfigurationGenerator_tests, PortConfigurationGenerator_when_no_devices_present_creates_skeleton)
 {
     // Arrange
