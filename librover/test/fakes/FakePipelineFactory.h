@@ -26,7 +26,7 @@
 #define __ROMI_FAKEPIPELINE_FACTORY_H
 
 #include <memory>
-#include <JsonCpp.h>
+#include <json.hpp>
 #include <cv/IImageCropper.h>
 #include <configuration/GetOpt.h>
 #include <weeder/PipelineFactory.h>
@@ -43,16 +43,16 @@ namespace romi {
                 ~FakePipelineFactory() override = default;
 
                 std::unique_ptr<IImageCropper>
-                build_cropper(CNCRange &range, JsonCpp& weeder, romi::GetOpt& options);
+                build_cropper(CNCRange &range, nlohmann::json& weeder, romi::GetOpt& options);
 
                 std::unique_ptr<IImageSegmentation>
-                build_segmentation(JsonCpp& weeder, romi::GetOpt& options);
+                build_segmentation(nlohmann::json& weeder, romi::GetOpt& options);
 
 
                 std::unique_ptr<IConnectedComponents>
                 build_connected_components(romi::GetOpt& options);
 
-                IPipeline& build(CNCRange &range, JsonCpp& config, romi::GetOpt& options);
+                IPipeline& build(CNCRange &range, nlohmann::json& config, romi::GetOpt& options);
         };
 }
 

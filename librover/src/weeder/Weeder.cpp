@@ -114,7 +114,7 @@ namespace romi {
 
         void Weeder::store_svg(Path& path, size_t index)
         {
-                rpp::MemBuffer buffer;
+                rcom::MemBuffer buffer;
                 // The dimensions are in meter. Convert to pixels, width 1000 px/m.
                 v3 dimensions = _range.dimensions();
                 int w = (int) (dimensions.x() * 1000.0);
@@ -142,7 +142,7 @@ namespace romi {
                 session_.store_svg(filename, buffer.tostring());
         }
 
-        void Weeder::store_svg_path(rpp::MemBuffer& buffer, Path& path)
+        void Weeder::store_svg_path(rcom::MemBuffer& buffer, Path& path)
         {
                 if (path.size() > 1) {
                         buffer.printf("    <path d=\"");
@@ -169,7 +169,7 @@ namespace romi {
                 }
         }
 
-        void Weeder::store_svg_centers(rpp::MemBuffer& buffer, Path& path)
+        void Weeder::store_svg_centers(rcom::MemBuffer& buffer, Path& path)
         {
                 v3 dimensions = _range.dimensions();
                 double h = dimensions.y() * 1000.0;
@@ -200,7 +200,7 @@ namespace romi {
         void Weeder::move_arm_to_camera_position()
         {
                 stop_spindle_and_move_arm_up();
-                moveto(0.0, _range.max.y(), 0.0);
+                moveto(0.0, _range.max_.y(), 0.0);
         }
 
         void Weeder::move_arm_to_start_position(v3 p)
@@ -259,7 +259,7 @@ namespace romi {
                 // Map these coordinates to the physical dimensions of
                 // the workspace.
                 path.scale(_range.dimensions());
-                path.translate(_range.min);
+                path.translate(_range.min_);
                 path.set_z(_z0);
                 
                 if (!path.clamp(_range, 0.01))
@@ -269,7 +269,7 @@ namespace romi {
         void Weeder::rotate_path_to_starting_point(Path& path)
         {
                 r_debug("Weeder::rotate_path_to_starting_point");
-                v3 starting_point(0.0, _range.max.y(), _z0);
+                v3 starting_point(0.0, _range.max_.y(), _z0);
                 int closest_index = path.closest_point(starting_point);
                 if (closest_index >= 0) {
                         Path out;

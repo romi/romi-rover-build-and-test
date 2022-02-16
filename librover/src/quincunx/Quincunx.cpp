@@ -49,7 +49,7 @@ namespace romi {
                                      float radius,
                                      std::vector<point_t>& positions);
 
-        Quincunx::Quincunx(JsonCpp& params) :
+        Quincunx::Quincunx(nlohmann::json& params) :
                 _distance_plants(0.0),
                 _distance_rows(0.0),
                 _radius_zones(0.0),
@@ -58,11 +58,11 @@ namespace romi {
                 try {
                         _distance_plants = (double) params["distance-plants"];
                         _distance_rows = (double) params["distance-rows"];
-                        _radius_zones = params.num("radius-zones", 0.1);
-                        _threshold = params.num("threshold", 0.5);
+                            _radius_zones = params.value("radius-zones", 0.1);
+                            _threshold = params.value("threshold", 0.5);
                         assert_settings();
                         
-                } catch (JSONError& je) {
+                } catch (nlohmann::json::exception& je) {
                         r_warn("Quincunx: invalid JSON");
                         throw std::runtime_error("Quincunx: invalid JSON");
                 }

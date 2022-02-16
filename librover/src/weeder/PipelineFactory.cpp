@@ -43,25 +43,25 @@
 namespace romi {
         
         std::unique_ptr<IImageCropper>
-        PipelineFactory::build_cropper(CNCRange &range, JsonCpp& weeder)
+        PipelineFactory::build_cropper(CNCRange &range, nlohmann::json& weeder)
         {
-                const char *name = (const char *) weeder["cropper"];
-                JsonCpp properties = weeder[name];
+                std::string name = weeder["cropper"];
+                nlohmann::json properties = weeder[name];
                 return std::make_unique<ImageCropper>(range, properties);
         }
         
         std::unique_ptr<IImageSegmentation> 
-        PipelineFactory::build_segmentation(JsonCpp& weeder)
+        PipelineFactory::build_segmentation(nlohmann::json& weeder)
         {
-                const char *name = (const char *) weeder["segmentation"];
+                std::string name = weeder["segmentation"];
                 return build_segmentation(name, weeder);
         }
         
         std::unique_ptr<IImageSegmentation> 
-        PipelineFactory::build_segmentation(const std::string& name, JsonCpp& weeder)
+        PipelineFactory::build_segmentation(const std::string& name, nlohmann::json& weeder)
         {
                 if (name == kSVM) {
-                        JsonCpp properties = weeder["svm"];                
+                        nlohmann::json properties = weeder["svm"];
                         return std::make_unique<SVMSegmentation>(properties);
                         
                 } else if (name == kPythonUnet) {
@@ -86,15 +86,15 @@ namespace romi {
         }
         
         std::unique_ptr<IPathPlanner>
-        PipelineFactory::build_planner(JsonCpp& weeder)
+        PipelineFactory::build_planner(nlohmann::json& weeder)
         {
-                std::string name = (const char *) weeder["path"];
-                JsonCpp properties = weeder[name.c_str()];
+                std::string name = weeder["path"];
+                nlohmann::json properties = weeder[name.c_str()];
                 return build_planner(name, properties);
         }
         
         std::unique_ptr<IPathPlanner>
-        PipelineFactory::build_planner(const std::string& name, JsonCpp& properties)
+        PipelineFactory::build_planner(const std::string& name, nlohmann::json& properties)
         {
                 if (name == kQuincunx) {
                         return std::make_unique<Quincunx>(properties);
@@ -108,9 +108,9 @@ namespace romi {
                 }
         }
         
-        IPipeline& PipelineFactory::build(CNCRange &range, JsonCpp& config)
+        IPipeline& PipelineFactory::build(CNCRange &range, nlohmann::json& config)
         {
-                JsonCpp weeder = config["weeder"];
+                nlohmann::json weeder = config["weeder"];
 
                 auto cropper = build_cropper(range, weeder);
                 auto connected_components = build_connected_components();

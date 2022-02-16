@@ -22,17 +22,18 @@
 
  */
 
+#include <log.h>
 #include <stdexcept>
 #include "svm/SVMSegmentation.h"
 
 namespace romi {
         
-        SVMSegmentation::SVMSegmentation(JsonCpp& params) : _b(0.0)
+        SVMSegmentation::SVMSegmentation(nlohmann::json& params) : _b(0.0)
         {
                 try {
                         set_parameter_a(params["a"]);
                         set_parameter_b(params["b"]);
-                } catch (JSONError& je) {
+                } catch (nlohmann::json::exception& je) {
                         r_err("SVMSegmentation: Failed to parse the parameters: %s",
                               je.what());
                         throw std::runtime_error("SVMSegmentation: bad config");
@@ -66,18 +67,18 @@ namespace romi {
                 return _b;
         }
 
-        void SVMSegmentation::set_parameter_a(JsonCpp value)
+        void SVMSegmentation::set_parameter_a(nlohmann::json value)
         {
                 float a[3];
-                a[0] = (float) value.num(0);
-                a[1] = (float) value.num(1);
-                a[2] = (float) value.num(2);
+                a[0] = (float) value[0];
+                a[1] = (float) value[1];
+                a[2] = (float) value[2];
                 set_coefficients(a);
         }
         
-        void SVMSegmentation::set_parameter_b(JsonCpp value)
+        void SVMSegmentation::set_parameter_b(nlohmann::json value)
         {
-                set_intercept((float) value.num());
+                set_intercept((float) value);
         }
 
         bool SVMSegmentation::create_mask(ISession &session, Image &image, Image &mask)

@@ -25,7 +25,7 @@
 #ifndef __ROMI_PIPELINE_H
 #define __ROMI_PIPELINE_H
 
-#include <JsonCpp.h>
+#include <json.hpp>
 #include <MemBuffer.h>
 #include <api/CNCRange.h>
 #include <cv/IImageCropper.h>
@@ -58,11 +58,11 @@ namespace romi {
                 void check_path(ISession& session, Image& mask, Path& path,
                                 std::vector<Path>& paths, size_t index);
                 void check_segment(ISession& session,
-                                   rpp::MemBuffer& buffer,
+                                   rcom::MemBuffer& buffer,
                                    Image& image, v3 start, v3 end,
                                    std::vector<Path>& paths);
                 void go_around(ISession& session,
-                               rpp::MemBuffer& buffer,
+                               rcom::MemBuffer& buffer,
                                Image& mask,
                                v3 start, v3 end,
                                std::vector<Path>& paths);

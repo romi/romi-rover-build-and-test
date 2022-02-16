@@ -26,7 +26,7 @@
 #define __ROMI_I_IMAGE_SEGMENTATION_H
 
 #include "session/ISession.h"
-#include "JsonCpp.h"
+#include "json.hpp"
 
 namespace romi {
 

@@ -98,7 +98,7 @@ namespace romi {
                 Centers centers = romi::calculate_centers(dilated_mask, max_centers);
                 r_info("calculate_centers (slic): done");
                 {
-                        rpp::MemBuffer buffer;
+                        rcom::MemBuffer buffer;
                         for (auto & center: centers)
                                 buffer.printf("%zu\t%zu\n", center.first, center.second);
                         session.store_txt("centers", buffer.tostring());
@@ -154,7 +154,7 @@ namespace romi {
                         session.store_path(filename, 0, initial_path);
 
                         {
-                                rpp::MemBuffer buffer;
+                                rcom::MemBuffer buffer;
                                 int w = (int) mask.width();
                                 int h = (int) mask.height();
 
@@ -277,7 +277,7 @@ namespace romi {
         void Pipeline::check_path(ISession& session, Image& mask, Path& path,
                                   std::vector<Path>& paths, size_t index)
         {
-                rpp::MemBuffer buffer;
+                rcom::MemBuffer buffer;
                 int w = (int) mask.width();
                 int h = (int) mask.height();
 
@@ -309,7 +309,7 @@ namespace romi {
         }
         
         void Pipeline::check_segment(ISession& session,
-                                     rpp::MemBuffer& buffer,
+                                     rcom::MemBuffer& buffer,
                                      Image& mask, v3 start, v3 end,
                                      std::vector<Path>& paths)
         {
@@ -322,7 +322,7 @@ namespace romi {
         }
 
         void Pipeline::go_around(ISession& session,
-                                 rpp::MemBuffer& buffer,
+                                 rcom::MemBuffer& buffer,
                                  Image& mask,
                                  v3 start, v3 end,
                                  std::vector<Path>& paths)
