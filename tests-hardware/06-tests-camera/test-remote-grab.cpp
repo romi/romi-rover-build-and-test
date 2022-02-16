@@ -8,7 +8,7 @@ static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
 static void quit_on_control_c();
 
-void store_jpeg(rpp::MemBuffer& jpeg, const char *filename)
+void store_jpeg(rcom::MemBuffer& jpeg, const char *filename)
 {
         r_info("File %s, Length %d", filename, (int) jpeg.size());
         
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
                 quit_on_control_c();
                 
                 for (int i = 0; i < number_of_grabs; i++) {
-                        rpp::MemBuffer& jpeg = camera.grab_jpeg();
+                        rcom::MemBuffer& jpeg = camera.grab_jpeg();
                         if (jpeg.size() > 0) {
                                 const char *filename = requested_filename;
                                 if (filename == nullptr)

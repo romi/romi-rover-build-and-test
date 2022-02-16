@@ -128,7 +128,10 @@ int main(int argc, char** argv)
         try {
                 std::string config_file = options.get_config_file();
                 r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
-                JsonCpp config = JsonCpp::load(config_file.c_str());
+
+                // TBD: USE FILEUTIL LOADER
+                std::ifstream ifs(config_file);
+                nlohmann::json config = nlohmann::json::parse(ifs);
 
                 rpp::Linux linux;
 
@@ -146,10 +149,10 @@ int main(int argc, char** argv)
 
 
 
-                JsonCpp rover_settings = config["navigation"]["rover"];
+                nlohmann::json rover_settings = config.at("navigation").at("rover");
                 romi::NavigationSettings rover_config(rover_settings);
                 
-                JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
+                nlohmann::json driver_settings = config.at("navigation").at("brush-motor-driver");
                 
                 std::string device = romi::get_brush_motor_device(options, config);
                 std::shared_ptr<romiserial::RSerial>serial
@@ -170,7 +173,7 @@ int main(int argc, char** argv)
                 
                 romi::LocationTracker distance_measure(wheelodometry, wheelodometry);
                 
-                const char *imu_device = (const char *) config["ports"]["imu"]["port"];
+                std::string imu_device = config["ports"]["imu"]["port"];
                 client_name = "imu_device";
                 auto imu_serial = romiserial::RomiSerialClient::create(imu_device, client_name);
                 romi::IMUTrackFollower track_follower(imu_serial);

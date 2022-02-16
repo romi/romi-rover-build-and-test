@@ -90,7 +90,7 @@ void move_and_grab(romi::Session& session,
                    double x, double y, double z)
 {
         assert_moveto(oquam, x, y, z);
-        rpp::MemBuffer& image = camera.grab_jpeg();
+        rcom::MemBuffer& image = camera.grab_jpeg();
         std::string filename = make_filename(x, y, z);
         session.store_jpg(filename, image);
 }
@@ -100,13 +100,13 @@ void run_calibration(romi::Session& session,
                      romi::Oquam& oquam,
                      romi::ICamera& camera)
 {
-        double x0 = range.min.x();
-        double y0 = range.min.y();
-        double z0 = range.min.z();
+        double x0 = range.min_.x();
+        double y0 = range.min_.y();
+        double z0 = range.min_.z();
                 
-        double x1 = range.max.x();
-        double y1 = range.max.y();
-        double z1 = range.max.z();
+        double x1 = range.max_.x();
+        double y1 = range.max_.y();
+        double z1 = range.max_.z();
 
         double dx = (x1 - x0) / 10.0;
         double dy = (y1 - y0) / 10.0;
@@ -153,7 +153,7 @@ bool handle_axis_event(romi::CNCRange& range,
                         success = oquam.get_position(pos);
                         if (success) {
                                 r_debug("setting z0 to %f", pos.z());
-                                range.min.set(romi::kZ, pos.z());
+                                range.min_.set(romi::kZ, pos.z());
                         } else {
                                 r_err("get_position failed");
                         }
@@ -237,7 +237,9 @@ int main(int argc, char** argv)
         try {
                 std::string config_file = options.get_config_file();
                 r_info("Romi Rover: Using configuration file: '%s'", config_file.c_str());
-                JsonCpp config = JsonCpp::load(config_file.c_str());
+                // TBD: USE FileUtils
+                std::ifstream ifs(config_file);
+                nlohmann::json config = nlohmann::json::parse(ifs);
 
                 // Session
                 r_info("main: Creating session");
@@ -255,13 +257,13 @@ int main(int argc, char** argv)
 
                 // Joystick
                 r_info("main: Creating joystick");
-                const char *joystick_device = (const char *) config["ports"]["joystick"]["port"];
+                std::string joystick_device = config["ports"]["joystick"]["port"];
                 romi::LinuxJoystick joystick(linux, joystick_device);
 
                 
                 // CNC controller
                 r_info("main: Creating CNC controller");
-                const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
+                std::string cnc_device = config["ports"]["oquam"]["port"];
                 std::string client_name("cnc_device");
                 auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
                 romi::StepperController cnc_controller(cnc_serial);
@@ -269,9 +271,9 @@ int main(int argc, char** argv)
                 
                 // CNC
                 r_info("main: Creating CNC");
-                JsonCpp r = config["oquam"]["cnc-range"];
+                nlohmann::json r = config.at("oquam").at("cnc-range");
                 romi::CNCRange range(r);
-                JsonCpp s = config["oquam"]["stepper-settings"];
+                nlohmann::json s = config.at("oquam").at("stepper-settings");
                 romi::StepperSettings stepper_settings(s);
                 double slice_duration = (double) config["oquam"]["path-slice-duration"];
                 double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
@@ -327,7 +329,7 @@ int main(int argc, char** argv)
                 retval = 0;
 
                 
-        } catch (JSONError& je) {
+        } catch (nlohmann::json::exception& je) {
                 r_err("main: Failed to read the configuration file: %s", je.what());
                 
         } catch (std::exception& e) {
