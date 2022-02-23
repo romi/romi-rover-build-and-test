@@ -49,6 +49,7 @@ static const char *kHeight = "height";
 static const char *kFPS = "fps";
 static const char *kBitrate = "bitrate";
 static const char *kGimbal = "gimbal";
+static const char *kTopic = "topic";
 
 static std::vector<romi::Option> option_list = {
         { "help", false, nullptr,
