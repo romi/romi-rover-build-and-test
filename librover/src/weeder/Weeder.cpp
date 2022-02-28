@@ -200,7 +200,7 @@ namespace romi {
         void Weeder::move_arm_to_camera_position()
         {
                 stop_spindle_and_move_arm_up();
-                moveto(0.0, _range.max.y(), 0.0);
+                moveto(0.0, _range.ymax(), 0.0);
         }
 
         void Weeder::move_arm_to_start_position(v3 p)
@@ -259,7 +259,7 @@ namespace romi {
                 // Map these coordinates to the physical dimensions of
                 // the workspace.
                 path.scale(_range.dimensions());
-                path.translate(_range.min);
+                path.translate(_range.min());
                 path.set_z(_z0);
                 
                 if (!path.clamp(_range, 0.01))
@@ -269,7 +269,7 @@ namespace romi {
         void Weeder::rotate_path_to_starting_point(Path& path)
         {
                 r_debug("Weeder::rotate_path_to_starting_point");
-                v3 starting_point(0.0, _range.max.y(), _z0);
+                v3 starting_point(0.0, _range.ymax(), _z0);
                 int closest_index = path.closest_point(starting_point);
                 if (closest_index >= 0) {
                         Path out;
