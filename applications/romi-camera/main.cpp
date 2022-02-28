@@ -20,7 +20,7 @@
   along with this program.  If not, see
   <http://www.gnu.org/licenses/>.
 
- */
+*/
 #include <stdexcept>
 #include <memory>
 #include <r.h>
@@ -119,30 +119,30 @@ int main(int argc, char **argv)
                 std::unique_ptr<romi::PiCameraSettings> settings;
 
                 if (version == "v2") {
-		  if (mode == kVideo) {
-		    r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
-		    settings = std::make_unique<romi::V2VideoCameraSettings>(width,
-									     height,
-									     fps);
-		    settings->bitrate_ = bitrate;
+                        if (mode == kVideo) {
+                                r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
+                                settings = std::make_unique<romi::V2VideoCameraSettings>(width,
+                                                                                         height,
+                                                                                         fps);
+                                settings->bitrate_ = bitrate;
 
-		  } else if (mode == kStill) {
-		    r_info("Camera: still mode.");
-		    settings = std::make_unique<romi::V2StillCameraSettings>(width, height);
-		  }
+                        } else if (mode == kStill) {
+                                r_info("Camera: still mode.");
+                                settings = std::make_unique<romi::V2StillCameraSettings>(width, height);
+                        }
 		  
 		} else if (version == "hq") {
-		  if (mode == kVideo) {
-		    r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
-		    settings = std::make_unique<romi::HQVideoCameraSettings>(width,
-									     height,
-									     fps);
-		    settings->bitrate_ = bitrate;
+                        if (mode == kVideo) {
+                                r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
+                                settings = std::make_unique<romi::HQVideoCameraSettings>(width,
+                                                                                         height,
+                                                                                         fps);
+                                settings->bitrate_ = bitrate;
 
-		  } else if (mode == kStill) {
-		    r_info("Camera: still mode.");
-		    settings = std::make_unique<romi::HQStillCameraSettings>(width, height);
-		  }
+                        } else if (mode == kStill) {
+                                r_info("Camera: still mode.");
+                                settings = std::make_unique<romi::HQStillCameraSettings>(width, height);
+                        }
 		}
 
                 std::unique_ptr<romiserial::IRomiSerialClient> gimbal_serial;

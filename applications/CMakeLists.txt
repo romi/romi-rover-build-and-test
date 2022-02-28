@@ -17,6 +17,7 @@ add_subdirectory(oquam)
 
 if(${PI_BUILD})
     add_subdirectory(romi-camera)
+    add_subdirectory(romi-cablebot)
 endif()
 
 
