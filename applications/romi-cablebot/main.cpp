@@ -28,14 +28,15 @@
 #include <configuration/GetOpt.h>
 #include <ClockAccessor.h>
 #include <RomiSerialClient.h>
+#include <Linux.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <session/Session.h>
 #include <data_provider/CNCLocationProvider.h>
 
-static bool quit = false;
-static void set_quit(int sig, siginfo_t *info, void *ucontext);
-static void quit_on_control_c();
+// static bool quit = false;
+// static void set_quit(int sig, siginfo_t *info, void *ucontext);
+// static void quit_on_control_c();
 
 static const char *kMode = "mode";
 static const char *kVideo = "video";
@@ -71,22 +72,37 @@ static const constexpr double kStartPosition = 1.0;
 static const constexpr double kEndPosition = kStartPosition + kScanLength;
 
 
-void scan(romi::IImagingDevice& cablebot)
+std::string make_image_name(size_t counter)
 {
+        char buffer[64];
+	snprintf(buffer, sizeof(buffer), "camera-%06zu.jpg", counter);
+	return std::string(buffer);
+}
+
+void scan(romi::ImagingDevice& cablebot, romi::Session& session)
+{
+	session.start("test");
         cablebot.power_up();
 
+	size_t counter = 0;
         double position = kStartPosition;
         while (position < kEndPosition) {
                 cablebot.cnc_->moveto(position, 0.0, 0.0, 0.5);
                 rpp::MemBuffer& image = cablebot.camera_->grab_jpeg();
-                
-                (void) image;
+                if (image.size() > 0) {
+                        std::string filename = make_image_name(counter++);
+                        bool success = session.store_jpg(filename, image);
+			if (!success) {
+			  // Too bad
+			}
+                }
                 position += kScanInterval;
         }
         
         cablebot.cnc_->moveto(0.1, 0.0, 0.0, 0.5);
         cablebot.cnc_->homing();
         cablebot.power_down();
+	session.stop();
 }
 
 int main(int argc, char **argv)
@@ -106,7 +122,6 @@ int main(int argc, char **argv)
                 std::string width_value = options.get_value(kWidth);
                 std::string height_value = options.get_value(kHeight);
                 std::string fps_value = options.get_value(kFPS);
-		std::string version = options.get_value(kCameraVersion);
 		std::string bitrate_value = options.get_value(kBitrate);
 
                 size_t width = (size_t) std::stoul(width_value);
@@ -120,8 +135,7 @@ int main(int argc, char **argv)
                 } else if (mode_string == kStill) {
                         mode = romi::Cablebot::kStillMode;
                 } else {
-                        throw std::runtime_error("Invalid camera mode: %s",
-                                                 mode_string.c_str());
+                        throw std::runtime_error("Invalid camera mode");
                 }
 		
                 r_info("Camera: %zux%zu.", width, height);
@@ -135,7 +149,7 @@ int main(int argc, char **argv)
                 romi::RomiDeviceData romiDeviceData;
                 romi::SoftwareVersion softwareVersion;
                 std::unique_ptr<romi::ILocationProvider> locationProvider
-                        = std::make_unique<romi::CNCLocationProvider>(cablebot.cnc_);
+                        = std::make_unique<romi::CNCLocationProvider>(cablebot->cnc_);
                 std::string session_directory = "/home/romi/sessions";
 
                 romi::Session session(linux, session_directory, romiDeviceData,
@@ -143,7 +157,7 @@ int main(int argc, char **argv)
 
                 
                 
-                scan(*cablebot);
+                scan(*cablebot, session);
                 
                 // quit_on_control_c();
                 
