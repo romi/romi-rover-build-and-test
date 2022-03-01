@@ -28,6 +28,10 @@
 #include <configuration/GetOpt.h>
 #include <ClockAccessor.h>
 #include <RomiSerialClient.h>
+#include <data_provider/RomiDeviceData.h>
+#include <data_provider/SoftwareVersion.h>
+#include <session/Session.h>
+#include <data_provider/CNCLocationProvider.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
@@ -75,6 +79,7 @@ void scan(romi::IImagingDevice& cablebot)
         while (position < kEndPosition) {
                 cablebot.cnc_->moveto(position, 0.0, 0.0, 0.5);
                 rpp::MemBuffer& image = cablebot.camera_->grab_jpeg();
+                
                 (void) image;
                 position += kScanInterval;
         }
@@ -122,6 +127,21 @@ int main(int argc, char **argv)
                 r_info("Camera: %zux%zu.", width, height);
 		  
                 auto cablebot = romi::Cablebot::create(mode, width, height, fps, bitrate);
+
+                // Linux
+                rpp::Linux linux;
+
+                // Session
+                romi::RomiDeviceData romiDeviceData;
+                romi::SoftwareVersion softwareVersion;
+                std::unique_ptr<romi::ILocationProvider> locationProvider
+                        = std::make_unique<romi::CNCLocationProvider>(cablebot.cnc_);
+                std::string session_directory = "/home/romi/sessions";
+
+                romi::Session session(linux, session_directory, romiDeviceData,
+                                      softwareVersion, std::move(locationProvider));
+
+                
                 
                 scan(*cablebot);
                 
