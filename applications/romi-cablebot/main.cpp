@@ -24,11 +24,7 @@
 #include <stdexcept>
 #include <memory>
 #include <r.h>
-#include <picamera/PiCamera.h>
-#include <picamera/PiCameraSettings.h>
-#include <hal/BldcGimbal.h>
 #include <cablebot/Cablebot.h>
-#include <cablebot/CablebotBase.h>
 #include <configuration/GetOpt.h>
 #include <ClockAccessor.h>
 #include <RomiSerialClient.h>
@@ -37,8 +33,6 @@ static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
 static void quit_on_control_c();
 
-static const char *kBase = "base";
-static const char *kCameraVersion = "camera-version";
 static const char *kMode = "mode";
 static const char *kVideo = "video";
 static const char *kStill = "still";
@@ -46,18 +40,10 @@ static const char *kWidth = "width";
 static const char *kHeight = "height";
 static const char *kFPS = "fps";
 static const char *kBitrate = "bitrate";
-static const char *kGimbal = "gimbal";
-static const char *kTopic = "topic";
 
 static std::vector<romi::Option> option_list = {
         { "help", false, nullptr,
           "Print help message" },
-                
-        { kBase, true, nullptr,
-          "The path of the cablebot base device."},
-
-        { kCameraVersion, true, "hq",
-          "The camera version: 'v2' or 'hq' (hq)"},
                 
         { kMode, true, kVideo,
           "The camera mode: 'video' or 'still'."},
@@ -73,9 +59,6 @@ static std::vector<romi::Option> option_list = {
 
         { kBitrate, true, "25000000",
           "The average bitrate (video only) (25000000)"},
-
-        { kGimbal, true, nullptr,
-          "Connect to the gimbal with the given device path"}
 };
 
 static const constexpr double kScanLength = 18.0;
@@ -86,20 +69,19 @@ static const constexpr double kEndPosition = kStartPosition + kScanLength;
 
 void scan(romi::IImagingDevice& cablebot)
 {
-        cablebot.wake_up();
-        cablebot.homing();
+        cablebot.power_up();
 
         double position = kStartPosition;
         while (position < kEndPosition) {
-                cablebot.moveto(position, 0.0, 0.0, 0.5);
-                rpp::MemBuffer& image = cablebot.grab_jpeg();
+                cablebot.cnc_->moveto(position, 0.0, 0.0, 0.5);
+                rpp::MemBuffer& image = cablebot.camera_->grab_jpeg();
                 (void) image;
                 position += kScanInterval;
         }
         
-        cablebot.moveto(0.1, 0.0, 0.0, 0.5);
-        cablebot.homing();
-        cablebot.stand_by();
+        cablebot.cnc_->moveto(0.1, 0.0, 0.0, 0.5);
+        cablebot.cnc_->homing();
+        cablebot.power_down();
 }
 
 int main(int argc, char **argv)
@@ -115,7 +97,7 @@ int main(int argc, char **argv)
                         exit(0);
                 }
 
-                std::string mode = options.get_value(kMode);
+                std::string mode_string = options.get_value(kMode);
                 std::string width_value = options.get_value(kWidth);
                 std::string height_value = options.get_value(kHeight);
                 std::string fps_value = options.get_value(kFPS);
@@ -126,67 +108,22 @@ int main(int argc, char **argv)
                 size_t height = (size_t) std::stoul(height_value);
                 int32_t fps = (int32_t) std::stoi(fps_value);
                 uint32_t bitrate = (uint32_t) std::stoi(bitrate_value);
+                romi::Cablebot::CameraMode mode;
+
+                if (mode_string == kVideo) {
+                        mode = romi::Cablebot::kVideoMode;
+                } else if (mode_string == kStill) {
+                        mode = romi::Cablebot::kStillMode;
+                } else {
+                        throw std::runtime_error("Invalid camera mode: %s",
+                                                 mode_string.c_str());
+                }
 		
                 r_info("Camera: %zux%zu.", width, height);
-                
-                std::unique_ptr<romi::PiCameraSettings> settings;
-
-                if (version == "v2") {
-                        if (mode == kVideo) {
-                                r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
-                                settings = std::make_unique<romi::V2VideoCameraSettings>(width,
-                                                                                         height,
-                                                                                         fps);
-                                settings->bitrate_ = bitrate;
-
-                        } else if (mode == kStill) {
-                                r_info("Camera: still mode.");
-                                settings = std::make_unique<romi::V2StillCameraSettings>(width, height);
-                        }
 		  
-		} else if (version == "hq") {
-                        if (mode == kVideo) {
-                                r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
-                                settings = std::make_unique<romi::HQVideoCameraSettings>(width,
-                                                                                         height,
-                                                                                         fps);
-                                settings->bitrate_ = bitrate;
-
-                        } else if (mode == kStill) {
-                                r_info("Camera: still mode.");
-                                settings = std::make_unique<romi::HQStillCameraSettings>(width, height);
-                        }
-		}
-
-                // Gimbal
-                std::unique_ptr<romiserial::IRomiSerialClient> gimbal_serial;
-                std::unique_ptr<romi::IGimbal> gimbal;
+                auto cablebot = romi::Cablebot::create(mode, width, height, fps, bitrate);
                 
-                if (options.is_set(kGimbal)) {
-                        std::string device = options.get_value(kGimbal);
-                        r_info("Connecting to gimbal at %s", device.c_str());
-                        gimbal_serial = romiserial::RomiSerialClient::create(device,
-                                                                             "BldcGimbal");
-                        gimbal = std::make_unique<romi::BldcGimbal>(*gimbal_serial);
-                }
-                
-                // Camera
-                std::unique_ptr<romi::ICamera> camera = romi::PiCamera::create(*settings);
-
-                // Base
-                std::unique_ptr<romiserial::IRomiSerialClient> base_serial;
-                std::unique_ptr<romi::ICNC> base;
-                std::string device = options.get_value(kBase);
-                r_info("Connecting to base at %s", device.c_str());
-                base_serial = romiserial::RomiSerialClient::create(device,
-                                                                   "CablebotBase");
-                base = std::make_unique<romi::CablebotBase>(base_serial);
-
-                // Cablebot
-                romi::Cablebot cablebot(base, gimbal, camera);
-
-                
-                scan(cablebot);
+                scan(*cablebot);
                 
                 // quit_on_control_c();
                 
@@ -198,23 +135,23 @@ int main(int argc, char **argv)
         }
 }
 
-static void set_quit(int sig, siginfo_t *info, void *ucontext)
-{
-        (void) sig;
-        (void) info;
-        (void) ucontext;
-        quit = true;
-}
+// static void set_quit(int sig, siginfo_t *info, void *ucontext)
+// {
+//         (void) sig;
+//         (void) info;
+//         (void) ucontext;
+//         quit = true;
+// }
 
-static void quit_on_control_c()
-{
-        struct sigaction act;
-        memset(&act, 0, sizeof(struct sigaction));
+// static void quit_on_control_c()
+// {
+//         struct sigaction act;
+//         memset(&act, 0, sizeof(struct sigaction));
 
-        act.sa_flags = SA_SIGINFO;
-        act.sa_sigaction = set_quit;
-        if (sigaction(SIGINT, &act, nullptr) != 0) {
-                perror("init_signal_handler");
-                exit(1);
-        }
-}
+//         act.sa_flags = SA_SIGINFO;
+//         act.sa_sigaction = set_quit;
+//         if (sigaction(SIGINT, &act, nullptr) != 0) {
+//                 perror("init_signal_handler");
+//                 exit(1);
+//         }
+// }
