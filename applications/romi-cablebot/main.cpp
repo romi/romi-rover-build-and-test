@@ -68,7 +68,7 @@ static std::vector<romi::Option> option_list = {
         { kStart, true, "0",
           "The start position of the scan (in meter)"},
 
-        { kLength, true, "0",
+        { kLength, true, "1",
           "The length of the scan (in meter)"},
 
         { kInterval, true, "0.25",
@@ -85,10 +85,23 @@ struct ScanOptions
         size_t height;
         int32_t fps;
         uint32_t bitrate;
-        double start_position;
+        double start;
         double length;
         double interval;
         std::string directory;
+
+        ScanOptions()
+                : mode(romi::Cablebot::kVideoMode),
+                  width(1920),
+                  height(1080),
+                  fps(5),
+                  bitrate(25000000),
+                  start(0.0),
+                  length(1.0),
+                  interval(0.25),
+                  directory(".")
+                {}
+        
 };
 
 std::string make_image_name(size_t counter)
@@ -193,10 +206,10 @@ void parse_options(int argc, char **argv, ScanOptions& scan_options)
         scan_options.height = (size_t) parse_value(cmdline_options, kHeight);
         scan_options.fps = (int32_t) parse_value(cmdline_options, kFPS);
         scan_options.bitrate = (uint32_t) parse_value(cmdline_options, kBitrate);
-        scan_options.start_position = parse_value(cmdline_options, kStart);
+        scan_options.start = parse_value(cmdline_options, kStart);
         scan_options.length = parse_value(cmdline_options, kLength);
         scan_options.interval = parse_value(cmdline_options, kInterval);
-        scan_options.directory = options.get_value(kDirectory);
+        scan_options.directory = cmdline_options.get_value(kDirectory);
 }
 
 int main(int argc, char **argv)
