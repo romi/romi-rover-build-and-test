@@ -85,10 +85,23 @@ struct ScanOptions
         size_t height;
         int32_t fps;
         uint32_t bitrate;
-        double start_position;
+        double start;
         double length;
         double interval;
         std::string directory;
+
+        ScanOptions()
+                : mode(romi::Cablebot::kVideoMode),
+                  width(1920),
+                  height(1080),
+                  fps(5),
+                  bitrate(25000000),
+                  start(0.0),
+                  length(1.0),
+                  interval(0.25),
+                  directory(".")
+                {}
+        
 };
 
 std::string make_image_name(size_t counter)
