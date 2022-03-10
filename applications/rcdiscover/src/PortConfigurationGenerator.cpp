@@ -60,7 +60,7 @@ PortConfigurationGenerator::CreateConfigurationFile(const std::string& json_conf
         nlohmann::json valid_ports = nlohmann::json::object();;
         if (configuration_object.contains(serial_ports_configuration_key))
         {
-            ports = configuration_object["serial_ports_configuration_key"];
+            ports = configuration_object[serial_ports_configuration_key];
             valid_ports = CopyUnhandledDeviceTypes(ports);
         }
 
