@@ -100,13 +100,13 @@ void run_calibration(romi::Session& session,
                      romi::Oquam& oquam,
                      romi::ICamera& camera)
 {
-        double x0 = range.min_.x();
-        double y0 = range.min_.y();
-        double z0 = range.min_.z();
+        double x0 = range.xmin();
+        double y0 = range.ymin();
+        double z0 = range.zmin();
                 
-        double x1 = range.max_.x();
-        double y1 = range.max_.y();
-        double z1 = range.max_.z();
+        double x1 = range.xmax();
+        double y1 = range.ymax();
+        double z1 = range.zmax();
 
         double dx = (x1 - x0) / 10.0;
         double dy = (y1 - y0) / 10.0;
@@ -153,7 +153,10 @@ bool handle_axis_event(romi::CNCRange& range,
                         success = oquam.get_position(pos);
                         if (success) {
                                 r_debug("setting z0 to %f", pos.z());
-                                range.min_.set(romi::kZ, pos.z());
+                                romi::v3 min = range.min();
+                                romi::v3 max = range.max();
+                                min.z(pos.z());
+                                range.init(min, max);
                         } else {
                                 r_err("get_position failed");
                         }

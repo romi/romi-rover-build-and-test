@@ -14,7 +14,7 @@ def main(folder, config_file):
         raise RuntimeError("Not enough images")
     print(f"Found {len(files)} files");
     image_height = get_image_height(files[0])
-    lower, upper = select_lower_and_upper_values(files[0])
+    lower, upper = select_lower_and_upper_values(files[10])
     xy_cnc, xy_image = detect_ball(files, lower, upper)
     ax, ay, bx, by = get_transformation(xy_cnc, xy_image)
     cnc_width, cnc_height = get_cnc_dimensions(config_file)

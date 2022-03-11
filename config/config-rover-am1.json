@@ -36,25 +36,9 @@
         }
     },
     "ports": {
-        "brush-motor-driver": {
-            "port": "/dev/ttyACM1",
-            "type": "serial"
-        },
-        "display-device": {
-            "port": "/dev/ttyACM3",
-            "type": "serial"
-        },
-        "imu": {
-            "port": "/dev/ttyUSB0",
-            "type": "serial"
-        },
         "joystick": {
             "port": "/dev/input/js0",
             "type": "input-device"
-        },
-        "oquam": {
-            "port": "/dev/ttyACM2",
-            "type": "serial"
         },
         "steering": {
             "port": "/dev/ttyACM0",
@@ -141,7 +125,7 @@
         "camera-classname": "remote-camera",
         "cnc-classname": "remote-cnc",
         "cropper": "imagecropper",
-        "diameter-tool": 0.04,
+        "diameter-tool": 0.040000,
         "imagecropper": {
             "workspace": [335, 79, 934, 888]
         },
