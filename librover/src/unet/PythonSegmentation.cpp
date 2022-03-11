@@ -18,10 +18,11 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see
-  <http://www.gnu.org/licenses/>.
+  <http://www.gnu.org/licenses/>
 
  */
 
+#include <log.h>
 #include <cv/ImageIO.h>
 #include "unet/PythonSegmentation.h"
 
@@ -109,13 +110,14 @@ namespace romi {
         void PythonSegmentation::send_python_request(const std::string& path,
                                                      const std::string& output_name)
         {
-                JsonCpp response;
+                nlohmann::json response;
                 romi::RPCError error;
                 
                 r_debug("PythonSegmentation: @1");
-                JsonCpp params = JsonCpp::construct("{\"path\": \"%s\", "
-                                                    "\"output-name\": \"%s\"}",
-                                                    path.c_str(), output_name.c_str());
+                nlohmann::json params {
+                        {"path", path},
+                        {"output-name", output_name}
+                };
                 r_debug("PythonSegmentation: @2");
                 assert_connected_to_python();
 
@@ -127,9 +129,9 @@ namespace romi {
                         r_warn("Failed to call Python: %s", error.message.c_str());
                         throw std::runtime_error("Failed to call Python");
                         
-                } else if (response.get("error").num("code") != 0) {
-                        const char *message = response.get("error").str("message");
-                        r_warn("Failed to call Python: %s", message);
+                } else if (response["error"]["code"] != 0) {
+                        std::string message = response["error"]["message"];
+                        r_warn("Failed to call Python: %s", message.c_str());
                         throw std::runtime_error("Failed to call Python");
                 }
                 r_debug("PythonSegmentation: @5");

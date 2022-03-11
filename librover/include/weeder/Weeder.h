@@ -65,8 +65,8 @@ namespace romi {
                 void camera_grab(Image& image);
                 std::vector<Path> analyse_image(Image& image);
                 void store_svg(Path& path, size_t index);
-                void store_svg_path(rpp::MemBuffer& buffer, Path& path);
-                void store_svg_centers(rpp::MemBuffer& buffer, Path& path);
+                void store_svg_path(rcom::MemBuffer& buffer, Path& path);
+                void store_svg_centers(rcom::MemBuffer& buffer, Path& path);
 
         public:
 

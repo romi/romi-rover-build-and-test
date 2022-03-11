@@ -43,7 +43,7 @@ namespace romi {
                 void assert_settings();
 
         public:
-                explicit SOM(JsonCpp& params);
+                explicit SOM(nlohmann::json& params);
                 ~SOM() override = default;
                 
                 Path trace_path(ISession& session, Centers& centers, Image& mask) override;

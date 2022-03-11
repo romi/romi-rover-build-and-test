@@ -50,6 +50,7 @@
 #include <fake/FakeMotorDriver.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
+#include <fstream>
 
 std::atomic<bool> quit(false);
 
@@ -148,14 +149,17 @@ int main(int argc, char** argv)
         try {
                 std::string config_file = options.get_config_file();
                 r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
-                JsonCpp config = JsonCpp::load(config_file.c_str());
+
+                // TBD Use FILEUtils Loader.
+                std::ifstream ifs(config_file);
+                nlohmann::json config = nlohmann::json::parse(ifs);
 
 
 
-                // JsonCpp rover_settings = config["navigation"]["rover"];
+                // nlohmann::json rover_settings = config["navigation"]["rover"];
                 // romi::NavigationSettings rover_config(rover_settings);
                 
-                // JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
+                // nlohmann::json driver_settings = config["navigation"]["brush-motor-driver"];
                 
                 // std::string device = romi::get_brush_motor_device(options, config);
                 // std::shared_ptr<romiserial::RSerial>serial

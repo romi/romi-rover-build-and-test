@@ -26,7 +26,7 @@
 #define __ROMI_PIPELINE_FACTORY_H
 
 #include <memory>
-#include <JsonCpp.h>
+#include <json.hpp>
 #include <cv/IImageCropper.h>
 #include <configuration/GetOpt.h>
 #include "IPipeline.h"
@@ -59,25 +59,25 @@ namespace romi {
                 std::unique_ptr<IPipeline> _pipeline;
 
             std::unique_ptr<IImageCropper>
-            build_cropper(CNCRange &range, JsonCpp& weeder);
+            build_cropper(CNCRange &range, nlohmann::json& weeder);
 
-            std::unique_ptr<IImageSegmentation> build_segmentation(JsonCpp& weeder);
+            std::unique_ptr<IImageSegmentation> build_segmentation(nlohmann::json& weeder);
 
             std::unique_ptr<IConnectedComponents> build_connected_components();
 
-            std::unique_ptr<IPathPlanner> build_planner(JsonCpp& weeder);
+            std::unique_ptr<IPathPlanner> build_planner(nlohmann::json& weeder);
 
         private:
                 std::unique_ptr<IImageSegmentation>
-                build_segmentation(const std::string& name, JsonCpp& weeder_props);
+                build_segmentation(const std::string& name, nlohmann::json& weeder_props);
                 std::unique_ptr<IPathPlanner> build_planner(const std::string& name,
-                                                            JsonCpp& properties);
+                                                            nlohmann::json& properties);
 
         public:
                 PipelineFactory() : _pipeline() {}
                 virtual ~PipelineFactory() = default;
 
-                IPipeline& build(CNCRange &range, JsonCpp& config);
+                IPipeline& build(CNCRange &range, nlohmann::json& config);
         };
 }
 

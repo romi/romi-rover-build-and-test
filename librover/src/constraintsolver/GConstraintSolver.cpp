@@ -30,10 +30,10 @@
 
 namespace romi {
 
-        GConstraintSolver::GConstraintSolver(JsonCpp &params) : print_(false)
+        GConstraintSolver::GConstraintSolver(nlohmann::json &params) : print_(false)
         {
-                if (params.has("print"))
-                        print_ = params.boolean("print");
+                if (params.contains("print"))
+                        print_ = params["print"];
         }
 
 
@@ -49,7 +49,7 @@ namespace romi {
                 }
 
                 {
-                        rpp::MemBuffer buffer;
+                        rcom::MemBuffer buffer;
                         for (auto & center : centers)
                                 buffer.printf("%zu\t%zu\n", center.first, center.second);
                         session.store_txt("centers.txt", buffer.tostring());

@@ -39,7 +39,7 @@
 namespace romi {
 
         std::unique_ptr<IImageCropper>
-        FakePipelineFactory::build_cropper(CNCRange &range, JsonCpp& weeder, romi::GetOpt& options)
+        FakePipelineFactory::build_cropper(CNCRange &range, nlohmann::json& weeder, romi::GetOpt& options)
         {
             std::string path = options.get_value("cropper");
             if (path.empty()) {
@@ -54,7 +54,7 @@ namespace romi {
         }
 
         std::unique_ptr<IImageSegmentation>
-        FakePipelineFactory::build_segmentation(JsonCpp& weeder, romi::GetOpt& options)
+        FakePipelineFactory::build_segmentation(nlohmann::json& weeder, romi::GetOpt& options)
         {
             std::string path = options.get_value("mask");
             if (path.empty()) {
@@ -81,10 +81,10 @@ namespace romi {
                 }
         }
 
-        IPipeline& FakePipelineFactory::build(CNCRange &range, JsonCpp& config,
+        IPipeline& FakePipelineFactory::build(CNCRange &range, nlohmann::json& config,
                                           romi::GetOpt& options)
         {
-                JsonCpp weeder = config["weeder"];
+                nlohmann::json weeder = config["weeder"];
 
                 auto cropper = build_cropper(range, weeder, options);
                 auto connected_components = build_connected_components(options);

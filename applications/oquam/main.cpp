@@ -64,7 +64,9 @@ int main(int argc, char** argv)
         try {
                 std::string config_file = options.get_config_file();
                 r_info("Oquam: Using configuration file: '%s'", config_file.c_str());
-                JsonCpp config = JsonCpp::load(config_file.c_str());
+                // TBD: USE FileUtils
+                std::ifstream ifs(config_file);
+                nlohmann::json config = nlohmann::json::parse(ifs);
 
                 // Session
                 rpp::Linux linux;
@@ -82,10 +84,10 @@ int main(int argc, char** argv)
                 // Oquam cnc
                 romi::OquamFactory factory;
                 
-                JsonCpp range_data = config["oquam"]["cnc-range"];
+                nlohmann::json range_data = config.at("oquam").at("cnc-range");
                 romi::CNCRange range(range_data);
 
-                JsonCpp stepper_data = config["oquam"]["stepper-settings"];
+                nlohmann::json stepper_data = config.at("oquam").at("stepper-settings");
                 romi::StepperSettings stepper_settings(stepper_data);
         
                 double slice_duration = (double) config["oquam"]["path-slice-duration"];
@@ -118,7 +120,7 @@ int main(int argc, char** argv)
                 
                 retval = 0;
                 
-        } catch (JSONError& je) {
+        } catch (nlohmann::json::exception& je) {
                 r_err("main: Failed to read the config file: %s", je.what());
                 
         } catch (std::exception& e) {

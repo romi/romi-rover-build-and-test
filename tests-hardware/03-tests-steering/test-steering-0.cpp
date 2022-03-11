@@ -52,6 +52,7 @@
 #include <fake/FakeMotorDriver.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
+#include <fstream>
 
 std::atomic<bool> quit(false);
 
@@ -88,11 +89,13 @@ int main(int argc, char** argv)
         try {
                 std::string config_file = options.get_config_file();
                 r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
-                JsonCpp config = JsonCpp::load(config_file.c_str());
+                // TBD: USE FIleUtils Loader.
+                std::ifstream ifs(config_file);
+                nlohmann::json config = nlohmann::json::parse(ifs);
 
-                JsonCpp rover_settings = config["navigation"]["rover"];
+                nlohmann::json rover_settings = config.at("navigation").at("rover");
                 romi::NavigationSettings rover_config(rover_settings);
-                const char *steering_device = (const char *) config["ports"]["steering"]["port"];
+                std::string steering_device = config["ports"]["steering"]["port"];
                 
                 std::string client_name("steering_tests");
                 auto steering_serial = romiserial::RomiSerialClient::create(steering_device, client_name);

@@ -27,19 +27,19 @@
 
 namespace romi {
 
-        SOM::SOM(JsonCpp& params) : _alpha(0), _beta(0), _epsilon(0), _print(false)
+        SOM::SOM(nlohmann::json& params) : _alpha(0), _beta(0), _epsilon(0), _print(false)
         {
                 try {
-                        _alpha = params.num("alpha", 0.2);
-                        _beta = params.num("beta", 1.2);
-                        _epsilon = params.num("epsilon", 0.01);
+                        _alpha = params.value("alpha", 0.2);
+                        _beta = params.value("beta", 1.2);
+                        _epsilon = params.value("epsilon", 0.01);
 
-                        if (params.has("print"))
-                                _print = params.boolean("print");
+                        if (params.contains("print"))
+                                _print = params["print"];
 
                         assert_settings();
                         
-                } catch (JSONError& je) {
+                } catch (nlohmann::json::exception& je) {
                         r_warn("SOM: invalid JSON");
                         throw std::runtime_error("SOM: invalid JSON");
                 }

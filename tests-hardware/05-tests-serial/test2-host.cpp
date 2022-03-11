@@ -10,7 +10,7 @@ int main()
         std::shared_ptr<RSerial> serial = std::make_shared<RSerial>("/dev/serial0", 115200, 0);
         RomiSerialClient romi_serial(serial, serial);
         
-        JsonCpp response;
+        nlohmann::json response;
         std::string str;
         
         while (true) {
