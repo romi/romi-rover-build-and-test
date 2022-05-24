@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
     auto configuration_result = portConfigurationGenerator.CreateConfigurationFile(json_configuration,
                                                                                    connectedDevices,
                                                                                    port_configuration_file);
-    if (configuration_result == 0) {
+    if (configuration_result) {
         std::cout << "wrote config: " << port_configuration_file << std::endl;
     } else {
         std::cout << "failed to write config: " << port_configuration_file << std::endl;

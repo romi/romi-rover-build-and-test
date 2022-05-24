@@ -9,7 +9,7 @@ static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
 static void quit_on_control_c();
 
-void store_jpeg(rpp::MemBuffer& jpeg, const char *name_prefix, int index)
+void store_jpeg(rcom::MemBuffer& jpeg, const char *name_prefix, int index)
 {
         char filename[512];
         snprintf(filename, sizeof(filename), "%s_%04d.jpg", name_prefix, index);
@@ -43,7 +43,7 @@ int main()
                 for (int i = 0; !quit; i++) {
                         auto clock = rpp::ClockAccessor::GetInstance();
                         double start_time = clock->time();
-                        rpp::MemBuffer& jpeg = camera->grab_jpeg();
+                        rcom::MemBuffer& jpeg = camera->grab_jpeg();
                         r_info("Grab: %f s", clock->time() - start_time);
                         store_jpeg(jpeg, "test", i);
                         r_info("Store: %f s", clock->time() - start_time);

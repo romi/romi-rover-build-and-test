@@ -1,104 +1,77 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include <filesystem>
 
-#include <r.h>
 #include "PortConfigurationGenerator.h"
+#include "json.hpp"
+
 
 PortConfigurationGenerator::PortConfigurationGenerator()
         : serial_ports_configuration_key("ports"),
           serial_port_key("port"),
           serial_device_type("type"),
-          serial_type("serial"),
-          ports_()
+          serial_type("serial")
 {
 }
 
-json_object_t
+nlohmann::json
 PortConfigurationGenerator::CreateConfigurationBase(const std::string& json_configuration)
 {
-        json_object_t configuration_object;
-        if (json_configuration.empty()) {
-                configuration_object = json_object_create();
-        } else {
-                int parse_error = 0;
-                char error_message[256];
-                configuration_object = json_parse_ext(json_configuration.c_str(),
-                                                      &parse_error, error_message,
-                                                      sizeof(error_message));
-                if (json_isnull(configuration_object)) {
-                        configuration_object = json_object_create();
-                }
-        }
-        return configuration_object;
+    nlohmann::json configuration_object;
+    try {
+        configuration_object = nlohmann::json::parse(json_configuration);
+    }
+    catch(nlohmann::json::exception& ex){
+        configuration_object =  nlohmann::json::object();
+    }
+    return configuration_object;
+
 }
 
-void PortConfigurationGenerator::CopyDevicePerhaps(const char* key, json_object_t value)
+void PortConfigurationGenerator::CopyNonSerialDevice(const std::string& key, nlohmann::json& value,
+                                                     nlohmann::json& valid_ports)
 {
-        const char *type = json_object_getstr(value, "type");
-        if (strcmp(type, serial_type.c_str()) != 0) {
+        std::string type = value["type"];
+        if (type != serial_type) {
                 std::cout << "Copying " << key << std::endl;
-                json_object_set(ports_, key, value);
+                valid_ports[key] = value;
         }
 }
 
-static int32_t port_iterator(const char* key, json_object_t value, void* data)
+nlohmann::json
+PortConfigurationGenerator::CopyUnhandledDeviceTypes(nlohmann::json& previous_ports_object)
 {
-        PortConfigurationGenerator *generator = (PortConfigurationGenerator *) data;
-        generator->CopyDevicePerhaps(key, value);
-        return 0;
+    nlohmann::json valid_ports{};
+    for (auto& el : previous_ports_object.items())
+    {
+        CopyNonSerialDevice(el.key(), el.value(), valid_ports);
+    }
+    return valid_ports;
 }
 
-void
-PortConfigurationGenerator::CopyUnhandledDeviceTypes(json_object_t previous_ports_object)
-{
-        json_object_foreach(previous_ports_object, port_iterator, this);
-}
-
-int
+bool
 PortConfigurationGenerator::CreateConfigurationFile(const std::string& json_configuration,
                                                     const DeviceMap& devices,
                                                     const std::string& ouput_file)
 {
-        const int buff_size = 8192;
-        char json_string_buff[buff_size];
-        memset(json_string_buff, 0, buff_size);
-        std::string json_string;
 
-        json_object_t configuration_object = CreateConfigurationBase(json_configuration);
-        json_object_t previous_ports_object;
-
-        ports_ = json_object_create();
-        
-        if (json_object_has(configuration_object, serial_ports_configuration_key.c_str())) {
-                previous_ports_object = json_object_get(configuration_object,
-                                                        serial_ports_configuration_key.c_str());
-                CopyUnhandledDeviceTypes(previous_ports_object);
+        nlohmann::json configuration_object = CreateConfigurationBase(json_configuration);
+        nlohmann::json ports{};
+        nlohmann::json valid_ports = nlohmann::json::object();;
+        if (configuration_object.contains(serial_ports_configuration_key))
+        {
+            ports = configuration_object[serial_ports_configuration_key];
+            valid_ports = CopyUnhandledDeviceTypes(ports);
         }
-        
-        json_object_set(configuration_object, serial_ports_configuration_key.c_str(), ports_);
-        
+
         for (const auto& device : devices) {
-                json_object_t device_object = json_object_create();
-                json_object_setstr(device_object, serial_device_type.c_str(), serial_type.c_str());
-                json_object_setstr(device_object, serial_port_key.c_str(), device.first.c_str());
-                json_object_set(ports_, device.second.c_str(), device_object);
-                json_unref(device_object);
+            nlohmann::json  device_object{};
+            device_object[serial_device_type] = serial_type;
+            device_object[serial_port_key] = device.first;
+            valid_ports[device.second] = device_object;
         }
-
-        // ToDo: Refactor to use Json_tostring, but refactor
-        // json_tostring to take flags then we will retain the
-        // exception information on file write failures.
-        int retval = json_tofile(configuration_object,
-                                 k_json_pretty | k_json_sort_keys,
-                                 ouput_file.c_str());
-
-        json_unref(configuration_object);
-        json_unref(ports_);
-        ports_ = json_null();
-
-        return retval;
+        configuration_object[serial_ports_configuration_key] = valid_ports;
+        return SaveConfiguration(ouput_file, configuration_object.dump(4));
 }
 
 std::string

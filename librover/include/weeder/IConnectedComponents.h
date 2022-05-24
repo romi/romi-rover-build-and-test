@@ -25,7 +25,7 @@
 #ifndef __ROMI_I_CONNECTED_COMPONENTS_H
 #define __ROMI_I_CONNECTED_COMPONENTS_H
 
-#include <JsonCpp.h>
+#include <json.hpp>
 #include "session/ISession.h"
 
 namespace romi {
