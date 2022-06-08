@@ -49,7 +49,7 @@ namespace romi {
         {
 
         public:
-                explicit GConstraintSolver(JsonCpp& params);
+                explicit GConstraintSolver(nlohmann::json& params);
                 ~GConstraintSolver() override = default;
                 
                 Path trace_path(ISession& session, Centers& centers, Image& mask) override;

@@ -72,7 +72,7 @@ void SignalHandler(int signal)
         }
 }
 
-bool send_membuffer(std::unique_ptr<rcom::IWebSocket>& webclient, rpp::MemBuffer& memBuffer) {
+bool send_membuffer(std::unique_ptr<rcom::IWebSocket>& webclient, rcom::MemBuffer& memBuffer) {
 
     std::cout << "sending: " << memBuffer.tostring() << std::endl;
 
@@ -96,7 +96,7 @@ bool send_membuffer(std::unique_ptr<rcom::IWebSocket>& webclient, rpp::MemBuffer
 
 bool send_execute_script(std::unique_ptr<rcom::IWebSocket>& webclient, romi::Script& script)
 {
-    rpp::MemBuffer memBuffer;
+    rcom::MemBuffer memBuffer;
     memBuffer.printf(R"({ "%s" : "%s", "%s" : "%s"})",
                      romi::RemoteMessgeTypes::message_type_request,
                      romi::RemoteMessgeTypes::request_type_execute,
@@ -108,7 +108,7 @@ bool send_execute_script(std::unique_ptr<rcom::IWebSocket>& webclient, romi::Scr
 
 bool send_execute_state(std::unique_ptr<rcom::IWebSocket>& webclient, const char *state)
 {
-    rpp::MemBuffer memBuffer;
+    rcom::MemBuffer memBuffer;
     memBuffer.printf(R"({ "%s" : "%s", "%s" : "%s"})",
                      romi::RemoteMessgeTypes::message_type_request,
                      romi::RemoteMessgeTypes::request_type_execute,
@@ -184,13 +184,13 @@ int main(int argc, char** argv)
 
             auto webclient = try_create_remote_connection(remote_address);
 
-            rpp::MemBuffer memBuffer;
+            rcom::MemBuffer memBuffer;
             memBuffer.printf(R"({ "request" : "list" })");
             webclient->send(memBuffer, rcom::kTextMessage);
             // TBD: 100 second for debugging remotely, change to something reasonable before checkin.
             auto recv = webclient->recv(memBuffer, 100.0);
 
-            JsonCpp jsonScripts = JsonCpp::parse(memBuffer);
+            nlohmann::json jsonScripts = nlohmann::json::parse(memBuffer.tostring());
 
             romi::ScriptList scriptList(jsonScripts);
             if (recv != rcom::RecvStatus::kRecvText) {
@@ -239,7 +239,7 @@ int main(int argc, char** argv)
                 }
             } // End While
                 retval = 0;
-        } catch (JSONError& je) {
+        } catch (nlohmann::json::exception& je) {
                 r_err("main: Invalid configuration file: %s", je.what());
 
         } catch (std::exception& e) {

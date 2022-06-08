@@ -36,26 +36,26 @@ namespace romi {
         {}
         
         ICNCController& OquamFactory::create_controller(IOptions &options,
-                                                       JsonCpp &config)
+                                                       nlohmann::json &config)
         {
                 if (_controller == nullptr)
                         instantiate_controller(options, config);
                 return *_controller;
         }
 
-        void OquamFactory::instantiate_controller(IOptions &options, JsonCpp &config)
+        void OquamFactory::instantiate_controller(IOptions &options, nlohmann::json &config)
         {
                 std::string classname = get_controller_classname_in_config(config);
                 instantiate_controller(classname, options, config);
         }
 
-        std::string OquamFactory::get_controller_classname_in_config(JsonCpp &config)
+        std::string OquamFactory::get_controller_classname_in_config(nlohmann::json &config)
         {
                 std::string controller_classname ;
                 try {
-                        controller_classname = (const char *) config["oquam"]["controller-classname"];
+                        controller_classname = config["oquam"]["controller-classname"];
                         
-                } catch (JSONError &je) {
+                } catch (nlohmann::json::exception& je) {
                         r_warn("Failed to get the value for "
                                "oquam.controller-classname: %s", je.what());
                         throw std::runtime_error("No controller classname defined");
@@ -65,7 +65,7 @@ namespace romi {
         
         void OquamFactory::instantiate_controller(const std::string& classname,
                                                   IOptions &options,
-                                                  JsonCpp &config)
+                                                  nlohmann::json &config)
         {
                 r_info("create_controller: Creating an instance of '%s'", classname.c_str());
                 
@@ -87,7 +87,7 @@ namespace romi {
         }
         
         void OquamFactory::instantiate_stepper_controller(IOptions &options,
-                                                          JsonCpp &config)
+                                                          nlohmann::json &config)
         {
                 std::string device = get_stepper_controller_device(options, config);
                 auto romi_serial = romiserial::RomiSerialClient::create(device, "oquam");
@@ -95,7 +95,7 @@ namespace romi {
         }
 
         std::string OquamFactory::get_stepper_controller_device(IOptions &options,
-                                                                JsonCpp &config)
+                                                                nlohmann::json &config)
         {
                 std::string device_name = options.get_value(RoverOptions::cnc_device);
                 if (device_name.empty()) {
@@ -104,13 +104,13 @@ namespace romi {
                 return device_name;
         }
 
-        std::string OquamFactory::get_stepper_controller_device_in_config(JsonCpp &config)
+        std::string OquamFactory::get_stepper_controller_device_in_config(nlohmann::json &config)
         {
                 std::string device_name;
                 try {
-                        device_name = (const char *) config["ports"]["oquam"]["port"];
+                        device_name = config["ports"]["oquam"]["port"];
                         
-                } catch (JSONError &je) {
+                } catch (nlohmann::json::exception &je) {
                         r_warn("Failed to get the value for "
                                "ports.oquam.port: %s", je.what());
                         throw std::runtime_error("No crystal controller device defined");

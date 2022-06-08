@@ -104,14 +104,14 @@ int main(int argc, char** argv)
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
-        // TBD: Check with Peter.
-//        app_init(&argc, argv);
-//        app_set_name("romi-rover");
-        
+
         try {
                 std::string config_file = options.get_config_file();
                 r_info("Navigation: Using configuration file: '%s'", config_file.c_str());
-                JsonCpp config = JsonCpp::load(config_file.c_str());
+
+                // TBD: USE FileUtils
+                std::ifstream ifs(config_file);
+                nlohmann::json config = nlohmann::json::parse(ifs);
 
                 rpp::Linux linux;
 
@@ -128,7 +128,7 @@ int main(int argc, char** argv)
                 session.start("hw_observation_id");
 
                 // Display
-                const char *display_device = (const char *) config["ports"]["display-device"]["port"];
+                std::string display_device = config["ports"]["display-device"]["port"];
 
                 std::string client_name("display_device");
                 auto display_serial = romiserial::RomiSerialClient::create(display_device, client_name);
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
                 display.show(0, "Initializing");
                 
                 // Joystick
-                const char *joystick_device = (const char *) config["ports"]["joystick"]["port"];
+                std::string joystick_device = config["ports"]["joystick"]["port"];
                 romi::LinuxJoystick joystick(linux, joystick_device);
                 romi::UIEventMapper joystick_event_mapper;
                 romi::JoystickInputDevice input_device(joystick, joystick_event_mapper);
@@ -146,10 +146,10 @@ int main(int argc, char** argv)
                 romi::FakeWeeder weeder;
                 
                 // Navigation
-                JsonCpp rover_settings = config["navigation"]["rover"];
+                nlohmann::json rover_settings = config.at("navigation").at("rover");
                 romi::NavigationSettings rover_config(rover_settings);
-                const char *driver_device = (const char *) config["ports"]["brush-motor-driver"]["port"];
-                JsonCpp driver_settings = config["navigation"]["brush-motor-driver"];
+                std::string driver_device = config["ports"]["brush-motor-driver"]["port"];
+                nlohmann::json driver_settings = config.at("navigation").at("brush-motor-driver");
                 client_name = ("driver_device");
                 auto driver_serial = romiserial::RomiSerialClient::create(driver_device, client_name);
                 romi::BrushMotorDriver driver(driver_serial, driver_settings,
@@ -223,7 +223,7 @@ int main(int argc, char** argv)
                 retval = 0;
 
                 
-        } catch (JSONError& je) {
+        } catch (nlohmann::json::exception& je) {
                 r_err("main: Failed to read the configuration file: %s", je.what());
                 
         } catch (std::exception& e) {

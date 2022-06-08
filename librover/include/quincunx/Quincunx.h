@@ -41,7 +41,7 @@ namespace romi {
                 void assert_settings();
                 
         public:
-                explicit Quincunx(JsonCpp& params);
+                explicit Quincunx(nlohmann::json& params);
                 ~Quincunx() override = default;
                 
                 Path trace_path(ISession& session, Centers& centers, Image& mask) override;

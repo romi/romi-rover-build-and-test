@@ -129,7 +129,10 @@ int main(int argc, char** argv)
                 if (path.empty())
                         throw std::runtime_error("No configuration file was given");
 
-                JsonCpp config = JsonCpp::load(path.c_str());
+                // TBD: Add JSON Loader to utils.
+                std::ifstream ifs(path);
+                nlohmann::json config = nlohmann::json::parse(ifs);
+//                nlohmann::json config = nlohmann::json::load(path.c_str());
                 
                 // Session
                 rpp::Linux linux;
@@ -144,11 +147,11 @@ int main(int argc, char** argv)
                 r_info("Session directory is %s", session_directory.c_str());
 
                 // CNC
-                JsonCpp oquam_config = config["oquam"];
-                JsonCpp range_data = oquam_config["cnc-range"];
-                double slice_duration = (double) oquam_config["path-slice-duration"];
-                double maximum_deviation = (double) oquam_config["path-maximum-deviation"];
-                JsonCpp stepper_data = oquam_config["stepper-settings"];
+                nlohmann::json oquam_config = config.at("oquam");
+                nlohmann::json range_data = oquam_config.at("cnc-range");
+                double slice_duration = oquam_config["path-slice-duration"];
+                double maximum_deviation = oquam_config["path-maximum-deviation"];
+                nlohmann::json stepper_data = oquam_config.at("stepper-settings");
                 
                 romi::CNCRange range(range_data);                
                 romi::StepperSettings stepper_settings(stepper_data);
@@ -160,7 +163,7 @@ int main(int argc, char** argv)
                         = options.get_value(kCNCControllerClassname);
                 
                 if (cnc_controller_classname == romi::StepperController::ClassName) {
-                        const char *cnc_device = (const char *) config["ports"]["oquam"]["port"];
+                        std::string cnc_device = config["ports"]["oquam"]["port"];
                         std::string client_name("cnc_device");
                         auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
                         controller = std::make_unique<romi::StepperController>(cnc_serial);

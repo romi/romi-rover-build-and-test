@@ -114,7 +114,7 @@ namespace romi {
 
         void Weeder::store_svg(Path& path, size_t index)
         {
-                rpp::MemBuffer buffer;
+                rcom::MemBuffer buffer;
                 // The dimensions are in meter. Convert to pixels, width 1000 px/m.
                 v3 dimensions = _range.dimensions();
                 int w = (int) (dimensions.x() * 1000.0);
@@ -142,7 +142,7 @@ namespace romi {
                 session_.store_svg(filename, buffer.tostring());
         }
 
-        void Weeder::store_svg_path(rpp::MemBuffer& buffer, Path& path)
+        void Weeder::store_svg_path(rcom::MemBuffer& buffer, Path& path)
         {
                 if (path.size() > 1) {
                         buffer.printf("    <path d=\"");
@@ -169,7 +169,7 @@ namespace romi {
                 }
         }
 
-        void Weeder::store_svg_centers(rpp::MemBuffer& buffer, Path& path)
+        void Weeder::store_svg_centers(rcom::MemBuffer& buffer, Path& path)
         {
                 v3 dimensions = _range.dimensions();
                 double h = dimensions.y() * 1000.0;
@@ -269,6 +269,7 @@ namespace romi {
         void Weeder::rotate_path_to_starting_point(Path& path)
         {
                 r_debug("Weeder::rotate_path_to_starting_point");
+
                 v3 starting_point(0.0, _range.ymax(), _z0);
                 int closest_index = path.closest_point(starting_point);
                 if (closest_index >= 0) {

@@ -36,11 +36,11 @@ namespace romi {
                 float _a[3];
                 float _b;
 
-                void set_parameter_a(JsonCpp value);
-                void set_parameter_b(JsonCpp value);
+                void set_parameter_a(nlohmann::json value);
+                void set_parameter_b(nlohmann::json value);
 
         public:
-                explicit SVMSegmentation(JsonCpp& params);
+                explicit SVMSegmentation(nlohmann::json& params);
                 SVMSegmentation(float a[3], float b);
                 
                 virtual ~SVMSegmentation() override = default;

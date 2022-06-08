@@ -31,6 +31,7 @@
 
 #include "configuration/IOptions.h"
 #include "oquam/ICNCController.h"
+#include <json.hpp>
 
 namespace romi {
 
@@ -39,22 +40,22 @@ namespace romi {
         protected:
                 std::unique_ptr<ICNCController> _controller;
                 
-                void instantiate_controller(IOptions &options, JsonCpp &config);
+                void instantiate_controller(IOptions &options, nlohmann::json &config);
                 void instantiate_controller(const std::string& controller_classname,
-                                            IOptions &options, JsonCpp &config);
-                std::string get_controller_classname_in_config(JsonCpp &config);
+                                            IOptions &options, nlohmann::json &config);
+                std::string get_controller_classname_in_config(nlohmann::json &config);
                 void instantiate_fake_controller();
-                void instantiate_stepper_controller(IOptions &options, JsonCpp &config);
+                void instantiate_stepper_controller(IOptions &options, nlohmann::json &config);
                 std::string get_stepper_controller_device(IOptions &options,
-                                                          JsonCpp &config);
-                std::string get_stepper_controller_device_in_config(JsonCpp &config);
+                                                          nlohmann::json &config);
+                std::string get_stepper_controller_device_in_config(nlohmann::json &config);
 
         public:
 
                 OquamFactory();
                 virtual ~OquamFactory() = default;
                 
-                ICNCController& create_controller(IOptions& options, JsonCpp& config);
+                ICNCController& create_controller(IOptions& options, nlohmann::json& config);
 
         };
 }

@@ -1,8 +1,5 @@
-#include <log.h>
+
 #include <iostream>
-#include <cstring>
-#include <thread>
-#include <chrono>
 #include <RomiSerialClient.h>
 #include "StringUtils.h"
 #include "SerialPortDiscover.h"
@@ -38,7 +35,7 @@ std::string SerialPortDiscover::TryConnectedDevice(const std::string& path)
         bool checked = false;
         std::string device;
         std::string name;
-        JsonCpp response;
+        nlohmann::json response;
         std::string client_name("SerialPortDiscover");
         
         auto client = romiserial::RomiSerialClient::create(path, client_name);
@@ -46,15 +43,15 @@ std::string SerialPortDiscover::TryConnectedDevice(const std::string& path)
         while ((checked == false) && (retrycurrent++ < retrycount)) {
                 std::cout << "Attempt " << retrycurrent << std::endl;
                 client->send("?", response);
-                if (response.num(romiserial::kStatusCode) == romiserial::kNoError) {
-                        name = response.str(1);
+                if (response[romiserial::kStatusCode] == romiserial::kNoError) {
+                        name = response[1];
                         std::cout << path << " " << name << std::endl;
                         device = FilterDevice(name);
                         if (!device.empty())
                                 checked = true;
                 } else {
-                        std::cout << "Failed: " << response.str(romiserial::kErrorMessage)
-                                  << ", err=" << response.num(romiserial::kStatusCode)
+                        std::cout << "Failed: " << response[romiserial::kErrorMessage]
+                                  << ", err=" << response[romiserial::kStatusCode]
                                   << std::endl;
                 }
         }
