@@ -33,6 +33,7 @@
 #include <data_provider/SoftwareVersion.h>
 #include <session/Session.h>
 #include <data_provider/CNCLocationProvider.h>
+#include <picamera/PiCameraSettings.h>
 
 static const char *kMode = "mode";
 static const char *kVideo = "video";
@@ -50,8 +51,8 @@ static std::vector<romi::Option> option_list = {
         { "help", false, nullptr,
           "Print help message" },
                 
-        { kMode, true, kVideo,
-          "The camera mode: 'video' or 'still'."},
+        { kMode, true, kStill,
+          "The camera mode: 'video' or 'still'. (still)"},
 
         { kWidth, true, "4056",
           "The image width (4056)"},
@@ -92,10 +93,10 @@ struct ScanOptions
 
         ScanOptions()
                 : mode(romi::Cablebot::kVideoMode),
-                  width(1920),
-                  height(1080),
+                  width(romi::kHQFullWidth),
+                  height(romi::kHQFullHeight),
                   fps(5),
-                  bitrate(25000000),
+                  bitrate(romi::kMaxBitrateMJPEG),
                   start(0.0),
                   length(1.0),
                   interval(0.25),
@@ -111,59 +112,87 @@ std::string make_image_name(size_t counter)
 	return std::string(buffer);
 }
 
-void store_image(rpp::MemBuffer& image, romi::Session& session, size_t counter)
+bool store_image(rpp::MemBuffer& image, romi::Session& session, size_t counter)
 {
+        bool success = true;
         if (image.size() > 0) {
                 std::string filename = make_image_name(counter);
-                bool success = session.store_jpg(filename, image);
+                success = session.store_jpg(filename, image);
                 if (!success) {
                         r_err("romi-cablebot: Failed to store the image");
+                } else {
+                        r_debug("romi-cablebot: Stored %s", filename.c_str());
                 }
         }
+        return success;
 }
 
-void grab_image(romi::ImagingDevice& cablebot, romi::Session& session,
-                double position, size_t counter)
+bool grab_image(romi::ImagingDevice& cablebot, romi::Session& session, size_t counter)
 {
-        cablebot.cnc_->moveto(position, 0.0, 0.0, 0.2);
-        rpp::MemBuffer& image = cablebot.camera_->grab_jpeg();
-        store_image(image, session, counter);
+        bool success = true;
+        try {
+                rpp::MemBuffer& image = cablebot.camera_->grab_jpeg();
+                success = store_image(image, session, counter);
+        } catch (std::runtime_error& e) {
+                r_err("grab_image failed: %s", e.what());
+                success = false;
+        }
+        return success;
 }
 
-void init_scan(romi::ImagingDevice& cablebot, romi::Session& session, double start)
+bool init_scan(romi::ImagingDevice& cablebot, romi::Session& session)
 {
+        r_debug("romi-cablebot: Scan starting");
 	session.start("test");
-        cablebot.power_up();
-        cablebot.cnc_->moveto(start, 0.0, 0.0, 1.0);
+        r_debug("romi-cablebot: Power up");
+        return cablebot.power_up();
 }
 
-void run_scan(romi::ImagingDevice& cablebot, romi::Session& session,
+bool moveto(romi::ImagingDevice& cablebot, double position)
+{
+        r_debug("romi-cablebot: Move to %.2f", position);
+        bool success = cablebot.cnc_->moveto(position, 0.0, 0.0, 1.0);
+        if (!success) {
+                r_err("moveto: failed");
+        }
+        return success;
+}
+
+bool run_scan(romi::ImagingDevice& cablebot, romi::Session& session,
               double start, double length, double interval)
 {
 	size_t counter = 0;
         double position = start;
         double end = start + length;
-        while (position < end) {
-                grab_image(cablebot, session, position, counter);
+
+        r_debug("romi-cablebot: Scan run");
+        
+        bool success = moveto(cablebot, position);
+        while (success && position < end) {
+                success = (grab_image(cablebot, session, counter)
+                           && moveto(cablebot, position));
                 position += interval;
                 counter++;
         }
+        cablebot.cnc_->moveto(0.1, 0.0, 0.0, 1.0);
+        return success;
 }
 
 void end_scan(romi::ImagingDevice& cablebot, romi::Session& session)
 {
-        cablebot.cnc_->moveto(0.1, 0.0, 0.0, 1.0);
         cablebot.cnc_->homing();
         cablebot.power_down();
 	session.stop();
+        r_debug("romi-cablebot: Scan done");
 }
 
-void scan(romi::ImagingDevice& cablebot, romi::Session& session,
+bool scan(romi::ImagingDevice& cablebot, romi::Session& session,
           double start, double length, double interval)
 {
-        init_scan(cablebot, session, start);
-        run_scan(cablebot, session, start, length, interval);
+        bool success = (init_scan(cablebot, session)
+                        && run_scan(cablebot, session, start, length, interval));
         end_scan(cablebot, session);
+        return success;
 }
 
 void check_help(romi::GetOpt& options)
@@ -226,6 +255,7 @@ int main(int argc, char **argv)
                 rpp::Linux linux;
 
                 // Cablebot
+                r_debug("romi-cablebot: Initializing cablebot");
                 auto cablebot = romi::Cablebot::create(options.mode, options.width,
                                                        options.height, options.fps,
                                                        options.bitrate);
