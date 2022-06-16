@@ -1,0 +1,76 @@
+{
+       "rover": {
+        "wheel_diameter": 0.322,
+        "wheel_base": 1.00,
+        "width": 1.0,
+        "length": 1.0,
+        "encoder_steps": 13250
+    },
+    
+    "brush_motors": {
+        "device": "/dev/ttyACM2",
+        "max_speed": 0.5,
+        "max_signal": 30,
+        "pid": true,
+        "rc": false,
+        "homing": false,
+        "k": [0.08, 1.20, 0.0 ]
+    },
+    
+    "grbl": {
+        "device": "/dev/ttyACM0"
+    },
+    
+    "weeder": {
+        "workspace": [0.0, 636, 146, 735, 735, 0.640, 0.640],
+        "z0xxx": -0.065,
+        "z0-mixer": -0.160,
+        "z0": -0.110,
+        "invert_axes": false,
+        "datadir": "data/weeder",
+        "quincunx_threshold": 0.5
+    },
+    
+    "interface": {
+        "html": "/home/p2p/romi-rover/interface/html",
+        "scripts": "/home/p2p/romi-rover/scripts/rover-valldaura.json"
+    },
+    
+    "launch": {
+        "general": {
+            "sessions-dir": "/home/p2p/data",
+            "user": "p2p"
+        },
+        "registry": {
+            "path": "/usr/local/bin/rcregistry"
+        },
+        "nodes": [{
+            "path": "/home/p2p/romi-rover/build/configuration/configuration"
+        }, {
+            "path": "/home/p2p/romi-rover/build/fsdb/fsdb"
+        }, {
+            "path": "/home/p2p/romi-rover/build/brush_motors/brush_motors"
+        }, {
+            "path": "/home/p2p/romi-rover/realsense/build/realsense"
+        }, {
+            "path": "/home/p2p/romi-rover/build/grbl/grbl"
+        }, {
+            "path": "/home/p2p/romi-rover/build/wheel_odometry/wheel_odometry"
+        }, {
+            "path": "/home/p2p/romi-rover/build/camera_recorder/camera_recorder"
+        }, {
+            "path": "/home/p2p/romi-rover/build/weeder/weeder"
+        }, {
+            "path": "/home/p2p/romi-rover/build/navigation/navigation"
+        }, {
+            "path": "/home/p2p/romi-rover/build/interface/interface"
+        }, {
+            "path": "/home/p2p/romi-rover/build/watchdog/watchdog",
+            "user": "root"
+        }, {
+            "path": "/home/p2p/romi-rover/build/webproxy/webproxy",
+            "user": "root"
+        }]
+    }
+}
+

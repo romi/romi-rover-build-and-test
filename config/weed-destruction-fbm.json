@@ -1,0 +1,149 @@
+{
+    "navigation": {
+        "brush-motor-driver": {
+            "encoder_directions": {
+                "left": -1,
+                "right": 1
+            },
+            "maximum_signal_amplitude": 40,
+            "pid": {
+                "kd": 0,
+                "ki": 0,
+                "kp": 1.200000
+            },
+            "use_pid": true
+        },
+        "motor-driver": "brush-motor-driver",
+        "rover": {
+            "encoder_steps": 1536,
+            "maximum_speed": 1,
+            "wheel_base": 1,
+            "wheel_diameter": 0.470000
+        }
+    },
+    "oquam": {
+        "cnc-range": [[0, 0.950000], [0, 0.900000], [-0.180000, 0]],
+        "controller-classname": "stepper-controller",
+        "path-maximum-deviation": 0.010000,
+        "path-slice-duration": 0.020000,
+        "stepper-settings": {
+            "displacement-per-revolution": [0.040000, 0.040000, -0.002000],
+            "gears-ratio": [1, 1, 1],
+            "maximum-acceleration": [0.300000, 0.300000, 0.030000],
+            "maximum-rpm": [300, 300, 300],
+            "microsteps": [8, 8, 1],
+            "steps-per-revolution": [200, 200, 200]
+        }
+    },
+    "ports": {
+        "brush-motor-driver": {
+            "port": "/dev/ttyACM2",
+            "type": "serial"
+        },
+        "display-device": {
+            "port": "/dev/ttyACM0",
+            "type": "serial"
+        },
+        "joystick": {
+            "port": "/dev/input/js0",
+            "type": "joystick"
+        },
+        "oquam": {
+            "port": "/dev/ttyACM1",
+            "type": "serial"
+        }
+    },
+    "user-interface": {
+        "display-classname": "crystal-display",
+        "fluid-sounds": {
+            "soundfont": "/home/romi/romi-rover/assets/notifications.sf2",
+            "sounds": {
+                "change-menu": {
+                    "preset": 1,
+                    "volume": 90
+                },
+                "confirm-menu-mode": {
+                    "preset": 22,
+                    "volume": 90
+                },
+                "confirm-navigation-mode": {
+                    "preset": 16,
+                    "volume": 90
+                },
+                "leave-menu-mode": {
+                    "preset": 21,
+                    "volume": 90
+                },
+                "leave-navigation-mode": {
+                    "preset": 21,
+                    "volume": 90
+                },
+                "menu-confirmed": {
+                    "preset": 22,
+                    "volume": 90
+                },
+                "moving": {
+                    "preset": 7,
+                    "volume": 90
+                },
+                "script-finished": {
+                    "preset": 10,
+                    "volume": 90
+                },
+                "startup": {
+                    "preset": 4,
+                    "volume": 90
+                }
+            }
+        },
+        "input-device-classname": "joystick",
+        "navigation-classname": "remote-navigation",
+        "notifications": "fluid-sounds",
+        "remote-navigation": {
+            "server-name": "navigation"
+        },
+        "script-engine": {
+            "script": "/home/romi/romi-rover/config/scripts.json"
+        },
+        "speed-controller": {
+            "accurate": {
+                "direction-curve-exponent": 1,
+                "direction-multiplier": 0.050000,
+                "speed-curve-exponent": 1,
+                "speed-multiplier": 0.200000,
+                "use-direction-curve": true,
+                "use-speed-curve": true
+            },
+            "fast": {
+                "direction-curve-exponent": 1.500000,
+                "direction-multiplier": 0.400000,
+                "speed-curve-exponent": 1.500000,
+                "speed-multiplier": 1,
+                "use-direction-curve": true,
+                "use-speed-curve": true
+            }
+        },
+        "weeder-classname": "fake-weeder"
+    },
+    "weeder": {
+        "camera-classname": "remote-camera",
+        "cnc-classname": "remote-cnc",
+        "cropper": "imagecropper",
+        "imagecropper": {
+            "workspace": [335, 79, 934, 888]
+        },
+        "ortools": {
+            "print": false
+        },
+        "path": "ortools",
+        "segmentation": "python-svm",
+        "som": {
+            "alpha": 0.200000,
+            "beta": 1.200000,
+            "epsilon": 0.010000,
+            "print": false
+        },
+        "speed": 0.800000,
+        "z0": -0.110000
+    }
+}

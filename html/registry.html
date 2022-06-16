@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Registry</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/registry.css">
+  </head>
+  <body>
+    <div id="main" class="container">
+      <div id="nodes">
+        Didn't load the information from the registry, yet.
+      </div>
+    </div>
+    <div id="main" class="container">
+      <ul class="nav nav-pills green" id="viewer-nav">
+      </ul>
+      <div class="tab-content clearfix" id="viewers">
+      </div>
+    </div>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/registry.js"></script>
+    <script src="js/svg.min.js"></script>
+    <script>
+      $(document).ready(function() { showRegistry(); });
+    </script>
+  </body>
+</html>

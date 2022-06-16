@@ -1,28 +1,19 @@
-# romi-rover-build-and-test
-master   
-[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)  
-ci_dev   
-[![Build Status](https://travis-ci.org/romi/romi-rover-build-and-test.svg?branch=master)](https://travis-ci.org/romi/romi-rover-build-and-test)
-## libr 
-master  
-[![Build Status](https://travis-ci.org/romi/libr.svg?branch=master)](https://travis-ci.org/romi/libr)
-[![codecov](https://codecov.io/gh/romi/libr/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libr)  
-ci_dev  
-[![Build Status](https://travis-ci.org/romi/libr.svg?branch=ci_dev)](https://travis-ci.org/romi/libr)
-[![codecov](https://codecov.io/gh/romi/libr/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libr)  
-
-## rcom
-master  
-[![Build Status](https://travis-ci.org/romi/rcom.svg?branch=master)](https://travis-ci.org/romi/rcom)
-[![codecov](https://codecov.io/gh/romi/rcom/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/rcom)    
-ci_dev  
-[![Build Status](https://travis-ci.org/romi/rcom.svg?branch=ci_dev)](https://travis-ci.org/romi/rcom)
-[![codecov](https://codecov.io/gh/romi/rcom/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/rcom)  
+## romi-rover-build-and-test
+| |master| |ci_dev| |
+|:---|:---|:---|:---|:---|
+|**build & test**|![Build Status](https://github.com/romi/romi-rover-build-and-test/workflows/CI/badge.svg?branch=master)|[![codecov](https://codecov.io/gh/romi/romi-rover-build-and-test/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/romi-rover-build-and-test)|![Build Status](https://github.com/romi/romi-rover-build-and-test/workflows/CI/badge.svg?branch=ci_dev)|[![codecov](https://codecov.io/gh/romi/romi-rover-build-and-test/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/romi-rover-build-and-test)| 
+|**libr**|![Build Status](https://github.com/romi/libr/workflows/CI/badge.svg?branch=master)|[![codecov](https://codecov.io/gh/romi/libr/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libr)|![Build Status](https://github.com/romi/libr/workflows/CI/badge.svg?branch=ci_dev)|[![codecov](https://codecov.io/gh/romi/libr/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libr) 
+|**librcom**|![Build Status](https://github.com/romi/librcom/workflows/CI/badge.svg?branch=master)|[![codecov](https://codecov.io/gh/romi/librcom/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/librcom) |![Build Status](https://github.com/romi/librcom/workflows/CI/badge.svg?branch=ci_dev)|[![codecov](https://codecov.io/gh/romi/librcom/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/librcom)  
+|**libromi**|![Build Status](https://github.com/romi/libromi/workflows/CI/badge.svg?branch=master)|[![codecov](https://codecov.io/gh/romi/libromi/branch/master/graph/badge.svg)](https://codecov.io/gh/romi/libromi)|![Build Status](https://github.com/romi/libromi/workflows/CI/badge.svg?branch=ci_dev)|[![codecov](https://codecov.io/gh/romi/libromi/branch/ci_dev/graph/badge.svg)](https://codecov.io/gh/romi/libromi) 
 
 The purpose of this repo is to provide a single point of interaction to download, build, test, and optionally generate a code coverage test report for the romi-rover and all its dependencies.
 Since the romi-rover uses CMake as it's build system, CMake is also used to download the project and dependencies in addition to building the rover.
 
 This ReadMe file gives a detailed description of the download / build / test functionality as well as configuration / build information.
+
+# Dependencies
+Before continuing this project assumes you have CMake, GCC and Build essentials installed.
+You'll also need to install the fluidsynth-dev package for development: **sudo apt install libfluidsynth-dev**
 
 ## Getting Started
 As you have probably already noticed, this repo contains a number of submodules. The libraries used in this project all have a a dependency on the google test suite
@@ -73,7 +64,7 @@ Keeping the downloads in a separate download area saves re-downloading every tim
 The romi rover project is dependent on a number of libries.  
 
 romi-rover-test-and-build/libr/  
-romi-rover-test-and-build/rcom/
+romi-rover-test-and-build/librcom/
 
 Each of these libraries is designed such that the individual library can be cloned and used independently of this super project,
 however we recommend you use this project for any development. If you poke around in the submodule CMakeLists.txt files

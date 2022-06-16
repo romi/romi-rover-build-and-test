@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=..
+CAMERA_IP=10.10.10.16
+CAMERA_USERNAME=romi
+CAMERA_REMOTE_BIN=/home/romi/romi-rover-build-and-test/build/bin/romi-camera
+CAMERA_FPS=5
+NAME=rover-am1
+
+#-----------------------------------------
+
+#SCRIPT=$0
+#NAME=$(basename $SCRIPT)
+
+echo "============================== $NAME ====================================="
+
+IP=`hostname -I | awk '{print $1}'`
+# Alternative: ip route get 1.2.3.4 | head -n 1 | awk '{print $7}'
+if [ "x$IP" == "x" ];
+then
+    echo "Couldn't find IP address"
+    exit 1;
+fi
+
+BIN_DIR=$ROOT_DIR/build/bin
+APPLICATION_DIR=$ROOT_DIR/applications
+CONFIG_DIR=$ROOT_DIR/config
+SCRIPT_DIR=$ROOT_DIR/scripts
+ASSETS_DIR=$ROOT_DIR/assets
+DATE=$(date +"%Y%m%d-%H%M%S")
+CONFIG_FILE=$CONFIG_DIR/config-$NAME.json
+SCRIPT_FILE=$SCRIPT_DIR/scripts-$NAME.json
+SOUNDFONT_FILE=$ASSETS_DIR/notifications.sf2
+SESSION_DIR=$ROOT_DIR/sessions/$DATE
+LOG_DIR=$ROOT_DIR/logs/$DATE
+
+
+bash $NAME-stop
+
+mkdir -p $SESSION_DIR
+mkdir -p $LOG_DIR
+
+echo "==================================================================="
+echo "Config file: $CONFIG_FILE"
+
+echo "==================================================================="
+echo "Running rcdiscovery"
+$BIN_DIR/rcdiscover $CONFIG_FILE
+sleep 1
+
+echo
+echo
+echo "==================================================================="
+echo "Starting registry"
+$BIN_DIR/rcom-registry > $LOG_DIR/registry.txt &
+echo "$! " > $NAME.pid
+sleep 2
+
+
+echo "Stopping previous camera service"
+ssh $CAMERA_USERNAME@$CAMERA_IP killall romi-camera
+sleep 2
+
+echo "Starting camera"
+ssh $CAMERA_USERNAME@$CAMERA_IP $CAMERA_REMOTE_BIN $IP $CAMERA_FPS > $LOG_DIR/camera.txt &
+echo "$! " >> $NAME.pid
+sleep 1
+
+echo "Starting Python"
+python3 $APPLICATION_DIR/romi-python/main.py \
+        --nav-path $APPLICATION_DIR/romi-python/nav/default.json \
+        --registry $IP \
+        --ip $IP \
+        > $LOG_DIR/python.txt &
+echo "$! " >> $NAME.pid
+sleep 3
+
+echo "Starting rover"
+touch $LOG_DIR/rover.txt
+$BIN_DIR/romi-rover \
+    --config $CONFIG_FILE \
+    --session $SESSION_DIR \
+    --script $SCRIPT_FILE \
+    --soundfont $SOUNDFONT_FILE \
+    > $LOG_DIR/rover.txt &
+echo "$! " >> $NAME.pid
+
+echo "Ready"
+
+tail -f $LOG_DIR/*.txt
+
+

@@ -1,6 +1,9 @@
 [submodule "libr"]
 	path = libr
 	url = https://github.com/romi/libr.git
-[submodule "rcom"]
-	path = rcom
-	url = https://github.com/romi/rcom.git
+[submodule "libromi"]
+	path = libromi
+	url = https://github.com/romi/libromi.git
+[submodule "librcom"]
+    	path = librcom
+    	url = https://github.com/romi/librcom.git

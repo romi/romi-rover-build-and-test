@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+if [ -e "rover-am1.pid" ];
+then
+    for pid in `cat rover-am1.pid`;
+    do
+        kill -9 $pid
+    done
+fi
+
+rm -f "rover-am1.pid"

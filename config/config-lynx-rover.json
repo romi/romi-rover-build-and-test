@@ -1,0 +1,85 @@
+{
+    "rover": {
+        "wheel_diameter": 0.12,
+        "wheel_base": 1.00,
+        "width": 1.0,
+        "length": 1.0,
+        "encoder_steps": 3000
+    },
+    
+    "brush_motors": {
+        "device": "/dev/ttyACM1",
+        "max_speed": 0.5,
+        "max_signal": 60,
+        "pid": true,
+        "rc": false,
+        "homing": false,
+        "k": [0.3, 0.8, 0]
+    },
+    
+    "grbl": {
+        "device": "/dev/ttyACM0"
+    },
+    
+    "fake_camera": {
+        "image": "data/camera.jpg"
+    },
+    
+    "fsdb": {
+        "directory": "data/db"
+    },
+    
+    "weeder": {
+        "workspace": [0.0087267, 480, 24, 1060, 1043, 0.710, 0.680],
+        "z0": -0.010,
+        "invert_axes": false,
+        "datadir": "data/weeder",
+        "quincunx_threshold": 0.5
+    },
+    
+    "interface": {
+        "html": "interface/html",
+        "scripts": "scripts/chatelain-lite.json"
+    },
+    
+    "launch": {
+        "general": {
+            "log-dir-HIDE": "log"
+        },
+        "registry": {
+            "path": "/usr/local/bin/rcregistry"
+        },
+        "nodes": [{
+            "path": "build/configuration/configuration"
+        }, {
+            "path": "build/fsdb/fsdb"
+        }, {
+            "path": "build/brush_motors/brush_motors",
+            "disabled": false
+        }, {
+            "path": "build/fake_camera/fake_camera",
+            "disabled": true
+        }, {
+            "path": "build/video4linux/video4linux",
+            "disabled": false
+        }, {
+            "path": "build/grbl/grbl",
+            "disabled": false
+        }, {
+            "path": "build/wheel_odometry/wheel_odometry",
+            "disabled": false
+        }, {
+            "path": "build/camera_recorder/camera_recorder"
+        }, {
+            "path": "build/weeder/weeder",
+            "disabled": false
+        }, {
+            "path": "build/navigation/navigation",
+            "disabled": false
+        }, {
+            "path": "build/interface/interface",
+            "disabled": false
+        }]
+    }
+}
+

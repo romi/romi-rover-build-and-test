@@ -1,0 +1,32 @@
+dist: bionic
+
+addons:
+  apt:
+    packages:
+      - socat
+
+language: cpp
+
+compiler:
+  - gcc
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install python3
+  - sudo apt-get install python3-pip
+
+install:
+  - pip3 install websocket-client
+
+before_script:
+  # out-of-source build
+  - mkdir build_tests
+  - cd build_tests
+  - cmake ..
+
+script:
+  - make -j4
+  - ctest -V
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

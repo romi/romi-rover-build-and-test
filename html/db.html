@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Database</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/db.css">
+  </head>
+  <body>
+    <div id="main" class="container">
+      <ul class="nav nav-pills" id="browser" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="db-tab" data-toggle="tab" href="#db"
+             role="tab" aria-controls="db" aria-selected="true">DB</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="scan-tab" data-toggle="tab" href="#scan"
+             role="tab" aria-controls="scan" aria-selected="false">-</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="fileset-tab" data-toggle="tab" href="#fileset"
+             role="tab" aria-controls="fileset" aria-selected="false">-</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="file-tab" data-toggle="tab" href="#file"
+             role="tab" aria-controls="file" aria-selected="false">-</a>
+        </li>
+      </ul>
+      <div class="tab-content" id="myTabContent">
+        <div class="tab-pane show active" id="db" role="tabpanel" aria-labelledby="db-tab">
+          Database has not been loaded, yet.</div>
+        <div class="tab-pane" id="scan" role="tabpanel" aria-labelledby="scan-tab">
+          Select a scan in the DB tab.</div>
+        <div class="tab-pane" id="fileset" role="tabpanel" aria-labelledby="fileset-tab">
+          Select a fileset in the scan tab.</div>
+        <div class="tab-pane" id="file" role="tabpanel" aria-labelledby="file-tab">
+          Select a file in the fileset tab.</div>
+      </div>
+    </div>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/svg.min.js"></script>
+    <script>
+      $(document).ready(function() { showDB(); });
+    </script>
+  </body>
+</html>

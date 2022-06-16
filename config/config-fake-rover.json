@@ -1,0 +1,77 @@
+{    
+    "rover": {
+        "wheel_diameter": 0.506,
+        "wheel_base": 1.00,
+        "width": 1.10,
+        "length": 1.40,
+        "encoder_steps": 7168
+    },
+    
+    "proxy": {
+        "html": "romi-rover/html"
+    }, 
+
+    "fake_camera": {
+        "image": "romi-rover/fake_camera/00000.jpg"
+    },
+    
+    "weeder": {
+        "workspace": [410, 103, 474, 474],
+        "z0": -0.010,
+        "invert_axes": false,
+        "quincunx_threshold": 0.0
+    },
+    
+    "script_engine": {
+        "scripts": "romi-rover/scripts/default.json"
+    },
+    
+    "cnc": {
+        "range": [[0, 0.700000], [0, 0.700000], [-0.400000, 0]]
+    }, 
+
+    "launch": {
+        "general": {
+            "sessions-dir": "/tmp/session"
+        },
+         "registry": {
+            "path": "rcregistry"
+        },
+        "nodes": [
+            {
+                "path": "configuration"
+            },
+            {
+                "path": "fsdb"
+            },
+            {
+                "path": "fake_motors"
+            },
+            {
+                "path": "fake_camera"
+            },
+            {
+                "path": "fake_cnc"
+            },
+            {
+                "path": "wheel_odometry"
+            },
+            {
+                "path": "camera_recorder"
+            },
+            {
+                "path": "weeder"
+            },
+            {
+                "path": "navigation"
+            },
+            {
+                "path": "script_engine"
+            },
+            {
+                "path": "webproxy"
+            }
+        ]
+    }
+}
+

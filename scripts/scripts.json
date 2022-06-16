@@ -1,0 +1,37 @@
+[
+    {
+        "id": "move-forward",
+        "title": "Forward 60cm",
+        "actions": [
+            {"action": "move", "distance": 0.60, "speed": 0.4}
+        ]
+    },
+    {
+        "id": "move-backward",
+        "title": "Backward 60cm",
+        "actions": [
+            {"action": "move", "distance": -0.60, "speed": 0.4}
+        ]
+    },
+    {
+        "id": "weeding",
+        "title": "Hoe salads",
+        "actions": [
+            {"action": "hoe"}
+        ]
+    },
+    {
+        "id": "start-recording",
+        "title": "Start recording",
+        "actions": [
+            {"action": "start-recording"}
+        ]
+    },
+    {
+        "id": "stop-recording",
+        "title": "Stop recording",
+        "actions": [
+            {"action": "stop-recording"}
+        ]
+    }
+]

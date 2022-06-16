@@ -1,0 +1,90 @@
+{
+    "fsdb": {
+        "directory": "/home/romi/data"
+    }, 
+    "proxy": {
+        "html": "/home/romi/romi-rover/html"
+    }, 
+    "brush_motors": {
+        "rc": false, 
+        "homing": false, 
+        "max_speed": 0.500000, 
+        "max_signal": 30, 
+        "pid": true, 
+        "k": [0.080000, 1.200000, 0]
+    }, 
+    "cnc": {
+        "range": [[0, 0.560], [0, 0.600], [-0.160, 0]]
+    }, 
+    "weeder": {
+        "workspace": [562, 59, 700, 728], 
+        "z0": -0.110, 
+        "z0-test": -0.110, 
+        "z0-soil": -0.160, 
+        "invert_axes": false, 
+        "quincunx_threshold": 0.500000
+    }, 
+    "rover": {
+        "width": 1, 
+        "length": 1, 
+        "wheel_base": 1, 
+        "encoder_steps": 13250, 
+        "wheel_diameter": 0.322000
+    }, 
+    "launch": {
+        "nodes": [{
+            "path": "/home/romi/romi-rover/configuration"
+        }, {
+            "path": "/home/romi/romi-rover/control_panel"
+        }, {
+            "path": "/home/romi/romi-rover/fsdb"
+        }, {
+            "path": "/home/romi/romi-rover/brush_motors"
+        }, {
+            "path": "/home/romi/romi-rover/video4linux"
+        }, {
+            "path": "/home/romi/romi-rover/grbl"
+        }, {
+            "path": "/home/romi/romi-rover/wheel_odometry"
+        }, {
+            "path": "/home/romi/romi-rover/camera_recorder"
+        }, {
+            "path": "/home/romi/romi-rover/weeder"
+        }, {
+            "path": "/home/romi/romi-rover/navigation"
+        }, {
+            "path": "/home/romi/romi-rover/script_engine"
+        }, {
+            "path": "/home/romi/romi-rover/webproxy", 
+            "user-TODO": "root"
+        }], 
+        "registry": {
+            "path": "/home/romi/romi-rover/rcregistry"
+        }, 
+        "general": {
+            "sessions-dir": "/home/romi/data", 
+            "user": "romi"
+        }
+    }, 
+    "script_engine": {
+        "scripts": "/home/romi/romi-rover/scripts-rover-chatelain.json"
+    }, 
+    "watchdog": {
+        "wait_powerup": ["cnc", "motorcontroller"], 
+        "heartbeat": ["cnc", "motorcontroller"]
+    }, 
+    "ports": {
+        "grbl": {
+            "port": "/dev/ttyACM2", 
+            "type": "serial"
+        }, 
+        "brush_motors": {
+            "port": "/dev/ttyACM0", 
+            "type": "serial"
+        }, 
+        "control_panel": {
+            "port": "/dev/ttyACM1", 
+            "type": "serial"
+        }
+    }
+}

@@ -1,0 +1,72 @@
+{
+    "rover": {
+        "wheel_diameter": 0.322,
+        "wheel_base": 1.00,
+        "width": 1.0,
+        "length": 1.0,
+        "encoder_steps": 13250
+    },
+    
+    "brush_motors": {
+        "device": "/dev/ttyACM1",
+        "max_speed": 0.5,
+        "max_signal": 30,
+        "pid": true,
+        "rc": false,
+        "homing": false,
+        "k": [0.08, 1.20, 0.0 ]
+    },
+    
+    "grbl": {
+        "device": "/dev/ttyACM0"
+    },
+    
+    "fsdb": {
+        "directory": "data/db"
+    },
+    
+    "weeder": {
+        "workspace": [0.00873, 316, 96, 617, 617, 620, 620],
+        "z0": -0.010,
+        "invert_axes": false,
+        "datadir": "data/weeder",
+        "quincunx_threshold": 0.5
+    },
+    
+    "interface": {
+        "html": "<romi-rover>/interface/html",
+        "scripts": "/home/romi/scripts/rover-default.json"
+    },
+    
+    "launch": {
+        "general": {
+            "sessions-dir": "/home/romi/data",
+            "user": "romi"
+        },
+        "registry": {
+            "path": "/usr/local/bin/rcregistry"
+        },
+        "nodes": [{
+            "path": "/usr/local/bin/configuration"
+        }, {
+            "path": "/usr/local/bin/fsdb"
+        }, {
+            "path": "/usr/local/bin/brush_motors"
+        }, {
+            "path": "/usr/local/bin/video4linux"
+        }, {
+            "path": "/usr/local/bin/grbl"
+        }, {
+            "path": "/usr/local/bin/wheel_odometry"
+        }, {
+            "path": "/usr/local/bin/camera_recorder"
+        }, {
+            "path": "/usr/local/bin/weeder"
+        }, {
+            "path": "/usr/local/bin/navigation"
+        }, {
+            "path": "/usr/local/bin/interface"
+        }]
+    }
+}
+
