@@ -341,7 +341,7 @@ int main(int argc, char** argv)
                 double max_rps = max_rpm / 60.0;
                 double default_rps = max_rps / 2.0; // Turn at 1/2th of max speed
                 double steps_per_revolution = 200; // From the motor specs
-                double microsteps = 2;  // Driver jumper settings
+                double microsteps = 16;  // Driver jumper settings
                 double gears = 76.0 + 49.0/64.0; // From the motor specs
                 double belt = 34.0 / 34.0;
                 int16_t steps_per_second = (int16_t) ceil(default_rps

@@ -4,6 +4,7 @@ import cv2
 import time
 import numpy as np
 import os
+import argparse
 
 model = None
 model_config = None
@@ -75,9 +76,11 @@ def get_pred_unet(path, output_name):
     print(f"get_pred_unet: segment {now-start_time:0.3f} seconds")
     
     cv2.imwrite(folder + "/" + output_name + "_rgb.png", seg_img)
-
+    print(f"{folder}/{output_name}_rgb.png")
+    
     mask = seg_img[:,:,0]
     cv2.imwrite(folder + "/" + output_name + ".png", mask)
+    print(f"{folder}/{output_name}.png")
 
     now = time.time()
     print(f"get_pred_unet: imwrite {now-start_time:0.3f} seconds")
@@ -102,10 +105,14 @@ def unet_handle_request(params):
     print(f"handle_unet_request: {now-start_time:0.3f} seconds")
     return True
 
-if __name__ == "__main__":
-    unet_init("/home/romi/ACRE/models/unet_ACRE_20210922")
 
-    for i in range(10):
-        print(f"========================= {i+1}")
-        unet_handle_request({'path': '/home/romi/acre/sessions/20210921-184538/Rover_ROMI1_20210921-184748.397/camera-000568.jpg',
-                         'output-name': 'mask-000568-test'})
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file")
+    parser.add_argument('--weights', type=str, nargs='?',
+                        default="/home/romi/ACRE/models/unet_ACRE_20210922",
+                        help='Path to Unet weights')
+    args = parser.parse_args()
+    
+    unet_init(args.weights)
+    unet_handle_request({'path': args.file, 'output-name': 'unet-test'})
