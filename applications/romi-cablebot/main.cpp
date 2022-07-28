@@ -112,7 +112,7 @@ std::string make_image_name(size_t counter)
 	return std::string(buffer);
 }
 
-bool store_image(rpp::MemBuffer& image, romi::Session& session, size_t counter)
+bool store_image(rcom::MemBuffer& image, romi::Session& session, size_t counter)
 {
         bool success = true;
         if (image.size() > 0) {
@@ -131,7 +131,7 @@ bool grab_image(romi::ImagingDevice& cablebot, romi::Session& session, size_t co
 {
         bool success = true;
         try {
-                rpp::MemBuffer& image = cablebot.camera_->grab_jpeg();
+                rcom::MemBuffer& image = cablebot.camera_->grab_jpeg();
                 success = store_image(image, session, counter);
         } catch (std::runtime_error& e) {
                 r_err("grab_image failed: %s", e.what());
