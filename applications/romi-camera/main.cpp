@@ -23,7 +23,7 @@
 */
 #include <stdexcept>
 #include <memory>
-#include <r.h>
+
 #include <RegistryServer.h>
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>

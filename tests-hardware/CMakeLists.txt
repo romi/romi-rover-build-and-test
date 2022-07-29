@@ -21,11 +21,11 @@ install(TARGETS 04-test-joystick DESTINATION bin)
 #
 
 add_executable(05-tests-serial-1-read 05-tests-serial/test1-read.cpp)
-target_link_libraries(05-tests-serial-1-read romi r)
+target_link_libraries(05-tests-serial-1-read romi)
 install(TARGETS 05-tests-serial-1-read DESTINATION bin)
 
 add_executable(05-tests-serial-1-write 05-tests-serial/test1-write.cpp)
-target_link_libraries(05-tests-serial-1-write romi r)
+target_link_libraries(05-tests-serial-1-write romi)
 install(TARGETS 05-tests-serial-1-write DESTINATION bin)
 
 
@@ -33,19 +33,19 @@ install(TARGETS 05-tests-serial-1-write DESTINATION bin)
 
 if(PI_BUILD)
   add_executable(06-tests-camera-grab 06-tests-camera/test-grab.cpp)
-  target_link_libraries(06-tests-camera-grab romi r)
+  target_link_libraries(06-tests-camera-grab romi)
   install(TARGETS 06-tests-camera-grab DESTINATION bin)
 endif()
 
 add_executable(06-tests-remote-camera-grab 06-tests-camera/test-remote-grab.cpp)
-target_link_libraries(06-tests-remote-camera-grab romi r)
+target_link_libraries(06-tests-remote-camera-grab romi)
 install(TARGETS 06-tests-remote-camera-grab DESTINATION bin)
 
 #
 
 
 add_executable(10-calibration-move-and-grab 10-calibration/move-and-grab.cpp)
-target_link_libraries(10-calibration-move-and-grab romi r)
+target_link_libraries(10-calibration-move-and-grab romi)
 
 #
 
@@ -64,9 +64,9 @@ set(GPIO_SOURCES
 )
 
 add_executable(07-tests-gpio-power-relay 07-tests-gpio/test-power-relay.cpp ${GPIO_SOURCES})
-target_link_libraries(07-tests-gpio-power-relay romi r)
+target_link_libraries(07-tests-gpio-power-relay romi)
 install(TARGETS 07-tests-gpio-power-relay DESTINATION bin)
 
 add_executable(07-tests-gpio-security-button 07-tests-gpio/test-security-button.cpp ${GPIO_SOURCES})
-target_link_libraries(07-tests-gpio-security-button romi r)
+target_link_libraries(07-tests-gpio-security-button romi)
 install(TARGETS 07-tests-gpio-security-button DESTINATION bin)

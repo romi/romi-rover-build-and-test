@@ -6,7 +6,6 @@
 #include <chrono>
 #include <atomic>
 
-#include <r.h>
 #include <RomiSerial.h>
 
 #include "gtest/gtest.h"

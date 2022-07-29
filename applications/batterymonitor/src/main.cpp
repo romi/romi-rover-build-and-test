@@ -34,7 +34,7 @@
 #include <Clock.h>
 #include <ClockAccessor.h>
 #include <rover/RoverOptions.h>
-#include <log.h>
+#include <Logger.h>
 #include <RSerial.h>
 #include <api/DataLogAccessor.h>
 #include <iostream>
@@ -74,8 +74,8 @@ int main(int argc, char** argv)
         options.exit_if_help_requested();
         std::string port("/dev/ttyUSB0");
 
-        r_log_init();
-        r_log_set_app("romi-rover");
+        log_init();
+        log_set_application("romi-rover");
 
         std::string filename = "battery.txt";
         auto datalog = std::make_shared<romi::DataLog>(filename);

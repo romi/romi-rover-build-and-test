@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <memory>
 #include <iostream>
-#include <log.h>
+#include <Logger.h>
 #include <camera/USBCamera.h>
 #include <cv/ImageIO.h>
 #include <ClockAccessor.h>

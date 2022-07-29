@@ -112,8 +112,8 @@ int main(int argc, char** argv)
         std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
         rpp::ClockAccessor::SetInstance(clock);
 
-        r_log_init();
-        r_log_set_app("eval");
+        log_init();
+        log_set_application("eval");
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
         

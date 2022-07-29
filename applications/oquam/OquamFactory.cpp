@@ -25,7 +25,7 @@
 #include <oquam/FakeCNCController.h>
 #include <oquam/StepperController.h>
 #include <rover/RoverOptions.h>
-
+#include "Logger.h"
 #include "OquamFactory.h"
 
 using namespace std;

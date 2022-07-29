@@ -119,8 +119,8 @@ int main(int argc, char** argv)
         r_info("Navigating %f meters at speed of %.1f%% of maximum speed",
                distance, 100.0 * speed);
         
-        r_log_init();
-        r_log_set_app("navigation");
+        log_init();
+        log_set_application("navigation");
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);

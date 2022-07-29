@@ -23,7 +23,7 @@
 */
 #include <stdexcept>
 #include <memory>
-#include <r.h>
+
 #include <cablebot/Cablebot.h>
 #include <configuration/GetOpt.h>
 #include <ClockAccessor.h>

@@ -1,5 +1,7 @@
+#include <string.h>
 #include <stdexcept>
-#include <r.h>
+#include <unistd.h>
+#include "Logger.h"
 #include "GpioFileDescriptor.h"
 
 namespace romi {

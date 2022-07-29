@@ -26,7 +26,7 @@
 #define __ROMI_I_PATH_PLANNER_H
 
 #include <vector>
-#include <r.h>
+
 #include <api/Path.h>
 #include <session/ISession.h>
 #include <cv/Image.h>

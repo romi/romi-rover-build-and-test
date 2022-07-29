@@ -30,7 +30,6 @@ target_link_libraries(  romi_rover_rcdiscover_unit_tests
                         gmock
                         romiserial
                         rpp
-                        r
                         stdc++fs)
 
 add_test(

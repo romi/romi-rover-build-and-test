@@ -3,11 +3,12 @@
 
 #include <stdint.h>
 #include <math.h>
-#include <r.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "Logger.h"
+
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 typedef int32_t fixed_t; 
 typedef int64_t double_fixed_t; 
@@ -48,7 +49,7 @@ double fxtod(fixed_t r)
 }
 
 static inline
-fixed_t dtofx(double v) 
+fixed_t dtofx(double v)
 {
         r_debug("dtofx(%f)", v);
         int neg = (v < 0.0);
@@ -113,8 +114,8 @@ fixed_t fxsq(fixed_t a)
 
 fixed_t fxrecip_1_to_0(fixed_t a);
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif /* _FIXED_H_ */

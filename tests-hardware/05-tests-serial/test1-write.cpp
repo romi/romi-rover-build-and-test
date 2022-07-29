@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
+#include "Logger.h"
 #include <RSerial.h>
 #include <Printer.h>
-#include <r.h>
+
 
 using namespace romiserial;
 

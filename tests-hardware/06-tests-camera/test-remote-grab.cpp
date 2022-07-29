@@ -1,6 +1,8 @@
 #include <stdexcept>
 #include <signal.h>
-#include <r.h>
+#include "unistd.h"
+#include "fcntl.h"
+#include "Logger.h"
 #include <rpc/RcomClient.h>
 #include <rpc/RemoteCamera.h>
 

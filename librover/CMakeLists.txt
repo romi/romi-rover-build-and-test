@@ -40,7 +40,7 @@ set(SOURCES
         src/svm/SVMSegmentation.cpp
         src/som/SOM.cpp
         src/som/Superpixels.cpp
-        src/som/fixed.c
+        src/som/fixed.cpp
 
         src/unet/PythonSegmentation.cpp
         src/unet/PythonSVM.cpp

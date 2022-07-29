@@ -140,8 +140,8 @@ int main(int argc, char** argv)
         
         r_info("Navigating at %.1f% m/s", speed);
         
-        r_log_init();
-        r_log_set_app("navigation");
+        log_init();
+        log_set_application("navigation");
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);

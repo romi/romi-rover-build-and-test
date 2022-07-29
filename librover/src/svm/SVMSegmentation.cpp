@@ -22,7 +22,7 @@
 
  */
 
-#include <log.h>
+#include <Logger.h>
 #include <stdexcept>
 #include "svm/SVMSegmentation.h"
 

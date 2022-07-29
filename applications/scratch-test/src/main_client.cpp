@@ -133,7 +133,7 @@ int main(int argc, char** argv)
         options.parse(argc, argv);
         options.exit_if_help_requested();
 
-        r_log_init();
+        log_init();
         r_log_set_app("romi-rover");
 
         std::signal(SIGSEGV, SignalHandler);
