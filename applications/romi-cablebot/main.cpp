@@ -23,223 +23,46 @@
 */
 #include <stdexcept>
 #include <memory>
+#include <fstream>
 #include <r.h>
-#include <cablebot/Cablebot.h>
+#include <RegistryServer.h>
+#include <picamera/PiCamera.h>
+#include <picamera/PiCameraSettings.h>
+#include <rpc/CameraAdaptor.h>
+#include <rpc/CameraMountAdaptor.h>
+#include <rpc/RcomServer.h>
+#include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
 #include <ClockAccessor.h>
 #include <RomiSerialClient.h>
-#include <Linux.h>
-#include <data_provider/RomiDeviceData.h>
-#include <data_provider/SoftwareVersion.h>
-#include <session/Session.h>
-#include <data_provider/CNCLocationProvider.h>
-#include <picamera/PiCameraSettings.h>
+#include <camera/ICameraSettings.h>
+#include <camera/CameraInfoIO.h>
+#include <cablebot/Cablebot.h>
 
+static bool quit = false;
+static void set_quit(int sig, siginfo_t *info, void *ucontext);
+static void quit_on_control_c();
+
+static const char *kRegistry = "registry";
+static const char *kConfig = "config";
 static const char *kMode = "mode";
 static const char *kVideo = "video";
 static const char *kStill = "still";
 static const char *kWidth = "width";
 static const char *kHeight = "height";
-static const char *kFPS = "fps";
+static const char *kFramerate = "framerate";
 static const char *kBitrate = "bitrate";
-static const char *kStart = "start";
-static const char *kLength = "length";
-static const char *kInterval = "interval";
-static const char *kDirectory = "dir";
 
 static std::vector<romi::Option> option_list = {
         { "help", false, nullptr,
           "Print help message" },
                 
-        { kMode, true, kStill,
-          "The camera mode: 'video' or 'still'. (still)"},
-
-        { kWidth, true, "4056",
-          "The image width (4056)"},
-
-        { kHeight, true, "3040",
-          "The image height (3040)"},
-
-        { kFPS, true, "5",
-          "The frame rate, for video mode only (5 fps)"},
-
-        { kBitrate, true, "25000000",
-          "The average bitrate (video only) (25000000)"},
-
-        { kStart, true, "0",
-          "The start position of the scan (in meter)"},
-
-        { kLength, true, "1",
-          "The length of the scan (in meter)"},
-
-        { kInterval, true, "0.25",
-          "The interval between images (in meter)"},
-        
-        { kDirectory, true, ".",
-          "The session directory (.)"},
+        { kRegistry, true, nullptr,
+          "The IP address of the registry."},
+                
+        { kConfig, true, "config.json",
+          "The config file (config.json)"}                
 };
-
-struct ScanOptions
-{
-        romi::Cablebot::CameraMode mode;
-        size_t width;
-        size_t height;
-        int32_t fps;
-        uint32_t bitrate;
-        double start;
-        double length;
-        double interval;
-        std::string directory;
-
-        ScanOptions()
-                : mode(romi::Cablebot::kVideoMode),
-                  width(romi::kHQFullWidth),
-                  height(romi::kHQFullHeight),
-                  fps(5),
-                  bitrate(romi::kMaxBitrateMJPEG),
-                  start(0.0),
-                  length(1.0),
-                  interval(0.25),
-                  directory(".")
-                {}
-        
-};
-
-std::string make_image_name(size_t counter)
-{
-        char buffer[64];
-	snprintf(buffer, sizeof(buffer), "camera-%06zu.jpg", counter);
-	return std::string(buffer);
-}
-
-bool store_image(rcom::MemBuffer& image, romi::Session& session, size_t counter)
-{
-        bool success = true;
-        if (image.size() > 0) {
-                std::string filename = make_image_name(counter);
-                success = session.store_jpg(filename, image);
-                if (!success) {
-                        r_err("romi-cablebot: Failed to store the image");
-                } else {
-                        r_debug("romi-cablebot: Stored %s", filename.c_str());
-                }
-        }
-        return success;
-}
-
-bool grab_image(romi::ImagingDevice& cablebot, romi::Session& session, size_t counter)
-{
-        bool success = true;
-        try {
-                rcom::MemBuffer& image = cablebot.camera_->grab_jpeg();
-                success = store_image(image, session, counter);
-        } catch (std::runtime_error& e) {
-                r_err("grab_image failed: %s", e.what());
-                success = false;
-        }
-        return success;
-}
-
-bool init_scan(romi::ImagingDevice& cablebot, romi::Session& session)
-{
-        r_debug("romi-cablebot: Scan starting");
-	session.start("test");
-        r_debug("romi-cablebot: Power up");
-        return cablebot.power_up();
-}
-
-bool moveto(romi::ImagingDevice& cablebot, double position)
-{
-        r_debug("romi-cablebot: Move to %.2f", position);
-        bool success = cablebot.cnc_->moveto(position, 0.0, 0.0, 1.0);
-        if (!success) {
-                r_err("moveto: failed");
-        }
-        return success;
-}
-
-bool run_scan(romi::ImagingDevice& cablebot, romi::Session& session,
-              double start, double length, double interval)
-{
-	size_t counter = 0;
-        double position = start;
-        double end = start + length;
-
-        r_debug("romi-cablebot: Scan run");
-        
-        bool success = moveto(cablebot, position);
-        while (success && position < end) {
-                success = (grab_image(cablebot, session, counter)
-                           && moveto(cablebot, position));
-                position += interval;
-                counter++;
-        }
-        cablebot.cnc_->moveto(0.1, 0.0, 0.0, 1.0);
-        return success;
-}
-
-void end_scan(romi::ImagingDevice& cablebot, romi::Session& session)
-{
-        cablebot.cnc_->homing();
-        cablebot.power_down();
-	session.stop();
-        r_debug("romi-cablebot: Scan done");
-}
-
-bool scan(romi::ImagingDevice& cablebot, romi::Session& session,
-          double start, double length, double interval)
-{
-        bool success = (init_scan(cablebot, session)
-                        && run_scan(cablebot, session, start, length, interval));
-        end_scan(cablebot, session);
-        return success;
-}
-
-void check_help(romi::GetOpt& options)
-{
-        if (options.is_help_requested()) {
-                options.print_usage();
-                exit(0);
-        }
-}
-
-romi::Cablebot::CameraMode parse_mode(romi::GetOpt& options)
-{
-        romi::Cablebot::CameraMode mode;
-        std::string mode_string = options.get_value(kMode);
-        if (mode_string == kVideo) {
-                mode = romi::Cablebot::kVideoMode;
-        } else if (mode_string == kStill) {
-                mode = romi::Cablebot::kStillMode;
-        } else {
-                throw std::runtime_error("Invalid camera mode");
-        }
-        return mode;
-}
-
-double parse_value(romi::GetOpt& options, const char *name)
-{
-        std::string string_value = options.get_value(name);
-        return std::stod(string_value);
-}
-
-void parse_options(int argc, char **argv, ScanOptions& scan_options)
-{
-        romi::GetOpt cmdline_options(option_list);
-        cmdline_options.parse(argc, argv);
-        
-        check_help(cmdline_options);
-        
-        scan_options.mode = parse_mode(cmdline_options);
-        scan_options.width = (size_t) parse_value(cmdline_options, kWidth);
-        scan_options.height = (size_t) parse_value(cmdline_options, kHeight);
-        scan_options.fps = (int32_t) parse_value(cmdline_options, kFPS);
-        scan_options.bitrate = (uint32_t) parse_value(cmdline_options, kBitrate);
-        scan_options.start = parse_value(cmdline_options, kStart);
-        scan_options.length = parse_value(cmdline_options, kLength);
-        scan_options.interval = parse_value(cmdline_options, kInterval);
-        scan_options.directory = cmdline_options.get_value(kDirectory);
-}
 
 int main(int argc, char **argv)
 {
@@ -247,32 +70,111 @@ int main(int argc, char **argv)
         rpp::ClockAccessor::SetInstance(clock);
         
         try {
-                // Options
-                ScanOptions options;
-                parse_options(argc, argv, options);
+                romi::GetOpt options(option_list);
+                options.parse(argc, argv);
+                if (options.is_help_requested()) {
+                        options.print_usage();
+                        exit(0);
+                }
 		  
                 // Linux
-                rpp::Linux linux;
+                //rpp::Linux linux;
+                
+                if (options.is_set(kRegistry)) {
+                        std::string ip = options.get_value(kRegistry);
+                        r_info("Registry IP set to %s", ip.c_str());
+                        rcom::RegistryServer::set_address(ip.c_str());
+                }
 
+                
+                std::string config_file = options.get_value(kConfig);
+                r_info("Romi Cablebot: Using configuration file: '%s'", config_file.c_str());
+
+                // TBD: Create standard JSON load functionality.
+                std::ifstream ifs(config_file);
+                nlohmann::json config = nlohmann::json::parse(ifs);
+
+                romi::CameraInfoIO info_io;
+                std::unique_ptr<romi::ICameraInfo> camera_info = info_io.load(config["camera"]);
+
+                romi::ICameraSettings& camera_settings = camera_info->get_settings();
+                
+                romi::Cablebot::CameraMode mode;
+                std::string mode_str;
+                camera_settings.get_option(kMode, mode_str);
+                if (mode_str == kStill)
+                        mode = romi::Cablebot::kStillMode;
+                else if (mode_str == kVideo)
+                        mode = romi::Cablebot::kVideoMode;
+                
+                size_t width = (size_t) camera_settings.get_value(kWidth);
+                size_t height = (size_t) camera_settings.get_value(kHeight);
+                // FIXME
+                int32_t fps = (int32_t) camera_settings.get_value(kFramerate);
+                uint32_t bitrate = (uint32_t) camera_settings.get_value(kBitrate);
+                
+                r_info("Camera: %zux%zu.", width, height);
+
+                
                 // Cablebot
                 r_debug("romi-cablebot: Initializing cablebot");
-                auto cablebot = romi::Cablebot::create(options.mode, options.width,
-                                                       options.height, options.fps,
-                                                       options.bitrate);
+                auto cablebot = romi::Cablebot::create(mode, width, height, fps, bitrate);
 
-                // Session
-                romi::RomiDeviceData romiDeviceData;
-                romi::SoftwareVersion softwareVersion;
-                std::unique_ptr<romi::ILocationProvider> locationProvider
-                        = std::make_unique<romi::CNCLocationProvider>(cablebot->cnc_);
+                
+                // std::unique_ptr<romi::PiCameraSettings> settings;
 
-                romi::Session session(linux, options.directory, romiDeviceData,
-                                      softwareVersion, std::move(locationProvider));
+                // if (mode == "video") {
 
-                // Scan
-                scan(*cablebot, session, options.start, options.length, options.interval);
+                //         r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
+                //         settings = std::make_unique<romi::HQVideoCameraSettings>(width,
+                //                                                                  height,
+                //                                                                  fps);
+                //         settings->bitrate_ = bitrate;
+
+                // } else if (mode == "still") {
+                //         r_info("Camera: still mode.");
+                //         settings = std::make_unique<romi::HQStillCameraSettings>(width, height);
+                // }
+                
+                // auto camera = romi::PiCamera::create(*settings);
+
+                
+                romi::CameraAdaptor remote_camera(*cablebot->camera_);
+                auto camera_server = romi::RcomServer::create("camera", remote_camera);
+                
+                romi::CameraMountAdaptor remote_camera_mount(*cablebot->mount_);
+                auto cablebot_server = romi::RcomServer::create("cablebot", remote_camera_mount);
+                
+                quit_on_control_c();
+                
+                while (!quit) {
+                        camera_server->handle_events();
+                        cablebot_server->handle_events();
+                        clock->sleep(0.001);
+                }
 
         } catch (std::exception& e) {
-                r_err("romi-cablebot: caught exception: %s", e.what());
+                r_err("RomiCamera: caught exception: %s", e.what());
+        }
+}
+
+static void set_quit(int sig, siginfo_t *info, void *ucontext)
+{
+        (void) sig;
+        (void) info;
+        (void) ucontext;
+        quit = true;
+}
+
+static void quit_on_control_c()
+{
+        struct sigaction act;
+        memset(&act, 0, sizeof(struct sigaction));
+
+        act.sa_flags = SA_SIGINFO;
+        act.sa_sigaction = set_quit;
+        if (sigaction(SIGINT, &act, nullptr) != 0) {
+                perror("init_signal_handler");
+                exit(1);
         }
 }

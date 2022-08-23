@@ -1,0 +1,39 @@
+{
+    "camera": {
+        "id": "camera-cablebot-01",
+        "type": "pi-camera-hq-v10",
+        "name": "Raspbery Pi HQ Camera V1.0",
+        "lens": "CCTV Lens 6mm IR 3MP HD",
+        "sensor": {
+            "resolution": [4056, 3040],
+            "dimensions": [0.006287,  0.004712]
+        },
+        "calibration": {
+            "date": "2022-07-25",
+            "person": "hanappe",
+            "method": "colmap"
+        },
+        "settings": {
+            "mode": "still",
+            "width": 2028,
+            "height": 1520,
+            "framerate": 5,
+            "bitrate": 17000000
+        },
+        "intrinsics": {
+            "fx?": 2329.391527677837,
+            "fy?": 2329.391527677837,
+            "fx": 2200,
+            "fy": 2200,
+            "cx": 1014.0,
+            "cy": 760.0
+        },
+        "distortion": {
+            "type": "simple-radial",
+            "values": [-0.4928269684314728, -0.4928269684314728]
+
+
+
+        }
+    }
+}
