@@ -96,6 +96,9 @@ namespace romi {
                         
                         do_hoe(path);
                 }
+
+                grab_image(image);
+                session_.store_jpg("after", image);
         }
 
         void Weeder::grab_image(Image& image)
