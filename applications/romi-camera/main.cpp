@@ -28,7 +28,6 @@
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
-#include <rpc/GimbalAdaptor.h>
 #include <rpc/RcomServer.h>
 #include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
@@ -48,7 +47,6 @@ static const char *kWidth = "width";
 static const char *kHeight = "height";
 static const char *kFPS = "fps";
 static const char *kBitrate = "bitrate";
-static const char *kGimbal = "gimbal";
 static const char *kTopic = "topic";
 
 static std::vector<romi::Option> option_list = {
@@ -77,10 +75,7 @@ static std::vector<romi::Option> option_list = {
           "The frame rate, for video mode only (5 fps)"},
 
         { kBitrate, true, "17000000",
-          "The average bitrate (video only) (17000000)"},
-
-        { kGimbal, true, nullptr,
-          "Connect to the gimbal with the given device path"}
+          "The average bitrate (video only) (17000000)"}
 };
 
 int main(int argc, char **argv)
@@ -144,21 +139,6 @@ int main(int argc, char **argv)
                                 settings = std::make_unique<romi::HQStillCameraSettings>(width, height);
                         }
 		}
-
-                std::unique_ptr<romiserial::IRomiSerialClient> gimbal_serial;
-                std::unique_ptr<romi::BldcGimbal> gimbal;
-                std::unique_ptr<romi::GimbalAdaptor> gimbal_adaptor;
-                std::unique_ptr<romi::IRPCServer> gimbal_server; 
-                
-                if (options.is_set(kGimbal)) {
-                        std::string device = options.get_value(kGimbal);
-                        r_info("Connecting to gimbal at %s", device.c_str());
-                        gimbal_serial = romiserial::RomiSerialClient::create(device,
-                                                                             "BldcGimbal");
-                        gimbal = std::make_unique<romi::BldcGimbal>(*gimbal_serial);
-                        gimbal_adaptor = std::make_unique<romi::GimbalAdaptor>(*gimbal);
-                        gimbal_server = romi::RcomServer::create("gimbal", *gimbal_adaptor);
-                }
                 
                 std::string topic = options.get_value(kTopic);
                 auto camera = romi::PiCamera::create(*settings);
@@ -169,8 +149,6 @@ int main(int argc, char **argv)
                 
                 while (!quit) {
                         camera_server->handle_events();
-                        if (gimbal_server)
-                                gimbal_server->handle_events();
                         clock->sleep(0.001);
                 }
 

@@ -1,5 +1,6 @@
 import asyncio
 import argparse
+import time
 from romi.rpc import Server
 
 from unet import unet_init, unet_handle_request
@@ -40,9 +41,9 @@ if __name__ == "__main__":
     parser.add_argument('--triple-svm-2', type=str, nargs='?',
                         default="svm0/yellow-hose_0010_1000.json",
                         help='Set the path to the "exclude" SVM')
-    parser.add_argument('--registry', type=str, nargs='?', default="10.10.10.1",
+    parser.add_argument('--registry', type=str, nargs='?', default="10.10.18.1",
                     help='Set the IP address of the registry')
-    parser.add_argument('--ip', type=str, nargs='?', default="10.10.10.1",
+    parser.add_argument('--ip', type=str, nargs='?', default="10.10.18.1",
                     help='The local IP address to use')
 
     print("Parsing arguments")

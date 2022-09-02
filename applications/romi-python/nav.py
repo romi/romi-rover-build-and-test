@@ -9,8 +9,9 @@ store_masks_flag = True
 
 image_width = 1640
 image_height = 1232
-center_x = int(image_width / 2)
-center_x = 625  # 1640/2 - (0.37m/2 * 1000 px/m)
+#center_x = int(image_width / 2)
+center_x = 410
+#center_x = 625  # 1640/2 - (0.37m/2 * 1000 px/m)
 center_y = int(image_height / 2)
 center_x1 = center_x - 200
 center_x2 = center_x + 200
@@ -57,7 +58,8 @@ def get_mask(path):
 
     pred = ((im_vec @ np.asarray(svm_pars["coef"])
              + svm_pars["intercept"])>0).reshape([h, w])
-    return (255 - pred * 255).astype(np.uint8)
+    #return (255 - pred * 255).astype(np.uint8)
+    return (pred * 255).astype(np.uint8)
 
 
 def store_mask(path, postfix, mask):

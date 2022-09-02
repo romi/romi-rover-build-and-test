@@ -78,6 +78,17 @@ class TimeData():
         for i in range(len(self.values)):
             self.values[i,1] = self.values[i,1] - offset
         
+    def integrate(self):
+        total = 0.0
+        t0 = self.values[0,0]
+        start_time = t0
+        for i in range(1, len(self.values)):
+            t1 = self.values[i,0]
+            dt = t1 - t0
+            total += dt * self.values[i,1]
+            t0 = t1
+        end_time = t1
+        return total, end_time - start_time
 
 class DataViewer():
     def __init__(self, nplots):
@@ -184,6 +195,8 @@ if __name__ == "__main__":
     for name in plot_names_1:
         series = TimeData(datalog, name, conversion)
         dataviewer.add(0, series)
+        energy, duration = series.integrate()
+        print(f"SUM: {energy} {duration/60} min")
         
     conversion.parse(conv_names_2)
     for name in plot_names_2:

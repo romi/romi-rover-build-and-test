@@ -60,7 +60,13 @@ def get_pred_unet(path, output_name):
     pr = pr.reshape((model.output_height,
                      model.output_width,
                      model.n_classes)).argmax(axis=2)
-    colors=[[0,0,0], [255,255,255], [0,0,255]]
+
+    
+    
+    #colors=[[0,0,0], [255,255,255], [0,0,255]]
+    colors=[[0,0,0], [255,255,255], [255,255,255]]  # ACRE HACK (dont ask)
+
+
     
     seg_img = np.zeros((model.output_height, model.output_width, 3))
     
@@ -79,14 +85,29 @@ def get_pred_unet(path, output_name):
     print(f"{folder}/{output_name}_rgb.png")
     
     mask = seg_img[:,:,0]
-    cv2.imwrite(folder + "/" + output_name + ".png", mask)
-    print(f"{folder}/{output_name}.png")
+    cv2.imwrite(folder + "/" + output_name + "-white.png", mask)
 
     now = time.time()
     print(f"get_pred_unet: imwrite {now-start_time:0.3f} seconds")
 
+    mask = erode_dilate(mask, er_it=10, dil_it=25) # ACRE HACK
+    mask = ((mask>0)*255).astype(np.uint8)
+    cv2.imwrite(folder + "/" + output_name + "-erode-dilate.png", mask)
+
+    cv2.imwrite(folder + "/" + output_name + ".png", mask)
+    
     return mask
 
+
+def erode_dilate(mask, er_it=5, dil_it=25):
+    print("ERODE_DILATE")
+    kernel = np.array([[0, 1, 0],
+                       [1, 1, 1],
+                       [0, 1, 0]]).astype(np.uint8)
+
+    res = cv2.erode(mask, kernel, iterations=er_it)
+    res = cv2.dilate(res, kernel, iterations=dil_it)
+    return res
 
 def unet_init(model_path):
     print("Running unet_init")
@@ -116,3 +137,12 @@ if __name__ == "__main__":
     
     unet_init(args.weights)
     unet_handle_request({'path': args.file, 'output-name': 'unet-test'})
+
+
+#if __name__ == "__main__":
+#    model_path = "/home/hanappe/projects/ROMI/github/rover/acre/models/acre-20220608/"
+#    image_path = "/home/hanappe/projects/ROMI/github/rover/acre/sessions/20220610-083003/Rover_ROMI1_20220610-090020.945/camera.jpg"
+#
+#    unet_init(model_path)
+#    unet_handle_request({'path': image_path,
+#                         'output-name': 'unet-test-color'})
