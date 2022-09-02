@@ -59,6 +59,8 @@ if __name__ == "__main__":
                     },
                     args.registry, args.ip)
 
+    time.sleep(10)
+    
     unet_init(args.model_path)
     #svm_init(args.svm_path)
     #svm0_init(args.svm_path)
