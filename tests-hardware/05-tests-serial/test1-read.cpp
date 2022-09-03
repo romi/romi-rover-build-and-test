@@ -1,14 +1,16 @@
 #include <cstdlib>
 #include <RSerial.h>
 #include <Reader.h>
-#include "Logger.h"
+#include <util/Logger.h>
+#include <Console.h>
 
 
 using namespace romiserial;
 
 int main()
 {
-        RSerial serial("/dev/serial0", 115200, 0);
+        std::shared_ptr<ILog> log = std::make_shared<Console>();
+        RSerial serial("/dev/serial0", 115200, 0, log);
         Reader reader(serial);
         char buffer[64];
         

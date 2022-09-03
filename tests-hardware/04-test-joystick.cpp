@@ -28,11 +28,13 @@
 #include <atomic>
 #include <syslog.h>
 
+#include <rcom/Linux.h>
+
 #include <RSerial.h>
 #include <RomiSerialClient.h>
 
-#include <Linux.h>
 #include "configuration/ConfigurationProvider.h"
+#include <util/RomiSerialLog.h>
 #include <rover/Rover.h>
 #include <rover/RoverOptions.h>
 #include <rover/RoverInterface.h>
@@ -65,9 +67,8 @@
 #include <data_provider/SoftwareVersion.h>
 #include <rover/WheelOdometry.h>
 #include <rover/DifferentialSteering.h>
-
-#include "Clock.h"
-#include "ClockAccessor.h"
+#include <util/Clock.h>
+#include <util/ClockAccessor.h>
 
 std::atomic<bool> quit(false);
 
@@ -90,8 +91,8 @@ void SignalHandler(int signal)
 
 int main(int argc, char** argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
 
         int retval = 1;
 
@@ -113,7 +114,7 @@ int main(int argc, char** argv)
                 std::ifstream ifs(config_file);
                 nlohmann::json config = nlohmann::json::parse(ifs);
 
-                rpp::Linux linux;
+                rcom::Linux linux;
 
                 // Session
                 romi::RomiDeviceData romiDeviceData;
@@ -131,7 +132,11 @@ int main(int argc, char** argv)
                 std::string display_device = config["ports"]["display-device"]["port"];
 
                 std::string client_name("display_device");
-                auto display_serial = romiserial::RomiSerialClient::create(display_device, client_name);
+                std::shared_ptr<romiserial::ILog> log
+                        = std::make_shared<romi::RomiSerialLog>();
+                auto display_serial = romiserial::RomiSerialClient::create(display_device,
+                                                                           client_name,
+                                                                           log);
                 romi::CrystalDisplay display(display_serial);
                 display.clear(display.count_lines());
                 display.show(0, "Initializing");
@@ -151,7 +156,9 @@ int main(int argc, char** argv)
                 std::string driver_device = config["ports"]["brush-motor-driver"]["port"];
                 nlohmann::json driver_settings = config.at("navigation").at("brush-motor-driver");
                 client_name = ("driver_device");
-                auto driver_serial = romiserial::RomiSerialClient::create(driver_device, client_name);
+                auto driver_serial = romiserial::RomiSerialClient::create(driver_device,
+                                                                          client_name,
+                                                                          log);
                 romi::BrushMotorDriver driver(driver_serial, driver_settings,
                                               rover_config.compute_max_angular_speed(),
                                               rover_config.compute_max_angular_acceleration());

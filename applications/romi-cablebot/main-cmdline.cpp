@@ -23,12 +23,11 @@
 */
 #include <stdexcept>
 #include <memory>
-#include <r.h>
+#include <rcom/Linux.h>
 #include <cablebot/Cablebot.h>
 #include <configuration/GetOpt.h>
-#include <ClockAccessor.h>
+#include <util/ClockAccessor.h>
 #include <RomiSerialClient.h>
-#include <Linux.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <session/Session.h>
@@ -243,8 +242,8 @@ void parse_options(int argc, char **argv, ScanOptions& scan_options)
 
 int main(int argc, char **argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
         
         try {
                 // Options
@@ -252,7 +251,7 @@ int main(int argc, char **argv)
                 parse_options(argc, argv, options);
 		  
                 // Linux
-                rpp::Linux linux;
+                rcom::Linux linux;
 
                 // Cablebot
                 r_debug("romi-cablebot: Initializing cablebot");

@@ -35,7 +35,7 @@
 #include <cctype>
 #include <cstring>
 #include "VeDirectFrameHandler.h"
-#include <Logger.h>
+#include <util/Logger.h>
 
 // The name of the record that contains the checksum.
 static constexpr char checksumTagName[] = "CHECKSUM";

@@ -4,8 +4,8 @@
 #include <atomic>
 #include <syslog.h>
 
+#include <rcom/Linux.h>
 #include <rpc/RcomServer.h>
-#include "Linux.h"
 
 #include <rover/RoverOptions.h>
 #include <rpc/CNCAdaptor.h>
@@ -17,9 +17,8 @@
 #include "session/Session.h"
 #include "data_provider/Gps.h"
 #include "data_provider/GpsLocationProvider.h"
-
-#include "Clock.h"
-#include "ClockAccessor.h"
+#include "util/Clock.h"
+#include "util/ClockAccessor.h"
 
 std::atomic<bool> quit(false);
 
@@ -46,8 +45,8 @@ void SignalHandler(int signal)
 
 int main(int argc, char** argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
 
         int retval = 1;
 
@@ -69,7 +68,7 @@ int main(int argc, char** argv)
                 nlohmann::json config = nlohmann::json::parse(ifs);
 
                 // Session
-                rpp::Linux linux;
+                rcom::Linux linux;
                 romi::RomiDeviceData romiDeviceData;
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;

@@ -25,7 +25,7 @@
 #include <getopt.h>
 #include <chrono>
 
-#include "Linux.h"
+#include <rcom/Linux.h>
 #include "debug_tools/debug_data_dumper.h"
 #include "data_provider/RomiDeviceData.h"
 #include "data_provider/SoftwareVersion.h"
@@ -40,13 +40,15 @@ using namespace romi;
 int main(int argc, char **argv)
 {
 
-        rpp::Linux linux;
+        rcom::Linux linux;
         RomiDeviceData romiDeviceData;
         SoftwareVersion softwareVersion;
         romi::Gps gps;
-        std::unique_ptr<ILocationProvider> locationPrivider = std::make_unique<GpsLocationProvider>(gps);
+        std::unique_ptr<ILocationProvider> locationPrivider
+                = std::make_unique<GpsLocationProvider>(gps);
         std::string session_directory(".");
-        romi::Session session(linux, session_directory, romiDeviceData, softwareVersion, std::move(locationPrivider));
+        romi::Session session(linux, session_directory, romiDeviceData,
+                              softwareVersion, std::move(locationPrivider));
         session.start("elastic");
         std::string dump_filename("dump.out");
         bool print = false;

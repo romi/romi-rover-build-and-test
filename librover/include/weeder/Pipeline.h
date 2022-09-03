@@ -25,8 +25,8 @@
 #ifndef __ROMI_PIPELINE_H
 #define __ROMI_PIPELINE_H
 
-#include <json.hpp>
-#include <MemBuffer.h>
+#include <rcom/json.hpp>
+#include <rcom/MemBuffer.h>
 #include <api/CNCRange.h>
 #include <cv/IImageCropper.h>
 

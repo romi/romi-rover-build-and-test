@@ -28,13 +28,14 @@
 #include <iostream>
 #include <stdexcept>
 #include <math.h>
-
 #include <syslog.h>
+#include <fstream>
+
 #include <rpc/RcomServer.h>
 #include <RomiSerialClient.h>
 #include <RSerial.h>
-#include <ClockAccessor.h>
-
+#include <util/ClockAccessor.h>
+#include <util/Logger.h>
 #include <hal/BrushMotorDriver.h>
 #include <rover/Navigation.h>
 #include <rover/NavigationSettings.h>
@@ -50,7 +51,6 @@
 #include <fake/FakeMotorDriver.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
-#include <fstream>
 
 std::atomic<bool> quit(false);
 
@@ -240,7 +240,7 @@ int main(int argc, char** argv)
                 }
 
                 //steering_controller.moveto(1000, 0, 0, 0);
-                rpp::ClockAccessor::GetInstance()->sleep(2.0);
+                romi::ClockAccessor::GetInstance()->sleep(2.0);
 
                 //driver.moveat(0, 0);
                 

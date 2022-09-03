@@ -24,7 +24,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <Logger.h>
+#include <util/Logger.h>
 #include <cv/cv.h>
 #include "constraintsolver/GConstraintSolver.h"
 

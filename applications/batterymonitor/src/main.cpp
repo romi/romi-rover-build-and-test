@@ -30,11 +30,12 @@
 #include <map>
 #include <algorithm>
 
-#include <Linux.h>
-#include <Clock.h>
-#include <ClockAccessor.h>
+#include <rcom/Linux.h>
+#include <util/Clock.h>
+#include <util/ClockAccessor.h>
 #include <rover/RoverOptions.h>
-#include <Logger.h>
+#include <util/Logger.h>
+#include <util/RomiSerialLog.h>
 #include <RSerial.h>
 #include <api/DataLogAccessor.h>
 #include <iostream>
@@ -64,8 +65,8 @@ void SignalHandler(int signal)
 
 int main(int argc, char** argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
 
         int retval = 1;
 
@@ -85,7 +86,7 @@ int main(int argc, char** argv)
         std::signal(SIGINT, SignalHandler);
         try {
 
-            rpp::Linux linux;
+            rcom::Linux linux;
             // Battery Monitor
 
             std::unique_ptr<romi::BatteryMonitor> battery_mon(nullptr);
@@ -95,12 +96,17 @@ int main(int argc, char** argv)
                 r_info("main: Creating Battery Monitor");
                 const char *battery_monotor_device = "/dev/ttyACM0";
                 auto client_name = "battery-monitor";
-                auto battery_serial = romiserial::RomiSerialClient::create(battery_monotor_device, client_name);
+                std::shared_ptr<romiserial::ILog> log
+                        = std::make_shared<romi::RomiSerialLog>();
+               auto battery_serial
+                        = romiserial::RomiSerialClient::create(battery_monotor_device,
+                                                               client_name, log);
 
-                battery_mon = std::make_unique<romi::BatteryMonitor>(battery_serial, datalog, quit);
+                battery_mon
+                        = std::make_unique<romi::BatteryMonitor>(battery_serial,
+                                                                 datalog, quit);
                 battery_mon->enable();
-            }
-            catch (std::exception& e){
+            } catch (std::exception& e) {
                 r_err("main: Unable to create battery monitor: %s", e.what());
             }
 
@@ -119,8 +125,9 @@ int main(int argc, char** argv)
                     throw;
                 }
             }
-        retval = 0;
-
+            
+            retval = 0;
+            
         } catch (std::exception& e) {
                 r_err("main: exception: %s", e.what());
         }

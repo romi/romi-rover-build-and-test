@@ -24,14 +24,14 @@
 #include <stdexcept>
 #include <memory>
 
-#include <RegistryServer.h>
+#include <rcom/RegistryServer.h>
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
 #include <rpc/RcomServer.h>
 #include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
-#include <ClockAccessor.h>
+#include <util/ClockAccessor.h>
 #include <RomiSerialClient.h>
 
 static bool quit = false;
@@ -80,8 +80,8 @@ static std::vector<romi::Option> option_list = {
 
 int main(int argc, char **argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
         
         try {
                 romi::GetOpt options(option_list);

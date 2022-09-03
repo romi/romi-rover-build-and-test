@@ -25,7 +25,8 @@
 #include <memory>
 #include <fstream>
 #include <r.h>
-#include <RegistryServer.h>
+
+#include <rcom/RegistryServer.h>
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
@@ -33,7 +34,7 @@
 #include <rpc/RcomServer.h>
 #include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
-#include <ClockAccessor.h>
+#include <util/ClockAccessor.h>
 #include <RomiSerialClient.h>
 #include <camera/ICameraSettings.h>
 #include <camera/CameraInfoIO.h>
@@ -66,8 +67,8 @@ static std::vector<romi::Option> option_list = {
 
 int main(int argc, char **argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
         
         try {
                 romi::GetOpt options(option_list);
@@ -78,7 +79,7 @@ int main(int argc, char **argv)
                 }
 		  
                 // Linux
-                //rpp::Linux linux;
+                //rcom::Linux linux;
                 
                 if (options.is_set(kRegistry)) {
                         std::string ip = options.get_value(kRegistry);

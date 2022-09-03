@@ -28,21 +28,19 @@
 #include <syslog.h>
 #include <thread>
 
-#include <Linux.h>
-#include <Clock.h>
-#include <ClockAccessor.h>
-#include <rover/RoverOptions.h>
+#include <rcom/Linux.h>
 
+#include <util/Clock.h>
+#include <util/ClockAccessor.h>
+#include <rover/RoverOptions.h>
 #include <rpc/RemoteCamera.h>
 #include <rpc/RcomClient.h>
-
 #include <oquam/StepperSettings.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
-
 #include <ui/ScriptList.h>
 #include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
@@ -85,8 +83,8 @@ void SignalHandler(int signal)
 
 int main(int argc, char** argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
 
         int retval = 1;
 
@@ -102,7 +100,7 @@ int main(int argc, char** argv)
 
         try {
 
-                rpp::Linux linux;
+                rcom::Linux linux;
 
                 // Session
                 r_info("main: Creating session");

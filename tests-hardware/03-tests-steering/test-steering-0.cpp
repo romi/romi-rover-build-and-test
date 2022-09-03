@@ -28,13 +28,16 @@
 #include <iostream>
 #include <stdexcept>
 #include <math.h>
-
 #include <syslog.h>
-#include <rpc/RcomServer.h>
+#include <fstream>
+
 #include <RomiSerialClient.h>
 #include <RSerial.h>
-#include <ClockAccessor.h>
 
+#include <rpc/RcomServer.h>
+#include <util/ClockAccessor.h>
+#include <util/Logger.h>
+#include <util/RomiSerialLog.h>
 #include <hal/BrushMotorDriver.h>
 #include <rover/Navigation.h>
 #include <rover/NavigationSettings.h>
@@ -52,7 +55,6 @@
 #include <fake/FakeMotorDriver.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
-#include <fstream>
 
 std::atomic<bool> quit(false);
 
@@ -97,8 +99,13 @@ int main(int argc, char** argv)
                 romi::NavigationSettings rover_config(rover_settings);
                 std::string steering_device = config["ports"]["steering"]["port"];
                 
+                std::shared_ptr<romiserial::ILog> log
+                        = std::make_shared<romi::RomiSerialLog>();
+                
                 std::string client_name("steering_tests");
-                auto steering_serial = romiserial::RomiSerialClient::create(steering_device, client_name);
+                auto steering_serial = romiserial::RomiSerialClient::create(steering_device,
+                                                                            client_name,
+                                                                            log);
                 romi::SteeringController steering_controller(steering_serial);
                 
                 double max_rpm = 500; // From the motor specs
@@ -120,32 +127,32 @@ int main(int argc, char** argv)
 
                 wheel_steering.turn_wheels(0, 0);
 
-                rpp::ClockAccessor::GetInstance()->sleep(2.0);
+                romi::ClockAccessor::GetInstance()->sleep(2.0);
 
                 r_info("Moving to 45 degrees");
                 wheel_steering.turn_wheels(M_PI/4, M_PI/4);
                 
-                rpp::ClockAccessor::GetInstance()->sleep(15.0);
+                romi::ClockAccessor::GetInstance()->sleep(15.0);
 
                 r_info("Moving to 180 degrees");
                 wheel_steering.turn_wheels(M_PI, M_PI);
                 
-                rpp::ClockAccessor::GetInstance()->sleep(15.0);
+                romi::ClockAccessor::GetInstance()->sleep(15.0);
 
                 r_info("Moving to -180 degrees");
                 wheel_steering.turn_wheels(-M_PI, -M_PI);
                 
-                rpp::ClockAccessor::GetInstance()->sleep(20.0);
+                romi::ClockAccessor::GetInstance()->sleep(20.0);
 
                 r_info("Moving to -45 degrees");
                 wheel_steering.turn_wheels(-M_PI/4, -M_PI/4);
                 
-                rpp::ClockAccessor::GetInstance()->sleep(15.0);
+                romi::ClockAccessor::GetInstance()->sleep(15.0);
 
                 r_info("Moving to 0 degrees");
                 wheel_steering.turn_wheels(0, 0);
                 
-                rpp::ClockAccessor::GetInstance()->sleep(10.0);
+                romi::ClockAccessor::GetInstance()->sleep(10.0);
                 
         } catch (std::exception& e) {
                 r_err(e.what());

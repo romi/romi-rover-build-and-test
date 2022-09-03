@@ -7,6 +7,7 @@
 #include <atomic>
 
 #include <RomiSerial.h>
+#include <Console.h>
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -116,7 +117,8 @@ int FakeSerialDeviceFunction(const std::string& port,
                 { '?', 0, false, SendInfo }
         };
 
-        romiserial::RSerial serial(port, 115200, 0);
+        std::shared_ptr<romiserial::ILog> log = std::make_shared<romiserial::Console>();
+        romiserial::RSerial serial(port, 115200, 0, log);
         romiserial::RomiSerial romi_serial(serial, serial, handlers, 1);
 
         std::cout << "FakeSerialDeviceFunction: Notify " << std::endl;

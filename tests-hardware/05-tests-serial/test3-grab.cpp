@@ -1,16 +1,16 @@
 #include <stdlib.h>
 #include <memory>
 #include <iostream>
-#include <Logger.h>
+#include <util/Logger.h>
 #include <camera/USBCamera.h>
 #include <cv/ImageIO.h>
-#include <ClockAccessor.h>
+#include <util/ClockAccessor.h>
 
 int main()
 {
         romi::USBCamera camera("/dev/video0", 1920, 1080);
         romi::Image image;
-        auto clock = rpp::ClockAccessor::GetInstance();
+        auto clock = romi::ClockAccessor::GetInstance();
 
         clock->sleep(2.0);
         

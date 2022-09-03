@@ -25,7 +25,8 @@
 #include <oquam/FakeCNCController.h>
 #include <oquam/StepperController.h>
 #include <rover/RoverOptions.h>
-#include "Logger.h"
+#include <util/Logger.h>
+#include <util/RomiSerialLog.h>
 #include "OquamFactory.h"
 
 using namespace std;
@@ -90,7 +91,10 @@ namespace romi {
                                                           nlohmann::json &config)
         {
                 std::string device = get_stepper_controller_device(options, config);
-                auto romi_serial = romiserial::RomiSerialClient::create(device, "oquam");
+                std::shared_ptr<romiserial::ILog> log
+                        = std::make_shared<romi::RomiSerialLog>();
+                auto romi_serial = romiserial::RomiSerialClient::create(device,
+                                                                        "oquam", log);
                 _controller = std::make_unique<StepperController>(romi_serial);
         }
 

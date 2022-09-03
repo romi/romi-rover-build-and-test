@@ -1,7 +1,7 @@
 //#include <stdexcept>
 //#include <unistd.h>
 #include "fcntl.h"
-#include "Logger.h"
+#include <util/Logger.h>
 #include "GpioChip.h"
 
 namespace romi {

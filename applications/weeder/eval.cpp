@@ -24,11 +24,14 @@
 #include <exception>
 #include <syslog.h>
 
-#include <Linux.h>
-#include <Clock.h>
-#include <ClockAccessor.h>
+#include <rcom/Linux.h>
+
 #include <RSerial.h>
 #include <RomiSerialClient.h>
+
+#include <util/Clock.h>
+#include <util/ClockAccessor.h>
+#include <util/RomiSerialLog.h>
 #include <rover/RoverOptions.h>
 #include <camera/FileCamera.h>
 #include <camera/USBCamera.h>
@@ -109,8 +112,8 @@ static std::vector<romi::Option> eval_options = {
 
 int main(int argc, char** argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
 
         log_init();
         log_set_application("eval");
@@ -135,7 +138,7 @@ int main(int argc, char** argv)
 //                nlohmann::json config = nlohmann::json::load(path.c_str());
                 
                 // Session
-                rpp::Linux linux;
+                rcom::Linux linux;
                 romi::RomiDeviceData romiDeviceData;
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
@@ -165,7 +168,11 @@ int main(int argc, char** argv)
                 if (cnc_controller_classname == romi::StepperController::ClassName) {
                         std::string cnc_device = config["ports"]["oquam"]["port"];
                         std::string client_name("cnc_device");
-                        auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
+                        std::shared_ptr<romiserial::ILog> log
+                                = std::make_shared<romi::RomiSerialLog>();
+                        auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device,
+                                                                               client_name,
+                                                                               log);
                         controller = std::make_unique<romi::StepperController>(cnc_serial);
                         
                 } else if (cnc_controller_classname == romi::FakeCNCController::ClassName) {

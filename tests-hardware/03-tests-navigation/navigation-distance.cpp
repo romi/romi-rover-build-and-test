@@ -24,14 +24,17 @@
 #include <exception>
 #include <atomic>
 #include <csignal>
-
 #include <syslog.h>
-#include <rpc/RcomServer.h>
+
+#include <rcom/Linux.h>
+
 #include <RomiSerialClient.h>
 #include <RSerial.h>
-#include <Linux.h>
-#include <ClockAccessor.h>
 
+#include <util/ClockAccessor.h>
+#include <util/RomiSerialLog.h>
+#include <util/Logger.h>
+#include <rpc/RcomServer.h>
 #include <hal/BrushMotorDriver.h>
 #include <rover/Navigation.h>
 #include <rover/NavigationSettings.h>
@@ -58,13 +61,11 @@ void SignalHandler(int signal)
         if (signal == SIGSEGV){
                 syslog(1, "rcom-registry segmentation fault");
                 exit(signal);
-        }
-        else if (signal == SIGINT){
+        } else if (signal == SIGINT) {
                 r_info("Ctrl-C Quitting Application");
                 perror("init_signal_handler");
                 quit = true;
-        }
-        else{
+        } else {
                 r_err("Unknown signam received %d", signal);
         }
 }
@@ -133,7 +134,7 @@ int main(int argc, char** argv)
                 std::ifstream ifs(config_file);
                 nlohmann::json config = nlohmann::json::parse(ifs);
 
-                rpp::Linux linux;
+                rcom::Linux linux;
 
                 // Session
                 romi::RomiDeviceData romiDeviceData;
@@ -153,12 +154,18 @@ int main(int argc, char** argv)
                 romi::NavigationSettings rover_config(rover_settings);
                 
                 nlohmann::json driver_settings = config.at("navigation").at("brush-motor-driver");
+
+                std::shared_ptr<romiserial::ILog> log
+                        = std::make_shared<romi::RomiSerialLog>();
                 
                 std::string device = romi::get_brush_motor_device(options, config);
-                std::shared_ptr<romiserial::RSerial>serial
-                        = std::make_shared<romiserial::RSerial>(device, 115200, 1);
+                // std::shared_ptr<romiserial::RSerial> serial
+                //         = std::make_shared<romiserial::RSerial>(device, 115200, 1);
+                
                 std::string client_name("navigation_distance_tests");
-                auto romi_serial = romiserial::RomiSerialClient::create(device, client_name);
+                auto romi_serial = romiserial::RomiSerialClient::create(device,
+                                                                        client_name,
+                                                                        log);
                         
                 romi::BrushMotorDriver driver(romi_serial,
                                               driver_settings,
@@ -175,7 +182,9 @@ int main(int argc, char** argv)
                 
                 std::string imu_device = config["ports"]["imu"]["port"];
                 client_name = "imu_device";
-                auto imu_serial = romiserial::RomiSerialClient::create(imu_device, client_name);
+                auto imu_serial = romiserial::RomiSerialClient::create(imu_device,
+                                                                       client_name,
+                                                                       log);
                 romi::IMUTrackFollower track_follower(imu_serial);
                 
                 //romi::ZeroNavigationController navigation_controller;
@@ -196,9 +205,9 @@ int main(int argc, char** argv)
                 if (controller == kDriverString) {
                         r_info("Using motor driver");
                         driver.moveat(speed, speed);
-                        rpp::ClockAccessor::GetInstance()->sleep(5.0);
+                        romi::ClockAccessor::GetInstance()->sleep(5.0);
                         driver.moveat(0.0, 0.0);
-                        rpp::ClockAccessor::GetInstance()->sleep(5.0);
+                        romi::ClockAccessor::GetInstance()->sleep(5.0);
                         
                 } else if (controller == kNavigationString) {
                         r_info("Using navigation controller");
@@ -206,7 +215,7 @@ int main(int argc, char** argv)
                 }
 
                 r_info("Recording PID and navigation speed data for 10 seconds...");
-                rpp::ClockAccessor::GetInstance()->sleep(10.0);
+                romi::ClockAccessor::GetInstance()->sleep(10.0);
                 
                 //driver.stop_recording_pid();
                 // driver.stop_recording_speeds();

@@ -1,7 +1,8 @@
 
 #include <iostream>
 #include <RomiSerialClient.h>
-#include "StringUtils.h"
+#include <Console.h>
+#include <util/StringUtils.h>
 #include "SerialPortDiscover.h"
 
 SerialPortDiscover::SerialPortDiscover(const std::map<std::string,
@@ -37,8 +38,8 @@ std::string SerialPortDiscover::TryConnectedDevice(const std::string& path)
         std::string name;
         nlohmann::json response;
         std::string client_name("SerialPortDiscover");
-        
-        auto client = romiserial::RomiSerialClient::create(path, client_name);
+        std::shared_ptr<romiserial::ILog> log = std::make_shared<romiserial::Console>();
+        auto client = romiserial::RomiSerialClient::create(path, client_name, log);
         
         while ((checked == false) && (retrycurrent++ < retrycount)) {
                 std::cout << "Attempt " << retrycurrent << std::endl;

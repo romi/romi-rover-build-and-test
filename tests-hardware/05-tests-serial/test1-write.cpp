@@ -1,15 +1,17 @@
 #include <stdlib.h>
 #include <string.h>
-#include "Logger.h"
+#include <util/Logger.h>
 #include <RSerial.h>
 #include <Printer.h>
+#include <Console.h>
 
 
 using namespace romiserial;
 
 int main()
 {
-        RSerial serial("/dev/serial0", 115200, 0);
+        std::shared_ptr<ILog> log = std::make_shared<Console>();
+        RSerial serial("/dev/serial0", 115200, 0, log);
         Printer printer(serial);
         
         int counter = 0;
