@@ -34,7 +34,6 @@
 #include <RomiSerialClient.h>
 #include <RSerial.h>
 
-#include <rpc/RcomServer.h>
 #include <util/ClockAccessor.h>
 #include <util/Logger.h>
 #include <util/RomiSerialLog.h>
@@ -61,16 +60,14 @@ std::atomic<bool> quit(false);
 void SignalHandler(int signal)
 {
         if (signal == SIGSEGV){
-                syslog(1, "rcom-registry segmentation fault");
+                syslog(1, "test-steering segmentation fault");
                 exit(signal);
-        }
-        else if (signal == SIGINT){
+        } else if (signal == SIGINT){
                 r_info("Ctrl-C Quitting Application");
                 perror("init_signal_handler");
                 quit = true;
-        }
-        else{
-                r_err("Unknown signam received %d", signal);
+        } else {
+                r_err("Unknown signal received %d", signal);
         }
 }
 

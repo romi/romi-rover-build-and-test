@@ -29,6 +29,8 @@
 #include <string.h>
 
 #include <rcom/Linux.h>
+#include <rcom/RcomClient.h>
+
 #include <RomiSerialClient.h>
 #include <util/Clock.h>
 #include <util/ClockAccessor.h>
@@ -37,7 +39,7 @@
 #include <camera/FileCamera.h>
 #include <camera/USBCamera.h>
 #include <rpc/RemoteCamera.h>
-#include <rpc/RcomClient.h>
+#include <rpc/RcomLog.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
 #include <oquam/Oquam.h>
@@ -316,8 +318,9 @@ int main(int argc, char** argv)
                         camera = std::make_unique<romi::USBCamera>(camera_device,
                                                                    width, height);
                 } else if (camera_classname == romi::RemoteCamera::ClassName) {
-                        auto client = romi::RcomClient::create("camera", 10.0);
-                        camera = std::make_unique<romi::RemoteCamera>(client);
+                        auto log = std::make_shared<romi::RcomLog>();
+                        auto client = rcom::RcomClient::create("camera", 10.0, log);
+                        camera = std::make_unique<romi::RemoteCamera>(client, log);
                 } else {
                         throw std::runtime_error("Unknown camera classname");
                 }

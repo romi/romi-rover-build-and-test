@@ -5,7 +5,7 @@
 #include <syslog.h>
 
 #include <rcom/Linux.h>
-#include <rpc/RcomServer.h>
+#include <rcom/RcomServer.h>
 
 #include <rover/RoverOptions.h>
 #include <rpc/CNCAdaptor.h>
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 
                 // RPC access
                 romi::CNCAdaptor adaptor(oquam);
-                auto server = romi::RcomServer::create("cnc", adaptor);
+                auto server = rcom::RcomServer::create("cnc", adaptor);
                 
                 while (!quit) {
                         server->handle_events();

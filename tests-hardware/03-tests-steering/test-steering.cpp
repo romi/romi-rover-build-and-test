@@ -31,7 +31,6 @@
 #include <syslog.h>
 #include <fstream>
 
-#include <rpc/RcomServer.h>
 #include <RomiSerialClient.h>
 #include <RSerial.h>
 #include <util/ClockAccessor.h>
@@ -57,15 +56,13 @@ std::atomic<bool> quit(false);
 void SignalHandler(int signal)
 {
         if (signal == SIGSEGV){
-                syslog(1, "rcom-registry segmentation fault");
+                syslog(1, "segmentation fault");
                 exit(signal);
-        }
-        else if (signal == SIGINT){
+        } else if (signal == SIGINT) {
                 r_info("Ctrl-C Quitting Application");
                 perror("init_signal_handler");
                 quit = true;
-        }
-        else{
+        } else {
                 r_err("Unknown signam received %d", signal);
         }
 }

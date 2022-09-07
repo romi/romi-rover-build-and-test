@@ -34,12 +34,13 @@
 #include <rcom/MessageLink.h>
 #include <rcom/Socket.h>
 #include <rcom/SocketFactory.h>
+#include <rcom/RcomClient.h>
 
 #include <util/Clock.h>
 #include <util/ClockAccessor.h>
 #include <rover/RoverOptions.h>
 #include <rpc/RemoteFunctionCallNames.h>
-#include <rpc/RcomClient.h>
+#include <rpc/RcomLog.h>
 #include <oquam/StepperSettings.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
@@ -48,7 +49,6 @@
 #include <data_provider/GpsLocationProvider.h>
 #include <ui/ScriptList.h>
 #include <ui/ScriptMenu.h>
-#include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
 
 std::atomic<bool> quit(false);
@@ -116,7 +116,9 @@ bool send_execute_state(std::unique_ptr<rcom::IWebSocket>& webclient, const char
 std::unique_ptr<rcom::IWebSocket>
 try_create_remote_connection(rcom::Address& remote_address)
 {
-        rcom::SocketFactory socketFactory;
+        std::shared_ptr<rcom::ILinux> linux = std::make_shared<rcom::Linux>();
+        std::shared_ptr<rcom::ILog> log = std::make_shared<romi::RcomLog>();
+        rcom::SocketFactory socketFactory(linux, log);
         std::unique_ptr<rcom::IWebSocket> webclient(nullptr);
         while (!quit && (webclient == nullptr)) {
                 try {

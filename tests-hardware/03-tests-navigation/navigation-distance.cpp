@@ -34,7 +34,6 @@
 #include <util/ClockAccessor.h>
 #include <util/RomiSerialLog.h>
 #include <util/Logger.h>
-#include <rpc/RcomServer.h>
 #include <hal/BrushMotorDriver.h>
 #include <rover/Navigation.h>
 #include <rover/NavigationSettings.h>
@@ -59,7 +58,7 @@ std::atomic<bool> quit(false);
 void SignalHandler(int signal)
 {
         if (signal == SIGSEGV){
-                syslog(1, "rcom-registry segmentation fault");
+                syslog(1, "navigation-distance segmentation fault");
                 exit(signal);
         } else if (signal == SIGINT) {
                 r_info("Ctrl-C Quitting Application");

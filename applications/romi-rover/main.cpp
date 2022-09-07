@@ -29,8 +29,8 @@
 #include <string.h>
 
 #include <rcom/Linux.h>
-#include <rcom/WebSocketServerFactory.h>
 #include <rcom/RegistryServer.h>
+#include <rcom/RcomClient.h>
 
 #include <RSerial.h>
 #include <RomiSerialClient.h>
@@ -59,7 +59,6 @@
 #include <api/EventTimer.h>
 #include <ui/ScriptList.h>
 #include <ui/ScriptMenu.h>
-#include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
 #include <battery_monitor/BatteryMonitor.h>
 //#include <notifications/FluidSoundNotifications.h>
@@ -76,7 +75,7 @@
 #include <camera/FileCamera.h>
 #include <camera/USBCamera.h>
 #include <rpc/RemoteCamera.h>
-#include <rpc/RcomClient.h>
+#include <rpc/RcomLog.h>
 #include <hal/BrushMotorDriver.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
@@ -151,7 +150,8 @@ int main(int argc, char** argv)
                         rcom::RegistryServer::set_address(registry.c_str());
                 
                 rcom::Linux linux;
-
+                auto rcomlog = std::make_shared<romi::RcomLog>();
+                        
                 // Session
                 r_info("main: Creating session");
                 romi::RomiDeviceData romiDeviceData;
@@ -252,6 +252,7 @@ int main(int argc, char** argv)
                                                    homing);
                 romi::Oquam oquam(cnc_controller, oquam_settings, session);
 
+                
                 // Camera
                 // TBD: Use refactored functions. get_camera_class
                 r_info("main: Creating camera");
@@ -269,8 +270,8 @@ int main(int argc, char** argv)
                         double height = (double) config["weeder"]["usb-camera"]["height"];
                         camera = std::make_unique<romi::USBCamera>(camera_device, width, height);
                 } else if (camera_classname == romi::RemoteCamera::ClassName) {
-                        auto client = romi::RcomClient::create("camera", 10.0);
-                        camera = std::make_unique<romi::RemoteCamera>(client);
+                        auto client = rcom::RcomClient::create("camera", 10.0, rcomlog);
+                        camera = std::make_unique<romi::RemoteCamera>(client, rcomlog);
                 } else {
                         throw std::runtime_error("Unknown camera classname");
                 }
@@ -319,7 +320,8 @@ int main(int argc, char** argv)
                                                                         5.0 * M_PI / 180.0);
 
                 } else if (track_follower_name == "python") {
-                        auto python_client = romi::RcomClient::create("python", 10.0);
+                        auto python_client = rcom::RcomClient::create("python",
+                                                                      10.0, rcomlog);
                         double pixels_per_meter = compute_pixels_per_meter(config);
                         track_follower = std::make_unique<romi::PythonTrackFollower>(*camera,
                                                                                      python_client,
@@ -426,7 +428,7 @@ int main(int argc, char** argv)
                 romi::RemoteStateInputDevice remoteStateInputDevice;
 
 
-            // Rover
+                // Rover
                 r_info("main: Creating rover");
                 romi::Rover rover(input_device,
                                   display,
@@ -440,12 +442,14 @@ int main(int argc, char** argv)
                                   *imager,
                                   remoteStateInputDevice);
 
-                auto webserver_socket_factory = rcom::WebSocketServerFactory::create();
                 auto scriptHubListener = std::make_shared<romi::ScriptHubListener>(rover);
-                romi::ScriptHub scriptHub(scriptHubListener,
-                                          webserver_socket_factory,
-                                          romi::ScriptHubListeningPort);
+                auto scriptHub = rcom::MessageHub::create("script",
+                                                          scriptHubListener,
+                                                          rcomlog,
+                                                          romi::ScriptHubListeningPort,
+                                                          true);
 
+                
                 // State machine
                 r_info("main: Creating state machine");
                 romi::RoverStateMachine state_machine(rover);
@@ -476,7 +480,7 @@ int main(int argc, char** argv)
                         try {
                                 user_interface.handle_events();
 
-                                scriptHub.handle_events();
+                                scriptHub->handle_events();
 
                                 // FIXME
                                 //double now = clock->time();

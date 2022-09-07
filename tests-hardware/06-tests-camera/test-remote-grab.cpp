@@ -3,8 +3,9 @@
 #include "unistd.h"
 #include "fcntl.h"
 #include <util/Logger.h>
-#include <rpc/RcomClient.h>
+#include <rcom/RcomClient.h>
 #include <rpc/RemoteCamera.h>
+#include <rpc/RcomLog.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
@@ -47,8 +48,9 @@ int main(int argc, char **argv)
                         requested_filename = argv[2];
                 }
                 
-                auto client = romi::RcomClient::create("camera", 10.0);
-                romi::RemoteCamera camera(client);
+                auto log = std::make_shared<romi::RcomLog>();
+                auto client = rcom::RcomClient::create("camera", 10.0, log);
+                romi::RemoteCamera camera(client, log);
 
                 quit_on_control_c();
                 

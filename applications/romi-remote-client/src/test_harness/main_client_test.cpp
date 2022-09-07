@@ -29,7 +29,7 @@
 #include <thread>
 
 #include <rcom/Linux.h>
-#include <rcom/WebSocketServerFactory.h>
+#include <rcom/MessageHub.h>
 
 #include <util/Clock.h>
 #include <util/ClockAccessor.h>
@@ -41,8 +41,8 @@
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
 #include <ui/ScriptList.h>
-#include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
+#include <rpc/RcomLog.h>
 #include <rover/EventsAndStates.h>
 #include <rover/RoverScriptEngine.h>
 #include <ui/RemoteStateInputDevice.h>
@@ -145,10 +145,14 @@ int main(int argc, char** argv)
                                   mockMenu, script_engine, mockNotifications,
                                   mockWeeder, mockImager, remoteStateInputDevice);
 
-                auto webserver_socket_factory = rcom::WebSocketServerFactory::create();
+                std::shared_ptr<rcom::ILog> rcomlog = std::make_shared<romi::RcomLog>();
                 auto scriptHubListener = std::make_shared<romi::ScriptHubListener>(rover);
-                romi::ScriptHub scriptHub(scriptHubListener, webserver_socket_factory,
-                                          romi::ScriptHubListeningPort);
+                auto scriptHub = rcom::MessageHub::create("script",
+                                                          scriptHubListener,
+                                                          rcomlog,
+                                                          romi::ScriptHubListeningPort,
+                                                          true);
+                
                 // State machine
                 r_info("main: Creating state machine");
                 romi::RoverStateMachine state_machine(rover);
@@ -161,7 +165,7 @@ int main(int argc, char** argv)
                         
                         try {
                             using namespace std::chrono_literals;
-                            scriptHub.handle_events();
+                            scriptHub->handle_events();
                             user_interface.handle_events();
 
                             std::this_thread::sleep_for(5ms);
