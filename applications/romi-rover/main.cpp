@@ -271,7 +271,7 @@ int main(int argc, char** argv)
                         camera = std::make_unique<romi::USBCamera>(camera_device, width, height);
                 } else if (camera_classname == romi::RemoteCamera::ClassName) {
                         auto client = rcom::RcomClient::create("camera", 10.0, rcomlog);
-                        camera = std::make_unique<romi::RemoteCamera>(client, rcomlog);
+                        camera = std::make_unique<romi::RemoteCamera>(client);
                 } else {
                         throw std::runtime_error("Unknown camera classname");
                 }

@@ -50,7 +50,7 @@ int main(int argc, char **argv)
                 
                 auto log = std::make_shared<romi::RcomLog>();
                 auto client = rcom::RcomClient::create("camera", 10.0, log);
-                romi::RemoteCamera camera(client, log);
+                romi::RemoteCamera camera(client);
 
                 quit_on_control_c();
                 
