@@ -1,6 +1,7 @@
 import argparse
 import math
 from romi.remote_device import OquamXYTheta
+import time
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -9,7 +10,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     cnc = OquamXYTheta("cnc", args.registry)
+    cnc.power_down()
     cnc.power_up()
+    cnc.homing()
 
     dimension = cnc.get_range()
     print(f"dimension={dimension}")
@@ -20,6 +23,9 @@ if __name__ == '__main__':
             dimension[1][1] - dimension[1][0])
     r = (d - 0.02) / 2
     print(f"c=({xc}, {yc}), r={r}")
+
+    time.sleep(2)
+    cnc.moveto(0.2, 0, 0, 0.1)
     
     #cnc.moveto(0.1, 0, 0, 0.5)
     #cnc.moveto(0, 0.1, 0, 0.5)
@@ -35,9 +41,9 @@ if __name__ == '__main__':
     
     print("*** position=", cnc.get_position())
 
-    cnc.moveto(0.0, 0.0, 0, 0.1)
+    cnc.moveto(0.0, 0.0, 0, 0.5)
 
-    print("*** position=", cnc.get_position())
+    #print("*** position=", cnc.get_position())
     
     #cnc.moveto(0, 0.7, 0, 1)
     #cnc.moveto(0.7, 0, 0, 1)

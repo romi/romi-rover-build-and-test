@@ -1,6 +1,6 @@
 {
     "oquam": {
-        "cnc-range": [[0, 0.750000], [0, 0.750000], [-100000, 100000]],
+        "cnc-range": [[0, 0.70000], [0, 0.70000], [-100000, 100000]],
         "path-slice-duration": 0.020000,
         "path-maximum-deviation": 0.010000,
         "controller-classname": "stepper-controller",
