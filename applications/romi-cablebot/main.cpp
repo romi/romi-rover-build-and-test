@@ -41,6 +41,7 @@
 #include <camera/ICameraSettings.h>
 #include <camera/CameraInfoIO.h>
 #include <cablebot/Cablebot.h>
+#include <util/Logger.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
