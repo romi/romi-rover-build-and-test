@@ -27,15 +27,17 @@
 #include <r.h>
 
 #include <rcom/RegistryServer.h>
+#include <rcom/RcomServer.h>
+
+#include <RomiSerialClient.h>
+
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
 #include <rpc/CameraMountAdaptor.h>
-#include <rpc/RcomServer.h>
 #include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
 #include <util/ClockAccessor.h>
-#include <RomiSerialClient.h>
 #include <camera/ICameraSettings.h>
 #include <camera/CameraInfoIO.h>
 #include <cablebot/Cablebot.h>

@@ -25,14 +25,16 @@
 #include <memory>
 
 #include <rcom/RegistryServer.h>
+#include <rcom/RcomServer.h>
+
+#include <RomiSerialClient.h>
+
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
-#include <rpc/RcomServer.h>
 #include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
 #include <util/ClockAccessor.h>
-#include <RomiSerialClient.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
