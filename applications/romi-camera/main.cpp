@@ -146,7 +146,7 @@ int main(int argc, char **argv)
                 std::string topic = options.get_value(kTopic);
                 auto camera = romi::PiCamera::create(*settings);
                 romi::CameraAdaptor adaptor(*camera);
-                auto camera_server = romi::RcomServer::create(topic, adaptor);
+                auto camera_server = rcom::RcomServer::create(topic, adaptor);
                 
                 quit_on_control_c();
                 

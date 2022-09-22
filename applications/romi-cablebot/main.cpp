@@ -144,10 +144,10 @@ int main(int argc, char **argv)
 
                 
                 romi::CameraAdaptor remote_camera(*cablebot->camera_);
-                auto camera_server = romi::RcomServer::create("camera", remote_camera);
+                auto camera_server = rcom::RcomServer::create("camera", remote_camera);
                 
                 romi::CameraMountAdaptor remote_camera_mount(*cablebot->mount_);
-                auto cablebot_server = romi::RcomServer::create("cablebot", remote_camera_mount);
+                auto cablebot_server = rcom::RcomServer::create("cablebot", remote_camera_mount);
                 
                 quit_on_control_c();
                 
