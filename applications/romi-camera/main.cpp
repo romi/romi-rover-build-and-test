@@ -35,6 +35,7 @@
 #include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
 #include <util/ClockAccessor.h>
+#include <util/Logger.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
