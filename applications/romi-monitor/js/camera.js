@@ -1,11 +1,12 @@
-var remoteCamera = null;
 var controlPanel = null;
-
+var remoteCamera = null;
+var imageViewer = null;
 
 class ImageViewer
 {
     constructor(id) {
         this.element = document.getElementById(id);
+        this.active = true;
         this.reader = new FileReader();
         this.reader.onload = (e) => {
             this.element.src = this.reader.result;
@@ -13,7 +14,17 @@ class ImageViewer
     }
 
     displayImage(data) {
-        this.reader.readAsDataURL(data);
+        if (this.active)
+            this.reader.readAsDataURL(data);
+    }
+    
+    showImages() {
+        this.active = true;
+    }
+    
+    skipImages() {
+        this.active = false;
+        this.element.src = "white.png";
     }
 }
 
@@ -110,8 +121,10 @@ class RemoteCamera
 
 class CameraControlPanel
 {
-    constructor(camera) {
-        this.camera = camera;
+    constructor(name, registry) {
+        this.name = name;
+        this.registry = registry;
+        this.camera = null;
         this.sliders = {};
         this.values = {};
         this.menus = {};
@@ -120,15 +133,36 @@ class CameraControlPanel
         this.panels = ["mode", "exposure", "compression", "processing"];
         this.selectedPanel = "mode";
         this.initPanelSelector();
-        this.imageViewer = document.getElementById("image-viewer");
+        this.imageFrame = document.getElementById("image-viewer");
         this.cameraImage = document.getElementById("camera");
+        this.connectButton = document.getElementById("btn-connect");
         this.fixedButton = document.getElementById("btn-fixed-image");
         this.scrollButton = document.getElementById("btn-scroll-image");
         this.repeatButton = document.getElementById("btn-repeat");
+        this.initConnectButton();
         this.initImageSizeButtons();
         this.initGrabButtons();
     }
 
+    setCamera(camera) {
+        if (camera) {
+            this.camera = camera;
+            this.connectButton.classList.add("selected");
+            this.camera.setRepeat(this.continuousUpdate);
+            // FIXME
+            imageViewer.showImages();
+        } else {
+            this.clearCamera();
+        }
+    }
+
+    clearCamera(camera) {
+        this.camera = null;
+        this.connectButton.classList.remove("selected");
+        // FIXME
+        imageViewer.skipImages();
+    }
+    
     initPanelSelector() {
         this.selectPanel(this.selectedPanel);
         $('#panel-select').change((e) => {
@@ -157,6 +191,20 @@ class CameraControlPanel
         }
     }
     
+    initConnectButton() {
+        $('#btn-connect').click((e) => {
+            this.toggleConnection();
+        });
+    }
+    
+    toggleConnection() {
+        if (this.camera) {
+            disconnectCamera();
+        } else {
+            connectCamera(this.name, this.registry);
+        }
+    }
+    
     initImageSizeButtons() {
         $('#btn-fixed-image').click((e) => {
             this.setFixedSizeImage();
@@ -168,7 +216,7 @@ class CameraControlPanel
     
     setFixedSizeImage() {
         console.log("setFixedSizeImage");
-        this.imageViewer.className = "image-viewer fixed-image";
+        this.imageFrame.className = "image-viewer fixed-image";
         this.cameraImage.className = "fixed-image";
         this.fixedButton.classList.add("selected");
         this.scrollButton.classList.remove("selected");
@@ -176,16 +224,17 @@ class CameraControlPanel
     
     setScrollableImage() {
         console.log("setScrollableImage");
-        this.imageViewer.className = "image-viewer scroll-image";
+        this.imageFrame.className = "image-viewer scroll-image";
         this.cameraImage.className = "scroll-image";
         this.fixedButton.classList.remove("selected");
         this.scrollButton.classList.add("selected");
     }
     
     initGrabButtons() {
-        this.camera.setRepeat(this.continuousUpdate);
         $('#btn-grab').click((e) => {
-            this.camera.grabPerhaps();
+            if (this.camera) {
+                this.camera.grabPerhaps();
+            }
         });
         $('#btn-repeat').click((e) => {
             this.toggleRepeat();
@@ -197,7 +246,9 @@ class CameraControlPanel
         this.camera.setRepeat(this.continuousUpdate);
         if (this.continuousUpdate) {
             this.repeatButton.classList.add("selected");
-            this.camera.grab();
+            if (this.camera) {
+                this.camera.grab();
+            }
         } else { 
             this.repeatButton.classList.remove("selected");
         }
@@ -239,9 +290,11 @@ class CameraControlPanel
         if (this.sliders[name])
             this.sliders[name].value = value;
         this.values[name].value = value;
-        this.camera.setValue(name, value);
+        if (this.camera) {
+            this.camera.setValue(name, value);
+        }
     }
-    
+
     initOption(name) {
         var select_id = name + '-select'
         this.menus[name] = document.getElementById(select_id);
@@ -251,11 +304,13 @@ class CameraControlPanel
     }
     
     updateOption(name, value) {
-        this.camera.selectOption(name, value);
+        if (this.camera) {
+            this.camera.selectOption(name, value);
+        }
     }
 }
 
-function initCamera(name, registry, createControlPanel)
+function connectCamera(name, registry)
 {
     var registrySocket = new WebSocket('ws://' + registry + ':10101');
 
@@ -269,10 +324,24 @@ function initCamera(name, registry, createControlPanel)
         var reply = JSON.parse(event.data);
         if (reply.success) {
             registrySocket.close();
-            var viewer = new ImageViewer('camera');
-            remoteCamera = new RemoteCamera(reply.address, viewer);
-            if (createControlPanel)
-                controlPanel = new CameraControlPanel(remoteCamera);
+            remoteCamera = new RemoteCamera(reply.address, imageViewer);
+            if (controlPanel)
+                controlPanel.setCamera(remoteCamera);
         }
     }
+}
+
+function disconnectCamera()
+{
+    remoteCamera = null;
+    controlPanel.clearCamera();
+}
+
+function initCamera(name, registry, createControlPanel)
+{
+    imageViewer = new ImageViewer('camera');
+    if (createControlPanel)
+        controlPanel = new CameraControlPanel(name, registry);
+    else
+        connectCamera(name, registry);
 }
