@@ -97,7 +97,7 @@ int main(int argc, char** argv)
                 double max_steps_per_block = 32000.0; // Should be less than 2^15/2-1
                 double max_slice_duration = stepper_settings.compute_minimum_duration(max_steps_per_block);
                 
-                romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
+                romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kAxisZ };
                 romi::OquamSettings oquam_settings(range,
                                                    stepper_settings.maximum_speed,
                                                    stepper_settings.maximum_acceleration,
