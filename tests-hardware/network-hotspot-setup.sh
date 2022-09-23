@@ -74,7 +74,8 @@ if [[ -z "${SSID2}" ]]; then
 fi
 # Environment variable defining password:
 if [[ -z "${AP_PWD}" ]]; then
-  AP_PWD="p2pfoodlab"
+    AP_PWD=`echo $RANDOM | md5sum | head -c 8`
+    echo Password set to '$AP_PWD'
 fi
 
 cat<<EOF >> /etc/hostapd/hostapd.conf
