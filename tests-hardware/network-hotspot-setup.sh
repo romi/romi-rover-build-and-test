@@ -68,17 +68,26 @@ then
     mv /etc/hostapd/hostapd.conf /etc/hostapd/hostapd.conf-$DATE
 fi
 
+# Environment variable defining SSID name:
+if [[ -z "${SSID2}" ]]; then
+  SSID2="Romi Rover"
+fi
+# Environment variable defining password:
+if [[ -z "${AP_PWD}" ]]; then
+  AP_PWD="p2pfoodlab"
+fi
+
 cat<<EOF >> /etc/hostapd/hostapd.conf
 country_code=FR
 interface=$WLAN
-ssid2="Romi Rover"
+ssid2=$SSID2
 hw_mode=g
 channel=10
 macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 wpa=2
-wpa_passphrase=p2pfoodlab
+wpa_passphrase=$AP_PWD
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP
