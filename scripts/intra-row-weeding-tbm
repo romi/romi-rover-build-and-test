@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+SCRIPT=$0
+SCRIPT_NAME=$(basename $SCRIPT)
+NAME="${SCRIPT_NAME}"
+
+bash rover-start $NAME
