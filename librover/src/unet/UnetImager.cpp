@@ -24,7 +24,7 @@
 
 #include <functional>
 #include "unet/UnetImager.h"
-#include <ClockAccessor.h>
+#include "util/ClockAccessor.h"
 
 namespace romi {
         
@@ -72,7 +72,7 @@ namespace romi {
                                                 r_debug("UnetImager: got response");
                                         }
                                 } else {
-                                        rpp::ClockAccessor::GetInstance()->sleep(0.020);
+                                        romi::ClockAccessor::GetInstance()->sleep(0.020);
                                 }
                         } catch (const std::runtime_error& e) {
                                 r_err("try_unet: exception: %s", e.what());

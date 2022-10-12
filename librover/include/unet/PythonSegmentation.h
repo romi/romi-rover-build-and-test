@@ -26,7 +26,7 @@
 #define __ROMI_PYTHON_SEGMENTATION_H
 
 #include <string>
-#include <rpc/RcomClient.h>
+#include <rcom/RcomClient.h>
 #include "weeder/IImageSegmentation.h"
 
 namespace romi {
@@ -38,7 +38,7 @@ namespace romi {
                 static constexpr const char *kDefaultImageName = "segmentation-image.jpg";
                 static constexpr const char *kDefaultMaskName = "segmentation-mask";
 
-                std::unique_ptr<IRPCClient> rpc_;
+                std::unique_ptr<rcom::IRPCClient> rpc_;
                 
                 std::string function_name_;
                 

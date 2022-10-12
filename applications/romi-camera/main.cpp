@@ -23,16 +23,19 @@
 */
 #include <stdexcept>
 #include <memory>
-#include <r.h>
-#include <RegistryServer.h>
+
+#include <rcom/RegistryServer.h>
+#include <rcom/RcomServer.h>
+
+#include <RomiSerialClient.h>
+
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
-#include <rpc/RcomServer.h>
 #include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
-#include <ClockAccessor.h>
-#include <RomiSerialClient.h>
+#include <util/ClockAccessor.h>
+#include <util/Logger.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
@@ -80,8 +83,8 @@ static std::vector<romi::Option> option_list = {
 
 int main(int argc, char **argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
         
         try {
                 romi::GetOpt options(option_list);
@@ -143,7 +146,7 @@ int main(int argc, char **argv)
                 std::string topic = options.get_value(kTopic);
                 auto camera = romi::PiCamera::create(*settings);
                 romi::CameraAdaptor adaptor(*camera);
-                auto camera_server = romi::RcomServer::create(topic, adaptor);
+                auto camera_server = rcom::RcomServer::create(topic, adaptor);
                 
                 quit_on_control_c();
                 

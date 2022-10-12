@@ -28,11 +28,15 @@
 #include <syslog.h>
 #include <string.h>
 
+#include <rcom/Linux.h>
+#include <rcom/RegistryServer.h>
+#include <rcom/RcomClient.h>
+
 #include <RSerial.h>
 #include <RomiSerialClient.h>
-#include <Linux.h>
-#include <Clock.h>
-#include <ClockAccessor.h>
+#include <util/RomiSerialLog.h>
+#include <util/Clock.h>
+#include <util/ClockAccessor.h>
 #include <configuration/ConfigurationProvider.h>
 #include <rover/Rover.h>
 #include <rover/RoverOptions.h>
@@ -55,7 +59,6 @@
 #include <api/EventTimer.h>
 #include <ui/ScriptList.h>
 #include <ui/ScriptMenu.h>
-#include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
 #include <battery_monitor/BatteryMonitor.h>
 //#include <notifications/FluidSoundNotifications.h>
@@ -72,7 +75,7 @@
 #include <camera/FileCamera.h>
 #include <camera/USBCamera.h>
 #include <rpc/RemoteCamera.h>
-#include <rpc/RcomClient.h>
+#include <rpc/RcomLog.h>
 #include <hal/BrushMotorDriver.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
@@ -85,11 +88,9 @@
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
-#include <RegistryServer.h>
 #include <api/DataLog.h>
 #include <api/DataLogAccessor.h>
 #include <oquam/FakeCNCController.h>
-#include <WebSocketServerFactory.h>
 
 
 std::atomic<bool> quit(false);
@@ -120,8 +121,8 @@ double compute_pixels_per_meter(nlohmann::json& config)
 
 int main(int argc, char** argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
 
         int retval = 1;
 
@@ -129,8 +130,8 @@ int main(int argc, char** argv)
         options.parse(argc, argv);
         options.exit_if_help_requested();
 
-        r_log_init();
-        r_log_set_app("romi-rover");
+        log_init();
+        log_set_application("romi-rover");
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
@@ -148,8 +149,9 @@ int main(int argc, char** argv)
                 if (!registry.empty())
                         rcom::RegistryServer::set_address(registry.c_str());
                 
-                rpp::Linux linux;
-
+                rcom::Linux linux;
+                auto rcomlog = std::make_shared<romi::RcomLog>();
+                        
                 // Session
                 r_info("main: Creating session");
                 romi::RomiDeviceData romiDeviceData;
@@ -169,13 +171,20 @@ int main(int argc, char** argv)
                 romi::DataLogAccessor::set(datalog);
                 r_info("main: Storing datalog in %s", filepath.string().c_str());
 
+
+                // Log redirection for romi serial
+                std::shared_ptr<romiserial::ILog> serial_log
+                        = std::make_shared<romi::RomiSerialLog>();
                 
                 // Display
                 r_info("main: Creating display");
                 std::string display_device = config["ports"]["display-device"]["port"];
 
                 std::string client_name("display_device");
-                auto display_serial = romiserial::RomiSerialClient::create(display_device, client_name);
+                auto display_serial
+                        = romiserial::RomiSerialClient::create(display_device,
+                                                               client_name,
+                                                               serial_log);
                 romi::CrystalDisplay display(display_serial);
                 display.clear(0);
                 display.clear(1);
@@ -192,7 +201,9 @@ int main(int argc, char** argv)
                 r_info("main: Creating CNC controller");
                 std::string cnc_device = config["ports"]["oquam"]["port"];
                 client_name = "cnc_device";
-                auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
+                auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device,
+                                                                       client_name,
+                                                                       serial_log);
                 romi::StepperController cnc_controller(cnc_serial);
                 //romi::FakeCNCController cnc_controller;
 
@@ -204,9 +215,14 @@ int main(int argc, char** argv)
                     r_info("main: Creating Battery Monitor");
                     std::string battery_monotor_device = config["ports"]["battery-monitor"]["port"];
                     client_name = "battery-monitor";
-                    auto battery_serial = romiserial::RomiSerialClient::create(battery_monotor_device, client_name);
+                    auto battery_serial
+                            = romiserial::RomiSerialClient::create(battery_monotor_device,
+                                                                   client_name,
+                                                                   serial_log);
 
-                    battery_mon = std::make_unique<romi::BatteryMonitor>(battery_serial, datalog, quit);
+                    battery_mon
+                            = std::make_unique<romi::BatteryMonitor>(battery_serial,
+                                                                     datalog, quit);
                     battery_mon->enable();
                 }
                 catch (std::exception& e){
@@ -236,6 +252,7 @@ int main(int argc, char** argv)
                                                    homing);
                 romi::Oquam oquam(cnc_controller, oquam_settings, session);
 
+                
                 // Camera
                 // TBD: Use refactored functions. get_camera_class
                 r_info("main: Creating camera");
@@ -253,7 +270,7 @@ int main(int argc, char** argv)
                         double height = (double) config["weeder"]["usb-camera"]["height"];
                         camera = std::make_unique<romi::USBCamera>(camera_device, width, height);
                 } else if (camera_classname == romi::RemoteCamera::ClassName) {
-                        auto client = romi::RcomClient::create("camera", 10.0);
+                        auto client = rcom::RcomClient::create("camera", 10.0, rcomlog);
                         camera = std::make_unique<romi::RemoteCamera>(client);
                 } else {
                         throw std::runtime_error("Unknown camera classname");
@@ -279,7 +296,9 @@ int main(int argc, char** argv)
                 std::string driver_device = config["ports"]["brush-motor-driver"]["port"];
                 nlohmann::json driver_settings = config.at("navigation").at("brush-motor-driver");
                 client_name = "brush_motor_driver_device";
-                auto driver_serial = romiserial::RomiSerialClient::create(driver_device, client_name);
+                auto driver_serial = romiserial::RomiSerialClient::create(driver_device,
+                                                                          client_name,
+                                                                          serial_log);
                 romi::BrushMotorDriver motor_driver(driver_serial,
                                                     driver_settings,
                                                     rover_config.compute_max_angular_speed(),
@@ -301,7 +320,8 @@ int main(int argc, char** argv)
                                                                         5.0 * M_PI / 180.0);
 
                 } else if (track_follower_name == "python") {
-                        auto python_client = romi::RcomClient::create("python", 10.0);
+                        auto python_client = rcom::RcomClient::create("python",
+                                                                      10.0, rcomlog);
                         double pixels_per_meter = compute_pixels_per_meter(config);
                         track_follower = std::make_unique<romi::PythonTrackFollower>(*camera,
                                                                                      python_client,
@@ -311,7 +331,9 @@ int main(int argc, char** argv)
                 } else if (track_follower_name == "imu") {
                         std::string imu_device = config["ports"]["imu"]["port"];
                         client_name = "imu_device";
-                        auto imu_serial = romiserial::RomiSerialClient::create(imu_device, client_name);
+                        auto imu_serial = romiserial::RomiSerialClient::create(imu_device,
+                                                                               client_name,
+                                                                               serial_log);
                         track_follower = std::make_unique<romi::IMUTrackFollower>(imu_serial);
                 } else {
                         r_err("Unknown track follower: %s", track_follower_name.c_str());
@@ -333,7 +355,10 @@ int main(int argc, char** argv)
                 
                 std::string steering_device = config["ports"]["steering"]["port"];
                 client_name = "steering_device";
-                auto steering_serial = romiserial::RomiSerialClient::create(steering_device, client_name);
+                auto steering_serial
+                        = romiserial::RomiSerialClient::create(steering_device,
+                                                               client_name,
+                                                               serial_log);
                 romi::SteeringController steering_controller(steering_serial);
 
                 // REFACTOR. ADD THESE TO A STEERING CONSTANTS FILE.
@@ -403,7 +428,7 @@ int main(int argc, char** argv)
                 romi::RemoteStateInputDevice remoteStateInputDevice;
 
 
-            // Rover
+                // Rover
                 r_info("main: Creating rover");
                 romi::Rover rover(input_device,
                                   display,
@@ -417,10 +442,14 @@ int main(int argc, char** argv)
                                   *imager,
                                   remoteStateInputDevice);
 
-                auto webserver_socket_factory = rcom::WebSocketServerFactory::create();
-                auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
-                ScriptHub scriptHub(scriptHubListener, webserver_socket_factory, ScriptHubListeningPort);
+                auto scriptHubListener = std::make_shared<romi::ScriptHubListener>(rover);
+                auto scriptHub = rcom::MessageHub::create("script",
+                                                          scriptHubListener,
+                                                          rcomlog,
+                                                          romi::ScriptHubListeningPort,
+                                                          true);
 
+                
                 // State machine
                 r_info("main: Creating state machine");
                 romi::RoverStateMachine state_machine(rover);
@@ -451,7 +480,7 @@ int main(int argc, char** argv)
                         try {
                                 user_interface.handle_events();
 
-                                scriptHub.handle_events();
+                                scriptHub->handle_events();
 
                                 // FIXME
                                 //double now = clock->time();

@@ -1,7 +1,7 @@
 #include <stdexcept>
-#include <r.h>
-#include <Clock.h>
-#include <ClockAccessor.h>
+
+#include <util/Clock.h>
+#include <util/ClockAccessor.h>
 #include <picamera/PiCamera.h>
 #include <picamera/PiCameraSettings.h>
 
@@ -41,7 +41,7 @@ int main()
                 quit_on_control_c();
                 
                 for (int i = 0; !quit; i++) {
-                        auto clock = rpp::ClockAccessor::GetInstance();
+                        auto clock = romi::ClockAccessor::GetInstance();
                         double start_time = clock->time();
                         rcom::MemBuffer& jpeg = camera->grab_jpeg();
                         r_info("Grab: %f s", clock->time() - start_time);

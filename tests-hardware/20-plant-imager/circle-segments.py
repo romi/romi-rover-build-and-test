@@ -24,10 +24,14 @@ if __name__ == '__main__':
     print(f"c=({xc}, {yc}), r={r}")
 
     speed = 0.4
+    N = 16
     
     cnc.moveto(xc - r, yc, 0.0, speed)
-    
-    cnc.helix(xc, yc, -2.0 * math.pi, -2.0 * math.pi, speed)
+
+    for i in range(N):
+        angle = -2.0 * math.pi / N
+        cnc.helix(xc, yc, angle, angle, speed)
+        
     #cnc.helix(xc, yc, -0.5 * math.pi, -0.5 * math.pi, speed)
 
     position = cnc.get_position()

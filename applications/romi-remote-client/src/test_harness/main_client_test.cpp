@@ -28,21 +28,21 @@
 #include <syslog.h>
 #include <thread>
 
-#include <Linux.h>
-#include <Clock.h>
-#include <ClockAccessor.h>
-#include <rover/RoverOptions.h>
+#include <rcom/Linux.h>
+#include <rcom/MessageHub.h>
 
+#include <util/Clock.h>
+#include <util/ClockAccessor.h>
+#include <rover/RoverOptions.h>
 #include <oquam/StepperSettings.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
-
 #include <ui/ScriptList.h>
-#include <rpc/ScriptHub.h>
 #include <rpc/ScriptHubListener.h>
+#include <rpc/RcomLog.h>
 #include <rover/EventsAndStates.h>
 #include <rover/RoverScriptEngine.h>
 #include <ui/RemoteStateInputDevice.h>
@@ -59,7 +59,6 @@
 #include "mock_notifications.h"
 #include "mock_weeder.h"
 #include "mock_imager.h"
-#include "WebSocketServerFactory.h"
 
 
 std::atomic<bool> quit(false);
@@ -82,8 +81,8 @@ void SignalHandler(int signal)
 
 int main(int argc, char** argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
 
         int retval = 1;
 
@@ -91,15 +90,15 @@ int main(int argc, char** argv)
         options.parse(argc, argv);
         options.exit_if_help_requested();
 
-        r_log_init();
-        r_log_set_app("romi-rover");
+        log_init();
+        log_set_application("romi-rover");
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
 
         try {
 
-                rpp::Linux linux;
+                rcom::Linux linux;
 
                 // Session
                 r_info("main: Creating session");
@@ -141,13 +140,20 @@ int main(int argc, char** argv)
                 romi::RoverScriptEngine script_engine(scripts, romi::event_script_finished,
                                                   romi::event_script_error);
 
-                romi::Rover rover(mockInputDevice, mockDisplay, mockSpeedController, mockNavigation, mockEventTimer,
-                                  mockMenu, script_engine, mockNotifications, mockWeeder, mockImager, remoteStateInputDevice);
+                romi::Rover rover(mockInputDevice, mockDisplay, mockSpeedController,
+                                  mockNavigation, mockEventTimer,
+                                  mockMenu, script_engine, mockNotifications,
+                                  mockWeeder, mockImager, remoteStateInputDevice);
 
-                auto webserver_socket_factory = rcom::WebSocketServerFactory::create();
-                auto scriptHubListener = std::make_shared<ScriptHubListener>(rover);
-                ScriptHub scriptHub(scriptHubListener, webserver_socket_factory, ScriptHubListeningPort);
-            // State machine
+                std::shared_ptr<rcom::ILog> rcomlog = std::make_shared<romi::RcomLog>();
+                auto scriptHubListener = std::make_shared<romi::ScriptHubListener>(rover);
+                auto scriptHub = rcom::MessageHub::create("script",
+                                                          scriptHubListener,
+                                                          rcomlog,
+                                                          romi::ScriptHubListeningPort,
+                                                          true);
+                
+                // State machine
                 r_info("main: Creating state machine");
                 romi::RoverStateMachine state_machine(rover);
 
@@ -159,7 +165,7 @@ int main(int argc, char** argv)
                         
                         try {
                             using namespace std::chrono_literals;
-                            scriptHub.handle_events();
+                            scriptHub->handle_events();
                             user_interface.handle_events();
 
                             std::this_thread::sleep_for(5ms);

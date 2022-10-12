@@ -28,15 +28,18 @@
 #include <syslog.h>
 #include <string.h>
 
-#include <Linux.h>
+#include <rcom/Linux.h>
+#include <rcom/RcomClient.h>
+
 #include <RomiSerialClient.h>
-#include <Clock.h>
-#include <ClockAccessor.h>
+#include <util/Clock.h>
+#include <util/ClockAccessor.h>
+#include <util/RomiSerialLog.h>
 #include <configuration/ConfigurationProvider.h>
 #include <camera/FileCamera.h>
 #include <camera/USBCamera.h>
 #include <rpc/RemoteCamera.h>
-#include <rpc/RcomClient.h>
+#include <rpc/RcomLog.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
 #include <oquam/Oquam.h>
@@ -222,8 +225,8 @@ void set_height(romi::CNCRange& range, romi::Oquam& oquam, romi::IJoystick& joys
 
 int main(int argc, char** argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
 
         int retval = 1;
 
@@ -231,8 +234,8 @@ int main(int argc, char** argv)
         options.parse(argc, argv);
         options.exit_if_help_requested();
 
-        r_log_init();
-        r_log_set_app("move-and-grab");
+        log_init();
+        log_set_application("move-and-grab");
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
@@ -246,7 +249,7 @@ int main(int argc, char** argv)
 
                 // Session
                 r_info("main: Creating session");
-                rpp::Linux linux;
+                rcom::Linux linux;
                 romi::RomiDeviceData romiDeviceData;
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
@@ -267,8 +270,12 @@ int main(int argc, char** argv)
                 // CNC controller
                 r_info("main: Creating CNC controller");
                 std::string cnc_device = config["ports"]["oquam"]["port"];
-                std::string client_name("cnc_device");
-                auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device, client_name);
+                std::string client_name("cnc_device");                
+                std::shared_ptr<romiserial::ILog> log
+                        = std::make_shared<romi::RomiSerialLog>();
+                auto cnc_serial = romiserial::RomiSerialClient::create(cnc_device,
+                                                                       client_name,
+                                                                       log);
                 romi::StepperController cnc_controller(cnc_serial);
 
                 
@@ -311,7 +318,8 @@ int main(int argc, char** argv)
                         camera = std::make_unique<romi::USBCamera>(camera_device,
                                                                    width, height);
                 } else if (camera_classname == romi::RemoteCamera::ClassName) {
-                        auto client = romi::RcomClient::create("camera", 10.0);
+                        auto log = std::make_shared<romi::RcomLog>();
+                        auto client = rcom::RcomClient::create("camera", 10.0, log);
                         camera = std::make_unique<romi::RemoteCamera>(client);
                 } else {
                         throw std::runtime_error("Unknown camera classname");

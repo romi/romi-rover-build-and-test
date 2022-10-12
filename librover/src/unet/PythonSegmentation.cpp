@@ -22,7 +22,7 @@
 
  */
 
-#include <log.h>
+#include <util/Logger.h>
 #include <cv/ImageIO.h>
 #include "unet/PythonSegmentation.h"
 
@@ -55,7 +55,7 @@ namespace romi {
 
                 if (!connected_to_python()) {
                         // Establish a new RPC connection.
-                        rpc_ = romi::RcomClient::create("python", 30);
+                        rpc_ = rcom::RcomClient::create("python", 30);
                         assert_connected_to_python();
                 }
         }
@@ -111,7 +111,7 @@ namespace romi {
                                                      const std::string& output_name)
         {
                 nlohmann::json response;
-                romi::RPCError error;
+                rcom::RPCError error;
                 
                 r_debug("PythonSegmentation: @1");
                 nlohmann::json params {

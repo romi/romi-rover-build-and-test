@@ -4,8 +4,8 @@
 #include <atomic>
 #include <syslog.h>
 
-#include <rpc/RcomServer.h>
-#include "Linux.h"
+#include <rcom/Linux.h>
+#include <rcom/RcomServer.h>
 
 #include <rover/RoverOptions.h>
 #include <rpc/CNCAdaptor.h>
@@ -17,9 +17,8 @@
 #include "session/Session.h"
 #include "data_provider/Gps.h"
 #include "data_provider/GpsLocationProvider.h"
-
-#include "Clock.h"
-#include "ClockAccessor.h"
+#include "util/Clock.h"
+#include "util/ClockAccessor.h"
 
 std::atomic<bool> quit(false);
 
@@ -46,8 +45,8 @@ void SignalHandler(int signal)
 
 int main(int argc, char** argv)
 {
-        std::shared_ptr<rpp::IClock> clock = std::make_shared<rpp::Clock>();
-        rpp::ClockAccessor::SetInstance(clock);
+        std::shared_ptr<romi::IClock> clock = std::make_shared<romi::Clock>();
+        romi::ClockAccessor::SetInstance(clock);
 
         int retval = 1;
 
@@ -55,8 +54,8 @@ int main(int argc, char** argv)
         options.parse(argc, argv);
         options.exit_if_help_requested();
 
-        r_log_init();
-        r_log_set_app("oquam");
+        log_init();
+        log_set_application("oquam");
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
@@ -69,7 +68,7 @@ int main(int argc, char** argv)
                 nlohmann::json config = nlohmann::json::parse(ifs);
 
                 // Session
-                rpp::Linux linux;
+                rcom::Linux linux;
                 romi::RomiDeviceData romiDeviceData;
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
@@ -98,7 +97,7 @@ int main(int argc, char** argv)
                 double max_steps_per_block = 32000.0; // Should be less than 2^15/2-1
                 double max_slice_duration = stepper_settings.compute_minimum_duration(max_steps_per_block);
                 
-                romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kNoAxis };
+                romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kAxisZ };
                 romi::OquamSettings oquam_settings(range,
                                                    stepper_settings.maximum_speed,
                                                    stepper_settings.maximum_acceleration,
@@ -111,7 +110,7 @@ int main(int argc, char** argv)
 
                 // RPC access
                 romi::CNCAdaptor adaptor(oquam);
-                auto server = romi::RcomServer::create("cnc", adaptor);
+                auto server = rcom::RcomServer::create("cnc", adaptor);
                 
                 while (!quit) {
                         server->handle_events();

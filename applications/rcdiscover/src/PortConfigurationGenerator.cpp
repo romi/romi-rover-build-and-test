@@ -1,3 +1,26 @@
+/*
+  romi-rover
+
+  Copyright (C) 2019-2020 Sony Computer Science Laboratories
+  Author(s) Peter Hanappe
+
+  romi-rover is collection of applications for the Romi Rover.
+
+  romi-rover is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see
+  <http://www.gnu.org/licenses/>.
+
+ */
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -17,18 +40,17 @@ PortConfigurationGenerator::PortConfigurationGenerator()
 nlohmann::json
 PortConfigurationGenerator::CreateConfigurationBase(const std::string& json_configuration)
 {
-    nlohmann::json configuration_object;
-    try {
-        configuration_object = nlohmann::json::parse(json_configuration);
-    }
-    catch(nlohmann::json::exception& ex){
-        configuration_object =  nlohmann::json::object();
-    }
-    return configuration_object;
-
+        nlohmann::json configuration_object;
+        try {
+                configuration_object = nlohmann::json::parse(json_configuration);
+        } catch(nlohmann::json::exception& ex){
+                configuration_object =  nlohmann::json::object();
+        }
+        return configuration_object;
 }
 
-void PortConfigurationGenerator::CopyNonSerialDevice(const std::string& key, nlohmann::json& value,
+void PortConfigurationGenerator::CopyNonSerialDevice(const std::string& key,
+                                                     nlohmann::json& value,
                                                      nlohmann::json& valid_ports)
 {
         std::string type = value["type"];
@@ -41,12 +63,11 @@ void PortConfigurationGenerator::CopyNonSerialDevice(const std::string& key, nlo
 nlohmann::json
 PortConfigurationGenerator::CopyUnhandledDeviceTypes(nlohmann::json& previous_ports_object)
 {
-    nlohmann::json valid_ports{};
-    for (auto& el : previous_ports_object.items())
-    {
-        CopyNonSerialDevice(el.key(), el.value(), valid_ports);
-    }
-    return valid_ports;
+        nlohmann::json valid_ports{};
+        for (auto& el : previous_ports_object.items()) {
+                CopyNonSerialDevice(el.key(), el.value(), valid_ports);
+        }
+        return valid_ports;
 }
 
 bool
@@ -58,8 +79,7 @@ PortConfigurationGenerator::CreateConfigurationFile(const std::string& json_conf
         nlohmann::json configuration_object = CreateConfigurationBase(json_configuration);
         nlohmann::json ports{};
         nlohmann::json valid_ports = nlohmann::json::object();;
-        if (configuration_object.contains(serial_ports_configuration_key))
-        {
+        if (configuration_object.contains(serial_ports_configuration_key)) {
             ports = configuration_object[serial_ports_configuration_key];
             valid_ports = CopyUnhandledDeviceTypes(ports);
         }

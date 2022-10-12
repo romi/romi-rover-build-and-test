@@ -25,15 +25,15 @@
 #ifndef __ROMI_UNET_IMAGER_H
 #define __ROMI_UNET_IMAGER_H
 #include <atomic>
-#include <ThreadsafeQueue.h>
+#include <util/ThreadsafeQueue.h>
 #include <camera/Imager.h>
 #include "unet/PythonUnet.h"
 
 class UnetImagerParams
 {
 public:
-    std::string image_path;
-    std::string output_name;
+        std::string image_path;
+        std::string output_name;
 };
 
 namespace romi {
@@ -41,10 +41,10 @@ namespace romi {
         class UnetImager : public PythonUnet, public Imager
         {
         private:
-            ThreadsafeQueue<UnetImagerParams> grab_queue_;
-            std::atomic<bool> quit_;
-            std::unique_ptr<std::thread> unet_thread_;
-            void stop_unet_processing();
+                ThreadsafeQueue<UnetImagerParams> grab_queue_;
+                std::atomic<bool> quit_;
+                std::unique_ptr<std::thread> unet_thread_;
+                void stop_unet_processing();
         protected:
                 
                 bool grab() override;
@@ -55,11 +55,11 @@ namespace romi {
         public:
                 UnetImager(ISession& session, ICamera& camera);
                 ~UnetImager() override;
-            bool start_recording(const std::string& observation_id,
-                                 size_t max_images,
-                                 double max_duration) override;
-            bool stop_recording() override;
-            bool is_recording() override;
+                bool start_recording(const std::string& observation_id,
+                                     size_t max_images,
+                                     double max_duration) override;
+                bool stop_recording() override;
+                bool is_recording() override;
         };
 }
 

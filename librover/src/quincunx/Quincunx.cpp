@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <session/ISession.h>
 #include "quincunx/Quincunx.h"
+#include "util/Logger.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"

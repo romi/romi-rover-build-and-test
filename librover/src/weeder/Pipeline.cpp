@@ -24,6 +24,7 @@
 
 #include <map>
 #include <cv/cv.h>
+#include <util/Logger.h>
 #include "weeder/Pipeline.h"
 #include "astar/AStar.hpp"
 

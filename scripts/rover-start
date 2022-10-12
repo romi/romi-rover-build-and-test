@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+
+SCRIPT=$0
+NAME=$1
+SVM=$2
+
+CAMERA_IP=10.10.10.16
+CAMERA_MODE=video
+CAMERA_FPS=4
+CAMERA_BITRATE=12000000
+CAMERA_USERNAME=romi
+CAMERA_REMOTE_BIN=/home/romi/romi-rover-build-and-test/build/bin/romi-camera
+
+#===============================================================================
+
+
+if [ "x$SVM" == "x" ];
+then
+    SVM=default.json
+fi
+
+echo "============================== $NAME ====================================="
+
+SCRIPT_DIR=$(dirname $SCRIPT)
+ROVER_DIR=$SCRIPT_DIR/../romi-rover-build-and-test
+BIN_DIR=$ROVER_DIR/build/bin
+APPLICATIONS_DIR=$ROVER_DIR/applications
+ROOT_DIR=$SCRIPT_DIR
+MODELS_DIR=$SCRIPT_DIR/models
+
+IP=`hostname -I | awk '{print $1}'`
+# Alternative: ip route get 1.2.3.4 | head -n 1 | awk '{print $7}'
+if [ "x$IP" == "x" ];
+then
+    echo "Couldn't find IP address"
+    exit 1;
+fi
+echo "Using IP $IP"
+
+
+DATE=$(date +"%Y%m%d-%H%M%S")
+CONFIG_FILE=$ROOT_DIR/config/$NAME.json
+SCRIPT_FILE=$ROOT_DIR/scripts/$NAME.script
+SESSION_DIR=$ROOT_DIR/sessions/$DATE
+LOG_DIR=$ROOT_DIR/logs/$DATE
+
+mkdir -p $SESSION_DIR
+mkdir -p $LOG_DIR
+
+bash rover-stop 
+
+echo "==================================================================="
+echo "Config file: $CONFIG_FILE"
+
+
+echo "==================================================================="
+echo "Pinging camera IP (from $IP to $CAMERA_IP)"
+ping -q -c 3 $CAMERA_IP > /dev/null
+CAMERA_IP_NOT_OK=$?
+if [ $CAMERA_IP_NOT_OK == 1 ];
+then
+    echo "Couldn't reach the camera IP. Are you on the right network?"
+    exit 1
+fi
+
+echo "Checking for stale registry and python apps."
+
+X=`ss -tulpn | grep 10101`
+if [ "x$X" != "x" ];
+then
+    echo "Port 10101 does not seem to be closed. Is the rcom-registry still running?"
+    exit 1
+fi
+
+X=`ss -tulpn | grep 10111`
+if [ "x$X" != "x" ];
+then
+    echo "Port 10111 does not seem to be closed. Is the romi-python still running?"
+    exit 1
+fi
+
+
+echo "==================================================================="
+echo "Running rcdiscovery"
+$BIN_DIR/rcdiscover $CONFIG_FILE
+sleep 1
+
+
+echo
+echo
+echo "==================================================================="
+echo "Starting registry"
+$BIN_DIR/rcom-registry > $SESSION_DIR/registry.txt &
+echo "$! " > rover.pid
+sleep 2
+
+echo "Stopping previous camera service"
+ssh $CAMERA_USERNAME@$CAMERA_IP killall romi-camera
+sleep 2
+
+echo "Starting camera"
+ssh $CAMERA_USERNAME@$CAMERA_IP \
+    $CAMERA_REMOTE_BIN \
+    --registry $IP \
+    --mode $CAMERA_MODE \
+    --fps $CAMERA_FPS \
+    --bitrate $CAMERA_BITRATE \
+    > $SESSION_DIR/camera.txt &
+echo "$! " >> rover.pid
+sleep 1
+
+#        --svm-path $MODELS_DIR/blue_tags.json \
+#        --triple-svm-1 $MODELS_DIR/blue_tags.json \
+#        --triple-svm-2 $MODELS_DIR/yellow-hose_0010_1000.json \
+#        --svm-path $MODELS_DIR/$SVM \
+#        --nav-path $MODELS_DIR/$SVM \
+
+#echo "Starting Python"
+python3 $APPLICATIONS_DIR/romi-python/main.py \
+        --model-path /home/hanappe/projects/ROMI/github/rover/acre/models/acre-20220608 \
+        --nav-path $MODELS_DIR/$SVM \
+        --registry $IP \
+        --ip $IP \
+        > $SESSION_DIR/python.txt &
+echo "$! " >> rover.pid
+sleep 3
+
+echo "Starting rover"
+touch $SESSION_DIR/log.txt
+$BIN_DIR/romi-rover \
+    --config $CONFIG_FILE \
+    --session $SESSION_DIR \
+    --script $SCRIPT_FILE \
+    > $SESSION_DIR/rover.txt &
+echo "$! " >> rover.pid
+
+echo "Ready"
+
+tail -f $SESSION_DIR/log.txt \
+     $SESSION_DIR/python.txt \
+     $SESSION_DIR/rover.txt \
+     $SESSION_DIR/registry.txt \
+     $SESSION_DIR/camera.txt
+
+
+

@@ -28,13 +28,13 @@
 #include <iostream>
 #include <stdexcept>
 #include <math.h>
-
 #include <syslog.h>
-#include <rpc/RcomServer.h>
+#include <fstream>
+
 #include <RomiSerialClient.h>
 #include <RSerial.h>
-#include <ClockAccessor.h>
-
+#include <util/ClockAccessor.h>
+#include <util/Logger.h>
 #include <hal/BrushMotorDriver.h>
 #include <rover/Navigation.h>
 #include <rover/NavigationSettings.h>
@@ -50,22 +50,19 @@
 #include <fake/FakeMotorDriver.h>
 #include <oquam/StepperController.h>
 #include <oquam/StepperSettings.h>
-#include <fstream>
 
 std::atomic<bool> quit(false);
 
 void SignalHandler(int signal)
 {
         if (signal == SIGSEGV){
-                syslog(1, "rcom-registry segmentation fault");
+                syslog(1, "segmentation fault");
                 exit(signal);
-        }
-        else if (signal == SIGINT){
+        } else if (signal == SIGINT) {
                 r_info("Ctrl-C Quitting Application");
                 perror("init_signal_handler");
                 quit = true;
-        }
-        else{
+        } else {
                 r_err("Unknown signam received %d", signal);
         }
 }
@@ -140,8 +137,8 @@ int main(int argc, char** argv)
         
         r_info("Navigating at %.1f% m/s", speed);
         
-        r_log_init();
-        r_log_set_app("navigation");
+        log_init();
+        log_set_application("navigation");
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
@@ -240,7 +237,7 @@ int main(int argc, char** argv)
                 }
 
                 //steering_controller.moveto(1000, 0, 0, 0);
-                rpp::ClockAccessor::GetInstance()->sleep(2.0);
+                romi::ClockAccessor::GetInstance()->sleep(2.0);
 
                 //driver.moveat(0, 0);
                 

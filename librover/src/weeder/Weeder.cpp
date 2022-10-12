@@ -22,6 +22,7 @@
 
  */
 
+#include <util/Logger.h>
 #include "weeder/Weeder.h"
 
 // ToDo: Observation_id

@@ -1,0 +1,134 @@
+[
+    {
+        "id": "weeding-workspace",
+        "title": "Weeding 1x",
+        "actions": [
+            {"action": "hoe"}
+        ]
+    },
+    {
+        "id": "move-5x1",
+        "title": "Move 5x",
+        "actions": [
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2}
+        ]
+    },
+    {
+        "id": "weeding-row",
+        "title": "Weeding 24m",
+        "actions": [
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "hoe"}
+        ]
+    },
+    {
+        "id": "move-10x",
+        "title": "Move 10x",
+        "actions": [
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2},
+            {"action": "move", "distance": 0.8, "speed": 0.2}
+        ]
+    },
+    {
+        "id": "move-15m",
+        "title": "Move 15m",
+        "actions": [
+            {"action": "move", "distance": 15.0, "speed": 0.2}
+        ]
+    },
+    {
+        "id": "move-24m",
+        "title": "Move 24m",
+        "actions": [
+            {"action": "move", "distance": 24.0, "speed": 0.2}
+        ]
+    },
+    {
+        "id": "move-36m",
+        "title": "Move 36m",
+        "actions": [
+            {"action": "move", "distance": 36.0, "speed": 0.2}
+        ]
+    },
+    {
+        "id": "start-recording",
+        "title": "Start recording",
+        "actions": [
+            {"action": "start-recording"}
+        ]
+    },
+    {
+        "id": "stop-recording",
+        "title": "Stop recording",
+        "actions": [
+            {"action": "stop-recording"}
+        ]
+    }
+]

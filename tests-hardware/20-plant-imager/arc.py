@@ -11,6 +11,7 @@ if __name__ == '__main__':
     
     cnc = OquamXYTheta("cnc", args.registry)
     cnc.power_up()
+    cnc.homing()
 
     dimension = cnc.get_range()
     print(f"dimension={dimension}")

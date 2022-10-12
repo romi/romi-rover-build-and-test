@@ -4,21 +4,17 @@ include_directories(include
         src)
 
 add_executable(rcdiscover
-                src/main.cpp
-                include/DeviceLister.h
-                src/DeviceLister.cpp
-                include/PortConfigurationGenerator.h
-                src/PortConfigurationGenerator.cpp
-                include/SerialPortIdentification.h
-                src/SerialPortIdentification.cpp
-                include/SerialPortDiscover.h
-                src/SerialPortDiscover.cpp
-        )
+  src/main.cpp
+  include/DeviceLister.h
+  src/DeviceLister.cpp
+  include/PortConfigurationGenerator.h
+  src/PortConfigurationGenerator.cpp
+  include/SerialPortIdentification.h
+  src/SerialPortIdentification.cpp
+  include/SerialPortDiscover.h
+  src/SerialPortDiscover.cpp)
 
-target_link_libraries( rcdiscover
-                        rpp
-                        romiserial
-                        stdc++fs)
+target_link_libraries(rcdiscover romi romiserial)
 
 if(BUILD_TESTS)
     add_subdirectory(test)
