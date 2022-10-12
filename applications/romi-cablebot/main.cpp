@@ -23,6 +23,7 @@
 */
 #include <stdexcept>
 #include <memory>
+#include <thread>
 #include <fstream>
 #include <r.h>
 #include <RegistryServer.h>
@@ -119,39 +120,30 @@ int main(int argc, char **argv)
                 // Cablebot
                 r_debug("romi-cablebot: Initializing cablebot");
                 auto cablebot = romi::Cablebot::create(mode, width, height, fps, bitrate);
-
-                
-                // std::unique_ptr<romi::PiCameraSettings> settings;
-
-                // if (mode == "video") {
-
-                //         r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
-                //         settings = std::make_unique<romi::HQVideoCameraSettings>(width,
-                //                                                                  height,
-                //                                                                  fps);
-                //         settings->bitrate_ = bitrate;
-
-                // } else if (mode == "still") {
-                //         r_info("Camera: still mode.");
-                //         settings = std::make_unique<romi::HQStillCameraSettings>(width, height);
-                // }
-                
-                // auto camera = romi::PiCamera::create(*settings);
-
                 
                 romi::CameraAdaptor remote_camera(*cablebot->camera_);
                 auto camera_server = romi::RcomServer::create("camera", remote_camera);
-                
+        
                 romi::CameraMountAdaptor remote_camera_mount(*cablebot->mount_);
                 auto cablebot_server = romi::RcomServer::create("cablebot", remote_camera_mount);
                 
                 quit_on_control_c();
                 
-                while (!quit) {
-                        camera_server->handle_events();
-                        cablebot_server->handle_events();
-                        clock->sleep(0.001);
-                }
+                std::thread camera_thread([server = std::move(camera_server)]() {
+                        while (!quit) {
+                                server->handle_events();
+                                rpp::ClockAccessor::GetInstance()->sleep(0.002);
+                        }
+                });
+                std::thread cablebot_thread([server = std::move(cablebot_server)]() {
+                        while (!quit) {
+                                server->handle_events();
+                                rpp::ClockAccessor::GetInstance()->sleep(0.002);
+                        }
+                });
+
+                camera_thread.join();
+                cablebot_thread.join();
 
         } catch (std::exception& e) {
                 r_err("RomiCamera: caught exception: %s", e.what());

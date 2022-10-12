@@ -23,6 +23,7 @@
 */
 #include <stdexcept>
 #include <memory>
+#include <math.h>
 #include <r.h>
 #include <cablebot/Cablebot.h>
 #include <configuration/GetOpt.h>
@@ -32,8 +33,9 @@
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <session/Session.h>
-#include <data_provider/CNCLocationProvider.h>
+#include <data_provider/CameraMountLocationProvider.h>
 #include <picamera/PiCameraSettings.h>
+//#include <util/Logger.h>
 
 static const char *kMode = "mode";
 static const char *kVideo = "video";
@@ -77,6 +79,115 @@ static std::vector<romi::Option> option_list = {
         
         { kDirectory, true, ".",
           "The session directory (.)"},
+};
+
+struct ScanPosition
+{
+        double x_;
+        double y_;
+        double z_;
+        double phi_x_;
+        double phi_y_;
+        double phi_z_;
+
+        ScanPosition(double x, double y, double z)
+                : x_(x), y_(y), z_(z),
+                  phi_x_(0.0), phi_y_(0.0), phi_z_(0.0) {
+        }
+};
+
+class ISegment
+{
+public:
+        virtual ~ISegment() = default;
+        virtual std::string& type = 0;
+};
+
+struct ScanPosition
+{
+        double x_;
+        double y_;
+        double z_;
+        double phi_x_;
+        double phi_y_;
+        double phi_z_;
+
+        ScanPosition(double x, double y, double z)
+                : x_(x), y_(y), z_(z),
+                  phi_x_(0.0), phi_y_(0.0), phi_z_(0.0) {
+        }
+};
+
+class IScanTrajectory
+{
+public:
+        virtual ~IScanTrajectory() = default;
+
+        virtual size_t num_positions() = 0;
+        virtual ScanPosition get_position(size_t i) = 0;
+};
+
+class LinearScan : public IScanTrajectory
+{
+protected:
+        double start_;
+        double length_;
+        double interval_;
+        size_t positions_;
+        
+public:
+        LinearScan(double start, double length, double interval);
+        ~LinearScan() override = default;
+
+        size_t num_positions() override;
+        ScanPosition get_position(size_t i) override;
+};
+
+LinearScan::LinearScan(double start, double length, double interval)
+        : start_(start),
+          length_(length),
+          interval_(interval),
+          positions_(0)
+{
+        if (interval_ * length_ <= 0.0) {
+                throw std::runtime_error("LinearScan: length and interval "
+                                         "should be non-zero and "
+                                         "point in the same direction");
+        }
+        positions_ = (size_t) floor(length_ / interval_);
+}
+
+size_t LinearScan::num_positions()
+{
+        return positions_;
+}
+
+ScanPosition LinearScan::get_position(size_t i)
+{
+        return ScanPosition(start_ + i * length_, 0.0, 0.0);
+}
+
+class IScanner
+{
+public:
+        virtual ~IScanner() = default;
+
+        virtual void run(romi::Session& session,
+                         IScanTrajectory& trajectory) = 0;
+        virtual void sync() = 0;
+        virtual double progress() = 0;
+};
+
+class Scanner : public IScanner
+{
+public:
+        Scanner(std::shared_ptr<romi::ImagingDevice>& device);
+        ~Scanner() override = default;
+
+        void run(romi::Session& session,
+                 IScanTrajectory& trajectory) override;
+        void sync() override;
+        double progress() override;
 };
 
 struct ScanOptions
@@ -151,7 +262,9 @@ bool init_scan(romi::ImagingDevice& cablebot, romi::Session& session)
 bool moveto(romi::ImagingDevice& cablebot, double position)
 {
         r_debug("romi-cablebot: Move to %.2f", position);
-        bool success = cablebot.cnc_->moveto(position, 0.0, 0.0, 1.0);
+        bool success = cablebot.mount_->moveto(position, 0.0, 0.0,
+                                               0.0, 0.0, 0.0,
+                                               1.0);
         if (!success) {
                 r_err("moveto: failed");
         }
@@ -174,13 +287,15 @@ bool run_scan(romi::ImagingDevice& cablebot, romi::Session& session,
                 position += interval;
                 counter++;
         }
-        cablebot.cnc_->moveto(0.1, 0.0, 0.0, 1.0);
+        cablebot.mount_->moveto(0.1, 0.0, 0.0,
+                                0.0, 0.0, 0.0,
+                                1.0);
         return success;
 }
 
 void end_scan(romi::ImagingDevice& cablebot, romi::Session& session)
 {
-        cablebot.cnc_->homing();
+        cablebot.mount_->homing();
         cablebot.power_down();
 	session.stop();
         r_debug("romi-cablebot: Scan done");
