@@ -1,12 +1,70 @@
 #!/usr/bin/env bash
 
-LAN=wlan0
+WLAN=wlan0
 ETH=eth0
+SSID2="Romi Rover"
+AP_PWD=""
+
 #WLAN=wlp0s20f3
 #ETH=enp40s0
 
 # From https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md
 # And https://cdn-learn.adafruit.com/downloads/pdf/setting-up-a-raspberry-pi-as-a-wifi-access-point.pdf
+
+usage() {
+  echo "USAGE:"
+  echo "  sudo ./network-hotspot-setup.sh [OPTIONS]
+    "
+
+  echo "DESCRIPTION:"
+  echo "  Configure the network interfaces and routing tables to enable the controller to act as a hotspot.
+  Has to be run as root as it will install the required dependencies.
+  "
+
+  echo "OPTIONS:"
+  echo "  --wlan
+    The name of the wireless lan interface, defaults to '$WLAN'."
+  echo "  --eth
+    The name of the ethernet interface, defaults to '$ETH'."
+  echo "  --ssid
+    The name of the SSID to configure, defaults to '$SSID2'"
+  echo "  --pwd
+    The SSID password to configure, defaults to a set of 8 random alphanumeric values (printed to the terminal)."
+  # General options:
+  echo "  -h, --help
+    Output a usage message and exit."
+}
+
+while [ "$1" != "" ]; do
+  case $1 in
+  --wlan)
+    shift
+    WLAN=$1
+    ;;
+  --eth)
+    shift
+    ETH=$1
+    ;;
+  --ssid)
+    shift
+    SSID2=$1
+    ;;
+  --pwd)
+    shift
+    AP_PWD=$1
+    ;;
+  -h | --help)
+    usage
+    exit
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+  esac
+  shift
+done
+
 
 DEBIAN_FRONTEND=noninteractive apt install -y hostapd dnsmasq netfilter-persistent iptables-persistent
 
@@ -68,14 +126,10 @@ then
     mv /etc/hostapd/hostapd.conf /etc/hostapd/hostapd.conf-$DATE
 fi
 
-# Environment variable defining SSID name:
-if [[ -z "${SSID2}" ]]; then
-  SSID2="Romi Rover"
-fi
-# Environment variable defining password:
-if [[ -z "${AP_PWD}" ]]; then
-    AP_PWD=`echo $RANDOM | md5sum | head -c 8`
-    echo Password set to '$AP_PWD'
+# Variable defining SSID password:
+if [ -z ${AP_PWD+x} ]; then
+  AP_PWD=`echo $RANDOM | md5sum | head -c 8`
+  echo "Password set to '$AP_PWD'"
 fi
 
 cat<<EOF >> /etc/hostapd/hostapd.conf
