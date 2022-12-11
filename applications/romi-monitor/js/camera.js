@@ -30,7 +30,8 @@ class ImageViewer
 
 class RemoteCamera
 {
-    constructor(address, viewer) {
+    constructor(id, address, viewer) {
+        this.id = id;
         this.viewer = viewer;
         this.continuousUpdate = true;
         this.socket = new WebSocket('ws://' + address);
@@ -41,6 +42,12 @@ class RemoteCamera
             this.grab();
         };
         this.encoder = new TextEncoder();
+    }
+    
+    disconnect() {
+        this.continuousUpdate = false;
+        this.socket.onmessage = null;
+        this.socket = null;
     }
     
     isTextMessage(buffer) {
@@ -93,27 +100,40 @@ class RemoteCamera
     }
 
     grab() {
-        var request = { 'method': 'camera:grab-jpeg-binary' };
+        var request = {
+            'method': 'camera:grab-jpeg-binary',
+            'params': {
+                'object-id': this.id
+            }
+        };
         var s = JSON.stringify(request);
         var message = this.encoder.encode(s)
         this.socket.send(message);
     }  
     
     setValue(name, value) {
-        var request = { 'method': 'camera:set-value',
-                        'params': {
-                            'name': name,
-                            'value': parseFloat(value) }};
+        var request = {
+            'method': 'camera:set-value',
+            'params': {
+                'object-id': this.id,
+                'name': name,
+                'value': parseFloat(value)
+            }
+        };
         var s = JSON.stringify(request);
         this.socket.send(s);
     }  
     
     selectOption(name, value) {
         console.log('Select option: ' + name + '=' + value)
-        var request = { 'method': 'camera:select-option',
-                        'params': {
-                            'name': name,
-                            'value': value }};
+        var request = {
+            'method': 'camera:select-option',
+            'params': {
+                'object-id': this.id,
+                'name': name,
+                'value': value
+            }
+        };
         var s = JSON.stringify(request);
         this.socket.send(s);
     }  
@@ -324,7 +344,7 @@ function connectCamera(name, registry)
         var reply = JSON.parse(event.data);
         if (reply.success) {
             registrySocket.close();
-            remoteCamera = new RemoteCamera(reply.address, imageViewer);
+            remoteCamera = new RemoteCamera('camera', reply.address, imageViewer);
             if (controlPanel)
                 controlPanel.setCamera(remoteCamera);
         }
@@ -333,6 +353,7 @@ function connectCamera(name, registry)
 
 function disconnectCamera()
 {
+    remoteCamera.disconnect();
     remoteCamera = null;
     controlPanel.clearCamera();
 }

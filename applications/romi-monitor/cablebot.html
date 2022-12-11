@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any
+         other head content must come *after* these tags -->
+    
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+
+    <title>Romi Rover Camera</title>
+
+  </head>
+  <body>
+      
+    <!---------------------------------------------->
+      
+    <div class="container-fluid">
+      <div id="image-viewer" class="image-viewer fixed-image">
+        <img src="white.png" id="camera" class="fixed-image">
+      </div>
+      <div class="button-panel">
+        <button class="btn" id="btn-connect">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+            <path style="line-height:normal;text-indent:0;text-align:start;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000;text-transform:none;block-progression:tb;isolation:auto;mix-blend-mode:normal" d="M 13.646484 1.6464844 L 12.158203 3.1347656 L 11.839844 2.8164062 C 11.296365 2.2735345 10.580834 2.0019438 9.8652344 2.0019531 C 9.1496346 2.0019625 8.4336568 2.2753275 7.890625 2.8183594 L 6.7070312 4 L 6.3535156 3.6464844 L 5.6464844 4.3535156 L 11.646484 10.353516 L 12.353516 9.6464844 L 12 9.2929688 L 13.183594 8.109375 C 14.269337 7.0224182 14.269657 5.2462199 13.183594 4.1601562 L 12.865234 3.8417969 L 14.353516 2.3535156 L 13.646484 1.6464844 z M 9.8652344 2.9980469 C 10.322901 2.9980069 10.780291 3.1732625 11.132812 3.5253906 L 12.476562 4.8671875 C 13.180499 5.5711238 13.180819 6.6973005 12.476562 7.4023438 L 11.292969 8.5859375 L 7.4140625 4.7070312 L 8.5976562 3.5253906 C 8.9496244 3.1734225 9.4075678 2.9980869 9.8652344 2.9980469 z M 4.3535156 5.6464844 L 3.6464844 6.3535156 L 4 6.7070312 L 2.8164062 7.890625 C 1.7306625 8.9775818 1.7303427 10.75378 2.8164062 11.839844 L 3.1347656 12.158203 L 1.6464844 13.646484 L 2.3535156 14.353516 L 3.8417969 12.865234 L 4.1601562 13.183594 C 5.2471131 14.269337 7.0233113 14.267751 8.109375 13.181641 L 9.2929688 12 L 9.6464844 12.353516 L 10.353516 11.646484 L 4.3535156 5.6464844 z M 4.7070312 7.4140625 L 8.5859375 11.292969 L 7.4023438 12.474609 C 6.6984074 13.178546 5.5722307 13.178866 4.8671875 12.474609 L 3.5234375 11.132812 C 2.8195012 10.428876 2.8191812 9.3026995 3.5234375 8.5976562 L 4.7070312 7.4140625 z"/>
+          </svg>
+        </button>
+        <button class="btn selected" id="btn-fixed-image">
+          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h48v48h-48z" fill="none"/><path d="M10 32h6v6h4v-10h-10v4zm6-16h-6v4h10v-10h-4v6zm12 22h4v-6h6v-4h-10v10zm4-22v-6h-4v10h10v-4h-6z"/></svg>            
+        </button>
+        <button class="btn" id="btn-scroll-image">
+          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h48v48h-48z" fill="none"/><path d="M14 28h-4v10h10v-4h-6v-6zm-4-8h4v-6h6v-4h-10v10zm24 14h-6v4h10v-10h-4v6zm-6-24v4h6v6h4v-10h-10z"/></svg>              
+        </button>
+        <button class="btn" id="btn-grab">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 198.931 198.931">
+	    <path d="M99.469,69.561c-25.423,0-46.104,20.683-46.104,46.104s20.683,46.104,46.104,46.104 c25.421,0,46.104-20.683,46.104-46.104S124.89,69.561,99.469,69.561z M99.469,146.91c-17.229,0-31.245-14.017-31.245-31.245 c0-17.228,14.017-31.245,31.245-31.245c17.228,0,31.245,14.017,31.245,31.245C130.714,132.892,116.698,146.91,99.469,146.91z"/>
+	    <path d="M175.499,44.681h-72.315h-3.715V27.956c0-9.393-7.64-17.036-17.033-17.036H44.247c-9.393,0-17.033,7.642-17.033,17.036 v16.726h-3.777C10.515,44.681,0,55.194,0,68.116v96.465c0,12.92,10.515,23.43,23.437,23.43h152.059 c12.925,0,23.435-10.51,23.435-23.43V68.116C198.934,55.194,188.421,44.681,175.499,44.681z M42.07,27.956 c0-1.201,0.976-2.176,2.177-2.176h38.189c1.199,0,2.174,0.976,2.174,2.177v16.726H42.07V27.956z M175.499,173.152H23.437c-4.73,0-8.578-3.846-8.578-8.571V68.116c0-4.73,3.848-8.576,8.578-8.576h5.451H42.07h42.538h18.573h72.315 c4.73,0,8.576,3.846,8.576,8.576v96.465h0.003C184.075,169.306,180.229,173.152,175.499,173.152z"/>
+	    <rect x="156.012" y="71.816" width="18.989" height="14.859"/>
+          </svg>
+        </button>
+        <button class="btn selected" id="btn-repeat">
+          <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><polyline points="320 120 368 168 320 216" style="fill:none;stroke:#000;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"/><path d="M352,168H144a80.24,80.24,0,0,0-80,80v16" style="fill:none;stroke:#000;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"/><polyline points="192 392 144 344 192 296" style="fill:none;stroke:#000;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"/><path d="M160,344H368a80.24,80.24,0,0,0,80-80V248" style="fill:none;stroke:#000;stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"/></svg>
+        </button>
+        
+        <form style="display: inline;">
+          <select id="panel-select">
+            <option value="mode">Mode</option>
+            <option value="exposure">Exposure</option>
+            <option value="compression">Compression</option>
+            <option value="processing">Processing</option>
+          </select>
+        </form>
+      </div>            
+    </div>
+          
+    <!---------------------------------------------->
+          
+    <div class="container-fluid overflow-scroll">
+      
+      <!---------------------------------------------->
+      
+      <div class="card text-dark bg-light border-success mb-2 mt-2" id="mode-panel">
+        <div class="card-body">
+          
+          <div class="control-input">
+            <div class="control-label"><label for="mode-select">Mode</label></div>
+            <select id="mode-select">
+              <option value="still" selected="true">Still</option>
+              <option value="video">Video</option>
+            </select>
+          </div>
+          
+          <div class="control-input">
+            <div class="control-label"><label for="resolution-select">Resolution</label></div>
+            <select id="resolution-select">
+              <optgroup label="HQ Camera">
+                <option value="4056x3040">4056 x 3040</option>
+                <option value="2028x1520" selected="true">2028 x 1520</option>
+                <option value="1014x760">1014 x 760</option>
+              </optgroup>
+              <optgroup label="V2 Camera">
+                <option value="3280x2464">3280 x 2464</option>
+                <option value="1640x1232">1640 x 1232</option>
+                <option value="820x616">820 x 616</option>
+              </optgroup>
+              <optgroup label="Generic">
+                <option value="1920x1080">1920 x 1080 (HD)</option>
+                <option value="640x480">640 x 480 (VGA)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="control-input">
+            <div class="control-label">Framerate</div>
+            <div class="control-value">
+              <input type="number" id="framerate-value" value="1" min="1" max="30" size="2">
+            </div>
+            <div class="control-info"></div>
+          </div>
+          
+        </div>
+      </div>
+      
+      <!---------------------------------------------->
+
+      <div class="card text-dark bg-light border-success mb-2 mt-2" id="exposure-panel">
+        <div class="card-body">
+
+          <div class="control-input">
+            <div class="control-label"><label for="exposure-mode-select">Exposure Mode</label></div>
+            <select id="exposure-mode-select">
+              <option value="off">Off</option>
+              <option value="auto" selected="true">Auto</option>
+              <option value="sports">Sports</option>
+              <option value="verylong">Verylong</option>
+              <option value="fixedfps">Fixedfps</option>
+              <option value="night">Night</option>
+              <option value="antishake">Antishake</option>
+              
+              <option value="nightpreview">Nightpreview</option>
+              <option value="backlight">Backlight</option>
+              <option value="spotlight">Spotlight</option>
+              <option value="snow">Snow</option>
+              <option value="beach">Beach</option>
+              <option value="fireworks">Fireworks</option>
+            </select>
+          </div>
+
+          <div class="control-input">
+            <div class="control-label">Shutter Speed</div>
+            <div class="control-slider">
+            </div>
+            <div class="control-value">
+              <input type="number" id="shutter-speed-value" value="0" min="0" max="200000" size="5">
+            </div>
+            <div class="control-info">in milliseconds. 0=auto</div>
+          </div>
+
+          <div class="control-input">
+            <div class="control-label">Analog Gain</div>
+            <div class="control-slider">
+              <input type="range" id="analog-gain-slider" value="1" min="1" max="12" step="0.1">
+            </div>
+            <div class="control-value">
+              <input type="number" id="analog-gain-value" value="1" min="1" max="12"  step="0.1" size="3">
+            </div>
+            <div class="control-info"></div>
+          </div>
+        </div>
+      </div>
+
+      <!---------------------------------------------->
+
+      <div class="card text-dark bg-light border-success mb-2 mt-2" id="compression-panel">
+        <div class="card-body">
+
+          <div class="control-input">
+            <div class="control-label">JPEG Quality</div>
+            <div class="control-slider">
+              <input type="range" id="jpeg-quality-slider" value="85" min="0" max="100">
+            </div>
+            <div class="control-value">
+              <input type="number" id="jpeg-quality-value" value="85" min="0" max="100" size="2">
+            </div>
+            <div class="control-info"></div>
+          </div>
+
+          <div class="control-input">
+            <div class="control-label">Bitrate</div>
+            <div class="control-value">
+              <input type="number" id="bitrate-value" value="17000000" min="1000" max="25000000" size="8">
+            </div>
+            <div class="control-info">in bits/s, between 1000 and 25000000.</div>
+          </div>
+        </div>
+      </div>
+
+      <!---------------------------------------------->
+      
+      <div class="card text-dark bg-light border-success mb-2 mt-2" id="processing-panel">
+        <div class="card-body">
+          
+          <div class="control-input">
+            <div class="control-label">Saturation</div>
+            <div class="control-slider">
+              <input type="range" id="saturation-slider" value="0" min="-100" max="100">
+            </div>
+            <div class="control-value">
+              <input type="number" id="saturation-value" value="0" min="-100" max="100" size="2">
+            </div>
+          </div>
+
+          <div class="control-input">
+            <div class="control-label">Sharpness</div>
+            <div class="control-slider">
+              <input type="range" id="sharpness-slider" value="0" min="-100" max="100">
+            </div>
+            <div class="control-value">
+              <input type="number" id="sharpness-value" value="0" min="-100" max="100" size="2">
+            </div>
+          </div>
+
+          <div class="control-input">
+            <div class="control-label">Brightness</div>
+            <div class="control-slider">
+              <input type="range" id="brightness-slider" value="50" min="0" max="100">
+            </div>
+            <div class="control-value">
+              <input type="number" id="brightness-value" value="50" min="0" max="100" size="2">
+            </div>
+          </div>
+          
+          <div class="control-input">
+            <div class="control-label">Contrast</div>
+            <div class="control-slider">
+              <input type="range" id="contrast-slider" value="0" min="-100" max="100">
+            </div>
+            <div class="control-value">
+              <input type="number" id="contrast-value" value="0" min="-100" max="100" size="2">
+            </div>
+          </div>
+
+          <div class="control-input">
+            <div class="control-label">ISO</div>
+            <div class="control-slider">
+              <input type="range" id="iso-slider" value="0" min="50" max="1000">
+            </div>
+            <div class="control-value">
+              <input type="number" id="iso-value" value="0" min="50" max="1000" size="2">
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/plotly.min.js"></script>
+    <script src="js/camera.js"></script>
+
+    <script type="text/javascript">
+      $(function() {
+          //initCamera("camera-top", "10.10.10.18", true);
+          initCamera("cablebot", window.location.hostname, true);
+      });
+    </script>
+    
+  </body>
+</html>

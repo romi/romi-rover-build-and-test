@@ -1,39 +1,77 @@
 {
     "camera": {
-        "id": "camera-cablebot-01",
-        "type": "pi-camera-hq-v10",
-        "name": "Raspbery Pi HQ Camera V1.0",
-        "lens": "CCTV Lens 6mm IR 3MP HD",
-        "sensor": {
-            "resolution": [4056, 3040],
-            "dimensions": [0.006287,  0.004712]
-        },
         "calibration": {
             "date": "2022-07-25",
-            "person": "hanappe",
-            "method": "colmap"
-        },
-        "settings": {
-            "mode": "still",
-            "width": 2028,
-            "height": 1520,
-            "framerate": 5,
-            "bitrate": 17000000
-        },
-        "intrinsics": {
-            "fx?": 2329.391527677837,
-            "fy?": 2329.391527677837,
-            "fx": 2200,
-            "fy": 2200,
-            "cx": 1014.0,
-            "cy": 760.0
+            "method": "colmap",
+            "person": "hanappe"
         },
         "distortion": {
             "type": "simple-radial",
-            "values": [-0.4928269684314728, -0.4928269684314728]
-
-
-
+            "values": [
+                -0.4928269684314728,
+                -0.4928269684314728
+            ]
+        },
+        "id": "camera-cablebot-01",
+        "intrinsics": {
+            "cx": 1014.0,
+            "cy": 760.0,
+            "fx": 2200.0,
+            "fy": 2200.0
+        },
+        "lens": "CCTV Lens 6mm IR 3MP HD",
+        "name": "Raspbery Pi HQ Camera V1.0",
+        "sensor": {
+            "dimensions": [
+                0.006287,
+                0.004712
+            ],
+            "resolution": [
+                4056.0,
+                3040.0
+            ]
+        },
+        "settings": {
+            "analog-gain": 12.0,
+            "bitrate": 17000000,
+            "exposure-mode": "auto",
+            "framerate": 5,
+            "mode": "still",
+            "resolution": "4056x3040",
+            "shutter-speed": 1000.0
+        },
+        "type": "pi-camera-hq-v10"
+    },
+    "programs": [
+        {
+            "enabled": true,
+            "hour": 9,
+            "id": 0,
+            "interval": 0.1,
+            "length": 16,
+            "minute": 0,
+            "start-at": 2,
+            "tilt": 0.0
+        },
+        {
+            "enabled": false,
+            "hour": 12,
+            "id": 1,
+            "interval": 0.1,
+            "length": 16,
+            "minute": 0,
+            "start-at": 2,
+            "tilt": 0.0
+        },
+        {
+            "enabled": false,
+            "hour": 15,
+            "id": 2,
+            "interval": 0.1,
+            "length": 16,
+            "minute": 0,
+            "start-at": 2,
+            "tilt": 0.0
         }
-    }
+    ]
 }
