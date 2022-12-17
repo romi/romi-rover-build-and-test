@@ -1,0 +1,184 @@
+@font-face {
+    font-family: 'din1451alt';
+    src: url('fonts/din1451alt.eot');
+    src: url('fonts/din1451alt.eot?#iefix') format('embedded-opentype'),
+         url('fonts/din1451alt.woff') format('woff'),
+         url('fonts/din1451alt.ttf') format('truetype'),
+         url('fonts/din1451alt.svg#alte_din_1451_mittelschriftRg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+body {
+    font-family: "din1451alt", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    font-size: 18px; 
+    line-height:24px;
+    padding: 0px;
+    margin: 0px;
+}
+
+@media (min-width:320px)  {
+    /* smartphones, iPhone, portrait 480x320 phones */
+    div.image-viewer {
+        width: 320px;
+        height: 240px;
+    }
+}
+@media (min-width:481px)  {
+    /* portrait e-readers (Nook/Kindle), smaller tablets @ 600 or @ 640 wide. */
+    div.image-viewer {
+        width: 480px;
+        height: 320px;
+    }
+}
+@media (min-width:641px)  {
+    /* portrait tablets, portrait iPad, landscape e-readers, landscape 800x480 or 854x480 phones */
+    div.image-viewer {
+        width: 640px;
+        height: 480px;
+    }
+}
+@media (min-width:961px)  {
+    /* tablet, landscape iPad, lo-res laptops ands desktops */
+    div.image-viewer {
+        width: 960px;
+        height: 640px;
+    }
+}
+@media (min-width:1025px) {
+    /* big landscape tablets, laptops, and desktops */
+    div.image-viewer {
+        width: 1014px;
+        height: 760px;
+    }
+}
+
+/* Index */
+
+.index-selector {
+    border: solid 2px black;
+    margin: 6px;
+    border-radius: 5px;
+}
+
+/**************************/
+/* Camera */
+
+div.fixed-image {}
+
+div.scroll-image {
+    overflow: scroll;
+}
+
+img.fixed-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+img.scroll-image {
+    width: 4056px;
+    height: 3040px;
+    object-fit: contain;
+}
+
+.btn {
+    width: 25px;
+    height: 25px;
+    background-color: white; /* Blue background */
+    border: none; /* Remove borders */
+    color: black; /* White text */
+    padding: 0px 0px; /* Some padding */
+    cursor: pointer; /* Mouse pointer on hover */
+}
+
+/* Darker background on mouse-over */
+.btn:hover {
+    background-color: Yellow;
+}
+
+.btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.btn.selected {
+    background-color: Yellow;
+}
+
+
+div.button-panel {
+    margin: 3px;
+}
+
+div.panel-select {
+    margin: 3px;
+}
+
+div.control-input {
+    margin: 5px;
+}
+
+div.control-label {
+    display: inline-block;
+    text-align: right;
+    padding-right: 10px;
+}
+
+div.control-value {
+    display: inline-block;
+}
+
+div.control-slider {
+    display: inline-block;
+}
+
+div.control-info {
+    display: inline-block;
+    text-left: right;
+    padding-left: 20px;
+}
+
+/**************************/
+/* Programs               */
+
+div.program-app {}
+div.program-list {}
+
+div.program {
+    border: solid 2px black;
+    padding: 6px;
+    margin: 6px;
+    border-radius: 5px;
+}
+
+.program-name-section { padding: 10px; }
+.program-name-label { font-weight: bold; display: inline-block; width: 240px; }
+
+.program-time-section { padding: 10px; }
+.program-time-label { display: inline-block; width: 240px; }
+.program-hour { }
+.program-minute { margin-left: 10px; }
+
+.program-travel-section { padding: 10px; }
+.program-travel-label { font-weight: bold; padding-bottom: 10px; }
+.program-start-section {}
+.program-start-label { display: inline-block; width: 240px; }
+.program-start { margin: 4px; }
+.program-length-section {}
+.program-length-label { display: inline-block; width: 240px; }
+.program-length { margin: 4px; }
+.program-interval-section {}
+.program-interval-label { display: inline-block; width: 240px; }
+.program-interval { margin: 4px; }
+.program-end-section {}
+.program-end-label { display: inline-block; width: 240px; }
+.program-end { margin: 4px; }
+.program-tilt-section {}
+.program-tilt-label { display: inline-block; width: 240px; }
+.program-tilt { margin: 4px; }
+
+.program-enabled-section { padding: 10px; }
+.program-enabled-label { display: inline-block; width: 240px; }
+.program-enabled { }
