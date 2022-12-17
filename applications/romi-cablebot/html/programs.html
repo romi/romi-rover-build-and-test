@@ -17,17 +17,21 @@
       
     <!---------------------------------------------->
       
-    <div class="container-fluid">
+    <div class="container">
       <div class="program-app" id="program-app">
       </div>
     </div>
 
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/remotecontroller.js"></script>
     <script src="js/programs.js"></script>
 
     <script type="text/javascript">
       window.onload = function() {
-          initProgramList("cablebot", window.location.hostname);
+          initProgramList("cablebot",
+                          window.location.hostname,
+                          window.location.hostname + ':10100');
       };
     </script>
     

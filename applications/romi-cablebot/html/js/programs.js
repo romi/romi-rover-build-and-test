@@ -1,75 +1,4 @@
-var remoteController = null;
-var programList = null;
 var programListController = null;
-
-class Selector
-{
-    constructor(callback, classname, options) {
-        this.callback = callback;
-        this.element = document.createElement('select');
-        this.element.className = classname;
-        this.element.addEventListener('change', (e) => { this.updateValue(e); });
-        this.makeOptions(options);
-        this.value = null;
-    }
-
-    makeOptions(options) {
-        for (const option of options) {
-            let element = document.createElement('option');
-            element.value = option.value;
-            element.label = option.label;
-            if (option.selected) {
-                element.selected = true;
-                this.value = option.value;
-            }
-            this.element.appendChild(element);
-        }
-    }
-
-    updateValue(e) {
-        this.value = e.target.value;
-        this.callback(this);
-    }
-}
-
-class TextField
-{
-    constructor(callback, classname, value, length) {
-        this.callback = callback;
-        this.value = value;
-        this.element = document.createElement('input');
-        this.element.type = 'text';
-        this.element.value = value;
-        this.element.size = length;
-        this.element.className = classname;
-        this.element.addEventListener('change', (e) => { this.updateValue(e); });
-    }
-
-    updateValue(e) {
-        this.value = e.target.value;
-        this.callback(this);
-    }
-}
-
-class Checkbox
-{
-    constructor(callback, classname, value) {
-        this.callback = callback;
-        this.element = document.createElement('input');
-        this.element.type = 'checkbox';
-        this.element.checked = value;
-        this.element.className = classname;
-        this.element.addEventListener('change', (e) => { this.updateValue(e); });
-        this.value = value;
-    }
-
-    updateValue(e) {
-        this.value = e.target.checked;
-        this.callback(this);
-    }
-}
-
-//
 
 class Program
 {
@@ -89,12 +18,6 @@ class Program
 
     
 }
-
-/*
-Program.prototype.toString = function() {
-    return `Program[id=${this.id}, name=${this.name}]: at ${this.hour}:${this.minute} start at ${this.start} m image every ${this.interval} m over ${this.length}, tilt ${this.tilt}, , enabled: ${this.enabled}`;
-};
-*/
 
 class ProgramList
 {
@@ -344,24 +267,13 @@ class ProgramListController
         this.elementID = elementID;
     }
 
-    setValue(objectId, fieldId, value) {
-        /*
-        console.log("Set: " + fieldId + " " + value);
-        let program = this.getProgram(objectId);
-        if (program) {
-            switch (fieldId) {
-            case 'hour': program.hour = value:
-                break;
-            case 'hour': program.hour = value:
-                break;
-            }
-            this.updateProgramWithId(id);
-        }*/
+    getObjectId() {
+        return 'programs';
     }
 
     connected() {
         console.log('ProgramListController.connected');
-        this.remoteController.send({'method': 'get', 'params': {'object-id': 'programs'}});
+        this.remoteController.invoke(this, 'get');
     }  
 
     handleTextMessage(response) {
@@ -402,30 +314,25 @@ class ProgramListController
     }
 
     displayPrograms() {
-        let view = new ProgramListView(this.programs, this);
         let parent = document.getElementById(this.elementID);
+        let view = new ProgramListView(this.programs, this);
         parent.appendChild(view.element);
     }
 
     updateProgram(program) {
-        let request = {
-            'method': 'update',
-            'params': {
-                'object-id': 'programs',
-                'program': {
-                    'id': program.id,
-                    'name': program.name,
-                    'hour': program.hour,
-                    'minute': program.minute,
-                    'start-at': program.start,
-                    'length': program.length,
-                    'interval': program.interval,
-                    'tilt': program.tilt,
-                    'enabled': program.enabled
-                }
+        let params = {
+            'program': {
+                'id': program.id,
+                'name': program.name,
+                'hour': program.hour,
+                'minute': program.minute,
+                'start-at': program.start,
+                'length': program.length,
+                'interval': program.interval,
+                'tilt': program.tilt,
+                'enabled': program.enabled
             }};
-        console.log('ProgramListController.update: ' + JSON.stringify(request));
-        this.remoteController.send(request);
+        this.remoteController.invoke(this, 'update', params);
     }
     
     updateProgramWithId(id) {
@@ -440,148 +347,13 @@ class ProgramListController
 
 //
 
-class RemoteController
+function initProgramList(name, registry, remoteAddress)
 {
-    constructor(name, registry) {
-        this.name = name;
-        this.registryIP = registry;
-        this.remoteAddress = null;
-        this.socket = null;
-        this.connected = false;
-        this.connectionHandlers = [];
-        this.connect();
-    }
-    
-    connect() {
-        var registrySocket = new WebSocket('ws://' + this.registryIP + ':10101');
-
-        registrySocket.onopen = (event) => {
-            var request = { 'request': 'get', 'topic': this.name };
-            registrySocket.send(JSON.stringify(request));
-        };
-        
-        registrySocket.onmessage = (event) => {
-            console.log(event.data);
-            var reply = JSON.parse(event.data);
-            if (reply.success) {
-                registrySocket.close();
-                this.remoteAddress = reply.address;
-                this.socket = new WebSocket('ws://' + this.remoteAddress);
-                this.socket.onmessage = (event) => {
-                    this.tryHandleMessage(event.data);
-                };
-                this.socket.onopen = (event) => {
-                    this.ignition();
-                };
-            }
-        }
-    }
-
-    callWhenConnected(handler) {
-        if (this.connected) {
-            handler.connected();
-        } else {
-            this.connectionHandlers.push(handler);
-        }
-    }
-
-    ignition() {
-        this.connected = true;
-        for (const handler of this.connectionHandlers) {
-            handler.connected();
-        }
-        this.connectionHandlers = [];
-    }
-
-    tryHandleMessage(buffer) {
-        try {
-            this.handleMessage(buffer);
-        } catch (error) {
-            console.error(error);
-        }
-    }
-
-    handleMessage(buffer) {
-        if (this.isTextMessage(buffer)) {
-            this.handleTextMessage(buffer);
-        } else {
-            this.handleBinaryMessage(buffer);
-        }
-    }
-    
-    isTextMessage(buffer) {
-        return (typeof buffer === 'string' && buffer.charAt(0) == '{');
-    }
-
-    handleTextMessage(buffer) {
-        let handler = this.getHandler(); 
-        var response = JSON.parse(buffer);
-        if (response.error) {
-            this.handleErrorMessage(response);
-        } else if (handler) {
-            handler.handleTextMessage(response);
-        } else {
-            console.log('RemoteController: No handler');
-        }
-    }  
-
-    handleErrorMessage(response) {
-        let handler = this.getHandler(); 
-        console.log('RemoteController: Method: ' + response.method
-                    + ', Error: ' + response.error.message);
-        if (handler) {
-            handler.handleErrorMessage(response.error);
-        } else {
-            console.log('RemoteController: No handler');
-        }
-    }  
-
-    handleBinaryMessage(buffer) {
-        let handler = this.getHandler(); 
-        if (handler) {
-            handler.handleBinaryMessage(buffer);
-        } else {
-            console.log('RemoteControlle: No handler');
-        }
-    }  
-
-    getHandler() {
-        return programListController; // FIXME
-    }
-    
-    send(request) {
-        if (this.connected) {
-            var s = JSON.stringify(request);
-            this.socket.send(s);
-        } else {
-            throw 'The RemoteController is not connected!';
-        }
-    }
-}
-
-function initProgramList(name, registry)
-{
-    remoteController = new RemoteController(name, registry);
-    programList = new ProgramList();
-
-    {
-        programList.add(new Program(0, "Test", 9, 30,
-                                    1.0, 10.0, 0.1,
-                                    45, true));
-        
-        programList.add(new Program(0, "Test2", 12, 30,
-                                    1.0, 10.0, 0.1,
-                                    45, true));
-    }
+    var remoteController = new RemoteController(name, registry, remoteAddress);
+    var programList = new ProgramList();
     
     programListController = new ProgramListController(programList, remoteController,
                                                      'program-app');
 
     remoteController.callWhenConnected(programListController);
-    
-    
-    //let app = document.getElementById('program-app');
-    //app.appendChild(programListView.element);
-
-    //remoteController.registerHandler('programs', programListController);
 }

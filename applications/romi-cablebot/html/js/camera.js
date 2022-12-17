@@ -141,9 +141,8 @@ class RemoteCamera
 
 class CameraControlPanel
 {
-    constructor(name, registry) {
-        this.name = name;
-        this.registry = registry;
+    constructor(remoteAddress) {
+        this.remoteAddress = remoteAddress;
         this.camera = null;
         this.sliders = {};
         this.values = {};
@@ -221,7 +220,7 @@ class CameraControlPanel
         if (this.camera) {
             disconnectCamera();
         } else {
-            connectCamera(this.name, this.registry);
+            connectCamera(this.remoteAddress);
         }
     }
     
@@ -330,26 +329,11 @@ class CameraControlPanel
     }
 }
 
-function connectCamera(name, registry)
+function connectCamera(remoteAddress)
 {
-    var registrySocket = new WebSocket('ws://' + registry + ':10101');
-
-    registrySocket.onopen = function (event) {
-        var request = { 'request': 'get', 'topic': name };
-        registrySocket.send(JSON.stringify(request));
-    };
-
-    registrySocket.onmessage = function (event) {
-        console.log(event.data);
-        var reply = JSON.parse(event.data);
-        if (reply.success) {
-            registrySocket.close();
-            console.log(JSON.stringify(reply));
-            remoteCamera = new RemoteCamera('camera', reply.address, imageViewer);
-            if (controlPanel)
-                controlPanel.setCamera(remoteCamera);
-        }
-    }
+    remoteCamera = new RemoteCamera('camera', remoteAddress, imageViewer);
+    if (controlPanel)
+        controlPanel.setCamera(remoteCamera);
 }
 
 function disconnectCamera()
@@ -359,11 +343,11 @@ function disconnectCamera()
     controlPanel.clearCamera();
 }
 
-function initCamera(name, registry, createControlPanel)
+function initCamera(remoteAddress, createControlPanel)
 {
     imageViewer = new ImageViewer('camera');
     if (createControlPanel)
-        controlPanel = new CameraControlPanel(name, registry);
+        controlPanel = new CameraControlPanel(remoteAddress);
     else
-        connectCamera(name, registry);
+        connectCamera(remoteAddress);
 }

@@ -37,7 +37,7 @@
             "exposure-mode": "auto",
             "framerate": 5,
             "mode": "still",
-            "resolution": "4056x3040",
+            "resolution": "2028x1520",
             "shutter-speed": 1000.0
         },
         "type": "pi-camera-hq-v10"
@@ -45,22 +45,24 @@
     "programs": [
         {
             "enabled": true,
-            "hour": 9,
+            "hour": 8,
             "id": 0,
             "interval": 0.1,
-            "length": 16,
+            "length": 16.0,
             "minute": 0,
-            "start-at": 2,
-            "tilt": 0.0
+            "name": "Matin",
+            "start-at": 2.0,
+            "tilt": 45.0
         },
         {
             "enabled": false,
             "hour": 12,
             "id": 1,
             "interval": 0.1,
-            "length": 16,
+            "length": 16.0,
             "minute": 0,
-            "start-at": 2,
+            "name": "Midi",
+            "start-at": 2.0,
             "tilt": 0.0
         },
         {
@@ -68,9 +70,10 @@
             "hour": 15,
             "id": 2,
             "interval": 0.1,
-            "length": 16,
+            "length": 16.0,
             "minute": 0,
-            "start-at": 2,
+            "name": "Après-midi",
+            "start-at": 2.0,
             "tilt": 0.0
         }
     ]

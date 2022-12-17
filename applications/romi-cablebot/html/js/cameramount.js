@@ -1,134 +1,203 @@
-var remoteCameraMount = null;
+var cameraMountController = null;
 var mountControlPanel = null;
 
-class RemoteCameraMount
+class Position
 {
-    constructor(address) {
-        this.socket = new WebSocket('ws://' + address);
-        this.socket.onmessage = (event) => {
-            this.handleMessage(event.data);
-        };
-        this.socket.onopen = (event) => {
-            this.initRangeAndPosition();
-        };
-        this.range_xyz = [[0, 0], [0, 0], [0, 0]];
-        this.range_angles = [[0, 0], [0, 0], [0, 0]];
-        this.position = [0, 0, 0, 0, 0, 0];
+    constructor() {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.ax = 0;
+        this.ay = 0;
+        this.az = 0;
     }
+}
+
+class Range
+{
+    constructor() {
+        this.xmin = 0;
+        this.xmax = 0;
+        this.ymin = 0;
+        this.ymax = 0;
+        this.zmin = 0;
+        this.zmax = 0;
+    }
+}
+
+class CameraMountController
+{
+    constructor(position, xyzRange, anglesRange, remoteController, elementID) {
+        this.position = position;
+        this.xyzRange = xyzRange;
+        this.anglesRange = anglesRange;
+        this.remoteController = remoteController;
+        this.elementID = elementID;
+    }
+
+    getObjectId() {
+        return 'camera-mount';
+    }
+
+    connected() {
+        console.log('CameraMountController.connected');
+        this.initRangeAndPosition();
+    }  
 
     initRangeAndPosition() {
         this.askRange();
     }
 
     askRange() {
-        var request = { 'method': 'camera-mount:get-range' };
-        var s = JSON.stringify(request);
-        this.socket.send(s);
+        this.remoteController.invoke(this, 'camera-mount:get-range');
     }
 
     askPosition() {
-        var request = { 'method': 'camera-mount:get-position' };
-        var s = JSON.stringify(request);
-        this.socket.send(s);
+        this.remoteController.invoke(this, 'camera-mount:get-position');
     }
 
     moveto(x, ax) {
-        var request = {
-            'method': 'camera-mount:moveto',
-            'params': { 'x': x, 'y': 0, 'z': 0,
-                        'ax': ax, 'ay': 0, 'az': 0,
-                        'speed': 1 }};
-        var s = JSON.stringify(request);
-        this.socket.send(s);
+        this.position.x = x;
+        this.position.ax = ax;
+        var param = { 'x': this.position.x,
+                      'y': this.position.y,
+                      'z': this.position.z,
+                      'ax': this.position.ax,
+                      'ay': this.position.ay,
+                      'az': this.position.az,
+                      'speed': 1 };
+        this.remoteController.invoke(this, 'camera-mount:moveto', params);
     }
+
+    handleErrorMessage(error) {
+        console.log('CameraMountController: Error: ' + error.message);
+    }  
     
-    handleMessage(buffer) {
-        var response = JSON.parse(buffer);
-        //console.log('Romi Camera: Response: ' + buffer);
-        if (response.error) {
-            this.handleErrorMessage(response);
-        } else if (response.method == "camera-mount:get-range") {
+    handleTextMessage(response) {
+        if (response.method == "camera-mount:get-range") {
             this.setRange(response.result);
             this.askPosition();
         } else if (response.method == "camera-mount:get-position") {
             this.setPosition(response.result);
-            this.moveto(2.0, 0.0);
+            this.buildView();
         } else {
-            console.log('Romi Camera: Response: ' + buffer);
+            console.log('CameraMountController: Unknown method: ' + response.method);
         }
     }  
 
-    handleErrorMessage(response) {
-        console.log('Romi CameraMount: Method: ' + response.method
-                    + ', Error: ' + response.error.message);
-    }  
+    handleBinaryMessage(buffer) {
+        console.log('CameraMountController: Not expected');
+    }
 
     setRange(result) {
-        this.range_xyz = result["xyz-range"];
-        this.range_angles = result["angles-range"];
+        console.log("TODO: CameraMountController.setRange: result=" + result);
+        //this.range_xyz = result["xyz-range"];
+        //this.range_angles = result["angles-range"];
     }  
 
     setPosition(result) {
-        this.position[0] = result['x'];
-        this.position[1] = result['y'];
-        this.position[2] = result['z'];
-        this.position[3] = result['ax'];
-        this.position[4] = result['ay'];
-        this.position[5] = result['az'];
-        console.log('Position: ' + this.position);
+        this.position.x = result['x'];
+        this.position.y = result['y'];
+        this.position.z = result['z'];
+        this.position.ax = result['ax'];
+        this.position.ay = result['ay'];
+        this.position.az = result['az'];
+        console.log('Position: ' + result);
     }  
+
+    buildView() {
+        let parent = document.getElementById(this.elementID);
+        let view = new CameraMountViewer(this.position, this.xyzRange,
+                                         this.anglesRange, this);
+        parent.appendChild(view.element);
+    }
 }  
 
-class CameraMountControlPanel
+class CameraMountViewer
 {
-    constructor(cameraMount) {
-        this.cameraMount = cameraMount;
-        this.values = {};
-        this.initControls();
-        this.x = 0;
-        this.ax = 0;
+    constructor(position, xyzRange, anglesRange, controller) {
+        this.controller = controller;
+        this.x = position.x;
+        this.xmin = xyzRange.xmin;
+        this.xmax = xyzRange.xmax;
+        this.ax = position.ax;
+        this.axmin = anglesRange.xmin;
+        this.axmax = anglesRange.xmax;
+        this.makeView();
     }
     
-    initControls() {
-        this.initSetting('x');
-        this.initSetting('ax');
+    makeView() {
+        this.element = document.createElement("div");
+        this.element.className = "position";
+        let xview = this.makeXView();
+        let axview = this.makeAXView();
+        this.element.appendChild(xview);
+        this.element.appendChild(axview);
     }
     
-    initSetting(name) {
-        var value_id = name + '-value'
-        this.values[name] = document.getElementById(value_id);
-        $('#' + value_id).change(() => {
-            this.updateValue(name, this.values[name].value);
-        });
+    makeXView() {
+        var element = document.createElement('div');
+        element.className = 'position-xyz-section';
+
+        var text = document.createElement('span');
+        text.className = 'position-x-label';
+        text.innerHTML = "Move to position (m)";
+        element.appendChild(text);        
+
+        this.xview = this.makeXTextField();
+        element.appendChild(this.xview.element);        
+        return element;
+    }
+        
+    makeXTextField() {
+        return new TextField((target) => { let x = parseFloat(target.value);
+                                           this.update(x, this.ax); },
+                             'position-x', this.x, 4);
     }
     
-    updateValue(name, value) {
-        if (name == 'x') {
-            this.x = parseFloat(value);
-            this.cameraMount.moveto(this.x, this.ax); 
-        } else if (name == 'ax') {
-            this.ax = parseFloat(value);
-            this.cameraMount.moveto(this.x, this.ax); 
+    makeAXView(position, range) {
+        var element = document.createElement('div');
+        element.className = 'position-angles-section';
+
+        var text = document.createElement('span');
+        text.className = 'position-ax-label';
+        text.innerHTML = "Position camera at angle (°)";
+        element.appendChild(text);        
+
+        this.axview = this.makeAXTextField();
+        element.appendChild(this.axview.element);        
+        return element;
+    }
+    
+    makeAXTextField() {
+        return new TextField((target) => { let ax = parseFloat(target.value);
+                                           this.update(this.x, ax); },
+                             'position-ax', this.ax, 4);
+    }
+    
+    update(x, ax) {
+        if (x < this.xmin || x > this.xmax) {
+            this.xview = this.x;
+        } else if (ax < this.axmin || ax > this.axmax) {
+            this.axview = this.ax;
+        } else {
+            this.x = x;
+            this.ax = ax;
+            this.controller.moveto(this.x, this.ax);
         }
     }
 }
 
-function initCameraMount(name, registry)
+function initCameraMount(name, registry, remoteAddress)
 {
-    var registrySocket = new WebSocket('ws://' + registry + ':10101');
+    var remoteController = new RemoteController(name, registry, remoteAddress);
+    
+    var position = new Position();
+    var xyzRange = new Range();
+    var anglesRange = new Range();
+        
+    cameraMountController = new CameraMountController(position, xyzRange, anglesRange,
+                                                      remoteController, 'position-app');    
 
-    registrySocket.onopen = function (event) {
-        var request = { 'request': 'get', 'topic': name };
-        registrySocket.send(JSON.stringify(request));
-    };
-
-    registrySocket.onmessage = function (event) {
-        console.log(event.data);
-        var reply = JSON.parse(event.data);
-        if (reply.success) {
-            registrySocket.close();
-            remoteCameraMount = new RemoteCameraMount(reply.address);
-            mountControlPanel = new CameraMountControlPanel(remoteCameraMount); 
-        }
-    }
+    remoteController.callWhenConnected(cameraMountController);
 }

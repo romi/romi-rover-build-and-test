@@ -182,3 +182,20 @@ div.program {
 .program-enabled-section { padding: 10px; }
 .program-enabled-label { display: inline-block; width: 240px; }
 .program-enabled { }
+
+/**************************/
+/* Position               */
+
+div.position {
+    border: solid 2px black;
+    padding: 6px;
+    margin: 6px;
+    border-radius: 5px;
+}
+
+.position-xyz-section { padding: 10px; }
+.position-x-label { font-weight: bold; display: inline-block; width: 240px; }
+.position-x { margin: 4px; }
+.position-angles-section { padding: 10px; }
+.position-ax-label { font-weight: bold; display: inline-block; width: 240px; }
+.position-ax { margin: 4px; }

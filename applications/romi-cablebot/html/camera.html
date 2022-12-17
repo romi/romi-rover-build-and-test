@@ -238,11 +238,12 @@
 
     <script src="js/bootstrap.min.js"></script>
     <script src="js/jquery.min.js"></script>
+    <script src="js/remotecontroller.js"></script>
     <script src="js/camera.js"></script>
 
     <script type="text/javascript">
       window.onload = function() {
-          initCamera("cablebot", window.location.hostname, true);
+          initCamera(window.location.hostname + ":10100", true);
       };
     </script>
     

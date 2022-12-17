@@ -29,7 +29,10 @@
 
 #include <rcom/RegistryServer.h>
 #include <rcom/RcomServer.h>
+#include <rcom/RcomMessageHandler.h>
+#include <rcom/MessageHub.h>
 #include <rcom/Linux.h>
+#include <rpc/RcomLog.h>
 
 #include <RomiSerialClient.h>
 
@@ -168,7 +171,15 @@ int main(int argc, char **argv)
                 adaptor.add("camera-mount", remote_camera_mount);
                 adaptor.add("programs", remote_programs_adaptor);
                 
-                auto server = rcom::RcomServer::create("cablebot", adaptor);
+                // auto server = rcom::RcomServer::create("cablebot", adaptor);
+
+                auto handler = std::make_shared<rcom::RcomMessageHandler>(adaptor);
+                auto rcomlog = std::make_shared<romi::RcomLog>();
+                auto server = rcom::MessageHub::create("cablebot",
+                                                       handler,
+                                                       rcomlog,
+                                                       10100,
+                                                       true);
                 
                 quit_on_control_c();
                 
