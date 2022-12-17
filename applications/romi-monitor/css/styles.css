@@ -1,3 +1,23 @@
+@font-face {
+    font-family: 'din1451alt';
+    src: url('fonts/din1451alt.eot');
+    src: url('fonts/din1451alt.eot?#iefix') format('embedded-opentype'),
+         url('fonts/din1451alt.woff') format('woff'),
+         url('fonts/din1451alt.ttf') format('truetype'),
+         url('fonts/din1451alt.svg#alte_din_1451_mittelschriftRg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+body {
+    font-family: "din1451alt", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    font-size: 18px; 
+    line-height:24px;
+    padding: 0px;
+    margin: 0px;
+}
+
 @media (min-width:320px)  {
     /* smartphones, iPhone, portrait 480x320 phones */
     div.image-viewer {
@@ -108,3 +128,46 @@ div.control-info {
     text-left: right;
     padding-left: 20px;
 }
+
+/**************************/
+/* Cablebot               */
+
+div.program-app {}
+div.program-list {}
+
+div.program {
+    border: solid 2px black;
+    padding: 6px;
+    margin: 6px;
+    border-radius: 5px;
+}
+
+.program-name-section { padding: 10px; }
+.program-name-label { font-weight: bold; display: inline-block; width: 240px; }
+
+.program-time-section { padding: 10px; }
+.program-time-label { display: inline-block; width: 240px; }
+.program-hour { }
+.program-minute { margin-left: 10px; }
+
+.program-travel-section { padding: 10px; }
+.program-travel-label { font-weight: bold; padding-bottom: 10px; }
+.program-start-section {}
+.program-start-label { display: inline-block; width: 240px; }
+.program-start { margin: 4px; }
+.program-length-section {}
+.program-length-label { display: inline-block; width: 240px; }
+.program-length { margin: 4px; }
+.program-interval-section {}
+.program-interval-label { display: inline-block; width: 240px; }
+.program-interval { margin: 4px; }
+.program-end-section {}
+.program-end-label { display: inline-block; width: 240px; }
+.program-end { margin: 4px; }
+.program-tilt-section {}
+.program-tilt-label { display: inline-block; width: 240px; }
+.program-tilt { margin: 4px; }
+
+.program-enabled-section { padding: 10px; }
+.program-enabled-label { display: inline-block; width: 240px; }
+.program-enabled { }

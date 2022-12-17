@@ -36,7 +36,7 @@
 #include <session/Session.h>
 #include <rpc/CameraAdaptor.h>
 #include <rpc/CameraMountAdaptor.h>
-#include <rpc/RemoteObjectsAdapter.h>
+#include <rpc/RemoteObjectsAdaptor.h>
 #include <configuration/GetOpt.h>
 #include <util/ClockAccessor.h>
 #include <camera/ICameraSettings.h>
@@ -54,6 +54,7 @@
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <data_provider/CameraMountLocationProvider.h>
+#include <cablebot/CablebotProgramListAdaptor.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
@@ -159,9 +160,13 @@ int main(int argc, char **argv)
                 std::shared_ptr<rcom::IRPCHandler> remote_camera_mount
                         = std::make_shared<romi::CameraMountAdaptor>(*cablebot->mount_);
                 
-                romi::RemoteObjectsAdapter adaptor;
+                std::shared_ptr<rcom::IRPCHandler> remote_programs_adaptor
+                        = std::make_shared<romi::CablebotProgramListAdaptor>(shared_programs, program_io);
+
+                romi::RemoteObjectsAdaptor adaptor;
                 adaptor.add("camera", remote_camera);
                 adaptor.add("camera-mount", remote_camera_mount);
+                adaptor.add("programs", remote_programs_adaptor);
                 
                 auto server = rcom::RcomServer::create("cablebot", adaptor);
                 
