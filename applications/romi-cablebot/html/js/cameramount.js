@@ -23,6 +23,15 @@ class Range
         this.zmin = 0;
         this.zmax = 0;
     }
+
+    convert(list) {
+	this.xmin = list[0][0];
+	this.xmax = list[0][1];
+	this.ymin = list[1][0];
+	this.ymax = list[1][1];
+	this.zmin = list[2][0];
+	this.zmax = list[2][1];
+    }  
 }
 
 class CameraMountController
@@ -57,15 +66,16 @@ class CameraMountController
     }
 
     moveto(x, ax) {
+	console.log("moveto " + x + " " + ax);
         this.position.x = x;
         this.position.ax = ax;
-        var param = { 'x': this.position.x,
-                      'y': this.position.y,
-                      'z': this.position.z,
-                      'ax': this.position.ax,
-                      'ay': this.position.ay,
-                      'az': this.position.az,
-                      'speed': 1 };
+        var params = { 'x': this.position.x,
+                       'y': this.position.y,
+                       'z': this.position.z,
+                       'ax': this.position.ax,
+                       'ay': this.position.ay,
+                       'az': this.position.az,
+                       'speed': 1 };
         this.remoteController.invoke(this, 'camera-mount:moveto', params);
     }
 
@@ -90,9 +100,17 @@ class CameraMountController
     }
 
     setRange(result) {
-        console.log("TODO: CameraMountController.setRange: result=" + result);
-        //this.range_xyz = result["xyz-range"];
-        //this.range_angles = result["angles-range"];
+        console.log("TODO: CameraMountController.setRange: result=" + JSON.stringify(result));
+	this.setXYZRange(result['xyz-range']);
+	this.setAnglesRange(result['angles-range']);
+    }  
+
+    setXYZRange(list) {
+	this.xyzRange.convert(list);
+    }  
+
+    setAnglesRange(list) {
+	this.anglesRange.convert(list);
     }  
 
     setPosition(result) {
@@ -176,11 +194,15 @@ class CameraMountViewer
     }
     
     update(x, ax) {
+	console.log("update " + x + " " + ax);
         if (x < this.xmin || x > this.xmax) {
-            this.xview = this.x;
+	    console.log("update x out of range [" + this.xmin + "," + this.xmax + "]");
+            this.xview.value = this.x;
         } else if (ax < this.axmin || ax > this.axmax) {
-            this.axview = this.ax;
+	    console.log("update ax out of range [" + this.axmin + "," + this.axmax + "]");
+            this.axview.value = this.ax;
         } else {
+	    console.log("update ok");
             this.x = x;
             this.ax = ax;
             this.controller.moveto(this.x, this.ax);

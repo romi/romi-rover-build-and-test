@@ -33,7 +33,7 @@
 #include <session/Session.h>
 #include <data_provider/CameraMountLocationProvider.h>
 #include <picamera/PiCameraSettings.h>
-//#include <util/Logger.h>
+#include <util/Logger.h>
 
 static const char *kMode = "mode";
 static const char *kVideo = "video";
@@ -77,28 +77,6 @@ static std::vector<romi::Option> option_list = {
         
         { kDirectory, true, ".",
           "The session directory (.)"},
-};
-
-struct ScanPosition
-{
-        double x_;
-        double y_;
-        double z_;
-        double phi_x_;
-        double phi_y_;
-        double phi_z_;
-
-        ScanPosition(double x, double y, double z)
-                : x_(x), y_(y), z_(z),
-                  phi_x_(0.0), phi_y_(0.0), phi_z_(0.0) {
-        }
-};
-
-class ISegment
-{
-public:
-        virtual ~ISegment() = default;
-        virtual std::string& type = 0;
 };
 
 struct ScanPosition
