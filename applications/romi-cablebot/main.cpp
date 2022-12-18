@@ -125,7 +125,7 @@ int main(int argc, char **argv)
                 
                 // Cablebot
                 r_debug("romi-cablebot: Initializing cablebot");
-                auto cablebot = romi::Cablebot::create(info_io);
+                auto cablebot = romi::Cablebot::create(linux, info_io);
 
                 // Session
                 romi::RomiDeviceData romiDeviceData;
