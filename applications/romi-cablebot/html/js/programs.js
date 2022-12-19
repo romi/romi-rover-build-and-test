@@ -129,7 +129,7 @@ class ProgramView
     
     makeMinuteSelector() {
         let options = [];
-        for (let i = 0; i < 60; i = i+5) {
+        for (let i = 0; i < 60; i = i+1) {
             let selected = (this.program.minute == i);
             options.push({"value": i.toString(),
                           "label": i.toString(),

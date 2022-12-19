@@ -153,7 +153,7 @@ int main(int argc, char **argv)
                         = std::make_shared<romi::AlarmClock>(runner);
         
                 // Controller                
-                romi::CablebotController controller(shared_programs, alarmclock);
+                //romi::CablebotController controller(shared_programs, alarmclock);
                 
                 // Server                
                 std::shared_ptr<rcom::IRPCHandler> remote_camera
@@ -182,7 +182,9 @@ int main(int argc, char **argv)
                                                        true);
                 
                 quit_on_control_c();
-                
+		
+		alarmclock->start();
+
                 while (!quit) {
                         server->handle_events();
                         romi::ClockAccessor::GetInstance()->sleep(0.002);

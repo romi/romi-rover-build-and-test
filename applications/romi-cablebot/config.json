@@ -66,15 +66,15 @@
             "tilt": 0.0
         },
         {
-            "enabled": false,
-            "hour": 15,
+            "enabled": true,
+            "hour": 1,
             "id": 2,
             "interval": 0.1,
-            "length": 16.0,
-            "minute": 0,
+            "length": 2.0,
+            "minute": 4,
             "name": "Après-midi",
-            "start-at": 2.0,
-            "tilt": 0.0
+            "start-at": 1.0,
+            "tilt": 45.0
         }
     ]
 }
