@@ -1,4 +1,8 @@
 {
+    "device": {
+        "type": "Cablebot",
+        "hardware-id": "001",
+    },
     "camera": {
         "calibration": {
             "date": "2022-07-25",
@@ -38,7 +42,7 @@
             "framerate": 5,
             "mode": "still",
             "resolution": "2028x1520",
-            "shutter-speed": 1000.0
+            "shutter-speed": 10000.0
         },
         "type": "pi-camera-hq-v10"
     },
@@ -51,6 +55,7 @@
             "length": 16.0,
             "minute": 0,
             "name": "Matin",
+            "observation-id": "",
             "start-at": 2.0,
             "tilt": 45.0
         },
@@ -62,19 +67,21 @@
             "length": 16.0,
             "minute": 0,
             "name": "Midi",
+            "observation-id": "",
             "start-at": 2.0,
             "tilt": 0.0
         },
         {
             "enabled": true,
-            "hour": 1,
+            "hour": 16,
             "id": 2,
             "interval": 0.1,
-            "length": 2.0,
-            "minute": 4,
-            "name": "Après-midi",
+            "length": 1.0,
+            "minute": 26,
+            "name": "Test",
+            "observation-id": "",
             "start-at": 1.0,
-            "tilt": 45.0
+            "tilt": -45.0
         }
     ]
 }

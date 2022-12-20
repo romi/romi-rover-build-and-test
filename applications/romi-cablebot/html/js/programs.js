@@ -2,11 +2,12 @@ var programListController = null;
 
 class Program
 {
-    constructor(id, name, hour, minute,
+    constructor(id, name, observationId, hour, minute,
                 start, length, interval,
                 tilt, enabled) {
         this.id = id;
         this.name = name;
+        this.observationId = observationId;
         this.hour = hour;
         this.minute = minute;
         this.start = start;
@@ -65,10 +66,12 @@ class ProgramView
 
     makeView() {
         let nameview = this.makeNameView();
+        let obsview = this.makeObservationIdView();
         let timeview = this.makeTimeView();
         let travel = this.makeTravelView();
         let enabled = this.makeEnabledView();
         this.element.appendChild(nameview);
+        this.element.appendChild(obsview);
         this.element.appendChild(timeview);
         this.element.appendChild(travel);
         this.element.appendChild(enabled);
@@ -92,6 +95,26 @@ class ProgramView
         return new TextField((target) => { this.program.name = target.value,
                                            this.update(); },
                              'program-name', this.program.name, 20);
+    }
+
+    makeObservationIdView() {
+        var element = document.createElement('div');
+        element.className = 'program-observationid-section';
+
+        var text = document.createElement('span');
+        text.className = 'program-observationid-label';
+        text.innerHTML = "Observation ID";
+        element.appendChild(text);        
+        
+        this.observationId = this.makeObservationIdTextField();
+        element.appendChild(this.observationId.element);        
+        return element;
+    }
+    
+    makeObservationIdTextField() {
+        return new TextField((target) => { this.program.observationId = target.value,
+                                           this.update(); },
+                             'program-observationid', this.program.observationId, 20);
     }
 
     update() {
@@ -302,7 +325,7 @@ class ProgramListController
     loadPrograms(list) {
         this.programs.clear();
         for (const p of list) {
-            let program = new Program(p['id'], p['name'],
+            let program = new Program(p['id'], p['name'], p['observation-id'],
                                       p['hour'], p['minute'], 
                                       p['start-at'], p['length'], p['interval'],
                                       p['tilt'], p['enabled']);
@@ -324,6 +347,7 @@ class ProgramListController
             'program': {
                 'id': program.id,
                 'name': program.name,
+                'observation-id': program.observationId,
                 'hour': program.hour,
                 'minute': program.minute,
                 'start-at': program.start,
