@@ -149,7 +149,8 @@ int main(int argc, char **argv)
 
                 // Runner
                 std::shared_ptr<romi::IAlarmClockListener> runner
-                        = std::make_shared<romi::CablebotRunner>(shared_programs, *cablebot, session);
+                        = std::make_shared<romi::CablebotRunner>(shared_programs, *cablebot,
+                                                                 session, *camera_info);
 
                 // Alarm
                 std::shared_ptr<romi::IAlarmClock> alarmclock
