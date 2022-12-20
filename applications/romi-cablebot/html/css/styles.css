@@ -156,6 +156,9 @@ div.program {
 .program-name-section { padding: 10px; }
 .program-name-label { font-weight: bold; display: inline-block; width: 240px; }
 
+.program-observationid-section { padding: 10px; }
+.program-observationid-label { font-weight: bold; display: inline-block; width: 240px; }
+
 .program-time-section { padding: 10px; }
 .program-time-label { display: inline-block; width: 240px; }
 .program-hour { }
