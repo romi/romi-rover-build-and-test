@@ -128,7 +128,10 @@ int main(int argc, char **argv)
                 auto cablebot = romi::Cablebot::create(linux, info_io);
 
                 // Session
-                romi::RomiDeviceData romiDeviceData;
+                nlohmann::json device_config = config->get_section("device");
+                std::string device_type = device_config["type"];
+                std::string device_id = device_config["hardware-id"];
+                romi::RomiDeviceData romiDeviceData(device_type, device_id);
                 romi::SoftwareVersion softwareVersion;
                 std::unique_ptr<romi::ILocationProvider> locationProvider
                         = std::make_unique<romi::CameraMountLocationProvider>(cablebot->mount_);
