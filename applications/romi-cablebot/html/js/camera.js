@@ -1,6 +1,5 @@
-var controlPanel = null;
+var settingsPanel = null;
 var remoteCamera = null;
-var imageViewer = null;
 
 class ImageViewer
 {
@@ -14,66 +13,34 @@ class ImageViewer
     }
 
     displayImage(data) {
-        if (this.active)
-            this.reader.readAsDataURL(data);
-    }
-    
-    showImages() {
-        this.active = true;
-    }
-    
-    skipImages() {
-        this.active = false;
-        this.element.src = "white.png";
+        this.reader.readAsDataURL(data);
     }
 }
 
 class RemoteCamera
 {
-    constructor(id, address, viewer) {
+    constructor(id, controller, viewer) {
         this.id = id;
+        this.controller = controller;
         this.viewer = viewer;
         this.continuousUpdate = true;
-        this.socket = new WebSocket('ws://' + address);
-        this.socket.onmessage = (event) => {
-            this.handleMessage(event.data);
-        };
-        this.socket.onopen = (event) => {
-            this.grab();
-        };
         this.encoder = new TextEncoder();
     }
-    
-    disconnect() {
-        this.continuousUpdate = false;
-        this.socket.onmessage = null;
-        this.socket = null;
-    }
-    
-    isTextMessage(buffer) {
-        return (typeof buffer === 'string' && buffer.charAt(0) == '{');
-    }
 
-    handleMessage(buffer) {
-        if (this.isTextMessage(buffer)) {
-            this.handleTextMessage(buffer);
-            
-        } else {
-            this.handleBinaryMessage(buffer);
-        }
-    }  
+    getId() {
+        return this.id;
+    }
 
     handleTextMessage(buffer) {
         var response = JSON.parse(buffer);
         if (response.error)
             this.handleErrorMessage(response.error);
         else
-            console.log('Romi Camera: ' + buffer);
+            console.log('RemoteCamera: ' + buffer);
     }  
 
-    handleErrorMessage(err) {
-        console.log('Romi Camera: Method: ' + response.method
-                    + ', Error: ' + response.error.message);
+    handleErrorMessage(error) {
+        console.log('RemoteCamera: Error: ' + error.message);
     }  
 
     handleBinaryMessage(buffer) {
@@ -81,105 +48,65 @@ class RemoteCamera
             try {
                 this.viewer.displayImage(buffer);
             } catch (error) {
-                var str = (typeof buffer === 'string');
+                //var str = (typeof buffer === 'string');
                 console.error(error);
             }
         }
         if (this.continuousUpdate) {
-            this.grab();
+            this.tryGrab();
         }
     }  
 
-    setRepeat(value) {
-        this.continuousUpdate = value;
-    }  
-    
-    grabPerhaps() {
-        if (!this.continuousUpdate)
+    tryGrab() {
+        try {
             this.grab();
+        } catch (error) {
+            console.error(error);
+            setTimeout(() => this.tryGrab(), 1000);
+        }
     }
 
     grab() {
-        var request = {
-            'method': 'camera:grab-jpeg-binary',
-            'params': {
-                'object-id': this.id
-            }
-        };
-        var s = JSON.stringify(request);
-        var message = this.encoder.encode(s)
-        this.socket.send(message);
+        this.controller.invokeBinary(this, 'camera:grab-jpeg-binary');
+    }  
+
+    connected() {
+        this.tryGrab();
     }  
     
     setValue(name, value) {
-        var request = {
-            'method': 'camera:set-value',
-            'params': {
-                'object-id': this.id,
-                'name': name,
-                'value': parseFloat(value)
-            }
+        var params = {
+            'name': name,
+            'value': parseFloat(value)
         };
-        var s = JSON.stringify(request);
-        this.socket.send(s);
+        this.controller.invoke(this, 'camera:set-value', params);
     }  
     
     selectOption(name, value) {
-        console.log('Select option: ' + name + '=' + value)
-        var request = {
-            'method': 'camera:select-option',
-            'params': {
-                'object-id': this.id,
-                'name': name,
-                'value': value
-            }
+        var params = {
+            'name': name,
+            'value': value
         };
-        var s = JSON.stringify(request);
-        this.socket.send(s);
+        this.controller.invoke(this, 'camera:select-option', params);
     }  
 }  
 
-class CameraControlPanel
+class CameraSettingsPanel
 {
-    constructor(remoteAddress) {
-        this.remoteAddress = remoteAddress;
-        this.camera = null;
+    constructor(camera) {
+        this.camera = camera;
         this.sliders = {};
         this.values = {};
         this.menus = {};
-        this.continuousUpdate = true;
         this.initControls();
         this.panels = ["mode", "exposure", "compression", "processing"];
         this.selectedPanel = "mode";
         this.initPanelSelector();
         this.imageFrame = document.getElementById("image-viewer");
         this.cameraImage = document.getElementById("camera");
-        this.connectButton = document.getElementById("btn-connect");
         this.fixedButton = document.getElementById("btn-fixed-image");
         this.scrollButton = document.getElementById("btn-scroll-image");
-        this.repeatButton = document.getElementById("btn-repeat");
-        this.initConnectButton();
         this.initImageSizeButtons();
-        this.initGrabButtons();
-    }
-
-    setCamera(camera) {
-        if (camera) {
-            this.camera = camera;
-            this.connectButton.classList.add("selected");
-            this.camera.setRepeat(this.continuousUpdate);
-            // FIXME
-            imageViewer.showImages();
-        } else {
-            this.clearCamera();
-        }
-    }
-
-    clearCamera(camera) {
-        this.camera = null;
-        this.connectButton.classList.remove("selected");
-        // FIXME
-        imageViewer.skipImages();
     }
     
     initPanelSelector() {
@@ -210,20 +137,6 @@ class CameraControlPanel
         }
     }
     
-    initConnectButton() {
-        $('#btn-connect').click((e) => {
-            this.toggleConnection();
-        });
-    }
-    
-    toggleConnection() {
-        if (this.camera) {
-            disconnectCamera();
-        } else {
-            connectCamera(this.remoteAddress);
-        }
-    }
-    
     initImageSizeButtons() {
         $('#btn-fixed-image').click((e) => {
             this.setFixedSizeImage();
@@ -247,30 +160,6 @@ class CameraControlPanel
         this.cameraImage.className = "scroll-image";
         this.fixedButton.classList.remove("selected");
         this.scrollButton.classList.add("selected");
-    }
-    
-    initGrabButtons() {
-        $('#btn-grab').click((e) => {
-            if (this.camera) {
-                this.camera.grabPerhaps();
-            }
-        });
-        $('#btn-repeat').click((e) => {
-            this.toggleRepeat();
-        });
-    }
-    
-    toggleRepeat() {
-        this.continuousUpdate = !this.continuousUpdate;
-        this.camera.setRepeat(this.continuousUpdate);
-        if (this.continuousUpdate) {
-            this.repeatButton.classList.add("selected");
-            if (this.camera) {
-                this.camera.grab();
-            }
-        } else { 
-            this.repeatButton.classList.remove("selected");
-        }
     }
     
     initControls() {
@@ -329,25 +218,11 @@ class CameraControlPanel
     }
 }
 
-function connectCamera(remoteAddress)
+function initCamera(name, remoteController, createControlPanel)
 {
-    remoteCamera = new RemoteCamera('camera', remoteAddress, imageViewer);
-    if (controlPanel)
-        controlPanel.setCamera(remoteCamera);
-}
-
-function disconnectCamera()
-{
-    remoteCamera.disconnect();
-    remoteCamera = null;
-    controlPanel.clearCamera();
-}
-
-function initCamera(remoteAddress, createControlPanel)
-{
-    imageViewer = new ImageViewer('camera');
+    let imageViewer = new ImageViewer('camera');
+    remoteCamera = new RemoteCamera(name, remoteController, imageViewer);
+    remoteController.callWhenConnected(remoteCamera);
     if (createControlPanel)
-        controlPanel = new CameraControlPanel(remoteAddress);
-    else
-        connectCamera(remoteAddress);
+        settingsPanel = new CameraSettingsPanel(remoteCamera);
 }

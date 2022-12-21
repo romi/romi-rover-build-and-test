@@ -17,6 +17,34 @@
       
     <!---------------------------------------------->
       
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a class="navbar-brand" href="https://romi-project.eu">
+          <img src="assets/logo.svg" width="120px" />
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="camera.html">Camera</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="programs.html">Programs</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link  active" href="cameramount.html">Manual positioning</a>
+            </li>
+        </div>
+      </div>
+    </nav>
+
+    <!---------------------------------------------->
+    
     <div class="container">
       <div id="image-viewer" class="image-viewer fixed-image">
         <img src="assets/white.png" id="camera" class="fixed-image">
@@ -39,9 +67,12 @@
     
     <script type="text/javascript">
       window.onload = function() {
-          initCamera(window.location.hostname + ':10100', false);
-          initCameraMount("cablebot", window.location.hostname,
-                          window.location.hostname + ':10100');
+          let registryAddress = window.location.hostname;
+          let deviceAddress = window.location.hostname + ':10100';
+          var remoteController = new RemoteController('cablebot', registryAddress,
+                                                      deviceAddress);
+          initCamera('camera', remoteController, false);
+          initCameraMount('camera-mount', remoteController);
       };
     </script>
     

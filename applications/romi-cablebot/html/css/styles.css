@@ -149,7 +149,7 @@ div.program-list {}
 div.program {
     border: solid 2px black;
     padding: 6px;
-    margin: 6px;
+    margin-top: 6px;
     border-radius: 5px;
 }
 
@@ -192,7 +192,7 @@ div.program {
 div.position {
     border: solid 2px black;
     padding: 6px;
-    margin: 6px;
+    margin-top: 6px;
     border-radius: 5px;
 }
 

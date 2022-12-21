@@ -23,7 +23,6 @@ class Program
 class ProgramList
 {
     constructor() {
-        console.log('ProgramList');
         this.programs = [];
     }
 
@@ -250,7 +249,6 @@ class ProgramView
 class ProgramListView
 {
     constructor(programs, controller) {
-        console.log('ProgramListView');
         this.programs = programs;
         this.controller = controller;
         this.element = document.createElement('div');
@@ -259,7 +257,6 @@ class ProgramListView
     }
 
     updateProgramList() {
-        console.log('ProgramListView.updateProgramList');
         this.clear();
         for (let i = 0; i < this.programs.count(); i++) {
             this.showProgram(this.programs.get(i));
@@ -273,7 +270,6 @@ class ProgramListView
     }
     
     showProgram(program) {
-        console.log('ProgramListView.showProgram');
         let view = new ProgramView(program, this.controller);
         this.element.appendChild(view.element);
     }
@@ -284,18 +280,16 @@ class ProgramListView
 class ProgramListController
 {
     constructor(programs, remoteController, elementID) {
-        console.log('ProgramListController');
         this.programs = programs;
         this.remoteController = remoteController;
         this.elementID = elementID;
     }
 
-    getObjectId() {
+    getId() {
         return 'programs';
     }
 
     connected() {
-        console.log('ProgramListController.connected');
         this.remoteController.invoke(this, 'get');
     }  
 

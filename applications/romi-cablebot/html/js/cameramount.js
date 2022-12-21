@@ -36,7 +36,8 @@ class Range
 
 class CameraMountController
 {
-    constructor(position, xyzRange, anglesRange, remoteController, elementID) {
+    constructor(id, position, xyzRange, anglesRange, remoteController, elementID) {
+        this.id = id;
         this.position = position;
         this.xyzRange = xyzRange;
         this.anglesRange = anglesRange;
@@ -44,8 +45,8 @@ class CameraMountController
         this.elementID = elementID;
     }
 
-    getObjectId() {
-        return 'camera-mount';
+    getId() {
+        return this.id;
     }
 
     connected() {
@@ -210,15 +211,14 @@ class CameraMountViewer
     }
 }
 
-function initCameraMount(name, registry, remoteAddress)
+function initCameraMount(name, remoteController)
 {
-    var remoteController = new RemoteController(name, registry, remoteAddress);
-    
     var position = new Position();
     var xyzRange = new Range();
     var anglesRange = new Range();
         
-    cameraMountController = new CameraMountController(position, xyzRange, anglesRange,
+    cameraMountController = new CameraMountController(name, position,
+                                                      xyzRange, anglesRange,
                                                       remoteController, 'position-app');    
 
     remoteController.callWhenConnected(cameraMountController);
