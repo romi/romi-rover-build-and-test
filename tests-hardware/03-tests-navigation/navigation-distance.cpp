@@ -136,7 +136,7 @@ int main(int argc, char** argv)
                 rcom::Linux linux;
 
                 // Session
-                romi::RomiDeviceData romiDeviceData;
+                romi::RomiDeviceData romiDeviceData("Rover", "all");
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
                 std::unique_ptr<romi::ILocationProvider> locationPrivider

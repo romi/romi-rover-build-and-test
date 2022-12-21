@@ -140,7 +140,7 @@ int main(int argc, char** argv)
                 
                 // Session
                 rcom::Linux linux;
-                romi::RomiDeviceData romiDeviceData;
+                romi::RomiDeviceData romiDeviceData("Weeder", "all");
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
                 std::unique_ptr<romi::ILocationProvider> locationPrivider

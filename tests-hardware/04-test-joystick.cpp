@@ -58,8 +58,6 @@
 #include <ui/RemoteStateInputDevice.h>
 #include <hal/BrushMotorDriver.h>
 #include <camera/FakeImager.h>
-#include <data_provider/RomiDeviceData.h>
-#include <data_provider/SoftwareVersion.h>
 #include <session/Session.h>
 #include <data_provider/Gps.h>
 #include <data_provider/GpsLocationProvider.h>
@@ -117,7 +115,7 @@ int main(int argc, char** argv)
                 rcom::Linux linux;
 
                 // Session
-                romi::RomiDeviceData romiDeviceData;
+                romi::RomiDeviceData romiDeviceData("Joystick", "NA");
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
                 std::unique_ptr<romi::ILocationProvider> locationPrivider

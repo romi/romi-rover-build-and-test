@@ -161,7 +161,7 @@ int main(int argc, char** argv)
 
                 // Session
                 r_info("main: Creating session");
-                romi::RomiDeviceData romiDeviceData;
+                romi::RomiDeviceData romiDeviceData("RemoteClient", "NA");
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
                 std::unique_ptr<romi::ILocationProvider> locationProvider

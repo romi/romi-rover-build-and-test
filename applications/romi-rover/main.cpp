@@ -154,7 +154,7 @@ int main(int argc, char** argv)
                         
                 // Session
                 r_info("main: Creating session");
-                romi::RomiDeviceData romiDeviceData;
+                romi::RomiDeviceData romiDeviceData("Rover", "0001"); // FIXME: from config
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
                 std::unique_ptr<romi::ILocationProvider> locationProvider

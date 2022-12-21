@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
                 // Session
                 rcom::Linux linux;
-                romi::RomiDeviceData romiDeviceData;
+                romi::RomiDeviceData romiDeviceData("Oquam", "001"); // FIXME: from config
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
                 std::unique_ptr<romi::ILocationProvider> locationPrivider

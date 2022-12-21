@@ -122,7 +122,7 @@ namespace romi {
                 assert_connected_to_python();
 
                 r_debug("PythonSegmentation: @3");
-                rpc_->execute(function_name_, params, response, error);
+                rpc_->execute("python", function_name_, params, response, error);
                 
                 r_debug("PythonSegmentation: @4");
                 if (error.code != 0) {
