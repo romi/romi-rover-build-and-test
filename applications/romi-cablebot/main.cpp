@@ -160,20 +160,15 @@ int main(int argc, char **argv)
                 //romi::CablebotController controller(shared_programs, alarmclock);
                 
                 // Server                
-                std::shared_ptr<rcom::IRPCHandler> remote_camera
-                        = std::make_shared<romi::CameraAdaptor>(*cablebot->camera_);
-                
-                
-                std::shared_ptr<rcom::IRPCHandler> remote_camera_mount
-                        = std::make_shared<romi::CameraMountAdaptor>(*cablebot->mount_);
-                
-                std::shared_ptr<rcom::IRPCHandler> remote_programs_adaptor
-                        = std::make_shared<romi::CablebotProgramListAdaptor>(shared_programs, program_io);
+                romi::CameraAdaptor camera_adaptor(*cablebot->camera_);
+                romi::CameraMountAdaptor cameramount_adaptor(*cablebot->mount_);
+                romi::CablebotProgramListAdaptor programs_adaptor(shared_programs,
+                                                                  program_io);
 
                 rcom::RemoteObjectsAdaptor adaptor;
-                adaptor.add("camera", remote_camera);
-                adaptor.add("camera-mount", remote_camera_mount);
-                adaptor.add("programs", remote_programs_adaptor);
+                adaptor.add("camera", camera_adaptor);
+                adaptor.add("camera-mount", cameramount_adaptor);
+                adaptor.add("programs", programs_adaptor);
                 
                 // auto server = rcom::RcomServer::create("cablebot", adaptor);
 
