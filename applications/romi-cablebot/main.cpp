@@ -32,6 +32,7 @@
 #include <rcom/RcomMessageHandler.h>
 #include <rcom/MessageHub.h>
 #include <rcom/Linux.h>
+#include <rcom/RemoteObjectsAdaptor.h>
 #include <rpc/RcomLog.h>
 
 #include <RomiSerialClient.h>
@@ -39,7 +40,6 @@
 #include <session/Session.h>
 #include <rpc/CameraAdaptor.h>
 #include <rpc/CameraMountAdaptor.h>
-#include <rpc/RemoteObjectsAdaptor.h>
 #include <configuration/GetOpt.h>
 #include <util/ClockAccessor.h>
 #include <camera/ICameraSettings.h>
@@ -170,7 +170,7 @@ int main(int argc, char **argv)
                 std::shared_ptr<rcom::IRPCHandler> remote_programs_adaptor
                         = std::make_shared<romi::CablebotProgramListAdaptor>(shared_programs, program_io);
 
-                romi::RemoteObjectsAdaptor adaptor;
+                rcom::RemoteObjectsAdaptor adaptor;
                 adaptor.add("camera", remote_camera);
                 adaptor.add("camera-mount", remote_camera_mount);
                 adaptor.add("programs", remote_programs_adaptor);
