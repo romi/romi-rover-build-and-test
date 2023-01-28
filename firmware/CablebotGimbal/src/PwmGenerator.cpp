@@ -44,7 +44,7 @@ PwmGenerator::PwmGenerator(IOutputPin *_pwm1,
         configurePwmFrequency();
 }
 
-void PwmGenerator::setPhase(float phase)
+void PwmGenerator::set_phase(float phase)
 {
         int i1 = phase * SINE_TABLE_SIZE;
         
@@ -61,9 +61,13 @@ void PwmGenerator::setPhase(float phase)
         pwm3->set(0.5 + amplitude * 0.5 * sineTable[i3]);
 }
 
-void PwmGenerator::setAmplitude(float value)
+void PwmGenerator::set_amplitude(float value)
 {
-        if (value >= 0.0f && value <= 1.0f)
+        if (value < 0.0f)
+                amplitude = 0.0f;
+        else if (value > 1.0f)
+                amplitude = 1.0f;
+        else 
                 amplitude = value;
 }
 

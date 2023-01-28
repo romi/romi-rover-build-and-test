@@ -30,8 +30,8 @@ class IPwmGenerator
 public:
         virtual ~IPwmGenerator() {}
 
-        virtual void setPhase(float phase) = 0;
-        virtual void setAmplitude(float p) = 0;
+        virtual void set_phase(float phase) = 0;
+        virtual void set_amplitude(float p) = 0;
         virtual void enable() = 0;
         virtual void disable() = 0;
 };

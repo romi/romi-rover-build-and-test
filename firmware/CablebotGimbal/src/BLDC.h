@@ -24,98 +24,50 @@
 #ifndef __BLDC_H
 #define __BLDC_H
 
+#include "fixed.h"
+#include "IBLDC.h"
 #include "IArduino.h"
 #include "IEncoder.h"
 #include "IOutputPin.h"
 #include "IPwmGenerator.h"
 
-float normalizeAngle(float angle);
-double normalizeAngle(double angle);
+float normalize_angle(float angle);
 
 class IMU;
 
-class BLDC
+class BLDC : public IBLDC
 {
 protected:
-        IArduino *arduino;
-        IEncoder* encoder;
-        IPwmGenerator *generator;
-        IOutputPin *sleepPin;
-        IOutputPin *resetPin;
-        double targetPosition;
-        double offsetAngleZero;
-        double speed;
-        double lastSpeed;
-        unsigned long lastUpdate;
-        double maxAcceleration;
-        double kp;
-        float power;
-        double phase;
-        
-        void moveat(float rpm, float dt);
-        bool updatePosition(float dt);
+        IPwmGenerator *generator_;
+        IOutputPin *sleep_pin_;
+        IOutputPin *reset_pin_;
+        float poles_;
+        float power_;
+        // float position_;
+        float phase_absolute_;
+        float phase_relative_;
                 
-        void setPhase(double value);
+        void set_phase(float value);
+        // void incr_phase(float delta);
         
-        void incrPhase(double delta) {
-                setPhase(phase + delta);
-        }
-        
-        float angleToPhase(float angle);
-
-        bool tryMoveto(float angle, float timeOut);
+        float angle_to_phase(float angle);
 
 public:
-        BLDC(IArduino *_arduino,
-             IEncoder* _encoder,
-             IPwmGenerator *_generator,
-             IOutputPin *_sleep,
-             IOutputPin *_reset);
+        BLDC(IPwmGenerator *generator,
+             IOutputPin *sleep,
+             IOutputPin *reset,
+             uint8_t poles);
         
-        virtual ~BLDC() {}
+        virtual ~BLDC() override = default;
 
-        void setPower(float p);
-        float getPower() {
-                return power;
-        }
+        void set_power(float p) override;
+        float get_power() const override;
         
-        /** Set the target position of the motor. The position is a
-            normalized angle: a value of 1 is equal to an absolute
-            angle of 360°. Values larger than 1 or smaller than zero
-            will be mapped to the [0,1] range.  */
-        void setTargetPosition(double pos);
-
-        /** Set the offset that corresponds to a 0° angle on your
-         * device.  */
-        void setOffsetAngleZero(double pos);        
-        double getOffsetAngleZero() {
-                return offsetAngleZero;
-        };
-
-        void setKp(double newkp) {
-                kp = newkp;
-        };
-        double getKp() {
-                return kp;
-        };
-        void setMaxAcceleration(double ma) {
-                maxAcceleration = ma;
-        };
-        double getMaxAcceleration() {
-                return maxAcceleration;
-        };
-
-        void wake();
-        void sleep();
-        void reset();
-
-        void update(float dt);
-
-        void calibrate();
-
-        bool moveto(float angle);
-
-        void followIMU(IMU* imu, float angle);
+        void incr_position(float delta) override;
+        
+        void wakeup() override;
+        void sleep() override;
+        void reset() override;
 };
 
 #endif // __BLDC_H

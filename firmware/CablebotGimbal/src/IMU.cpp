@@ -93,11 +93,15 @@ float IMU::getRoll(bool raw)
 	accel_zg = max(accel_zg, -0.9999999);	
 
 	double inclination_y = (acos(accel_yg) * DEGREES_PER_RADIAN);
-	if (accel_zg > 0) inclination_y = 360 - inclination_y;
-	inclination_y = inclination_y / 360;
+	if (accel_zg > 0)
+                inclination_y = 360 - inclination_y;
+	inclination_y =
+                inclination_y / 360;
 
-	if (raw) inclination_y = normalizeAngle(inclination_y);
-	else inclination_y = normalizeAngle(inclination_y + zero_offset);
+	if (raw)
+                inclination_y = normalize_angle(inclination_y);
+	else
+                inclination_y = normalize_angle(inclination_y + zero_offset);
 
 	return (float) inclination_y;
 }

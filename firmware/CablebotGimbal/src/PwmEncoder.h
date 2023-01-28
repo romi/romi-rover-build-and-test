@@ -37,57 +37,69 @@ void PwmEncoderFall();
 class PwmEncoder : public IEncoder
 {
 private:
-        IArduino *arduino;
-        int pin;
-        unsigned long prevTime;
-        uint16_t value;
-        uint16_t minValue;
-        uint16_t maxValue;
-        float angle;
+        IArduino *arduino_;
+        int pin_;
+        unsigned long previous_time_;
+        uint16_t value_;
+        uint16_t min_value_;
+        uint16_t max_value_;
+        bool inverted_;
         
         friend void PwmEncoderRise();
         friend void PwmEncoderFall();
         
         void rise() {
-                prevTime = arduino->micros();
-                attachInterrupt(pin, PwmEncoderFall, FALLING);
+                previous_time_ = arduino_->micros();
+                attachInterrupt(pin_, PwmEncoderFall, FALLING);
         }
         
         void fall() {
-                uint16_t tmp = arduino->micros() - prevTime;
+                uint16_t tmp = arduino_->micros() - previous_time_;
                 /** Filter the value using [min,max] and |delta| < 100
                  * because the reading is not always reliable.  */
-                if (tmp >= minValue && tmp <= maxValue) {
+                if (tmp >= min_value_ && tmp <= max_value_) {
                         // uint16_t delta = value - tmp;
                         // if (delta < 0)
                         //         delta = -delta;
                         // if (delta < 100)
-                                value = tmp;
+                                value_ = tmp;
                 }
-                attachInterrupt(pin, PwmEncoderRise, RISING);
+                attachInterrupt(pin_, PwmEncoderRise, RISING);
         }
 
 public:
-        PwmEncoder(IArduino *_arduino, int _pin,
-                   uint16_t _minValue, uint16_t _maxValue)
-                : arduino(_arduino), pin(_pin), 
-                  value(0), prevTime(0), minValue(_minValue),
-                  maxValue(_maxValue), angle(0.0f) {
+        PwmEncoder(IArduino *arduino, int pin,
+                   uint16_t min_value, uint16_t max_value)
+                : arduino_(arduino),
+                  pin_(pin), 
+                  previous_time_(0),
+                  value_(0),
+                  min_value_(min_value),
+                  max_value_(max_value),
+                  inverted_(false) {
                 // Sets the global encoder, used by the interrupt
                 // service routines.
                 setPwmEncoder(this); // Hmmm...
-                arduino->attachInterrupt(pin, PwmEncoderFall, FALLING);
+                arduino_->attachInterrupt(pin_, PwmEncoderFall, FALLING);
         }
         
         
         virtual ~PwmEncoder() {}
+
+        void set_inverted(bool value) override;
+        bool get_inverted() override;
         
-        uint16_t getValue() override {
-                return value;
+        uint16_t get_value() {
+                return value_;
         }
 
-        float getAngle() override {
-                return (float) (value - minValue) / (float) (maxValue - minValue);
+        float get_angle() override {
+                float angle = ((float) (value_ - min_value_)
+                               / (float) (max_value_ - min_value_));
+                if (inverted_) {
+                        angle = 1.0f - angle;
+                }
+                return angle;
         }
 };
 

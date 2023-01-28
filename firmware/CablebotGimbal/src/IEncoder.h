@@ -30,10 +30,12 @@ public:
         virtual ~IEncoder() {}
         
         // Returns the internal encoder value
-        virtual uint16_t getValue() = 0;
+        //virtual uint16_t getValue() = 0;
 
         // Returns the normalized angle in the [0,1] range (1=360°).
-        virtual float getAngle() = 0;
+        virtual float get_angle() = 0;
+        virtual void set_inverted(bool value) = 0;
+        virtual bool get_inverted() = 0;
 };
 
 #endif // __IENCODER_H

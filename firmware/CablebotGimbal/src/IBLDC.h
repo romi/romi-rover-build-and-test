@@ -16,41 +16,33 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   General Public License for more details.
 
-  You should have received a copy of the GNU General Public License
+  You should have received a copy opositionf the GNU General Public License
   along with this program.  If not, see
   <http://www.gnu.org/licenses/>.
 
  */
-#include "PwmEncoder.h"
+#ifndef __IBLDC_H
+#define __IBLDC_H
 
-static PwmEncoder *pwmEncoder = 0;
-
-void setPwmEncoder(PwmEncoder *encoder)
+class IBLDC
 {
-        pwmEncoder = encoder;
-}
+public:
+        virtual ~IBLDC() = default;
 
-void PwmEncoderRise()
-{
-        if (pwmEncoder)
-                pwmEncoder->rise();
-}
+        /* Power in range [0, 1] */
+        virtual void set_power(float p) = 0;
+        virtual float get_power() const = 0;
+        
+        /* position are in revolutions (ex. 0.01 equals 3.6°)  */
+        // virtual float get_position() = 0;
+        virtual void incr_position(float delta) = 0;
 
-void PwmEncoderFall()
-{
-        if (pwmEncoder)
-                pwmEncoder->fall();
-}
+        /* position in revolutions */
+        //virtual float get_position() const = 0;
 
-void PwmEncoder::set_inverted(bool value)
-{
-        inverted_ = value;
-}
+        virtual void wakeup() = 0;
+        virtual void sleep() = 0;
+        virtual void reset() = 0;
+};
 
-bool PwmEncoder::get_inverted()
-{
-        return inverted_;
-}
-
-// TODO 
-// implement SPI interface for AS5048A encoder
+#endif // __IBLDC_H

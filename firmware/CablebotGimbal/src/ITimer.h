@@ -2,7 +2,7 @@
   bldc_featherwing
 
   Copyright (C) 2019-2020 Sony Computer Science Laboratories
-  Author(s) Peter Hanappe
+  Author(s) Timothée Wintz, Peter Hanappe
 
   bldc_featherwing is Arduino firmware to control a brushless motor.
 
@@ -21,36 +21,20 @@
   <http://www.gnu.org/licenses/>.
 
  */
-#include "PwmEncoder.h"
 
-static PwmEncoder *pwmEncoder = 0;
+#ifndef __I_TIMER_H
+#define __I_TIMER_H
 
-void setPwmEncoder(PwmEncoder *encoder)
+#include "ITimerHandler.h"
+
+class ITimer
 {
-        pwmEncoder = encoder;
-}
+public:
+        virtual ~ITimer() = default;
+        virtual void set_handler(ITimerHandler *handler) = 0;
+        virtual void start() = 0;
+        virtual void stop() = 0;
+        virtual void restart() = 0;
+};
 
-void PwmEncoderRise()
-{
-        if (pwmEncoder)
-                pwmEncoder->rise();
-}
-
-void PwmEncoderFall()
-{
-        if (pwmEncoder)
-                pwmEncoder->fall();
-}
-
-void PwmEncoder::set_inverted(bool value)
-{
-        inverted_ = value;
-}
-
-bool PwmEncoder::get_inverted()
-{
-        return inverted_;
-}
-
-// TODO 
-// implement SPI interface for AS5048A encoder
+#endif // __I_TIMER_H

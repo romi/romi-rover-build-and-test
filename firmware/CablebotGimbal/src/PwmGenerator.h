@@ -56,10 +56,10 @@ public:
         virtual ~PwmGenerator() {}
 
         /** The phase should be a normalized angle between 0 and 1. */
-        void setPhase(float phase) override;
+        void set_phase(float phase) override;
         
         /** The ampltide should be a a value between 0 and 1. */
-        void setAmplitude(float p) override;
+        void set_amplitude(float p) override;
         
         void enable() override;
         void disable() override;

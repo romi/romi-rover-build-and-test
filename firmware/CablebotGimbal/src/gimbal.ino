@@ -21,23 +21,27 @@
   <http://www.gnu.org/licenses/>.
 
  */
+#include <RomiSerial.h>
+#include <ArduinoSerial.h>
+
 #include "ArduinoImpl.h"
 #include "PwmEncoder.h"
 #include "BLDC.h"
-#include "Parser.h"
 #include "PwmOut.h"
 #include "PwmGenerator.h"
 #include "DigitalOut.h"
 #include "pins.h"
 #include "IMU.h"
-#include <RomiSerial.h>
-#include <ArduinoSerial.h>
+#include "M0Timer3.h"
+#include "SpeedController.h"
+#include "PositionController.h"
+#include "PowerController.h"
+#include "test.h"
 
 using namespace romiserial;
 
 ArduinoImpl arduino;
 PwmEncoder encoder(&arduino, P_ENC, 11, 915);
-Parser parser("XP", "?sC");
 
 PwmOut pwm1(&arduino, P_IN1);
 PwmOut pwm2(&arduino, P_IN2);
@@ -52,10 +56,13 @@ PwmGenerator pwmGenerator(&pwm1, &pwm2, &pwm3,
 DigitalOut sleepPin(&arduino, P_SLEEP);
 DigitalOut resetPin(&arduino, P_RESET);
 
-// When building on Arduino IDE you need to modify variant.cpp file (from the adafruit M0 core) to free SERCOM0:
-// 1. Pins PA04 and PA05 changed from PIO_ANALOG to PIO_SERCOM_ALT (lines ~57,58)
+// When building on Arduino IDE you need to modify variant.cpp file
+// (from the adafruit M0 core) to free SERCOM0:
+// 1. Pins PA04 and PA05 changed from PIO_ANALOG to PIO_SERCOM_ALT
+//   (lines ~57,58)
 // 2. Comment references to Serial1 at the end of file
 // In platformio this is not needed (it is solved using a custom variant)
+
 TwoWire myWire(&sercom0, P_IMU_SDA, P_IMU_SCL);
 IMU imu(&myWire);
 
@@ -76,34 +83,38 @@ enum I2cCommands {
 	I2C_COMMAND_COUNT
 }; 
 
-BLDC motor(&arduino, &encoder, &pwmGenerator, &sleepPin, &resetPin);
+BLDC motor(&pwmGenerator, &sleepPin, &resetPin, 11);
+PowerController power_controller(encoder, motor);
+SpeedController speed_controller(motor, power_controller, 4.0); // acceleration in revolution/s²
+PositionController position_controller(encoder, speed_controller);
 
 unsigned long prev_time = 0;
 
 void send_info(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_enable(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_moveto(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_moveat(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_set_position(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_get_position(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_set_power(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
-void handle_calibrate(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
+//void handle_calibrate(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_get_roll(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
-
-void handle_get_roll();
+void run_tests(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 
 const static MessageHandler handlers[] = {
         { '?', 0, false, send_info },
+        { 'E', 1, false, handle_enable },
         { 'M', 1, false, handle_moveto },
+        { 'V', 1, false, handle_moveat },
         { 's', 0, false, handle_get_position },
         { 'P', 1, false, handle_set_power },
-        { 'C', 1, false, handle_calibrate },
         { 'r', 0, false, handle_get_roll },
+        // { 'T', 1, false, run_tests },
+        { 'T', 0, false, run_tests },
 };
 
 ArduinoSerial serial(Serial);
 RomiSerial romiSerial(serial, serial, handlers, sizeof(handlers) / sizeof(MessageHandler));
-
-// ArduinoSerial serial1(Serial1);
-// RomiSerial romiSerial1(serial1, serial1, handlers, sizeof(handlers) / sizeof(MessageHandler));
 
 // In degrees (0/180, 0/-180)
 float max_travel = 110;
@@ -114,13 +125,8 @@ void setup()
 {
 
         Serial.begin(115200);
-        /* while (!Serial) */
-        /*         ; */
-        /* Serial1.begin(115200); */
-        /* while (!Serial1) */
-                /* ; */
 
-	// Comunication with Raspberry Pi via I2C
+        // Comunication with Raspberry Pi via I2C
 	Wire.begin(I2C_ADDRESS);
 	Wire.onReceive(receiveEvent);
 	Wire.onRequest(requestEvent);
@@ -131,39 +137,73 @@ void setup()
 		// TODO Manage error
 	}
 
-        motor.setPower(0.4f);
+        //float angleAtStartup = encoder.getAngle();
+        //motor.setOffsetAngleZero(angleAtStartup);
+        motor.set_power(0.0f);
+        motor.wakeup();
 
+        encoder.set_inverted(true);
+        
+        position_controller.init_start_position();
+        M0Timer3::get().set_handler(&position_controller);
+        // M0Timer3::get().set_handler(&speed_controller);
+        // speed_controller.set_target_speed(0.1f);
+        
         Serial.println("OK");
 }
 
 void loop()
 {
         romiSerial.handle_input();
-	if (follow)
-                motor.followIMU(&imu, targetAngle);
+        
+        // Serial.print("Loop: angle=");
+        // Serial.println(encoder.get_angle(), 4);
+        // delay(1000);
+        
+        // if (follow)
+        //         motor.followIMU(&imu, targetAngle);
 }
 
 void send_info(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
-        romiSerial->send("[0,\"BLDCController\",\"0.1\","
+        romiSerial->send("[0,\"CablebotGimbal\",\"0.1\","
                          "\"" __DATE__ " " __TIME__ "\"]"); 
+}
+
+void handle_enable(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        if (args[0] == 0) {
+                motor.sleep();
+                romiSerial->send_ok();  
+        } else {
+                motor.wakeup();
+                romiSerial->send_ok();  
+        }
 }
 
 void handle_moveto(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
         float value = (float) args[0] / 3600.0f;
-        bool success = motor.moveto(value);
-        if (success) {
+        //bool success = motor.moveto(value);
+        position_controller.set_target_position(value);
+        // if (success) {
                 romiSerial->send_ok();  
-        } else {
-                romiSerial->send_error(1, "Failed");  
-        }
+        // } else {
+        //         romiSerial->send_error(1, "Failed");  
+        // }
+}
+
+void handle_moveat(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        float rps = (float) args[0] / 1000.0;
+        //speed_controller.set_target_speed(rps);
+        romiSerial->send_ok();  
 }
 
 void handle_get_position(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
 {
         static char buffer[32];
-        int value = (int) (3600.0f * encoder.getAngle()); 
+        int value = (int) (3600.0f * encoder.get_angle()); 
         snprintf(buffer, sizeof(buffer), "[0,%d]", value);
         romiSerial->send(buffer);                
 }
@@ -175,14 +215,10 @@ void handle_set_power(IRomiSerial *romiSerial, int16_t *args, const char *string
                 value = 1.0f;
         else if (value < 0.0f)
                 value = 0.0f;
-        motor.setPower(value);
+        // Serial.print("power ");
+        // Serial.println(value);
+        motor.set_power(value);
         romiSerial->send_ok();  
-}
-
-void handle_calibrate(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
-{
-        romiSerial->send_ok();  
-        motor.calibrate();
 }
 
 void handle_get_roll(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
@@ -236,21 +272,24 @@ void receiveEvent(int howMany)
 				// Set motor offset
 				float imuRaw = imu.getRoll(true);
 				float diff = value - imuRaw;
-				double angle = (double) encoder.getAngle();
-				motor.setOffsetAngleZero(angle + diff);
+				double angle = (double) encoder.get_angle();
+				//motor.setOffsetAngleZero(angle + diff);
 			}
 			break;
 		}
 		case I2C_ZERO:
 		{
                         Serial.println("set zero");
-			// This allows to set the zero offset based on the real position, so you can align the camera manually ant issue this command.
+			// This allows to set the zero offset based on
+			// the real position, so you can align the
+			// camera manually ant issue this command.
 			float raw = imu.getRoll(true);
 			imu.setZeroOffset(raw);
 
-			// The motor offset is also set to this angle (based on encoder input)
-			double angle = (double) encoder.getAngle();
-			motor.setOffsetAngleZero(angle);
+			// The motor offset is also set to this angle
+			// (based on encoder input)
+			double angle = (double) encoder.get_angle();
+			//motor.setOffsetAngleZero(angle);
 			break;
 		}
 		case I2C_MAX:
@@ -271,7 +310,7 @@ void receiveEvent(int howMany)
 					value = 1.0f;
 				else if (value < 0.0f)
 					value = 0.0f;
-				motor.setPower(value);
+				motor.set_power(value);
 			}
 			break;
 		}
@@ -279,8 +318,10 @@ void receiveEvent(int howMany)
 		{
 			int goToSleep;
 			if (i2c_receive(&goToSleep)) {
-				if (goToSleep) motor.sleep();
-				else motor.wake();
+				if (goToSleep)
+                                        motor.sleep();
+				else
+                                        motor.wakeup();
 			}
 			break;
 		}
@@ -289,16 +330,18 @@ void receiveEvent(int howMany)
 			int data;
 			if (i2c_receive(&data)) {
 				float pos = data / 10000.0f;
-                                Serial.print("motor position ");
-                                Serial.print(data);
 				if (pos > max_travel)
                                         pos = max_travel;
 				else if (pos < -max_travel)
                                         pos = -max_travel;
-				pos = fromRealAngle(pos);
+                                pos /= 360.0f;
+                                pos = normalize_angle(pos);
+                                position_controller.set_target_position(pos);
+                                
+                                Serial.print("motor position ");
+                                Serial.print(data);
                                 Serial.print(", ");
                                 Serial.println(pos);
-				motor.moveto(pos);
 			}
 			break;
 		}
@@ -307,7 +350,7 @@ void receiveEvent(int howMany)
 			int data;
 			if (i2c_receive(&data)) {
 				double newKp = data / 10000.0f;
-				motor.setKp(newKp);
+				//motor.setKp(newKp);
 			}
 			break;
 		}
@@ -316,7 +359,7 @@ void receiveEvent(int howMany)
 			int data;
 			if (i2c_receive(&data)) {
 				double maxAccel = data / 10000.0f;
-				motor.setMaxAcceleration(maxAccel);
+				//motor.setMaxAcceleration(maxAccel);
 			}
 			break;
 		}
@@ -360,29 +403,29 @@ void requestEvent()
 		}
 		case I2C_MOTOR_POWER: 
 		{
-			int mpow = motor.getPower() * 100;
-			Serial.println(motor.getPower());
+			int mpow = motor.get_power() * 100;
+			Serial.println(motor.get_power());
 			Serial.println(mpow);
 			i2c_send(mpow);
 			break;
 		}
 		case I2C_MOTOR_POSITION:
 		{
-			float norm_pos = encoder.getAngle();
-			norm_pos = norm_pos - motor.getOffsetAngleZero();
+			float norm_pos = encoder.get_angle();
+			//norm_pos = norm_pos - motor.getOffsetAngleZero();
 			int pos = toRealAngle(norm_pos) * 10000;
 			i2c_send(pos);
 			break;
 		}
 		case I2C_KP:
 		{
-			int theKp = motor.getKp() * 10000;
+			int theKp = 0; //motor.getKp() * 10000;
 			i2c_send(theKp);
 			break;
 		}
 		case I2C_MAX_ACCEL:
 		{
-			int maxAccel = motor.getMaxAcceleration() * 10000;
+			int maxAccel = 0; //motor.getMaxAcceleration() * 10000;
 			i2c_send(maxAccel);
 			break;
 		}
@@ -429,15 +472,37 @@ bool i2c_receive(int *data)
 
 float toRealAngle(float normalizedAngle)
 {
-	// Returns position in degrees from 0 to 180 (clockwise) and 0 to -180 (anticlockwise)
-	if (normalizedAngle > 0.5f) normalizedAngle -= 1.0f;
+	// Returns position in degrees from 0 to 180 (clockwise) and 0
+	// to -180 (anticlockwise)
+	while (normalizedAngle > 0.5f)
+                normalizedAngle -= 1.0f;
+	while (normalizedAngle < -0.5f)
+                normalizedAngle += 1.0f;
 	return normalizedAngle * 360.0f;
 }
 
-float fromRealAngle(float realAngle)
+float fromRealAngle(float angle)
 {
 	// Return normalized angle between 0 and 1.0
-	if (realAngle < 0)
-                realAngle += 360;
-	return realAngle / 360.0f;
+	while (angle < 0.0f)
+                angle += 360.0f;
+	while (angle > 360.0f)
+                angle += 360.0f;
+	return angle / 360.0f;
+}
+
+void run_tests(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        run_tests_all();
+        // switch (args[0]) {
+        // case 0:
+        //         run_tests_all();
+        //         break;
+                
+        // case 1:
+        //         run_tests_fixed();
+        //         break;
+        // }
+
+        romiSerial->send_ok();  
 }
