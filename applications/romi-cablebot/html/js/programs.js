@@ -295,11 +295,8 @@ class ProgramListController
 
     handleTextMessage(response) {
         if (response.method == "get") {
-            console.log(JSON.stringify(response));
-            if (response.method == 'get') {
-                this.loadPrograms(response.result);
-                this.displayPrograms();
-            }
+            this.loadPrograms(response.result);
+            this.displayPrograms();
         } else if (response.method == "update") {
             console.log(JSON.stringify(response));
         } else {
