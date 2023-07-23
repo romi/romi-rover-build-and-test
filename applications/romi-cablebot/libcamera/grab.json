@@ -1,0 +1,6 @@
+{
+    "width": 640,
+    "height": 480,
+    "quality": 95,
+    "device": "/dev/video0"
+}
