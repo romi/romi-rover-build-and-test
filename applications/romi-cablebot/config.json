@@ -31,7 +31,7 @@
                 3040.0
             ]
         },
-        "settings": {
+        "pi-camera-hq": {
             "analog-gain": 12.0,
             "bitrate": 17000000,
             "exposure-mode": "auto",
@@ -40,7 +40,12 @@
             "resolution": "2028x1520",
             "shutter-speed": 10000.0
         },
-        "type": "pi-camera-hq-v10"
+        "type": "external-camera",
+        "external-camera": {
+            "executable": "/home/hanappe/projects/ROMI/github/rover/romi-rover-build-and-test/applications/romi-cablebot/vgrabbj/grab.sh",
+            "width": 1920,
+            "height": 1080
+        }
     },
     "device": {
         "hardware-id": "001",
