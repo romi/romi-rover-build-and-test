@@ -11,15 +11,24 @@
 #define P_IN3 6
 #define P_EN3 5
 
-#define P_SLEEP A5
-#define P_RESET A0
+// Board Iaac 
+//#define P_SLEEP A5
+//#define P_RESET A0
 
+// Board Tim 
+#define P_SLEEP 19
+#define P_RESET 18
+
+// Board Iaac 
 // Encoder pin
-#define P_ENC A1
+//#define P_ENC A0
+
+// Board Tim 
+#define P_ENC SDA
 
 // IMU pins
-#define P_IMU_SDA A3
-#define P_IMU_SCL A4
+//#define P_IMU_SDA A3
+//#define P_IMU_SCL A4
 
 #endif // pin_defs_h_INCLUDED
 

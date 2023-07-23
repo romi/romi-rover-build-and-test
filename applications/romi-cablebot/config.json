@@ -1,8 +1,4 @@
 {
-    "device": {
-        "type": "Cablebot",
-        "hardware-id": "001",
-    },
     "camera": {
         "calibration": {
             "date": "2022-07-25",
@@ -46,6 +42,10 @@
         },
         "type": "pi-camera-hq-v10"
     },
+    "device": {
+        "hardware-id": "001",
+        "type": "Cablebot"
+    },
     "programs": [
         {
             "enabled": true,
@@ -64,10 +64,10 @@
             "hour": 12,
             "id": 1,
             "interval": 0.1,
-            "length": 16.0,
-            "minute": 0,
+            "length": 1.0,
+            "minute": 27,
             "name": "Midi",
-            "observation-id": "",
+            "observation-id": "tomato-row1",
             "start-at": 2.0,
             "tilt": 0.0
         },

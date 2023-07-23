@@ -15,7 +15,8 @@ enum DeviceState {
 enum DeviceError {
         ERROR_NONE = 0,
         ERROR_ODRIVE,
-        ERROR_BATTERY
+        ERROR_BATTERY,
+        ERROR_HOMING
 };
 
 enum BatteryState {

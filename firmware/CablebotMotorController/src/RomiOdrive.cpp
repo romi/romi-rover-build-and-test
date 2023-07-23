@@ -3,7 +3,7 @@
 bool RomiOdrive::begin()
 {
 	// Do a hardware reset
-	reset(true);
+	//reset(true);
 
 	// Start Serial port
 	odrvSer.begin(config.serial_speed);
@@ -35,25 +35,42 @@ void RomiOdrive::reset(bool hardReset)
 void RomiOdrive::rawCommand(const char* rawcom)
 {
 	send(rawcom);
-	Serial.println(getString());
+	//Serial.println(getString());
+}
+
+bool RomiOdrive::waitState(AxisState whichState, uint32_t timeout_ms)
+{
+	uint32_t start_t = millis();
+	int response = -1;
+
+	while (response != whichState) {
+		if (millis() - start_t > timeout_ms)
+                        return false;
+
+		response = readParameter("axis0.current_state").toInt();
+                
+		delay(500);
+        }
+
+	return true;
 }
 
 bool RomiOdrive::setState(AxisState whichState)
 {
-	snprintf(obuff, OBSIZE, "w axis0.requested_state %i", whichState);
-	send();
-
 	uint32_t start_t = millis();
-
-	int response;
-	send("r axis0.current_state");
-	response = getString().toInt();
+	int response = -1;
 
 	while (response != whichState) {
 		if (millis() - start_t > config.idle_timeout)
                         return false;
-		delay(300);
+
+                snprintf(obuff, OBSIZE, "w axis0.requested_state %i", whichState);
+                send();
+
+		delay(500);
+                
 		response = readParameter("axis0.current_state").toInt();
+                
         }
 
 	return true;
@@ -66,8 +83,12 @@ bool RomiOdrive::isEncoderOK()
 	while (!response) {
 		send("r axis0.encoder.is_ready");
 		response = getString().toInt();
+
+                send("r axis0.current_state");
+                getString();
+                        
 		counter++;
-		if (counter > 7)
+		if (counter > 20)
                         break;
 		delay(1000);
 	}
@@ -126,16 +147,18 @@ String RomiOdrive::readParameter(const char* whichParameter)
 void RomiOdrive::stop()
 {
 	// Find out in which control mode we are
-	String ctrlMoStr = readParameter("axis0.controller.config.control_mode");
-	uint8_t ctrlMo = ctrlMoStr.toInt();
+	String ctrlModeStr = readParameter("axis0.controller.config.control_mode");
+	uint8_t ctrlMode = ctrlModeStr.toInt();
 
-	if (ctrlMo == CONTROL_MODE_POSITION_CONTROL) {
+	if (ctrlMode == CONTROL_MODE_POSITION_CONTROL) {
 
 		String currPosStr = readParameter("axis0.encoder.shadow_count");
 		float currPos = currPosStr.toFloat();
-		moveTo(currPos /= config.encoderTicks);
+		moveTo(currPos / config.encoderTicks);
 
-	} else if (ctrlMo == CONTROL_MODE_VELOCITY_CONTROL) moveAt(0);
+	} else if (ctrlMode == CONTROL_MODE_VELOCITY_CONTROL) {
+                moveAt(0);
+        } // else ...   // TODO 
 }
 
 void RomiOdrive::moveTo(float posInTurns)
@@ -143,18 +166,20 @@ void RomiOdrive::moveTo(float posInTurns)
 	posInTurns *= ticksPerTurn();
 
 	// Position control mode CONTROL_MODE_POSITION_CONTROL  —  3
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i", CONTROL_MODE_POSITION_CONTROL);
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i",
+                 CONTROL_MODE_POSITION_CONTROL);
 	send();
 
 	// Input mode → INPUT_MODE_PASSTHROUGH  —  1
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i", INPUT_MODE_PASSTHROUGH);
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i",
+                 INPUT_MODE_PASSTHROUGH);
 	send();
 
 	snprintf(obuff, OBSIZE, "w axis0.controller.input_pos %f", posInTurns);
 	send();
 }
 
-void RomiOdrive::moveToAcc(float posInTurns)
+void RomiOdrive::moveToWithRamp(float posInTurns)
 {
 	// Settings for trapezoidal movement can be adjusted with:
 	// axis0.trap_traj.config.vel_limit
@@ -165,13 +190,16 @@ void RomiOdrive::moveToAcc(float posInTurns)
 	posInTurns *= ticksPerTurn();
 
 	// Position control mode = CONTROL_MODE_POSITION_CONTROL (3)
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i", CONTROL_MODE_POSITION_CONTROL);
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i",
+                 CONTROL_MODE_POSITION_CONTROL);
 	send();
 
 	// Input mode = INPUT_MODE_TRAP_TRAJ (5) (not needed since it
 	// is already in command code
+        
 	// https://github.com/odriverobotics/ODrive/blob/master/Firmware/communication/ascii_protocol.cpp#L263)
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i", INPUT_MODE_TRAP_TRAJ);
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i",
+                 INPUT_MODE_TRAP_TRAJ);
 	send();
 	
 	snprintf(obuff, OBSIZE, "w axis0.controller.input_pos %f", posInTurns);
@@ -180,17 +208,20 @@ void RomiOdrive::moveToAcc(float posInTurns)
 
 void RomiOdrive::moveAt(float velocity)
 {
-
 	// Velocity should be in turns/second
 	velocity *= ticksPerTurn();
 
 	//// Velocity control
-	// Set axis.controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL (2).
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i", CONTROL_MODE_VELOCITY_CONTROL);
+
+        // Set axis.controller.config.control_mode =
+	// CONTROL_MODE_VELOCITY_CONTROL (2).
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i",
+                 CONTROL_MODE_VELOCITY_CONTROL);
 	send();
 
 	// Input mode = INPUT_MODE_PASSTHROUGH (1)
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i", INPUT_MODE_PASSTHROUGH);
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i",
+                 INPUT_MODE_PASSTHROUGH);
 	send();
 
 	// Send velocity in turns/sec
@@ -198,7 +229,7 @@ void RomiOdrive::moveAt(float velocity)
 	send();
 }
 
-void RomiOdrive::moveAtNorm(float velocity)
+void RomiOdrive::moveAtNormalizedSpeed(float velocity)
 {
 	float maxSpeedInTurns  = config.maxSpeed * config.turnsPerMeter;
 	velocity = velocity * maxSpeedInTurns;
@@ -207,12 +238,16 @@ void RomiOdrive::moveAtNorm(float velocity)
 	velocity *= ticksPerTurn();
 
 	//// Velocity control
-	// Set axis.controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL (2).
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i", CONTROL_MODE_VELOCITY_CONTROL);
+        
+	// Set axis.controller.config.control_mode =
+	// CONTROL_MODE_VELOCITY_CONTROL (2).
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i",
+                 CONTROL_MODE_VELOCITY_CONTROL);
 	send();
 
 	// Input mode = INPUT_MODE_PASSTHROUGH (1)
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i", INPUT_MODE_PASSTHROUGH);
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i",
+                 INPUT_MODE_PASSTHROUGH);
 	send();
 
 	// Send velocity in turns/sec
@@ -220,20 +255,25 @@ void RomiOdrive::moveAtNorm(float velocity)
 	send();
 }
 
-void RomiOdrive::moveAttAcc(float velocity, float ramp_rate)
+void RomiOdrive::moveAtWithRamp(float velocity, float ramp_rate)
 {
 
 	// Velocity should be in turns/second
 	velocity *= ticksPerTurn();
 
 	//// Velocity control
-	// Set axis.controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL (2).
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i", CONTROL_MODE_VELOCITY_CONTROL);
+
+	// Set axis.controller.config.control_mode =
+	// CONTROL_MODE_VELOCITY_CONTROL (2).
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i",
+                 CONTROL_MODE_VELOCITY_CONTROL);
 	send();
 
-	// Activate the ramped velocity mode
-	// Set axis.controller.config.input_mode = INPUT_MODE_VEL_RAMP. (2)
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i", INPUT_MODE_VEL_RAMP);
+	// Activate the ramped velocity mode. Set
+	// axis.controller.config.input_mode =
+	// INPUT_MODE_VEL_RAMP. (2)
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i",
+                 INPUT_MODE_VEL_RAMP);
 	send();
 
 	//// Ramped velocity control
@@ -246,7 +286,7 @@ void RomiOdrive::moveAttAcc(float velocity, float ramp_rate)
 	send();
 }
 
-void RomiOdrive::moveAttAccNorm(float velocity, float ramp_rate)
+void RomiOdrive::moveAtNormalizedSpeedWithRamp(float velocity, float ramp_rate)
 {
 	float maxSpeedInTurns  = config.maxSpeed * config.turnsPerMeter;
 	velocity = velocity * maxSpeedInTurns;
@@ -254,16 +294,21 @@ void RomiOdrive::moveAttAccNorm(float velocity, float ramp_rate)
 	// Velocity should be in turns/second
 	velocity *= ticksPerTurn();
 
-	Serial.println(velocity);
+	//Serial.println(velocity);
 
 	//// Velocity control
-	// Set axis.controller.config.control_mode = CONTROL_MODE_VELOCITY_CONTROL (2).
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i", CONTROL_MODE_VELOCITY_CONTROL);
+
+	// Set axis.controller.config.control_mode =
+	// CONTROL_MODE_VELOCITY_CONTROL (2).
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.control_mode %i",
+                 CONTROL_MODE_VELOCITY_CONTROL);
 	send();
 
-	// Activate the ramped velocity mode
-	// Set axis.controller.config.input_mode = INPUT_MODE_VEL_RAMP. (2)
-	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i", INPUT_MODE_VEL_RAMP);
+	// Activate the ramped velocity mode. Set
+	// axis.controller.config.input_mode =
+	// INPUT_MODE_VEL_RAMP. (2)
+	snprintf(obuff, OBSIZE, "w axis0.controller.config.input_mode %i",
+                 INPUT_MODE_VEL_RAMP);
 	send();
 
 	//// Ramped velocity control
@@ -284,6 +329,7 @@ void RomiOdrive::send(const char* msg)
 
 void RomiOdrive::send()
 {
+        //Serial.println(obuff);
 	odrvSer.println(obuff);
 }
 
@@ -302,27 +348,35 @@ String RomiOdrive::getString()
 			delay(1);
 		}
 	}
+        //Serial.println(response);
 	return response;
 }
 
 bool RomiOdrive::setVersion(float fallback)
 {
-	// Depending on the odrive board version some settings change
-	// To find out your version you can check
-	// odrv0.fw_version_mayor odrv0.fw_version_minor
-	// odrv0.fw_version_revision We have only tested 0.4.11 and
-	// 0.5.10 (these boards report 0.0 version) boards More info
+	// Depending on the odrive board version some settings
+	// change. To find out your version you can check
+	// odrv0.fw_version_mayor, odrv0.fw_version_minor, and
+	// odrv0.fw_version_revision. We have only tested 0.4.11 and
+	// 0.5.10 (these boards report 0.0 version) boards. More info
 	// on https://docs.odriverobotics.com/migration
 
 	// Returns true if version detection succeed, false if setting fallback version
 
 	// Try to get version
 	send("r fw_version_major");
-	String mayor = getString();
+	String major = getString();
+
+        //Serial.print("major ");
+        //Serial.println(major);
+        
 	send("r fw_version_minor");
 	String minor = getString();
 
-	String strVer = "0." + mayor + minor;
+        //Serial.print("minor ");
+        //Serial.println(minor);
+
+	String strVer = "0." + major + minor;
 	config.odrvVer = strVer.toFloat();
 
 	if (config.odrvVer <= 0) {
@@ -344,6 +398,7 @@ int RomiOdrive::ticksPerTurn()
 float RomiOdrive::getPosition()
 {
         float ticks = getInfo(RomiOdrive::INFO_POSITION);
-        return ticks / (float) config.encoderTicks;
+        float turns = ticks / (float) config.encoderTicks;
+        return turns;
 }
 

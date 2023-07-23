@@ -35,13 +35,13 @@ float normalize_angle(float angle)
 }
 
 BLDC::BLDC(IPwmGenerator *generator,
-           IOutputPin *sleep,
-           IOutputPin *reset,
+           IOutputPin *sleep_pin,
+           IOutputPin *reset_pin,
            uint8_t poles)
         
         : generator_(generator),
-          sleep_pin_(sleep),
-          reset_pin_(reset),
+          sleep_pin_(sleep_pin),
+          reset_pin_(reset_pin),
           poles_((float)poles)
 {
         set_power(0.0f);

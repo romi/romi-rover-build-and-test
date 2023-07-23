@@ -36,6 +36,10 @@ void PwmEncoderFall();
 
 class PwmEncoder : public IEncoder
 {
+public:
+        uint16_t count_;
+        uint16_t value0_;
+        
 private:
         IArduino *arduino_;
         int pin_;
@@ -44,7 +48,9 @@ private:
         uint16_t min_value_;
         uint16_t max_value_;
         bool inverted_;
-        
+        float unit_to_angle;
+
+
         friend void PwmEncoderRise();
         friend void PwmEncoderFall();
         
@@ -55,6 +61,10 @@ private:
         
         void fall() {
                 uint16_t tmp = arduino_->micros() - previous_time_;
+                
+                value0_ = tmp;
+                count_++;
+                
                 /** Filter the value using [min,max] and |delta| < 100
                  * because the reading is not always reliable.  */
                 if (tmp >= min_value_ && tmp <= max_value_) {
@@ -77,9 +87,12 @@ public:
                   min_value_(min_value),
                   max_value_(max_value),
                   inverted_(false) {
+                count_ = 0;
+                value0_ = 0;
                 // Sets the global encoder, used by the interrupt
                 // service routines.
                 setPwmEncoder(this); // Hmmm...
+                unit_to_angle = 1.0f / (float) (max_value_ - min_value_);
                 arduino_->attachInterrupt(pin_, PwmEncoderFall, FALLING);
         }
         
@@ -94,8 +107,7 @@ public:
         }
 
         float get_angle() override {
-                float angle = ((float) (value_ - min_value_)
-                               / (float) (max_value_ - min_value_));
+                float angle = unit_to_angle * (float) (value_ - min_value_);
                 if (inverted_) {
                         angle = 1.0f - angle;
                 }

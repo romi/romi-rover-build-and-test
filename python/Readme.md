@@ -4,7 +4,16 @@
 
 ## Installation
 
+First install librcom/python
+
+
 ```console
-$ python3 -m pip install -e .
+$ pip install .
+```
+
+or
+
+```console
+$ pip install --editable .
 ```
 

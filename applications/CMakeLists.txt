@@ -16,9 +16,9 @@ add_subdirectory(batterymonitor)
 add_subdirectory(oquam)
 add_subdirectory(romi-cablebot)
 
-if(${PI_BUILD})
+#if(${PI_BUILD})
     add_subdirectory(romi-camera)
-endif()
+#endif()
 
 
 #install(DIRECTORY scripts DESTINATION share/romi FILES_MATCHING PATTERN "*.json")

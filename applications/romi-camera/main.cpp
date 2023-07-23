@@ -24,33 +24,44 @@
 #include <stdexcept>
 #include <memory>
 
+#define HAS_LEGACY_PICAMERA 0
+
+
 #include <rcom/RegistryServer.h>
 #include <rcom/RcomServer.h>
 
 #include <RomiSerialClient.h>
 
-#include <picamera/PiCamera.h>
-#include <picamera/PiCameraSettings.h>
 #include <rpc/CameraAdaptor.h>
 #include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
 #include <util/ClockAccessor.h>
 #include <util/Logger.h>
 
+#if HAS_LEGACY_PICAMERA
+#include <picamera/PiCamera.h>
+#include <picamera/PiCameraSettings.h>
+#endif
+
+#include <camera/ExternalCamera.h>
+
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
 static void quit_on_control_c();
 
+static const char *kCameraType = "camera-type";  // picamera-hq, picamera-v2, file-camera, external-camera
+static const char *kWidth = "width";
+static const char *kHeight = "height";
 static const char *kRegistry = "registry";
-static const char *kCameraVersion = "camera-version";
+static const char *kTopic = "topic";
+
+#if HAS_LEGACY_PICAMERA
 static const char *kMode = "mode";
 static const char *kVideo = "video";
 static const char *kStill = "still";
-static const char *kWidth = "width";
-static const char *kHeight = "height";
 static const char *kFPS = "fps";
 static const char *kBitrate = "bitrate";
-static const char *kTopic = "topic";
+#endif
 
 static std::vector<romi::Option> option_list = {
         { "help", false, nullptr,
@@ -62,11 +73,8 @@ static std::vector<romi::Option> option_list = {
         { kTopic, true, "camera",
           "The topic used for the registration."},
 
-        { kCameraVersion, true, "v2",
-          "The camera version: 'v2' or 'hq' (v2)"},
-                
-        { kMode, true, kVideo,
-          "The camera mode: 'video' or 'still'."},
+        { kCameraType, true, "external-camera",
+          "The camera type: picamera-hq, picamera-v2, file-camera, external-camera (external-camera)"},
 
         { kWidth, true, "1640",
           "The image width (1640)"},
@@ -74,11 +82,16 @@ static std::vector<romi::Option> option_list = {
         { kHeight, true, "1232",
           "The image height (1232)"},
 
+#if HAS_LEGACY_PICAMERA
+        { kMode, true, kVideo,
+          "The camera mode: 'video' or 'still'."},
+        
         { kFPS, true, "5",
           "The frame rate, for video mode only (5 fps)"},
 
         { kBitrate, true, "17000000",
           "The average bitrate (video only) (17000000)"}
+#endif
 };
 
 int main(int argc, char **argv)
@@ -100,23 +113,26 @@ int main(int argc, char **argv)
                         rcom::RegistryServer::set_address(ip.c_str());
                 }
 
-                std::string mode = options.get_value(kMode);
+		std::string type = options.get_value(kCameraType);
                 std::string width_value = options.get_value(kWidth);
                 std::string height_value = options.get_value(kHeight);
-                std::string fps_value = options.get_value(kFPS);
-		std::string version = options.get_value(kCameraVersion);
-		std::string bitrate_value = options.get_value(kBitrate);
 
                 size_t width = (size_t) std::stoul(width_value);
                 size_t height = (size_t) std::stoul(height_value);
+		
+                r_info("Camera: %s(%zux%zu).", type.c_str(), width, height);
+                
+                std::unique_ptr<romi::ICamera> camera;
+                        
+#if HAS_LEGACY_PICAMERA
+                std::string mode = options.get_value(kMode);
+                std::string fps_value = options.get_value(kFPS);
+		std::string bitrate_value = options.get_value(kBitrate);
                 int32_t fps = (int32_t) std::stoi(fps_value);
                 uint32_t bitrate = (uint32_t) std::stoi(bitrate_value);
-		
-                r_info("Camera: %zux%zu.", width, height);
-                
                 std::unique_ptr<romi::PiCameraSettings> settings;
-
-                if (version == "v2") {
+                
+                if (type == "picamera-v2") {
                         if (mode == kVideo) {
                                 r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
                                 settings = std::make_unique<romi::V2VideoCameraSettings>(width,
@@ -128,8 +144,10 @@ int main(int argc, char **argv)
                                 r_info("Camera: still mode.");
                                 settings = std::make_unique<romi::V2StillCameraSettings>(width, height);
                         }
-		  
-		} else if (version == "hq") {
+
+                        camera = romi::PiCamera::create(*settings);
+
+		} else if (type == "picamera-hq") {
                         if (mode == kVideo) {
                                 r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
                                 settings = std::make_unique<romi::HQVideoCameraSettings>(width,
@@ -141,10 +159,16 @@ int main(int argc, char **argv)
                                 r_info("Camera: still mode.");
                                 settings = std::make_unique<romi::HQStillCameraSettings>(width, height);
                         }
+                        
+                        camera = romi::PiCamera::create(*settings);
+                        
+		}
+#endif
+                if (type == "external-camera") {
+                        camera = std::make_unique<romi::ExternalCamera>("/home/hanappe/projects/ROMI/github/rover/romi-rover-build-and-test/applications/romi-cablebot/vgrabbj/grab.sh");
 		}
                 
                 std::string topic = options.get_value(kTopic);
-                auto camera = romi::PiCamera::create(*settings);
                 romi::CameraAdaptor adaptor(*camera);
                 auto camera_server = rcom::RcomServer::create(topic, adaptor);
                 

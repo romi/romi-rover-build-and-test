@@ -74,7 +74,7 @@ void PositionController::update_position(float time)
                 speed = -0.05f;                
         }
 
-        if (0 && ++counter == 50) {
+        if (++counter == 50) {
                 Serial.print("T=");
                 Serial.print(target_position_, 5);
                 Serial.print(", P=");

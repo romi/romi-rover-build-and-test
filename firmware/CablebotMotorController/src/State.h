@@ -1,58 +1,40 @@
-#ifndef __MOTORCONTROLLER_STATE_H
-#define __MOTORCONTROLLER_STATE_H
+#ifndef _CABLEBOTMOTORCONTROLLER_STATE_H
+#define _CABLEBOTMOTORCONTROLLER_STATE_H
 
 #include <FastLED.h>
+#include "IState.h"
 
 // Output pins
 #define PIN_ADDR_LED 5
 
-enum DeviceState {
-        STATE_ERROR,
-        STATE_STARTING_UP,
-        STATE_INITIALIZING_DEBUG_SERIAL,
-        STATE_INITIALIZING_CAMERA_SERIAL,
-        STATE_INITIALIZING_ODRIVE,
-        STATE_INITIALIZING_POSITION,
-        STATE_INITIALIZING_SWITCHES,
-        STATE_READY
-};
-
-enum DeviceError {
-        ERROR_NONE = 0,
-        ERROR_ODRIVE,
-        ERROR_BATTERY
-};
-
-enum BatteryState {
-        STATE_BATTERY_OK,
-        STATE_BATTERY_LOW,
-        STATE_BATTERY_CRITICAL
-};
-
-class State
+class State : public IState
 {
-public:
+protected:
         static const int NUM_LEDS = 3;
         
-        CRGB leds[NUM_LEDS];
-        DeviceState state;
-	DeviceError error;
-        const char *error_message;
-	BatteryState battery_state;
-        float voltage;
-        bool blink_on;
-        unsigned long interval;
-        unsigned long last_time;
+        CRGB leds_[NUM_LEDS];
+        DeviceState state_;
+	DeviceError error_;
+        const char *error_message_;
+	BatteryState battery_state_;
+        float voltage_;
+        bool blink_on_;
+        unsigned long interval_;
+        unsigned long last_time_;
+
+public:
         
         State();
-        virtual ~State() = default;
+        ~State() override = default;
 
-        void init();
-        void set(DeviceState s);
-        void set_error(DeviceError error, const char *message);
-        void set_battery(float voltage);
-        void clear_error();
-        void handle_leds();
+        void init() override;
+        void set(DeviceState s) override;
+        void set_error(DeviceError error, const char *message) override;
+        DeviceError error() const override;
+        const char *message() const override;
+        void set_battery(float voltage) override;
+        void clear_error() override;
+        void update() override;
 
 protected:
         void update_leds();
@@ -67,6 +49,6 @@ protected:
         
         
 
-#endif // __MOTORCONTROLLER_STATE_H
+#endif // _CABLEBOTMOTORCONTROLLER_STATE_H
 
 
