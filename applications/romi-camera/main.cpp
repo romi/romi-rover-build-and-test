@@ -54,6 +54,7 @@ static const char *kWidth = "width";
 static const char *kHeight = "height";
 static const char *kRegistry = "registry";
 static const char *kTopic = "topic";
+static const char *kExec = "exec";
 
 #if HAS_LEGACY_PICAMERA
 static const char *kMode = "mode";
@@ -74,13 +75,17 @@ static std::vector<romi::Option> option_list = {
           "The topic used for the registration."},
 
         { kCameraType, true, "external-camera",
-          "The camera type: picamera-hq, picamera-v2, file-camera, external-camera (external-camera)"},
+          "The camera type: picamera-hq, picamera-v2, file-camera, "
+          "external-camera (external-camera)"},
 
         { kWidth, true, "1640",
           "The image width (1640)"},
 
         { kHeight, true, "1232",
           "The image height (1232)"},
+
+        { kExec, true, "",
+          "The executable for the external-camera type"},
 
 #if HAS_LEGACY_PICAMERA
         { kMode, true, kVideo,
@@ -165,7 +170,10 @@ int main(int argc, char **argv)
 		}
 #endif
                 if (type == "external-camera") {
-                        camera = std::make_unique<romi::ExternalCamera>("/home/hanappe/projects/ROMI/github/rover/romi-rover-build-and-test/applications/romi-cablebot/vgrabbj/grab.sh");
+                        std::string executable = options.get_value(kExec);
+                        if (executable.empty())
+                                throw std::runtime_error("Missing --exec option");
+                        camera = std::make_unique<romi::ExternalCamera>(executable.c_str());
 		}
                 
                 std::string topic = options.get_value(kTopic);
