@@ -3,8 +3,8 @@ from rcom.rcom_client import RcomClient
 
 class Oquam(RcomClient):
    
-    def __init__(self, name = 'cnc', registry = '127.0.0.1'):
-        super().__init__(name, registry)
+    def __init__(self, name = 'cnc', id = 'cnc'):
+        super().__init__(name, id)
        
     def homing(self):
         self.execute('cnc-homing')
@@ -40,10 +40,10 @@ class Oquam(RcomClient):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--registry', type=str, nargs='?', default="127.0.0.1",
-                    help='IP address of the registry')
+    parser.add_argument('--topic', type=str, nargs='?', default="cnc",
+                    help='The regsitry topic')
     args = parser.parse_args()
     
-    cnc = Oquam("cnc", args.registry)
+    cnc = Oquam(args.topic, args.topic)
     #cnc.homing()
     cnc.moveto(1, 0, 0, 0.5)

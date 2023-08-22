@@ -1,6 +1,55 @@
 {
+    "camera": {
+        "calibration": {
+            "date": "2023-08-05",
+            "method": "charuco",
+            "person": "hanappe"
+        },
+        "distortion": {
+            "type": "simple-radial",
+            "values": [
+                -0.4928269684314728,
+                -0.4928269684314728
+            ]
+        },
+        "id": "camera-cablebot-01",
+        "intrinsics": {
+            "cx": 1014.0,
+            "cy": 760.0,
+            "fx": 2200.0,
+            "fy": 2200.0
+        },
+        "lens": "CCTV Lens 6mm IR 3MP HD",
+        "name": "Raspbery Pi HQ GS Camera V1.0",
+        "sensor": {
+            "dimensions": [
+                0.0050232,
+                0.0037536
+            ],
+            "resolution": [
+                1456,
+                1088
+            ]
+        },
+        "type": "remote-camera",
+        "external-camera": {
+            "executable": "/home/hanappe/projects/ROMI/github/rover/romi-rover-build-and-test/applications/romi-cablebot/vgrabbj/grab.sh",
+            "width": 1456,
+            "height": 1088
+        },
+        "remote-camera": {
+            "topic": "camera",
+            "width": 1456,
+            "height": 1088
+        },
+        "fake-camera": {}
+    },
+    "device": {
+        "hardware-id": "001",
+        "type": "CablebotV3"
+    },
     "oquam": {
-        "cnc-range": [[0, 0.560000], [0, 0], [0, 0]],
+        "cnc-range": [[0, 11], [0, 0], [0, 0]],
         "controller-classname": "stepper-controller",
         "path-maximum-deviation": 0.010000,
         "path-slice-duration": 0.020000,

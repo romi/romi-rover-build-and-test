@@ -147,11 +147,13 @@ bool handle_axis_event(romi::CNCRange& range,
                        romi::IJoystick& joystick,
                        romi::JoystickEvent& event)
 {
+        throw std::runtime_error("handle_axis_event: oquam.moveat NOT IMPLEMENTED");
+        
         bool success = true;
         if (event.number == kLeftAxisUpDown) {
                 double v = joystick.get_axis(event.number);
                 if (v == 0.0) {
-                        success = oquam.moveat(0, 0, 0);
+                        // success = oquam.moveat(0, 0, 0);
                         romi::v3 pos;
                         success = oquam.get_position(pos);
                         if (success) {
@@ -165,15 +167,15 @@ bool handle_axis_event(romi::CNCRange& range,
                         }
 
                 } else if (v < 0.0) {
-                        success = oquam.moveat(0, 0, -900);
+                        // success = oquam.moveat(0, 0, -900);
                         
                 } else {
-                        success = oquam.moveat(0, 0, 900);
+                        // success = oquam.moveat(0, 0, 900);
                 } 
         }
         if (!success) {
                 r_err("moveat failed");
-                oquam.moveat(0, 0, 0);
+                // oquam.moveat(0, 0, 0);
                 oquam.power_down();
                 
         }
@@ -194,8 +196,8 @@ bool handle_joystick_event(romi::CNCRange& range,
                            romi::Oquam& oquam,
                            romi::IJoystick& joystick)
 {
-        bool done = false;
-        romi::JoystickEvent& event = joystick.get_next_event();
+         bool done = false;
+         romi::JoystickEvent& event = joystick.get_next_event();
 
         switch (event.type) {
         default:
@@ -209,7 +211,7 @@ bool handle_joystick_event(romi::CNCRange& range,
                 break;
         }
         
-        return done;
+         return done;
 }
 
 void set_height(romi::CNCRange& range, romi::Oquam& oquam, romi::IJoystick& joystick)

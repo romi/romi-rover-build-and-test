@@ -43,6 +43,7 @@ extern volatile block_t *current_block;
 uint8_t controller_state;
 
 static const char *kInvalidState = "Invalid state";
+static const char *kInvalidMode = "Invalid mode";
 
 void handle_moveto(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_move(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
@@ -55,6 +56,8 @@ void send_position(IRomiSerial *romiSerial, int16_t *args, const char *string_ar
 void send_idle(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_homing(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_set_homing(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_set_homing_speeds(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
+void handle_set_homing_mode(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_enable(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void handle_spindle(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
 void send_info(IRomiSerial *romiSerial, int16_t *args, const char *string_arg);
@@ -72,6 +75,8 @@ const static MessageHandler handlers[] = {
         { 'I', 0, false, send_idle },
         { 'H', 0, false, handle_homing },
         { 'h', 3, false, handle_set_homing },
+        { 's', 3, false, handle_set_homing_speeds },
+        { 'o', 1, false, handle_set_homing_mode },
         { 'E', 1, false, handle_enable },
         { 'S', 1, false, handle_spindle },
         { 'T', 1, false, handle_test },
@@ -81,9 +86,15 @@ const static MessageHandler handlers[] = {
 ArduinoSerial serial(Serial);
 RomiSerial romiSerial(serial, serial, handlers, sizeof(handlers) / sizeof(MessageHandler));
 
+enum {
+        kHomingDefault = 0,
+        kHomingWithContact = 1
+};
+
 static char reply_string[80];
 static int8_t homing_axes[3] =  {-1, -1, -1};
 static int16_t homing_speeds[3] =  {1000, 1000, 400};
+static int16_t homing_mode = kHomingDefault;
 static uint8_t limit_switches[3] = {0, 0, 0};
 
 int moveat(int dx, int dy, int dz);
@@ -385,7 +396,7 @@ int homing_moveto_switch_released(int axis)
         return homing_wait_switch(homing_speeds[axis], axis, HIGH);
 }
 
-bool do_homing_axis(int axis)
+bool do_homing_axis_default(int axis)
 {
         bool success = false; 
         if (homing_moveto_switch_pressed(axis) == 0 
@@ -396,6 +407,30 @@ bool do_homing_axis(int axis)
                 controller_state = STATE_RUNNING;
                 wait();
                 success = true;
+        }
+        return success;
+}
+
+bool do_homing_axis_contact(int axis)
+{
+        bool success = false; 
+        if (homing_moveto_switch_pressed(axis) == 0) {
+                // Don't remove the RUNNING because wait() depends on
+                // it!
+                controller_state = STATE_RUNNING;
+                wait();
+                success = true;
+        }
+        return success;
+}
+
+bool do_homing_axis(int axis)
+{
+        bool success = false; 
+        if (homing_mode == kHomingDefault) {
+                success = do_homing_axis_default(axis);
+        } else if (homing_mode == kHomingWithContact) {
+                success = do_homing_axis_contact(axis);
         }
         return success;
 }
@@ -441,6 +476,24 @@ void handle_set_homing(IRomiSerial *romiSerial, int16_t *args, const char *strin
         for (int i = 0; i < 3; i++)
                 homing_axes[i] = args[i];        
         romiSerial->send_ok();
+}
+
+void handle_set_homing_speeds(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        for (int i = 0; i < 3; i++)
+                homing_speeds[i] = args[i];        
+        romiSerial->send_ok();
+}
+
+void handle_set_homing_mode(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)
+{
+        if (args[0] == kHomingDefault
+            || args[0] == kHomingWithContact) {
+                homing_mode = args[0];
+                romiSerial->send_ok();
+        } else {
+                romiSerial->send_error(102, kInvalidMode);  
+        }
 }
 
 void handle_enable(IRomiSerial *romiSerial, int16_t *args, const char *string_arg)

@@ -15,8 +15,10 @@
 //#define P_SLEEP A5
 //#define P_RESET A0
 
-// Board Tim 
+// Board Tim
+// 19=A5
 #define P_SLEEP 19
+// 18=A4
 #define P_RESET 18
 
 // Board Iaac 

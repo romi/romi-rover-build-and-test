@@ -90,6 +90,7 @@ int main(int argc, char **argv)
         try {
                 // Linux
                 rcom::Linux linux;
+                std::shared_ptr<rcom::ILog> rcomlog = std::make_shared<romi::RcomLog>();
 
                 // Options
                 romi::GetOpt options(option_list);
@@ -109,7 +110,7 @@ int main(int argc, char **argv)
                 std::string config_value = options.get_value(kConfig);
 
                 r_info("Romi Cablebot: Using configuration file: '%s'",
-                       config_value.c_str());
+                        config_value.c_str());
                 
                 std::filesystem::path config_path = config_value;
                 
@@ -125,7 +126,7 @@ int main(int argc, char **argv)
                 
                 // Cablebot
                 r_debug("romi-cablebot: Initializing cablebot");
-                auto cablebot = romi::Cablebot::create(linux, info_io);
+                auto cablebot = romi::Cablebot::create(linux, rcomlog, info_io);
 
                 // Session
                 nlohmann::json device_config = config->get_section("device");
@@ -167,18 +168,20 @@ int main(int argc, char **argv)
 
                 rcom::RemoteObjectsAdaptor adaptor;
                 adaptor.add("camera", camera_adaptor);
-                adaptor.add("camera-mount", cameramount_adaptor);
+                adaptor.add("mount", cameramount_adaptor);
                 adaptor.add("programs", programs_adaptor);
                 
-                // auto server = rcom::RcomServer::create("cablebot", adaptor);
+                auto server = rcom::RcomServer::create("cablebot", adaptor);
 
-                auto handler = std::make_shared<rcom::RcomMessageHandler>(adaptor);
-                auto rcomlog = std::make_shared<romi::RcomLog>();
-                auto server = rcom::MessageHub::create("cablebot",
-                                                       handler,
-                                                       rcomlog,
-                                                       10100,
-                                                       true);
+                
+                
+                //auto handler = std::make_shared<rcom::RcomMessageHandler>(adaptor);
+                //auto rcomlog = std::make_shared<romi::RcomLog>();
+                // auto server = rcom::MessageHub::create("cablebot",
+                //                                        handler,
+                //                                        rcomlog,
+                //                                        10100,
+                //                                        true);
                 
                 quit_on_control_c();
 		
