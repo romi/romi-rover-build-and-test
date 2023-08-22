@@ -97,7 +97,13 @@ int main(int argc, char** argv)
                 double max_steps_per_block = 32000.0; // Should be less than 2^15/2-1
                 double max_slice_duration = stepper_settings.compute_minimum_duration(max_steps_per_block);
                 
-                romi::AxisIndex homing[3] = { romi::kAxisX, romi::kAxisY, romi::kAxisZ };
+                romi::AxisIndex homing_axes[3] = { romi::kAxisX, romi::kAxisY, romi::kAxisZ };
+
+                nlohmann::json homing_settings = config["oquam"]["homing"];
+                homing_axes[0] = homing_settings["axes"][0];
+                homing_axes[1] = homing_settings["axes"][1];
+                homing_axes[2] = homing_settings["axes"][2];
+                        
                 romi::OquamSettings oquam_settings(range,
                                                    stepper_settings.maximum_speed,
                                                    stepper_settings.maximum_acceleration,
@@ -105,7 +111,7 @@ int main(int argc, char** argv)
                                                    maximum_deviation,
                                                    slice_duration,
                                                    max_slice_duration,
-                                                   homing);
+                                                   homing_axes);
                 romi::Oquam oquam(controller, oquam_settings, session);
 
                 // RPC access
