@@ -95,10 +95,6 @@ iptables -t nat -A POSTROUTING -o $ETH -j MASQUERADE
 iptables -A FORWARD -i $ETH -o $WLAN -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i $WLAN -o $ETH -j ACCEPT
 
-iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
-iptables -A FORWARD -i eth1 -o $WLAN -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i $WLAN -o eth1 -j ACCEPT
-
 netfilter-persistent save
 
 echo 1 > /proc/sys/net/ipv4/ip_forward
@@ -116,6 +112,7 @@ dhcp-range=10.10.10.2,10.10.10.20,255.255.255.0,24h
 domain=wlan     # Local wireless DNS domain
 address=/gw.wlan/10.10.10.1
                 # Alias for this router
+dhcp-option=6,8.8.8.8
 EOF
 
 rfkill unblock wlan
@@ -135,7 +132,7 @@ fi
 cat<<EOF >> /etc/hostapd/hostapd.conf
 country_code=FR
 interface=$WLAN
-ssid2=$SSID2
+ssid2="$SSID2"
 hw_mode=g
 channel=10
 macaddr_acl=0
