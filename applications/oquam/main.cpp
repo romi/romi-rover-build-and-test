@@ -53,6 +53,10 @@ int main(int argc, char** argv)
         int retval = 1;
 
         romi::RoverOptions options;
+        romi::Option session_dir = {
+                "oquam-session", false, ".",
+                "Set the session directory"}; 
+        options.add_option(session_dir);
         options.parse(argc, argv);
         options.exit_if_help_requested();
 
@@ -84,6 +88,7 @@ int main(int argc, char** argv)
                 std::unique_ptr<romi::ILocationProvider> locationPrivider
                         = std::make_unique<romi::GpsLocationProvider>(gps);
                 std::string session_directory = options.get_value("oquam-session");
+                r_info("");
                 romi::Session session(linux, session_directory,
                                       romiDeviceData, softwareVersion,
                                       std::move(locationPrivider));
