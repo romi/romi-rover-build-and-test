@@ -6,6 +6,7 @@
 
 #include <rcom/Linux.h>
 #include <rcom/RcomServer.h>
+#include <rcom/RegistryServer.h>
 
 #include <rover/RoverOptions.h>
 #include <rpc/CNCAdaptor.h>
@@ -21,6 +22,7 @@
 #include "util/ClockAccessor.h"
 
 std::atomic<bool> quit(false);
+static const char *kRegistry = "registry";
 
 static inline double sign(double v)
 {
@@ -61,6 +63,13 @@ int main(int argc, char** argv)
         std::signal(SIGINT, SignalHandler);
 
         try {
+	        
+                if (options.is_set(kRegistry)) {
+                        std::string ip = options.get_value(kRegistry);
+                        r_info("Registry IP set to %s", ip.c_str());
+                        rcom::RegistryServer::set_address(ip.c_str());
+                }
+		
                 std::string config_file = options.get_config_file();
                 r_info("Oquam: Using configuration file: '%s'", config_file.c_str());
                 // TBD: USE FileUtils
