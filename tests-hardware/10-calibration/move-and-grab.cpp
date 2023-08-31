@@ -299,7 +299,8 @@ int main(int argc, char** argv)
                                                    maximum_deviation,
                                                    slice_duration,
                                                    1.0,
-                                                   homing);
+                                                   homing,
+                                                   romi::kHomingDefault);
                 romi::Oquam oquam(cnc_controller, oquam_settings, session);
 
                 // Camera

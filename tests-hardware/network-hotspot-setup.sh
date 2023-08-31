@@ -82,6 +82,7 @@ cat<<EOF >> /etc/dhcpcd.conf
 interface $WLAN
     static ip_address=10.10.10.1/24
     nohook wpa_supplicant
+    static domain_name_servers=8.8.8.8
 EOF
 
 cat<<EOF >> /etc/sysctl.d/routed-ap.conf

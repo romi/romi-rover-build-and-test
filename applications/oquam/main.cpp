@@ -118,6 +118,8 @@ int main(int argc, char** argv)
                 homing_axes[1] = homing_settings["axes"][1];
                 homing_axes[2] = homing_settings["axes"][2];
                         
+                romi::HomingMode homing_mode = (romi::HomingMode) homing_settings["mode"];
+                        
                 romi::OquamSettings oquam_settings(range,
                                                    stepper_settings.maximum_speed,
                                                    stepper_settings.maximum_acceleration,
@@ -125,7 +127,8 @@ int main(int argc, char** argv)
                                                    maximum_deviation,
                                                    slice_duration,
                                                    max_slice_duration,
-                                                   homing_axes);
+                                                   homing_axes,
+                                                   homing_mode);
                 romi::Oquam oquam(controller, oquam_settings, session);
 
                 // RPC access

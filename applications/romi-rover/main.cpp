@@ -249,7 +249,8 @@ int main(int argc, char** argv)
                                                    maximum_deviation,
                                                    slice_duration,
                                                    max_slice_duration,
-                                                   homing);
+                                                   homing,
+                                                   romi::kHomingDefault);
                 romi::Oquam oquam(cnc_controller, oquam_settings, session);
 
                 

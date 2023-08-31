@@ -189,7 +189,8 @@ int main(int argc, char** argv)
                                                    maximum_deviation,
                                                    slice_duration,
                                                    1.0,
-                                                   homing);
+                                                   homing,
+                                                   romi::kHomingDefault);
                 romi::Oquam oquam(*controller, oquam_settings, session);
 
                 // File camera
