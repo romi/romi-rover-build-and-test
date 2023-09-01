@@ -377,6 +377,7 @@ int homing_wait_switch(int speed, int axis, int state)
                 
                 if (limit_switches[axis] == state) {
                         err = move(0, 0, 0, 0); // This will stop the moveat
+                        err = move(0, 0, 0, 0); // This will stop the moveat
                         break;
                 }
                 
@@ -439,8 +440,9 @@ bool do_homing()
 {
         bool success = true;
         for (int i = 0; i < 3; i++) {
-                if (homing_axes[i] >= 0 && homing_axes[i] < 3) {
-                        success = do_homing_axis(homing_axes[i]);
+                int8_t axis = homing_axes[i];
+                if (axis >= 0 && axis < 3) {
+                        success = do_homing_axis(axis);
                         if (!success)
                                 break;
                 }
