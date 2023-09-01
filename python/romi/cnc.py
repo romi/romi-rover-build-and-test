@@ -51,7 +51,7 @@ if __name__ == '__main__':
     
     cnc = CNC(args.topic, args.topic)
     # Turn off battery charger
-    cnc.set_relay(0, False)
+    cnc.set_relay(0, True)
     # Move to 1 meter
     cnc.moveto(1.0, 0, 0, 0.75)
     time.sleep(1)
@@ -60,4 +60,4 @@ if __name__ == '__main__':
     # Do homing
     cnc.homing()
     # Recharge the battery
-    cnc.set_relay(0, True)
+    cnc.set_relay(0, False)
