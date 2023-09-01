@@ -1,13 +1,18 @@
 import argparse
+import time
 from rcom.rcom_client import RcomClient
 
-class Oquam(RcomClient):
+class CNC(RcomClient):
    
     def __init__(self, name = 'cnc', id = 'cnc'):
         super().__init__(name, id)
        
     def homing(self):
         self.execute('cnc-homing')
+       
+    def set_relay(self, index, value):
+        params = {'index': index, 'value': value }
+        self.execute('set-relay', params)
        
     def power_up(self):
         self.execute('power-up')
@@ -44,6 +49,15 @@ if __name__ == '__main__':
                     help='The regsitry topic')
     args = parser.parse_args()
     
-    cnc = Oquam(args.topic, args.topic)
-    #cnc.homing()
-    cnc.moveto(1, 0, 0, 0.5)
+    cnc = CNC(args.topic, args.topic)
+    # Turn off battery charger
+    cnc.set_relay(0, False)
+    # Move to 1 meter
+    cnc.moveto(1.0, 0, 0, 0.75)
+    time.sleep(1)
+    # Return to 4 cm before the homing
+    cnc.moveto(0.04, 0, 0, 0.75)
+    # Do homing
+    cnc.homing()
+    # Recharge the battery
+    cnc.set_relay(0, True)
