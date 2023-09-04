@@ -1,4 +1,16 @@
 {
+    "device": {
+        "hardware-id": "001",
+        "type": "CablebotV3"
+    },
+    "cablebot": {
+        "camera": {
+            "type": "remote-camera",
+            "remote-camera": {
+                "topic": "camera"
+            }
+        }
+    },
     "camera": {
         "calibration": {
             "date": "2023-08-05",
@@ -12,6 +24,12 @@
                 -0.4928269684314728
             ]
         },
+        "external-camera": {
+            "executable": "/home/hanappe/projects/ROMI/github/rover/romi-rover-build-and-test/applications/romi-cablebot/vgrabbj/grab.sh",
+            "height": 1080,
+            "width": 1920
+        },
+        "fake-camera": {},
         "id": "camera-cablebot-01",
         "intrinsics": {
             "cx": 1014.0,
@@ -31,39 +49,65 @@
                 1088
             ]
         },
-        "type": "remote-camera",
-        "external-camera": {
-            "executable": "/home/hanappe/projects/ROMI/github/rover/romi-rover-build-and-test/applications/romi-cablebot/vgrabbj/grab.sh",
-            "width": 1456,
-            "height": 1088
-        },
-        "remote-camera": {
-            "topic": "camera",
-            "width": 1456,
-            "height": 1088
-        },
-        "fake-camera": {}
-    },
-    "device": {
-        "hardware-id": "001",
-        "type": "CablebotV3"
+        "type": "external-camera"
     },
     "oquam": {
-        "cnc-range": [[0, 11], [0, 0], [0, 0]],
+        "cnc-range": [
+            [
+                0,
+                11
+            ],
+            [
+                0,
+                0
+            ],
+            [
+                0,
+                0
+            ]
+        ],
         "controller-classname": "stepper-controller",
-        "path-maximum-deviation": 0.010000,
-        "path-slice-duration": 0.020000,
         "homing": {
-            "axes": [0, -1, -1],
+            "axes": [
+                0,
+                -1,
+                -1
+            ],
             "mode": 1
         },
+        "path-maximum-deviation": 0.01,
+        "path-slice-duration": 0.02,
         "stepper-settings": {
-            "displacement-per-revolution": [0.377, 0, 0],
-            "gears-ratio": [15.3, 1, 1],
-            "maximum-acceleration": [0.1500, 0, 0],
-            "maximum-rpm": [300, 300, 300],
-            "microsteps": [1, 1, 1],
-            "steps-per-revolution": [200, 200, 200]
+            "displacement-per-revolution": [
+                0.377,
+                0,
+                0
+            ],
+            "gears-ratio": [
+                15.3,
+                1,
+                1
+            ],
+            "maximum-acceleration": [
+                0.15,
+                0,
+                0
+            ],
+            "maximum-rpm": [
+                300,
+                300,
+                300
+            ],
+            "microsteps": [
+                1,
+                1,
+                1
+            ],
+            "steps-per-revolution": [
+                200,
+                200,
+                200
+            ]
         }
     },
     "ports": {
@@ -71,5 +115,6 @@
             "port": "/dev/ttyACM0",
             "type": "serial"
         }
-    }
+    },
+    "test": 4
 }

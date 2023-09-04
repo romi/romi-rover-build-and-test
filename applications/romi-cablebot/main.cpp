@@ -53,7 +53,7 @@
 #include <util/Logger.h>
 #include <util/AlarmClock.h>
 #include <util/IAlarmClockListener.h>
-#include <api/ConfigManager.h>
+#include <api/LocalConfig.h>
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <data_provider/CameraMountLocationProvider.h>
@@ -109,20 +109,17 @@ int main(int argc, char **argv)
                 // Config
                 std::string config_value = options.get_value(kConfig);
 
-                r_info("Romi Cablebot: Using configuration file: '%s'",
+                r_info("romi-cablebot: Using configuration file: '%s'",
                         config_value.c_str());
                 
                 std::filesystem::path config_path = config_value;
                 
                 std::shared_ptr<romi::IConfigManager> config
-                        = std::make_shared<romi::ConfigManager>(config_path);
+                        = std::make_shared<romi::LocalConfig>(config_path);
                 
                 // Camera settings
                 std::shared_ptr<romi::ICameraInfoIO> info_io =
                         std::make_shared<romi::CameraInfoIO>(config, "camera");
-
-                
-                std::unique_ptr<romi::ICameraInfo> camera_info = info_io->load();
                 
                 // Cablebot
                 r_debug("romi-cablebot: Initializing cablebot");
@@ -151,7 +148,7 @@ int main(int argc, char **argv)
                 // Runner
                 std::shared_ptr<romi::IAlarmClockListener> runner
                         = std::make_shared<romi::CablebotRunner>(shared_programs, *cablebot,
-                                                                 session, *camera_info);
+                                                                 session, info_io);
 
                 // Alarm
                 std::shared_ptr<romi::IAlarmClock> alarmclock

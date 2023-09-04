@@ -14,11 +14,10 @@ add_subdirectory(rcdiscover)
 add_subdirectory(romi-remote-client)
 add_subdirectory(batterymonitor)
 add_subdirectory(oquam)
+add_subdirectory(romi-camera)
 add_subdirectory(romi-cablebot)
+add_subdirectory(romi-config)
 
-#if(${PI_BUILD})
-    add_subdirectory(romi-camera)
-#endif()
 
 
 #install(DIRECTORY scripts DESTINATION share/romi FILES_MATCHING PATTERN "*.json")

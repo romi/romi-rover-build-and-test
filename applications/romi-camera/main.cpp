@@ -24,45 +24,37 @@
 #include <stdexcept>
 #include <memory>
 
-#define HAS_LEGACY_PICAMERA 0
-
-
+#include <rcom/Linux.h>
 #include <rcom/RegistryServer.h>
 #include <rcom/RcomServer.h>
+#include <rcom/RcomClient.h>
 
 #include <RomiSerialClient.h>
 
 #include <rpc/CameraAdaptor.h>
+#include <rpc/RcomLog.h>
 #include <hal/BldcGimbal.h>
 #include <configuration/GetOpt.h>
 #include <util/ClockAccessor.h>
 #include <util/Logger.h>
-
-#if HAS_LEGACY_PICAMERA
-#include <picamera/PiCamera.h>
-#include <picamera/PiCameraSettings.h>
-#endif
-
-#include <camera/ExternalCamera.h>
+#include <camera/CameraFactory.h>
+#include <camera/ICameraSettings.h>
+#include <camera/CameraInfoIO.h>
+#include <api/LocalConfig.h>
+#include <rpc/RemoteConfig.h>
+#include <session/Session.h>
+#include <data_provider/RomiDeviceData.h>
+#include <data_provider/SoftwareVersion.h>
+#include <data_provider/DummyLocationProvider.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
 static void quit_on_control_c();
 
-static const char *kCameraType = "camera-type";  // picamera-hq, picamera-v2, file-camera, external-camera
-static const char *kWidth = "width";
-static const char *kHeight = "height";
 static const char *kRegistry = "registry";
+static const char *kConfig = "config";
+static const char *kDirectory = "directory";
 static const char *kTopic = "topic";
-static const char *kExec = "exec";
-
-#if HAS_LEGACY_PICAMERA
-static const char *kMode = "mode";
-static const char *kVideo = "video";
-static const char *kStill = "still";
-static const char *kFPS = "fps";
-static const char *kBitrate = "bitrate";
-#endif
 
 static std::vector<romi::Option> option_list = {
         { "help", false, nullptr,
@@ -71,33 +63,16 @@ static std::vector<romi::Option> option_list = {
         { kRegistry, true, nullptr,
           "The IP address of the registry."},
                 
-        { kTopic, true, "camera",
-          "The topic used for the registration."},
-
-        { kCameraType, true, "external-camera",
-          "The camera type: picamera-hq, picamera-v2, file-camera, "
-          "external-camera (external-camera)"},
-
-        { kWidth, true, "1640",
-          "The image width (1640)"},
-
-        { kHeight, true, "1232",
-          "The image height (1232)"},
-
-        { kExec, true, "",
-          "The executable for the external-camera type"},
-
-#if HAS_LEGACY_PICAMERA
-        { kMode, true, kVideo,
-          "The camera mode: 'video' or 'still'."},
-        
-        { kFPS, true, "5",
-          "The frame rate, for video mode only (5 fps)"},
-
-        { kBitrate, true, "17000000",
-          "The average bitrate (video only) (17000000)"}
-#endif
+        { kTopic, false, "camera",
+          "The topic of the rcom node"},
+                
+        { kConfig, true, "config.json",
+          "The config file (config.json)"},
+                
+        { kDirectory, true, ".",
+          "The directory to store the images and log files (current directory)"}                
 };
+
 
 int main(int argc, char **argv)
 {
@@ -105,6 +80,11 @@ int main(int argc, char **argv)
         romi::ClockAccessor::SetInstance(clock);
         
         try {
+                // Linux
+                rcom::Linux linux;
+                std::shared_ptr<rcom::ILog> rcomlog = std::make_shared<romi::RcomLog>();
+                
+                // Options
                 romi::GetOpt options(option_list);
                 options.parse(argc, argv);
                 if (options.is_help_requested()) {
@@ -117,65 +97,59 @@ int main(int argc, char **argv)
                         r_info("Registry IP set to %s", ip.c_str());
                         rcom::RegistryServer::set_address(ip.c_str());
                 }
-
-		std::string type = options.get_value(kCameraType);
-                std::string width_value = options.get_value(kWidth);
-                std::string height_value = options.get_value(kHeight);
-
-                size_t width = (size_t) std::stoul(width_value);
-                size_t height = (size_t) std::stoul(height_value);
-		
-                r_info("Camera: %s(%zux%zu).", type.c_str(), width, height);
                 
+                // Config
+                std::shared_ptr<romi::IConfigManager> config;
+                
+                if (options.is_set(kConfig)) {
+                        std::string config_value = options.get_value(kConfig);
+                        
+                        r_info("romi-camera: Using local configuration file: '%s'",
+                               config_value.c_str());
+                
+                        std::filesystem::path config_path = config_value;
+                        config = std::make_shared<romi::LocalConfig>(config_path);
+                } else {
+                        r_info("romi-camera: Using remote configuration");
+                        auto client = rcom::RcomClient::create(kConfig, 10.0, rcomlog);
+                        config = std::make_shared<romi::RemoteConfig>(client);
+                }
+                
+                // Camera settings
+                std::shared_ptr<romi::ICameraInfoIO> info_io;
+                try {
+                        info_io = std::make_shared<romi::CameraInfoIO>(config, "camera");
+                        
+                } catch (std::exception& e) {
+                        r_debug("romi-camera: Failed to load the camera configuration");
+                        throw;
+                }
+
+                // Camera
+                r_debug("romi-camera: Initializing camera");
                 std::unique_ptr<romi::ICamera> camera;
+                try {
+                        camera = romi::CameraFactory::create(linux, rcomlog, info_io);
                         
-#if HAS_LEGACY_PICAMERA
-                std::string mode = options.get_value(kMode);
-                std::string fps_value = options.get_value(kFPS);
-		std::string bitrate_value = options.get_value(kBitrate);
-                int32_t fps = (int32_t) std::stoi(fps_value);
-                uint32_t bitrate = (uint32_t) std::stoi(bitrate_value);
-                std::unique_ptr<romi::PiCameraSettings> settings;
+                } catch (std::exception& e) {
+                        r_debug("romi-camera: Failed to create the camera");
+                        throw;
+                }
                 
-                if (type == "picamera-v2") {
-                        if (mode == kVideo) {
-                                r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
-                                settings = std::make_unique<romi::V2VideoCameraSettings>(width,
-                                                                                         height,
-                                                                                         fps);
-                                settings->bitrate_ = bitrate;
+                // Session
+                nlohmann::json device_config = config->get_section("device");
+                std::string device_type = device_config["type"];
+                std::string device_id = device_config["hardware-id"];
+                romi::RomiDeviceData romiDeviceData(device_type, device_id);
+                romi::SoftwareVersion softwareVersion;
+                std::unique_ptr<romi::ILocationProvider> locationProvider
+                        = std::make_unique<romi::DummyLocationProvider>();
+                std::string directory = options.get_value(kDirectory);
+                romi::Session session(linux, directory, romiDeviceData,
+                                      softwareVersion, std::move(locationProvider));
 
-                        } else if (mode == kStill) {
-                                r_info("Camera: still mode.");
-                                settings = std::make_unique<romi::V2StillCameraSettings>(width, height);
-                        }
 
-                        camera = romi::PiCamera::create(*settings);
-
-		} else if (type == "picamera-hq") {
-                        if (mode == kVideo) {
-                                r_info("Camera: video mode, %d fps, %d bps", (int) fps, (int) bitrate);
-                                settings = std::make_unique<romi::HQVideoCameraSettings>(width,
-                                                                                         height,
-                                                                                         fps);
-                                settings->bitrate_ = bitrate;
-
-                        } else if (mode == kStill) {
-                                r_info("Camera: still mode.");
-                                settings = std::make_unique<romi::HQStillCameraSettings>(width, height);
-                        }
-                        
-                        camera = romi::PiCamera::create(*settings);
-                        
-		}
-#endif
-                if (type == "external-camera") {
-                        std::string executable = options.get_value(kExec);
-                        if (executable.empty())
-                                throw std::runtime_error("Missing --exec option");
-                        camera = std::make_unique<romi::ExternalCamera>(executable.c_str());
-		}
-                
+                //
                 std::string topic = options.get_value(kTopic);
                 romi::CameraAdaptor adaptor(*camera);
                 auto camera_server = rcom::RcomServer::create(topic, adaptor);
