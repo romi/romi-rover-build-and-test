@@ -42,11 +42,10 @@ class Camera(RcomClient):
 
         
 
-class FakeCamera(RcomClient):
+class FakeCamera():
 
     
     def __init__(self, topic = 'camera', id = 'camera', file = 'test.jpg'):
-        super().__init__(topic, id)
         self.image = Image.open(file)
         
     def print_error(self, data):
