@@ -79,8 +79,8 @@ if __name__ == '__main__':
                     help='The file for the fake camera')
     args = parser.parse_args()
     
-    #camera = Camera(args.topic, args.topic)
-    camera = FakeCamera(args.topic, args.topic, args.file)
+    camera = Camera(args.topic, args.topic)
+    #camera = FakeCamera(args.topic, args.topic, args.file)
     for i in range(10):
         image = camera.grab()
         if image != None:
