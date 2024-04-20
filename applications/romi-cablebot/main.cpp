@@ -33,13 +33,15 @@
 #include <rcom/MessageHub.h>
 #include <rcom/Linux.h>
 #include <rcom/RemoteObjectsAdaptor.h>
-#include <rpc/RcomLog.h>
+#include <rcom/RcomClient.h>
 
 #include <RomiSerialClient.h>
 
 #include <session/Session.h>
+#include <rpc/RcomLog.h>
 #include <rpc/CameraAdaptor.h>
 #include <rpc/CameraMountAdaptor.h>
+#include <rpc/RemoteConfig.h>
 #include <configuration/GetOpt.h>
 #include <util/ClockAccessor.h>
 #include <camera/ICameraSettings.h>
@@ -50,6 +52,7 @@
 #include <cablebot/ICablebotProgramList.h>
 #include <cablebot/CablebotController.h>
 #include <cablebot/CablebotRunner.h>
+#include <cablebot/CablebotProgramListAdaptor.h>
 #include <util/Logger.h>
 #include <util/AlarmClock.h>
 #include <util/IAlarmClockListener.h>
@@ -57,7 +60,6 @@
 #include <data_provider/RomiDeviceData.h>
 #include <data_provider/SoftwareVersion.h>
 #include <data_provider/CameraMountLocationProvider.h>
-#include <cablebot/CablebotProgramListAdaptor.h>
 
 static bool quit = false;
 static void set_quit(int sig, siginfo_t *info, void *ucontext);
@@ -107,15 +109,31 @@ int main(int argc, char **argv)
                 }
 
                 // Config
-                std::string config_value = options.get_value(kConfig);
+                std::shared_ptr<romi::IConfigManager> config;
+                
+                if (options.is_set(kConfig)) {
+                        std::string config_value = options.get_value(kConfig);
+                        
+                        r_info("romi-camera: Using local configuration file: '%s'",
+                               config_value.c_str());
+                
+                        std::filesystem::path config_path = config_value;
+                        config = std::make_shared<romi::LocalConfig>(config_path);
+                } else {
+                        r_info("romi-camera: Using remote configuration");
+                        auto client = rcom::RcomClient::create(kConfig, 10.0, rcomlog);
+                        config = std::make_shared<romi::RemoteConfig>(client);
+                }
+                
+                // std::string config_value = options.get_value(kConfig);
 
-                r_info("romi-cablebot: Using configuration file: '%s'",
-                        config_value.c_str());
+                // r_info("romi-cablebot: Using configuration file: '%s'",
+                //         config_value.c_str());
                 
-                std::filesystem::path config_path = config_value;
+                // std::filesystem::path config_path = config_value;
                 
-                std::shared_ptr<romi::IConfigManager> config
-                        = std::make_shared<romi::LocalConfig>(config_path);
+                // std::shared_ptr<romi::IConfigManager> config
+                //         = std::make_shared<romi::LocalConfig>(config_path);
                 
                 // Camera settings
                 std::shared_ptr<romi::ICameraInfoIO> info_io =
