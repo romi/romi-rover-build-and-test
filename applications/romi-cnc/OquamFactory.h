@@ -40,22 +40,30 @@ namespace romi {
         protected:
                 std::unique_ptr<ICNCController> _controller;
                 
-                void instantiate_controller(IOptions &options, nlohmann::json &config);
+                void instantiate_controller(IOptions &options,
+                                            nlohmann::json &cnc_config,
+                                            nlohmann::json &ports_config);
+                
                 void instantiate_controller(const std::string& controller_classname,
-                                            IOptions &options, nlohmann::json &config);
-                std::string get_controller_classname_in_config(nlohmann::json &config);
+                                            IOptions &options,
+                                            nlohmann::json &ports_config);
+                
+                std::string get_controller_classname_in_config(nlohmann::json &cnc_config);
                 void instantiate_fake_controller();
-                void instantiate_stepper_controller(IOptions &options, nlohmann::json &config);
+                void instantiate_stepper_controller(IOptions &options,
+                                                    nlohmann::json &ports_config);
                 std::string get_stepper_controller_device(IOptions &options,
-                                                          nlohmann::json &config);
-                std::string get_stepper_controller_device_in_config(nlohmann::json &config);
+                                                          nlohmann::json &ports_config);
+                std::string get_stepper_controller_device_in_config(nlohmann::json &ports_config);
 
         public:
 
                 OquamFactory();
                 virtual ~OquamFactory() = default;
                 
-                ICNCController& create_controller(IOptions& options, nlohmann::json& config);
+                ICNCController& create_controller(IOptions& options,
+                                                  nlohmann::json& cnc_config,
+                                                  nlohmann::json& ports_config);
 
         };
 }

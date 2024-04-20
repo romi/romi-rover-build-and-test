@@ -1,10 +1,14 @@
 {
+    "device": {
+        "hardware-id": "001",
+        "type": "CablebotV3"
+    },
     "cablebot": {
         "camera": {
+            "type": "remote-camera",
             "remote-camera": {
                 "topic": "camera"
-            },
-            "type": "remote-camera"
+            }
         }
     },
     "camera": {
@@ -21,15 +25,15 @@
             ]
         },
         "external-camera": {
-            "executable": "/home/hanappe/projects/ROMI/github/rover/romi-rover-build-and-test/applications/romi-cablebot/vgrabbj/grab.sh",
-            "height": 1080,
-            "width": 1920
+            "executable": "/home/romi/romi-rover-build-and-test/applications/romi-cablebot/libcamera/grab.sh",
+            "height": 1088,
+            "width": 1456
         },
         "fake-camera": {},
         "id": "camera-cablebot-01",
         "intrinsics": {
-            "cx": 1014.0,
-            "cy": 760.0,
+            "cx": 728.0,
+            "cy": 544.0,
             "fx": 2200.0,
             "fy": 2200.0
         },
@@ -47,12 +51,7 @@
         },
         "type": "external-camera"
     },
-    "device": {
-        "hardware-id": "001",
-        "type": "CablebotV3"
-    },
     "cnc": {
-        "-controller-classname": "stepper-controller",
         "cnc-range": [
             [
                 0,
@@ -67,7 +66,7 @@
                 0
             ]
         ],
-        "controller-classname": "fake-cnc-controller",
+        "controller-classname": "stepper-controller",
         "homing": {
             "axes": [
                 0,

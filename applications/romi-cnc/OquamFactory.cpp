@@ -37,28 +37,31 @@ namespace romi {
         {}
         
         ICNCController& OquamFactory::create_controller(IOptions &options,
-                                                       nlohmann::json &config)
+                                                        nlohmann::json &cnc_config,
+                                                        nlohmann::json &ports_config)
         {
                 if (_controller == nullptr)
-                        instantiate_controller(options, config);
+                        instantiate_controller(options, cnc_config, ports_config);
                 return *_controller;
         }
 
-        void OquamFactory::instantiate_controller(IOptions &options, nlohmann::json &config)
+        void OquamFactory::instantiate_controller(IOptions &options,
+                                                  nlohmann::json &cnc_config,
+                                                  nlohmann::json &ports_config)
         {
-                std::string classname = get_controller_classname_in_config(config);
-                instantiate_controller(classname, options, config);
+                std::string classname = get_controller_classname_in_config(cnc_config);
+                instantiate_controller(classname, options, ports_config);
         }
 
         std::string OquamFactory::get_controller_classname_in_config(nlohmann::json &config)
         {
                 std::string controller_classname ;
                 try {
-                        controller_classname = config["oquam"]["controller-classname"];
+                        controller_classname = config["controller-classname"];
                         
                 } catch (nlohmann::json::exception& je) {
                         r_warn("Failed to get the value for "
-                               "oquam.controller-classname: %s", je.what());
+                               "cnc.controller-classname: %s", je.what());
                         throw std::runtime_error("No controller classname defined");
                 }
                 return controller_classname;
@@ -66,7 +69,7 @@ namespace romi {
         
         void OquamFactory::instantiate_controller(const std::string& classname,
                                                   IOptions &options,
-                                                  nlohmann::json &config)
+                                                  nlohmann::json &ports_config)
         {
                 r_info("create_controller: Creating an instance of '%s'", classname.c_str());
                 
@@ -74,7 +77,7 @@ namespace romi {
                         instantiate_fake_controller();
 
                 } else if (classname == StepperController::ClassName) {
-                        instantiate_stepper_controller(options, config);
+                        instantiate_stepper_controller(options, ports_config);
                         
                 } else {
                         r_err("Unknown controller class: '%s'", classname.c_str());
@@ -88,31 +91,31 @@ namespace romi {
         }
         
         void OquamFactory::instantiate_stepper_controller(IOptions &options,
-                                                          nlohmann::json &config)
+                                                          nlohmann::json &ports_config)
         {
-                std::string device = get_stepper_controller_device(options, config);
+                std::string device = get_stepper_controller_device(options, ports_config);
                 std::shared_ptr<romiserial::ILog> log
                         = std::make_shared<romi::RomiSerialLog>();
                 auto romi_serial = romiserial::RomiSerialClient::create(device,
-                                                                        "oquam", log);
+                                                                        "cnc", log);
                 _controller = std::make_unique<StepperController>(romi_serial);
         }
 
         std::string OquamFactory::get_stepper_controller_device(IOptions &options,
-                                                                nlohmann::json &config)
+                                                                nlohmann::json &ports_config)
         {
-                std::string device_name = options.get_value(RoverOptions::cnc_device);
+                std::string device_name = options.get_value(RoverOptions::kCncDevice);
                 if (device_name.empty()) {
-                        device_name = get_stepper_controller_device_in_config(config);
+                        device_name = get_stepper_controller_device_in_config(ports_config);
                 }
                 return device_name;
         }
 
-        std::string OquamFactory::get_stepper_controller_device_in_config(nlohmann::json &config)
+        std::string OquamFactory::get_stepper_controller_device_in_config(nlohmann::json &ports_config)
         {
                 std::string device_name;
                 try {
-                        device_name = config["ports"]["oquam"]["port"];
+                        device_name = ports_config["cnc"]["port"];
                         
                 } catch (nlohmann::json::exception &je) {
                         r_warn("Failed to get the value for "

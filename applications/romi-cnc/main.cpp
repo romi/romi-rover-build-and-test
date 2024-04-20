@@ -7,19 +7,23 @@
 #include <rcom/Linux.h>
 #include <rcom/RcomServer.h>
 #include <rcom/RegistryServer.h>
+#include <rcom/RcomClient.h>
 
+#include <rpc/RcomLog.h>
 #include <rover/RoverOptions.h>
 #include <rpc/CNCAdaptor.h>
 #include <oquam/Oquam.h>
 #include <oquam/StepperSettings.h>
+#include <data_provider/RomiDeviceData.h>
+#include <data_provider/SoftwareVersion.h>
+#include <session/Session.h>
+#include <data_provider/Gps.h>
+#include <data_provider/GpsLocationProvider.h>
+#include <util/Clock.h>
+#include <util/ClockAccessor.h>
+#include <api/LocalConfig.h>
+#include <rpc/RemoteConfig.h>
 #include "OquamFactory.h"
-#include "data_provider/RomiDeviceData.h"
-#include "data_provider/SoftwareVersion.h"
-#include "session/Session.h"
-#include "data_provider/Gps.h"
-#include "data_provider/GpsLocationProvider.h"
-#include "util/Clock.h"
-#include "util/ClockAccessor.h"
 
 std::atomic<bool> quit(false);
 static const char *kRegistry = "registry";
@@ -52,36 +56,57 @@ int main(int argc, char** argv)
 
         int retval = 1;
 
-        romi::RoverOptions options;
-        romi::Option session_dir = {
-                "oquam-session", false, ".",
-                "Set the session directory"}; 
-        options.add_option(session_dir);
-        options.parse(argc, argv);
-        options.exit_if_help_requested();
-
-        log_init();
-        log_set_application("oquam");
 
         std::signal(SIGSEGV, SignalHandler);
         std::signal(SIGINT, SignalHandler);
 
         try {
+                // Linux
+                rcom::Linux linux;
+                std::shared_ptr<rcom::ILog> rcomlog = std::make_shared<romi::RcomLog>();
 	        
+                romi::RoverOptions options;
+                romi::Option session_dir = {
+                        "oquam-session", false, ".",
+                        "Set the session directory"}; 
+                options.add_option(session_dir);
+                options.parse(argc, argv);
+                options.exit_if_help_requested();
+
+                log_init();
+                log_set_application("oquam");
+        
                 if (options.is_set(kRegistry)) {
                         std::string ip = options.get_value(kRegistry);
                         r_info("Registry IP set to %s", ip.c_str());
                         rcom::RegistryServer::set_address(ip.c_str());
                 }
 		
-                std::string config_file = options.get_config_file();
-                r_info("Oquam: Using configuration file: '%s'", config_file.c_str());
-                // TBD: USE FileUtils
-                std::ifstream ifs(config_file);
-                nlohmann::json config = nlohmann::json::parse(ifs);
+                std::shared_ptr<romi::IConfigManager> config;
+                
+                if (options.is_set(romi::RoverOptions::kConfig)) {
+                        std::string config_value = options.get_value(romi::RoverOptions::kConfig);
+                        
+                        r_info("romi-camera: Using local configuration file: '%s'",
+                               config_value.c_str());
+                
+                        std::filesystem::path config_path = config_value;
+                        config = std::make_shared<romi::LocalConfig>(config_path);
+                } else {
+                        r_info("romi-camera: Using remote configuration");
+                        auto client = rcom::RcomClient::create("config", 10.0, rcomlog);
+                        config = std::make_shared<romi::RemoteConfig>(client);
+                }
 
+                // std::string config_file = options.get_config_file();
+                // r_info("Oquam: Using configuration file: '%s'", config_file.c_str());
+                // // TBD: USE FileUtils
+                // std::ifstream ifs(config_file);
+                // nlohmann::json config = nlohmann::json::parse(ifs);
+                
+                nlohmann::json cnc_config = config->get_section("cnc");
+                
                 // Session
-                rcom::Linux linux;
                 romi::RomiDeviceData romiDeviceData("Oquam", "001"); // FIXME: from config
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
@@ -97,23 +122,26 @@ int main(int argc, char** argv)
                 // Oquam cnc
                 romi::OquamFactory factory;
                 
-                nlohmann::json range_data = config.at("oquam").at("cnc-range");
+                nlohmann::json range_data = cnc_config["cnc-range"];
                 romi::CNCRange range(range_data);
 
-                nlohmann::json stepper_data = config.at("oquam").at("stepper-settings");
+                nlohmann::json stepper_data = cnc_config["stepper-settings"];
                 romi::StepperSettings stepper_settings(stepper_data);
         
-                double slice_duration = (double) config["oquam"]["path-slice-duration"];
-                double maximum_deviation = (double) config["oquam"]["path-maximum-deviation"];
+                double slice_duration = (double) cnc_config["path-slice-duration"];
+                double maximum_deviation = (double) cnc_config["path-maximum-deviation"];
 
-                romi::ICNCController& controller = factory.create_controller(options, config);
+                nlohmann::json ports_config = config->get_section("ports");
+                romi::ICNCController& controller = factory.create_controller(options,
+                                                                             cnc_config,
+                                                                             ports_config);
 
                 double max_steps_per_block = 32000.0; // Should be less than 2^15/2-1
                 double max_slice_duration = stepper_settings.compute_minimum_duration(max_steps_per_block);
                 
                 romi::AxisIndex homing_axes[3] = { romi::kAxisX, romi::kAxisY, romi::kAxisZ };
 
-                nlohmann::json homing_settings = config["oquam"]["homing"];
+                nlohmann::json homing_settings = cnc_config["homing"];
                 homing_axes[0] = homing_settings["axes"][0];
                 homing_axes[1] = homing_settings["axes"][1];
                 homing_axes[2] = homing_settings["axes"][2];
