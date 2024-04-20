@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(oquam)
+project(romi-cnc)
 
 set(SOURCES
   main.cpp
@@ -7,8 +7,8 @@ set(SOURCES
   OquamFactory.h
   )
 
-add_executable(oquam ${SOURCES})
-target_link_libraries(oquam romi romiserial)
+add_executable(romi-cnc ${SOURCES})
+target_link_libraries(romi-cnc romi romiserial)
 
 #add_subdirectory(test)
 
