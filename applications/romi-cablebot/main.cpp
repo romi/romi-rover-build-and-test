@@ -186,17 +186,16 @@ int main(int argc, char **argv)
                 adaptor.add("mount", cameramount_adaptor);
                 adaptor.add("programs", programs_adaptor);
                 
-                auto server = rcom::RcomServer::create("cablebot", adaptor);
+                // auto server = rcom::RcomServer::create("cablebot", adaptor);
 
                 
-                
-                //auto handler = std::make_shared<rcom::RcomMessageHandler>(adaptor);
+                auto handler = std::make_shared<rcom::RcomMessageHandler>(adaptor);
                 //auto rcomlog = std::make_shared<romi::RcomLog>();
-                // auto server = rcom::MessageHub::create("cablebot",
-                //                                        handler,
-                //                                        rcomlog,
-                //                                        10100,
-                //                                        true);
+                auto server = rcom::MessageHub::create("cablebot",
+                                                       handler,
+                                                       rcomlog,
+                                                       10100,
+                                                       true);
                 
                 quit_on_control_c();
 		
