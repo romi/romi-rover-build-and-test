@@ -79,18 +79,18 @@ static std::vector<romi::Option> eval_options = {
 
         // File paths
                 
-        { romi::RoverOptions::config, true, "config.json",
+        { romi::RoverOptions::kConfig, true, "config.json",
           "Path of the config file" },
                 
-        { romi::RoverOptions::session_directory, true, ".",
+        { romi::RoverOptions::kSessionDirectory, true, ".",
           "The session directory where the output "
           "files are stored (logs, images...)"},
                 
-        { romi::RoverOptions::camera_classname, true, romi::FileCamera::ClassName,
+        { romi::RoverOptions::kCameraClassname, true, romi::FileCamera::ClassName,
           "The classname of the camera to instanciate "
           "(default: file-camera)."},
                 
-        { romi::RoverOptions::camera_image, true, nullptr,
+        { romi::RoverOptions::kCameraImage, true, nullptr,
           "The path of the image file for the file camera."},
                 
         { kCNCControllerClassname.c_str(), true, romi::FakeCNCController::ClassName,
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
                         exit(0);
                 }
  
-                std::string path = options.get_value(romi::RoverOptions::config);
+                std::string path = options.get_value(romi::RoverOptions::kConfig);
                 if (path.empty())
                         throw std::runtime_error("No configuration file was given");
 

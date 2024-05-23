@@ -173,8 +173,8 @@ int main(int argc, char** argv)
 
                 rcom::Address remote_address(romi::ScriptHubListeningPort);
 
-                if (options.is_set(romi::RoverOptions::registry)) {
-                        std::string ip = options.get_value(romi::RoverOptions::registry);
+                if (options.is_set(romi::RoverOptions::kRegistry)) {
+                        std::string ip = options.get_value(romi::RoverOptions::kRegistry);
                         r_info("Registry IP set to %s", ip.c_str());
                         remote_address.set(ip.c_str(), romi::ScriptHubListeningPort);
                 }

@@ -25,7 +25,7 @@
             ]
         },
         "external-camera": {
-            "executable": "/home/hanappe/projects/ROMI/github/rover/romi-rover-build-and-test/applications/romi-cablebot/vgrabbj/grab.sh",
+            "path": "/home/romi/romi-rover-build-and-test/applications/romi-cablebot/libcamera/grab.sh",
             "height": 1080,
             "width": 1920
         },

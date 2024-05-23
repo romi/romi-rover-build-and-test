@@ -145,7 +145,7 @@ int main(int argc, char** argv)
                 nlohmann::json config = nlohmann::json::parse(ifs);
 
                 // Registry
-                std::string registry = options.get_value(romi::RoverOptions::registry);
+                std::string registry = options.get_value(romi::RoverOptions::kRegistry);
                 if (!registry.empty())
                         rcom::RegistryServer::set_address(registry.c_str());
                 
