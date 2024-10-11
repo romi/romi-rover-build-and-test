@@ -115,6 +115,43 @@ If you use the on-demand option git will try to push any un-pushed submodules be
   
 If you want to make this the default behaviour for your system you can simply add it to git config:  
     **git config push.recurseSubmodules on-demand**
- 
+
+
+## Setting up a Raspberry Pi
+
+1. Install Raspberry Pi OS Lite 64-bits on an SD-card using the [RPi Imager software](https://www.raspberrypi.com/software/). In the configuration dialog of the installer, it's handy to immediately configure the WiFi connection and enable SSH so the Pi is ready to connect to the local network upon the first boot.  
+2. Start the Raspberry Pi and in a shell (either you hook up a screen and keayboard, or you connect over SSH if it was enabled) and install the required software packages:
+
+```
+sudo apt install git cmake build-essential libi2c-dev libpng-dev libjpeg-dev
+```
+
+4. Clone the git repository
+
+```
+git clone  --branch ci_dev --recurse-submodules https://github.com/romi/romi-rover-build-and-test.git
+```
+
+6. Depending on what you need, compile the code:
+
+```sh
+cd romi-rover-build-and-test
+mkdir build
+cd build
+cmake ..
+```
+
+For a camera set-up:
+
+```sh
+make romi-camera
+```
+
+For a main node that contraols a CNC:
+
+```sh
+make rcom-registry romi-cnc
+```
+
 
 
