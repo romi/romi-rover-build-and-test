@@ -23,10 +23,10 @@
 #include <util/ClockAccessor.h>
 #include <api/LocalConfig.h>
 #include <rpc/RemoteConfig.h>
+#include <configuration/ConfigurationProvider.h>
 #include "OquamFactory.h"
 
 std::atomic<bool> quit(false);
-static const char *kRegistry = "registry";
 
 static inline double sign(double v)
 {
@@ -61,23 +61,31 @@ int main(int argc, char** argv)
         std::signal(SIGINT, SignalHandler);
 
         try {
+
+                static std::vector<romi::Option> option_list = {
+                        { "help", false, nullptr, "Print help message" },
+                        { romi::RoverOptions::kConfig, true, "config.json", "Path of the config file" },
+                        { romi::RoverOptions::kRegistry, true, nullptr, "The IP address of the registry"},
+                        { romi::RoverOptions::kSessionDirectory, true, ".", "The session directory where the output "
+                          "files are stored (logs, images...)"}
+                };
+                
+                romi::GetOpt options(option_list);
+                options.parse(argc, argv);
+                if (options.is_help_requested()) {
+                        options.print_usage();
+                        return 0;
+                }
+                
                 // Linux
                 rcom::Linux linux;
                 std::shared_ptr<rcom::ILog> rcomlog = std::make_shared<romi::RcomLog>();
-	        
-                romi::RoverOptions options;
-                romi::Option session_dir = {
-                        "oquam-session", false, ".",
-                        "Set the session directory"}; 
-                options.add_option(session_dir);
-                options.parse(argc, argv);
-                options.exit_if_help_requested();
 
                 log_init();
-                log_set_application("oquam");
-        
-                if (options.is_set(kRegistry)) {
-                        std::string ip = options.get_value(kRegistry);
+                log_set_application("cnc");
+                
+                if (options.is_set(romi::RoverOptions::kRegistry)) {
+                        std::string ip = options.get_value(romi::RoverOptions::kRegistry);
                         r_info("Registry IP set to %s", ip.c_str());
                         rcom::RegistryServer::set_address(ip.c_str());
                 }
@@ -107,13 +115,14 @@ int main(int argc, char** argv)
                 nlohmann::json cnc_config = config->get_section("cnc");
                 
                 // Session
-                romi::RomiDeviceData romiDeviceData("Oquam", "001"); // FIXME: from config
+                romi::RomiDeviceData romiDeviceData("CNC", "001"); // FIXME: from config
                 romi::SoftwareVersion softwareVersion;
                 romi::Gps gps;
                 std::unique_ptr<romi::ILocationProvider> locationPrivider
                         = std::make_unique<romi::GpsLocationProvider>(gps);
-                std::string session_directory = options.get_value("oquam-session");
-                r_info("");
+                //std::string session_directory = romi::get_session_directory(options, config);
+                std::string session_directory = options.get_value(romi::RoverOptions::kSessionDirectory);
+                r_info("Session directory: %s", session_directory.c_str());
                 romi::Session session(linux, session_directory,
                                       romiDeviceData, softwareVersion,
                                       std::move(locationPrivider));
