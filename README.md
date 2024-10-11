@@ -115,6 +115,72 @@ If you use the on-demand option git will try to push any un-pushed submodules be
   
 If you want to make this the default behaviour for your system you can simply add it to git config:  
     **git config push.recurseSubmodules on-demand**
- 
 
 
+## Setting up a Raspberry Pi
+
+1. Install Raspberry Pi OS Lite 64-bits on an SD-card using the [RPi Imager software](https://www.raspberrypi.com/software/). In the configuration dialog of the installer, it's handy to immediately configure the WiFi connection and enable SSH so the Pi is ready to connect to the local network upon the first boot.  
+2. Start the Raspberry Pi and in a shell (either you hook up a screen and keayboard, or you connect over SSH if it was enabled) and install the required software packages:
+
+```
+sudo apt install git cmake build-essential libi2c-dev libpng-dev libjpeg-dev
+```
+The Pi comes with the `nano` text editor but you may want to install your preferred shell-based text editor. As an example, I use emacs (the one without the X-based GUI - noX): 
+```
+sudo apt install emacs-nox
+```
+
+4. Clone the git repository
+
+```
+git clone  --branch ci_dev --recurse-submodules https://github.com/romi/romi-rover-build-and-test.git
+```
+
+6. Depending on what you need, compile the code:
+
+```sh
+cd romi-rover-build-and-test
+mkdir build
+cd build
+cmake ..
+```
+
+For a camera set-up:
+
+```sh
+make romi-camera
+```
+
+For a main node that contraols a CNC:
+
+```sh
+make rcom-registry romi-cnc
+```
+7. When using the CNC module, copy the config file:
+
+For the 1000 mm XCarve
+```sh
+cp ~/romi-rover-build-and-test/config/default.json ~/config.json
+```
+
+For the Cablebot
+```sh
+cp ~/romi-rover-build-and-test/config/cablebot-v3.json ~/config.json
+```
+
+8. Startup Rcom Registry on boot:
+
+```sh
+sudo emacs /etc/rc.local
+```
+
+Add, before the `exit 0` line:
+
+```sh
+sudo -u romi /home/romi/romi-rover-build-and-test/build/bin/rcom-registry >> /home/romi/rcom-registry.log 2>&1 &
+sleep 3
+sudo -u romi /home/romi/romi-rover-build-and-test/build/bin/romi-config --config /home/romi/config.json  >> /home/romi/romi-config.log 2>&1 &
+sleep 3
+```
+
+9. 

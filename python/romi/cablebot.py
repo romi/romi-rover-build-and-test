@@ -18,7 +18,7 @@ def scan(cnc, camera, x0, dx, count):
         time.sleep(1)
         image = camera.grab()
         if image != None:
-            filename = f"cablebot-{i:05d}-{1000*x:05d}.jpg"
+            filename = f"cablebot-{i:05d}-{int(1000*x)}.jpg"
             print(f"Saving {filename}")
             image.save(filename)
 
@@ -53,5 +53,6 @@ if __name__ == '__main__':
     startup_cnc(cnc)
     scan(cnc, camera, args.start, args.interval, args.count)
     shutdown_cnc(cnc, args.no_homing)
+    # shutdown_cnc(cnc, True)
 
     
