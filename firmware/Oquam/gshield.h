@@ -27,8 +27,8 @@
 #ifndef _OQUAM_GSHIELD_H_
 #define _OQUAM_GSHIELD_H_
 
-#define ENABLE_PIN_HIGH   0
-#define ENCODER_REVERSED 0
+/* Configuration of the interupt timer: */
+
 /* #define PRESCALING         1 */
 /* #define FREQUENCY_STEPPER  25000 */
 /* #define INTERRUPTS_PER_MILLISECOND 25 */
@@ -36,12 +36,23 @@
 #define FREQUENCY_STEPPER  10000
 #define INTERRUPTS_PER_MILLISECOND 10
 
+/* Other stuff: */
+
+// Cablebot
+//#define ENABLE_PIN_HIGH   1   
+// XCarve
+#define ENABLE_PIN_HIGH   0
+
+#define ENCODER_REVERSED 0
+
+/* Configuration of the pins: */
+
 #define PIN_LIMIT_SWITCH_X   9
 #define PIN_LIMIT_SWITCH_Y   10
-#define PIN_LIMIT_SWITCH_Z   12
-#define PIN_SPINLDE          11
-//#define PIN_LIMIT_SWITCH_Z   11
-//#define PIN_SPINLDE          12
+//#define PIN_LIMIT_SWITCH_Z   12
+//#define PIN_SPINLDE          11
+#define PIN_LIMIT_SWITCH_Z   11
+#define PIN_SPINLDE          12
 
 /* 
  * The STEP_ and DIRECTION_ defines below are taken from Grbl.

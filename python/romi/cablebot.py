@@ -18,7 +18,11 @@ def scan(cnc, camera, x0, dx, count):
         time.sleep(1)
         image = camera.grab()
         if image != None:
+<<<<<<< Updated upstream
             filename = f"cablebot-{i:05d}-{int(1000*x)}.jpg"
+=======
+            filename = f"cablebot-{i:05d}-{int(1000*x):05d}.jpg"
+>>>>>>> Stashed changes
             print(f"Saving {filename}")
             image.save(filename)
 
@@ -46,6 +50,7 @@ if __name__ == '__main__':
                     help='The number of images')
     parser.add_argument('--no-homing', action=argparse.BooleanOptionalAction,
                         help='Go back to zero without the homing procedure')
+    args = parser.parse_args()
     
     cnc = CNC("cnc", "cnc")
     camera = Camera("camera", "camera")
