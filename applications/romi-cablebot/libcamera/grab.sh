@@ -20,6 +20,6 @@ elif [ "grab.json" -nt "grab.timestamp" ]; then
      touch grab.timestamp
 fi
 
-libcamera-jpeg -o $IMAGE -x grab.config -w $WIDTH -H $HEIGHT -q $QUALITY -d $DEVICE -D 0 -z 5 2>&1 > /dev/null 
+libcamera-jpeg -o $IMAGE --width $WIDTH --height $HEIGHT --quality $QUALITY -camera $DEVICE --autofocus-on-capture 2>&1 > /dev/null 
 
 
