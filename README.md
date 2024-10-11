@@ -125,6 +125,10 @@ If you want to make this the default behaviour for your system you can simply ad
 ```
 sudo apt install git cmake build-essential libi2c-dev libpng-dev libjpeg-dev
 ```
+The Pi comes with the `nano` text editor but you may want to install your preferred shell-based text editor. As an example, I use emacs (the one without the X-based GUI - noX): 
+```
+sudo apt install emacs-nox
+```
 
 4. Clone the git repository
 
@@ -152,6 +156,31 @@ For a main node that contraols a CNC:
 ```sh
 make rcom-registry romi-cnc
 ```
+7. When using the CNC module, copy the config file:
 
+For the 1000 mm XCarve
+```sh
+cp ~/romi-rover-build-and-test/config/default.json ~/config.json
+```
 
+For the Cablebot
+```sh
+cp ~/romi-rover-build-and-test/config/cablebot-v3.json ~/config.json
+```
 
+8. Startup Rcom Registry on boot:
+
+```sh
+sudo emacs /etc/rc.local
+```
+
+Add, before the `exit 0` line:
+
+```sh
+sudo -u romi /home/romi/romi-rover-build-and-test/build/bin/rcom-registry >> /home/romi/rcom-registry.log 2>&1 &
+sleep 3
+sudo -u romi /home/romi/romi-rover-build-and-test/build/bin/romi-config --config /home/romi/config.json  >> /home/romi/romi-config.log 2>&1 &
+sleep 3
+```
+
+9. 
