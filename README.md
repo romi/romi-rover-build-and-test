@@ -123,7 +123,7 @@ If you want to make this the default behaviour for your system you can simply ad
 2. Start the Raspberry Pi and in a shell (either you hook up a screen and keayboard, or you connect over SSH if it was enabled) and install the required software packages:
 
 ```
-sudo apt install git cmake build-essential libi2c-dev libpng-dev libjpeg-dev
+sudo apt install git cmake build-essential libi2c-dev libpng-dev libjpeg-dev python3-pip
 ```
 The Pi comes with the `nano` text editor but you may want to install your preferred shell-based text editor. As an example, I use emacs (the one without the X-based GUI - noX): 
 ```
@@ -181,6 +181,15 @@ sudo -u romi /home/romi/romi-rover-build-and-test/build/bin/rcom-registry >> /ho
 sleep 3
 sudo -u romi /home/romi/romi-rover-build-and-test/build/bin/romi-config --config /home/romi/config.json  >> /home/romi/romi-config.log 2>&1 &
 sleep 3
+sudo -u romi /home/romi/romi-rover-build-and-test/build/bin/romi-cnc --session-directory /home/romi/cnc >> /home/romi/cnc/temp.log 2>&1 &
 ```
 
-9. 
+9. Install Python interface
+```sh
+cd ~/romi-rover-build-and-test/librcom/python/
+python3 setup.py install --user
+
+cd ~/romi-rover-build-and-test/python/
+python3 setup.py install --user
+```
+
